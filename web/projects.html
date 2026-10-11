@@ -1,0 +1,6 @@
+<!doctype html><html lang="ru"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>EMS — проекты</title><link rel="stylesheet" href="/web/style.css"><link rel="stylesheet" href="/web/projects.css"><body>
+<header><h1>EMS — проекты</h1><a href="/">Графовый редактор</a> · <a href="/web/ui-demo.html">UI workspace</a></header><main>
+<p>Проекты хранятся в этом браузере. Экспортируйте копию для переноса или резервного хранения.</p>
+<label>Название <input id="name" value="Новый проект" maxlength="200"></label><button id="new-graph">Создать граф</button><button id="new-ui">Создать UI</button><button id="counter">Пример: счётчик</button><button id="import-project">Импорт копии</button><input id="file" type="file" accept=".json" hidden>
+<p id="status" role="status"></p><p id="error" role="alert"></p><div id="project-list"></div>
+</main><script type="module" src="/web/projects.mjs"></script></body></html>

@@ -314,4 +314,8 @@ await check('typed graph port connection reuses the selected lexical parameter',
  const runtime=new UIRuntime(editor.application,standaloneUIBase,{policy:{capabilities:['ui.render','state.read','state.write'],allowedEffects:['ui.render','state.read','state.write']}});
  try{await runtime.dispatch('increment','press');return await runtime.dispatch('increment','press')===1;}finally{await runtime.close();}
 });
+await check('unified project catalog preserves source-owned UI and imports a separate copy',async()=>{
+ const {ProjectManager}=await import('../src/studio/manager.mjs');const values=new Map(),manager=new ProjectManager({getItem:key=>values.get(key)??null,setItem:(key,value)=>values.set(key,value)});
+ manager.import(await get('examples/ui-source-counter.ems-ui.json'),'counter');const original=manager.export('counter');manager.import(original,'copy');return manager.load('copy').source===manager.load('counter').source&&manager.export('counter')===original&&manager.list().length===2;
+});
 console.log(`\nEMS foundation verification passed (${checks} checks). Not production readiness.`);

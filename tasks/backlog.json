@@ -548,20 +548,17 @@
         "GPT-6.1 Sol",
         "GPT-6 Luna"
       ],
-      "progress": "AC-051..054 semantic DOM/UI/source/forms/worker preview remain verified; AC-055..058 independent state/UI and IDE package download implemented under EMS-060/061. AC-059 initial typed control source graph/SVG selection/node-fragment edits now available in UI workspace. Full free control canvas/unified manager/AC-014/MVP/native parity remain open.",
+      "progress": "AC-051..061 UI/state/source/Worker/standalone/control graph profiles remain verified. AC-062 unified local graph/text/UI project catalog now provides create/open/copy/rename/import/export, managed graph+draft atomic storage and applied UI autosave using existing typed source/IR witness codecs. Chromium verifies text Run12, Apply to graph and refresh Run12, UI source edit and reopen Run4, creation/import/copy/rename. Full AC-014/native parity/full control graph remain open; next audit owner P0 MVP scenarios against actual evidence before authorized deploy.",
       "acceptanceEvidence": {
-        "scope": "Initial UI/source authoring plus actual worker preview; full handler graph/standalone/full AC-014 not completed.",
-        "docs": "docs/spec/UI_WORKER.md",
+        "scope": "Initial semantic UI/source/worker/standalone/graph integration plus unified local project catalog; full AC-014/native/general visual parity not claimed.",
+        "docs": "docs/spec/PROJECT_MANAGER.md",
         "example": "examples/ui-source-counter.ems-ui.json",
-        "tests": "630/630 PASS",
-        "verify": "118/118 PASS",
-        "browserTests": "14/14 PASS",
+        "tests": "672/672 PASS",
+        "verify": "129/129 PASS",
+        "browserTests": "22/22 PASS",
         "testFiles": [
-          "tests/ui.test.mjs",
-          "tests/ui-project.test.mjs",
-          "tests/ui-authoring.test.mjs",
-          "tests/ui-worker.test.mjs",
-          "tests/browser/ui.test.mjs"
+          "tests/project-manager.test.mjs",
+          "tests/browser/project-manager.test.mjs"
         ],
         "commands": [
           "npm test",

@@ -125,3 +125,7 @@ Control source graph supports real structured literal/operator/call/instruction 
 ## Точка продолжения после AC-061
 
 Actual typed contract catalog и lexical value→named call port connection работают в control source graph с source binding identity/visibility/type/effect checks и single execution of producers. Initial source graph connection gate verified Node/compiler/actual Chromium. Remaining full graphical control/operand wiring/layout/collection projection/source trace/project manager and owner MVP audit stay open; deploy follows gates, global EMS goal intact.
+
+## Точка продолжения после AC-062
+
+Unified local project catalog now creates/opens/copies/renames/imports/exports graph/text/UI programs using existing typed codecs and source witnesses. Applied graph and UI changes survive refresh with actual execution. Legacy storage remains accessible; server sync/full multipane graph debugger/visual parity remain separate work. Next: audit each owner P0 WEB IDE MVP scenario against real Node/Chromium evidence, close missing calculator/reusable expandable arithmetic AVG5/counter/project/type/error acceptance, then authorized isolated authenticated HTTPS deploy with rollback and domain checks. Do not gate accepted P0 deployment on unrelated P1/P2 features. Global goal remains full language/runtime/compiler/platform/ecosystem.

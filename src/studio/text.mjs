@@ -66,7 +66,7 @@ export function textFromWorkspace(editor){
  lines.push(`  return ${ref(graph.returns)};`,'}');return {source:lines.join('\n')+'\n',entry:graph.id,lowering};
 }
 
-function validateStoredDraft(value){
+export function validateStoredDraft(value){
  if(!value||typeof value!=='object'||Array.isArray(value)||Object.keys(value).sort().join(',')!=='entry,inputs,lowering,schemaVersion,source'||value.schemaVersion!=='ems-studio-text/1'||typeof value.source!=='string'||value.source.length>262144||typeof value.entry!=='string'||value.entry.length>1024||!['auto','call'].includes(value.lowering)||typeof value.inputs!=='string'||value.inputs.length>1048576)fail('INVALID_DRAFT','Invalid bounded saved text draft');return value;
 }
 export class TextDraftStorage{

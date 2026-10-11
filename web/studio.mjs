@@ -1,3 +1,4 @@
+import {ProjectManager} from '/src/studio/manager.mjs';
 import {STANDARD_CONTRACTS} from '/src/stdlib/finite.mjs';
 import {ProjectEditor,newProject,parseProject} from '/src/studio/project.mjs';
 import {startStudioExecution} from '/src/studio/execution-client.mjs';
@@ -11,6 +12,7 @@ const categories={number:'Числа',value:'Значения',logic:'Логик
 const el=(tag,text,style)=>{const node=document.createElement(tag);if(text!==undefined)node.textContent=text;if(style)node.className=style;return node;};
 const identity=()=> 'p'+crypto.randomUUID().replaceAll('-','');
 let store,editor,selected=null,pending=null,failedNode=null,textMode=false,textProjectId=null,textStorage;
+const managedId=new URLSearchParams(location.search).get('project'),manager=managedId?new ProjectManager(localStorage):null;
 let activeExecution=null;
 async function executeStudio(action,draft,inputs){
  const job=startStudioExecution({action,project:editor.serialize(),selected:editor.selectedContract,draft,inputs});activeExecution=job;$('stop').disabled=false;
@@ -18,7 +20,7 @@ async function executeStudio(action,draft,inputs){
 }
 $('stop').onclick=()=>activeExecution?.cancel();
 function report(error){$('error').textContent=`${error.code??'ERROR'}: ${error.message}`;}
-try{store=new ProjectStorage(localStorage);editor=new ProjectEditor(store.load()??newProject(identity()));}catch(error){editor=new ProjectEditor(newProject(identity()));report(error);}
+try{if(manager){const record=manager.load(managedId);if(record?.kind!=='graph')throw new Error('Графовый проект не найден');store={load:id=>{const record=manager.load(id??managedId);return record?.kind==='graph'?parseProject(record.source):null;},list:()=>manager.list().filter(record=>record.kind==='graph'),save:project=>{manager.save({id:project.id,name:project.name,kind:'graph',source:new ProjectEditor(project).serialize(),draft:manager.load(project.id)?.draft??null});history.replaceState(null,'','/?project='+encodeURIComponent(project.id));}};}else store=new ProjectStorage(localStorage);editor=new ProjectEditor(store.load()??newProject(identity()));}catch(error){if(manager){report(error);throw error;}editor=new ProjectEditor(newProject(identity()));report(error);}
 function projectList(){
  $('projects').replaceChildren();const current=el('option',editor.project.name);current.value=editor.project.id;$('projects').append(current);
  try{for(const project of store?.list()??[])if(project.id!==editor.project.id){const option=el('option',project.name);option.value=project.id;$('projects').append(option);}}catch{}
@@ -147,7 +149,7 @@ $('compile').onclick=()=>{try{const url=URL.createObjectURL(new Blob([editor.com
 // Text candidates compile through the ordinary EMS frontend and the same IR/runtime.
 const textAPI=await import('/src/studio/text.mjs');
 
-try{textStorage=new textAPI.TextDraftStorage(localStorage);}catch(error){report(error);}
+try{textStorage=manager?{load:id=>manager.load(id)?.draft??null,save:(id,draft)=>{const record=manager.load(id);if(!record)throw new Error('Проект не сохранён');manager.save({...record,source:editor.serialize(),draft:textAPI.validateStoredDraft({schemaVersion:'ems-studio-text/1',...draft})});}}:new textAPI.TextDraftStorage(localStorage);}catch(error){report(error);}
 function draft(){return {source:$('text-source').value,entry:$('text-entry').value.trim(),lowering:$('text-lowering').value,inputs:$('text-inputs').value};}
 function setDraft(value){$('text-source').value=value.source;$('text-entry').value=value.entry;$('text-lowering').value=value.lowering;$('text-inputs').value=value.inputs;}
 function saveDraft(){try{if(!textStorage)throw new Error('Хранилище черновика недоступно');textStorage.save(editor.project.id,draft());$('text-status').textContent='Черновик сохранён локально. Граф изменяется только после «Применить».';}catch(error){$('text-status').textContent='Черновик не сохранён';report(error);}}

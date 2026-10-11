@@ -1,5 +1,12 @@
 # Current implementation status
 
+## Последняя проверка — EMS-050 unified local project catalog, AC-062
+
+Каталог `/web/projects.html` объединяет graph/text/UI проекты: create/open/copy/rename/import/export, старые JSON импортируются копиями. Managed graph сохраняет graph+draft в одной записи; UI сохраняет applied source после Worker restart. Старые storage не мигрируются и не удаляются. Existing core codecs проверяют IR/pins/UI/source witnesses; no handler execution during import. Scope — docs/spec/PROJECT_MANAGER.md.
+
+Baseline f295dd5:668 tests/128 verify/20 browser. `npm test` **672/672 PASS**, `npm run verify` **129/129 PASS**, `npm run browser:test` **22/22 PASS**; final targeted6/6 после улучшения malformed-version errors и browser graph refresh oracle. Browser draft Run12→Apply graph→refresh Run12, UI edited handler4→refresh4, creation/import originals/copy/rename. No new deps/VPS changes. Full AC-012/AC-014/owner MVP production deployment/global goal remain open.
+
+
 ## Последняя проверка — EMS-032 catalog/typed lexical ports, AC-061
 
 `npm test` **668/668 PASS**, `npm run verify` **128/128 PASS**, `npm run browser:test` **20/20 PASS**. Baseline1c69b3e:664/127/19. Node22 / actual Chromium156. Arbitrary wires/full control canvas/collection projection/unified manager/MVP/deploy/global goal открыты.
