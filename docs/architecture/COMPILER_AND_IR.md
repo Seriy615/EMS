@@ -42,3 +42,5 @@ Differential tests: same inputs through reference evaluator and target artifact,
 ## Начальная компиляция state handlers
 
 Отдельный `compileStateControlJS` разрешает только проверенные kernel state intrinsics в control IR v2 и сохраняет runtime grants. Выход исполняется без EMS imports, но требует execution-owned transactional context. Pure targets прежние. Scheduler/store/commit/rollback и полный UI export этим API не реализованы; границы и AC-055 — `docs/spec/STATE_COMPILER.md`.
+
+AC-056: `ReactorKernel` — единый event/transaction scheduler для interpreted `ReactorSession` и независимого generated session. Compiler связывает реальные kernel state operations и включает class/helpers в модуль без EMS imports; IR evaluator остаётся только в interpreter adapter. `compileReactorJS` и CLI export documented in `docs/spec/STATE_COMPILER.md`; полный UI packaging — следующий EMS-061 gate.

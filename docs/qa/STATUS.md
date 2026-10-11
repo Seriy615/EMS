@@ -1,5 +1,12 @@
 # Current implementation status
 
+## Последняя проверка — EMS-060 standalone state session, AC-056
+
+`npm test` **646/646 PASS**, `npm run verify` **122/122 PASS**, `npm run browser:test` **15/15 PASS**. Baseline44e1eaa:638/120/14. Node22 / actual Chromium156. EMS-060 IN_PROGRESS; независимая finite state session доказана, production/native backend/source maps/state lock/full UI/MVP/deploy/global goal открыты.
+
+Interpreted ReactorSession и compiled output используют один ReactorKernel: FIFO, execution-owned draft, typed copies, commit/rollback, bounded admission/queue, cancellation/close и detached trace. compileReactorJS проверяет semantic manifest/handlers/kernel witness до build; generated module createSession/replayEvents не импортирует EMS. CLI экспортирует реальный typed source-owned UI project reactor. Node и actual Chromium differential tests доказывают same outcomes/traces, failure rollback/subsequent reads/replay и independent execution после остановки EMS origin. Control IR v2 state + pure graph IR v1; state graph v1/native IO explicit unsupported. Полный DOM/UI package пока не создан. Логи `/tmp/ems-reactor-export-{tests,verify,browser}.log`; scope/API — docs/spec/STATE_COMPILER.md.
+
+
 ## Последняя проверка — EMS-060 state handler compiler, AC-055
 
 `npm test` **638/638 PASS**, `npm run verify` **120/120 PASS**, `npm run browser:test` **14/14 PASS**. Baseline a26af74:630/118/14. Node22 / actual Chromium156. EMS-060 IN_PROGRESS: независимый compiler обработчиков завершён в указанном профиле; standalone reactor/UI, production backend, full MVP/deploy/global goal открыты.

@@ -101,3 +101,7 @@ AC-054 реализован для reference preview: настоящий persist
 ## Точка продолжения после AC-055
 
 EMS-060 IN_PROGRESS: независимые control state handlers с kernel witness/grants реализованы и проверены; общий транзакционный scheduler и целое приложение ещё не экспортированы. Следующий core gate — compiled session FIFO/rollback/replay/cancel без второго evaluator, затем EMS-061 independent browser UI package. Полный handler canvas/unified manager остаются зависимостями WEB IDE MVP; deploy следует после его приёмки. См. docs/spec/STATE_COMPILER.md и docs/qa/PROGRESS.md.
+
+## Точка продолжения после AC-056
+
+EMS-060 initial state session export теперь реализован: compiled и interpreted handlers подключаются к одному ReactorKernel. Node/actual Chromium доказывают FIFO/rollback/replay/cancellation и independent execution. EMS-060 остаётся IN_PROGRESS для production/native/maps/state provenance. Следующий core→UI шаг EMS-061 — независимый semantic UI/DOM package над готовым session; полный handler canvas/unified manager и owner scenarios остаются gates WEB IDE MVP. Deploy после его приёмки, global goal активна.

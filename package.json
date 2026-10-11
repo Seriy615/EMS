@@ -12,6 +12,7 @@
     "browser:verify": "node tools/browser-conformance.mjs",
     "browser:test": "node --test tests/browser/*.test.mjs",
     "export:portable": "node tools/export-portable.mjs",
+    "export:reactor": "node tools/export-reactor.mjs examples/ui-source-counter.ems-ui.json --out dist/counter-session.mjs",
     "demo": "node tools/ems.mjs run examples/avg5.graph.json '{\"times\":[12.4,11.85,13.2,12.1,14]}'",
     "validate": "node tools/ems.mjs validate examples/avg5.graph.json",
     "build:demo": "node tools/ems.mjs build examples/avg5.graph.json --out dist/avg5.mjs",

@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 import assert from 'node:assert/strict';
 import {compileStateControlJS} from '../src/compiler/control.mjs';
+import {compileReactorJS} from '../src/compiler/reactor.mjs';
 import { readFile, stat, open } from 'node:fs/promises';
 import { createCoreRegistry, parseTextEMS, validateGraph, executeGraph, compileStandaloneJS, compiledAtomicManifest, registerCompiledAtomic, registerTrustedJSBindings } from '../src/reference/index.mjs';
 import { lowerGraphToIR, serializeIR, parseIR, executeIR, compileIRToJS, graphProvenance } from '../src/ir/index.mjs';
@@ -260,5 +261,16 @@ await check('kernel state handler compiles without EMS imports and keeps actual 
 });
 await check('compiled state handler preserves permission checks before state access',()=>{
   let calls=0;assert.throws(()=>compiledStateModule.execute({delta:1},{state:{read:()=>++calls,write:()=>++calls}}),{code:'PERMISSION_DENIED'});return calls===0;
+});
+const standaloneReactorManifest={schemaVersion:'ems-reactor/1',id:'verify.counter',version:'1.0.0',state:[{id:'count',type:'Number',initial:0}],handlers:[{event:'update',program:compiledStateIR}]};
+const standaloneReactorModule=await import(`data:text/javascript,${encodeURIComponent(compileReactorJS(standaloneReactorManifest,compiledStateRegistry))}`);
+await check('independent state session owns FIFO commits and deterministic replay',async()=>{
+ const options={policy:{capabilities:['state.read','state.write'],allowedEffects:['state.read','state.write']},recordTrace:true};
+ const s=standaloneReactorModule.createSession(options),r=standaloneReactorModule.createSession(options);
+ try{assert.deepEqual(await Promise.all([s.dispatch('update',{delta:2}),s.dispatch('update',{delta:3})]),[2,5]);await standaloneReactorModule.replayEvents(r,s.trace());assert.deepEqual(r.trace(),s.trace());return r.snapshot().count===5;}finally{await s.close();await r.close();}
+});
+await check('independent state session close cancels queued writes before commit',async()=>{
+ const s=standaloneReactorModule.createSession({policy:{capabilities:['state.read','state.write'],allowedEffects:['state.read','state.write']}});
+ const pending=assert.rejects(s.dispatch('update',{delta:100}),{code:'CANCELLED'});await s.close();await pending;await assert.rejects(s.dispatch('update',{delta:1}),{code:'SESSION_CLOSED'});return s.snapshot().count===0;
 });
 console.log(`\nEMS foundation verification passed (${checks} checks). Not production readiness.`);

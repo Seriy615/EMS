@@ -586,20 +586,23 @@
         "GPT-6.1 Sol",
         "GPT-6 Luna"
       ],
-      "progress": "AC-055 initial stateful control handler compiler implemented: independent JS, genuine private kernel callback/metadata witness, retained runtime grants, interpreter/compiled state-call/error/budget/async parity and fresh Node execution without EMS imports. Pure export unchanged. Existing transaction scheduler/store not yet exported; FIFO/rollback/replay/cancel standalone sessions, state provenance/lock, native host calls/source maps and complete UI application remain open. See docs/spec/STATE_COMPILER.md.",
+      "progress": "AC-055/056 implemented: independent state control handler and finite reactor compiler. Interpreted ReactorSession and generated output use the same ReactorKernel FIFO/state draft/commit/rollback/queue/cancel/close implementation. Node/Chromium differential traces, fresh process and source-owned UI-project CLI export pass. Control IR v2 state and pure graph IR v1 supported; state graph v1, native/IO bindings, source maps and state lock/provenance remain open. Production backend and whole UI export not complete. See docs/spec/STATE_COMPILER.md.",
       "evidence": {
-        "scope": "Initial state control handlers only; production/session/UI export not complete.",
+        "scope": "Initial independent finite state session only; production/full UI export not complete.",
         "docs": "docs/spec/STATE_COMPILER.md",
         "testFiles": [
-          "tests/state-compiler.test.mjs"
+          "tests/state-compiler.test.mjs",
+          "tests/reactor-compiler.test.mjs",
+          "tests/browser/reactor-compiler.test.mjs"
         ],
-        "tests": "638/638 PASS",
-        "verify": "120/120 PASS",
-        "browserTests": "14/14 PASS",
+        "tests": "646/646 PASS",
+        "verify": "122/122 PASS",
+        "browserTests": "15/15 PASS",
         "commands": [
           "npm test",
           "npm run verify",
-          "npm run browser:test"
+          "npm run browser:test",
+          "npm run export:reactor"
         ]
       }
     },
@@ -619,7 +622,8 @@
       "ownerModelPolicy": [
         "GPT-6.1 Sol",
         "GPT-6 Luna"
-      ]
+      ],
+      "progress": "Next available core dependency step: initial finite state session export AC-056 now implemented under EMS-060. Package actual semantic UI/DOM event bindings using this session and existing shared rendering/lifecycle, verify independent browser after runtime origin shutdown. Production/PWA/source lock and full UI scope remain open; no complete UI export claimed yet."
     },
     {
       "id": "EMS-062",
