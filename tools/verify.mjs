@@ -8,6 +8,7 @@ import { typecheckModule } from '../src/frontend/check.mjs';
 import { lowerCheckedModule } from '../src/frontend/lower.mjs';
 import { createStateRegistry, ReactorSession, replayEvents } from '../src/runtime/reactor.mjs';
 import { validateContractInterface, compareContractInterfaces, registerContractBinding, createProgramLock, executeLockedIR, compileLockedIRToJS } from '../src/contracts/index.mjs';
+import { runNodeConformance } from './conformance.mjs';
 const root=new URL('../',import.meta.url);
 const get=async p=>readFile(new URL(p,root),'utf8');
 const readJSON=async p=>JSON.parse(await get(p));
@@ -15,6 +16,7 @@ let checks=0;
 async function check(desc, fn) { const x=await fn(); assert.ok(x,desc); checks++; console.log('✓',desc); }
 const required=['AGENTS.md','.agents/policy.json','PROJECT_GOAL.md','docs/spec/LANGUAGE_SEMANTICS.md','docs/spec/IR.md','schemas/ir.schema.json','docs/spec/STATE_EVENTS.md','schemas/reactor.schema.json','docs/spec/CONTROL_IR.md','schemas/control-ir.schema.json','schemas/control-finite-ir.schema.json','schemas/control-algebraic-ir.schema.json','docs/spec/CONTROL_ALGEBRAIC.md','docs/spec/CONTROL_FUTURES.md','schemas/control-futures-ir.schema.json','docs/spec/CONTROL_STREAMS.md','schemas/control-streams-ir.schema.json','docs/spec/PROGRAM_LOCK.md','schemas/program-lock.schema.json','docs/spec/RESOURCE_IDL.md','schemas/resource-interface.schema.json','docs/spec/CONTRACT_IDL.md','schemas/contract-interface.schema.json','schemas/contract-binding.schema.json','docs/spec/CONTROL_RESOURCES.md','schemas/control-resources-ir.schema.json','docs/qa/PROGRESS.md','docs/spec/EMS_FULL_SPEC.md','docs/plans/ROADMAP.md','docs/qa/ACCEPTANCE.md','tasks/backlog.json'];
 for(const f of required) { await stat(new URL(f,root)); await check(`found ${f}`,()=>true); }
+for(const f of ['docs/qa/CONFORMANCE.md','tests/fixtures/language-conformance.json']) { await stat(new URL(f,root)); await check(`found ${f}`,()=>true); }
 const policy=await readJSON('.agents/policy.json');
 await check('models exactly Sol 6.1 + Luna 6',()=>policy.agents.approvedDisplayNames.join(',')==='GPT-6.1 Sol,GPT-6 Luna');
 await check('fallback disabled',()=>policy.agents.allowImplicitModelFallback===false);
@@ -211,4 +213,11 @@ await check('dependency lock executes exact core program',async()=>await execute
 const lockedOutput=await import(`data:text/javascript,${encodeURIComponent(await compileLockedIRToJS(programLock,ir,registry,{target:'node'}))}`);
 await check('verified standalone retains arithmetic result',()=>lockedOutput.execute({times:[12.4,11.85,13.2,12.1,14]})===result);
 await check('locked execution rejects changed target before execution',async()=>{await assert.rejects(executeLockedIR(programLock,ir,{times:[]},registry,{target:'web'}),{code:'LOCK_MISMATCH'});return true;});
+await check('common conformance gate matches a typed value and detailed failure across fresh standalone processes',async()=>{
+  const report=await runNodeConformance([
+    {id:'verify.value',source:'fn test()->Number {return 3;}',expected:{value:3}},
+    {id:'verify.error',source:'fn test()->Number {return 1/0;}',expected:{error:'DIV_BY_ZERO'}}
+  ]);
+  return report.passed===2&&report.failed===0;
+});
 console.log(`\nEMS foundation verification passed (${checks} checks). Not production readiness.`);

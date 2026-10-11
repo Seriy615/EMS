@@ -1,0 +1,543 @@
+{
+  "profile": "ems-finite-language/1",
+  "vectors": [
+    {
+      "id": "branch",
+      "source": "fn test(flag:Boolean)->Number {if flag {return 1;} else {return 1/0;}}",
+      "inputs": {
+        "flag": true
+      },
+      "expected": {
+        "value": 1
+      }
+    },
+    {
+      "id": "loop-order",
+      "source": "fn test()->Number {let mut n=0;let mut total=0;while n<10 {n=n+1;if n==3 {continue;}if n==6 {break;}total=total+n;}return total;}",
+      "inputs": {},
+      "expected": {
+        "value": 12
+      }
+    },
+    {
+      "id": "recursive",
+      "source": "fn factorial(n:Number)->Number {if n<=1 {return 1;}return n*factorial(n-1);} fn test(n:Number)->Number {return factorial(n);}",
+      "inputs": {
+        "n": 5
+      },
+      "expected": {
+        "value": 120
+      }
+    },
+    {
+      "id": "short-circuit",
+      "source": "fn test()->Boolean {return false && (1/0==0) || true;}",
+      "inputs": {},
+      "expected": {
+        "value": true
+      }
+    },
+    {
+      "id": "bounds",
+      "source": "fn test(i:Number)->Number {return [1,2][i];}",
+      "inputs": {
+        "i": 0.5
+      },
+      "expected": {
+        "error": "BOUNDS_ERROR"
+      }
+    },
+    {
+      "id": "step-limit",
+      "source": "fn test()->Number {while true {} return 1;}",
+      "inputs": {},
+      "expected": {
+        "error": "STEP_LIMIT"
+      },
+      "options": {
+        "maxSteps": 25
+      }
+    },
+    {
+      "id": "call-depth",
+      "source": "fn test()->Number {return test();}",
+      "inputs": {},
+      "expected": {
+        "error": "CALL_DEPTH"
+      },
+      "options": {
+        "maxDepth": 3
+      }
+    },
+    {
+      "id": "typed-catch",
+      "source": "fn test()->String {try {throw \"failure\";} catch(error:String){return error;}}",
+      "inputs": {},
+      "expected": {
+        "value": "failure"
+      }
+    },
+    {
+      "id": "unhandled-throw",
+      "source": "fn test()->Number {throw \"failure\";}",
+      "inputs": {},
+      "expected": {
+        "error": "USER_THROW"
+      }
+    },
+    {
+      "id": "finally-order",
+      "source": "fn test()->Number {let mut n=0;try {n=1;throw \"failed\";} catch(error:String){n=n+2;} finally {n=n+4;}return n;}",
+      "inputs": {},
+      "expected": {
+        "value": 7
+      }
+    },
+    {
+      "id": "algebraic",
+      "source": "fn test()->Number {let value:Option<Number>=Some(4);match value {Some(n)=>{return n+1;},None=>{return 0;}}}",
+      "inputs": {},
+      "expected": {
+        "value": 5
+      }
+    },
+    {
+      "id": "result",
+      "source": "fn test()->Result<Number,String> {return Err(\"failed\");}",
+      "inputs": {},
+      "expected": {
+        "value": {
+          "tag": "Err",
+          "value": "failed"
+        }
+      }
+    },
+    {
+      "id": "async-join",
+      "source": "async fn value(x:Number)->Number {return x+1;} async fn test()->Number {let task=value(2);return (await task)+(await task);}",
+      "inputs": {},
+      "expected": {
+        "value": 6
+      }
+    },
+    {
+      "id": "supervised-failure",
+      "source": "async fn fail()->Number {return 1/0;} async fn test()->Number {let task=fail();return 3;}",
+      "inputs": {},
+      "expected": {
+        "error": "DIV_BY_ZERO"
+      }
+    },
+    {
+      "id": "snapshot-stream",
+      "source": "async fn test()->Number {let mut total=0;for await n in stream.fromArray([1,2,3]) {total=total+n;}return total;}",
+      "inputs": {},
+      "expected": {
+        "value": 6
+      }
+    },
+    {
+      "id": "channel-backpressure",
+      "source": "async fn produce(s:Stream<Number>)->Number {await stream.send(s,2);await stream.send(s,3);stream.close(s);return 4;} async fn test()->Number {let s:Stream<Number>=stream.channel(1);let producer=produce(s);let mut total=0;for await n in s {total=total+n;}return total+(await producer);}",
+      "inputs": {},
+      "expected": {
+        "value": 9
+      }
+    },
+    {
+      "id": "stream-zero",
+      "source": "async fn test()->Number {for await n in stream.fromArray([-0]) {return n;}return 1;}",
+      "inputs": {},
+      "expected": {
+        "value": 0,
+        "negativeZero": true
+      }
+    },
+    {
+      "id": "owned-cell",
+      "source": "fn test()->Number {using value=resource.cell(3);resource.write(value,4);return resource.read(value);}",
+      "inputs": {},
+      "expected": {
+        "value": 4
+      }
+    },
+    {
+      "id": "cleanup-on-throw",
+      "source": "fn test()->Boolean {let value=resource.cell(3);try {using inner=value;throw \"failed\";} catch(error:String){return resource.isClosed(value);}}",
+      "inputs": {},
+      "expected": {
+        "value": true
+      }
+    },
+    {
+      "id": "invalid-input",
+      "source": "fn test(x:Number)->Number {return x+1;}",
+      "inputs": {
+        "x": "3"
+      },
+      "expected": {
+        "error": "TYPE_MISMATCH"
+      }
+    },
+    {
+      "id": "overflow",
+      "source": "fn test(x:Number)->Number {let mut value=x;value=value*2;return value;}",
+      "inputs": {
+        "x": 1.7976931348623157e+308
+      },
+      "expected": {
+        "error": "TYPE_MISMATCH"
+      }
+    },
+    {
+      "id": "generic-scope",
+      "source": "fn choose<T>(flag:Boolean,a:T,b:T)->T {if flag {return a;}else {return b;}}fn test()->Number {let flag=choose(false,true,false);return choose(flag,1,4);}",
+      "inputs": {},
+      "expected": {
+        "value": 4
+      }
+    },
+    {
+      "id": "atomic-interface",
+      "source": "fn test(a:Number,b:Number)->Number {return std.math.divide(a,b);}",
+      "inputs": {
+        "a": 6,
+        "b": 2
+      },
+      "interfaces": [
+        {
+          "interface": {
+            "schemaVersion": "ems-contract-interface/1",
+            "id": "std.math.divide",
+            "version": "1.0.0",
+            "inputs": [
+              {
+                "name": "a",
+                "type": "Number"
+              },
+              {
+                "name": "b",
+                "type": "Number"
+              }
+            ],
+            "output": {
+              "type": "Number"
+            },
+            "errors": [],
+            "semantics": {
+              "determinism": "deterministic",
+              "effects": [],
+              "capabilities": []
+            },
+            "conditions": {
+              "pre": [
+                {
+                  "kind": "nonzero",
+                  "subject": {
+                    "input": "b"
+                  }
+                }
+              ],
+              "post": []
+            }
+          },
+          "binding": {
+            "schemaVersion": "ems-contract-binding/1",
+            "id": "ems.reference.divide",
+            "version": "1.0.0",
+            "interface": {
+              "id": "std.math.divide",
+              "version": "1.0.0"
+            },
+            "implementation": {
+              "id": "core.div",
+              "version": "1.0.0"
+            },
+            "targets": [
+              "node",
+              "web"
+            ],
+            "determinism": "deterministic"
+          }
+        }
+      ],
+      "expected": {
+        "value": 3
+      }
+    },
+    {
+      "id": "atomic-precondition",
+      "source": "fn test(a:Number,b:Number)->Number {return std.math.divide(a,b);}",
+      "inputs": {
+        "a": 6,
+        "b": 0
+      },
+      "interfaces": [
+        {
+          "interface": {
+            "schemaVersion": "ems-contract-interface/1",
+            "id": "std.math.divide",
+            "version": "1.0.0",
+            "inputs": [
+              {
+                "name": "a",
+                "type": "Number"
+              },
+              {
+                "name": "b",
+                "type": "Number"
+              }
+            ],
+            "output": {
+              "type": "Number"
+            },
+            "errors": [],
+            "semantics": {
+              "determinism": "deterministic",
+              "effects": [],
+              "capabilities": []
+            },
+            "conditions": {
+              "pre": [
+                {
+                  "kind": "nonzero",
+                  "subject": {
+                    "input": "b"
+                  }
+                }
+              ],
+              "post": []
+            }
+          },
+          "binding": {
+            "schemaVersion": "ems-contract-binding/1",
+            "id": "ems.reference.divide",
+            "version": "1.0.0",
+            "interface": {
+              "id": "std.math.divide",
+              "version": "1.0.0"
+            },
+            "implementation": {
+              "id": "core.div",
+              "version": "1.0.0"
+            },
+            "targets": [
+              "node",
+              "web"
+            ],
+            "determinism": "deterministic"
+          }
+        }
+      ],
+      "expected": {
+        "error": "PRECONDITION_FAILED"
+      }
+    },
+    {
+      "id": "composite-interface",
+      "source": "fn test(a:Number,b:Number)->Number {return std.math.divide(a,b);}",
+      "inputs": {
+        "a": 6,
+        "b": 2
+      },
+      "composites": [
+        {
+          "schemaVersion": "0.1",
+          "id": "demo.divide",
+          "version": "1.0.0",
+          "inputs": {
+            "a": {
+              "type": "Number"
+            },
+            "b": {
+              "type": "Number"
+            }
+          },
+          "output": {
+            "type": "Number"
+          },
+          "nodes": [
+            {
+              "id": "divide",
+              "uses": "core.div",
+              "args": {
+                "a": {
+                  "input": "a"
+                },
+                "b": {
+                  "input": "b"
+                }
+              }
+            }
+          ],
+          "returns": {
+            "node": "divide"
+          }
+        }
+      ],
+      "interfaces": [
+        {
+          "interface": {
+            "schemaVersion": "ems-contract-interface/1",
+            "id": "std.math.divide",
+            "version": "1.0.0",
+            "inputs": [
+              {
+                "name": "a",
+                "type": "Number"
+              },
+              {
+                "name": "b",
+                "type": "Number"
+              }
+            ],
+            "output": {
+              "type": "Number"
+            },
+            "errors": [],
+            "semantics": {
+              "determinism": "deterministic",
+              "effects": [],
+              "capabilities": []
+            },
+            "conditions": {
+              "pre": [
+                {
+                  "kind": "nonzero",
+                  "subject": {
+                    "input": "b"
+                  }
+                }
+              ],
+              "post": []
+            }
+          },
+          "binding": {
+            "schemaVersion": "ems-contract-binding/1",
+            "id": "ems.reference.divide",
+            "version": "1.0.0",
+            "interface": {
+              "id": "std.math.divide",
+              "version": "1.0.0"
+            },
+            "implementation": {
+              "id": "demo.divide",
+              "version": "1.0.0"
+            },
+            "targets": [
+              "node",
+              "web"
+            ],
+            "determinism": "deterministic"
+          }
+        }
+      ],
+      "expected": {
+        "value": 3
+      }
+    },
+    {
+      "id": "composite-precondition",
+      "source": "fn test(a:Number,b:Number)->Number {return std.math.divide(a,b);}",
+      "inputs": {
+        "a": 6,
+        "b": 0
+      },
+      "composites": [
+        {
+          "schemaVersion": "0.1",
+          "id": "demo.divide",
+          "version": "1.0.0",
+          "inputs": {
+            "a": {
+              "type": "Number"
+            },
+            "b": {
+              "type": "Number"
+            }
+          },
+          "output": {
+            "type": "Number"
+          },
+          "nodes": [
+            {
+              "id": "divide",
+              "uses": "core.div",
+              "args": {
+                "a": {
+                  "input": "a"
+                },
+                "b": {
+                  "input": "b"
+                }
+              }
+            }
+          ],
+          "returns": {
+            "node": "divide"
+          }
+        }
+      ],
+      "interfaces": [
+        {
+          "interface": {
+            "schemaVersion": "ems-contract-interface/1",
+            "id": "std.math.divide",
+            "version": "1.0.0",
+            "inputs": [
+              {
+                "name": "a",
+                "type": "Number"
+              },
+              {
+                "name": "b",
+                "type": "Number"
+              }
+            ],
+            "output": {
+              "type": "Number"
+            },
+            "errors": [],
+            "semantics": {
+              "determinism": "deterministic",
+              "effects": [],
+              "capabilities": []
+            },
+            "conditions": {
+              "pre": [
+                {
+                  "kind": "nonzero",
+                  "subject": {
+                    "input": "b"
+                  }
+                }
+              ],
+              "post": []
+            }
+          },
+          "binding": {
+            "schemaVersion": "ems-contract-binding/1",
+            "id": "ems.reference.divide",
+            "version": "1.0.0",
+            "interface": {
+              "id": "std.math.divide",
+              "version": "1.0.0"
+            },
+            "implementation": {
+              "id": "demo.divide",
+              "version": "1.0.0"
+            },
+            "targets": [
+              "node",
+              "web"
+            ],
+            "determinism": "deterministic"
+          }
+        }
+      ],
+      "expected": {
+        "error": "PRECONDITION_FAILED"
+      }
+    }
+  ]
+}

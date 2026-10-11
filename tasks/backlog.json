@@ -268,13 +268,23 @@
       "objective": "Specify & implement state, cancellation, futures, events and deterministic ordering where possible",
       "deliverables": "Runtime reference conformance",
       "acceptance": "Replay tests show stable semantics",
-      "status": "IN_PROGRESS",
+      "status": "DONE",
       "priority": "P0",
-      "progress": "Finite reactor session (AC-032): typed state atoms, transactional FIFO handlers using existing IR, replay, bounded queue, abort propagation and late-write rejection. Textual counter runs through shared runtime. Structured control IR v2/lowering/runtime and pure standalone implemented (AC-033): eager text semantics, typed mutable scopes, if/while/for, short circuit, generic/local recursion, indexing, identical step/depth guards. Typed user throw/catch/finally profile implemented (AC-034): aliases/generics, terminal cancellation/budget guards, differential standalone, transaction rollback/replay and payload-free failure traces. Option/Result/match implemented (AC-035): explicit tagged values, nested exhaustive semantic patterns, aliases/generics, independent IR validation, exact budget/permission parity, algebraic catches/event inputs and standalone CLI export. Language async/Future implemented (AC-036): typed scoped hot tasks/await, cached outcomes, supervision and program join before event commit, root abort propagation, task ancestry/shared budgets and independent async standalone. Stream implemented (AC-037): owned snapshot sources/bounded FIFO channels, typed next/send/close and for-await, actual backpressure/copied values, computed localEffects, cancellation/terminal task wakeup, actor replay/rollback and independent standalone. ResourceHandle/using implemented (AC-038): owned typed cells, lexical LIFO cleanup outside execution ticks, runtime/independent standalone parity, trusted native lifecycle bindings with preflight, exact-once release attempts, late IO/cancellation/deadline failure diagnostics and event cleanup before commit. Full error/resource IDL and standalone state export remain pending.",
+      "progress": "Finite reactor session (AC-032): typed state atoms, transactional FIFO handlers using existing IR, replay, bounded queue, abort propagation and late-write rejection. Textual counter runs through shared runtime. Structured control IR v2/lowering/runtime and pure standalone implemented (AC-033): eager text semantics, typed mutable scopes, if/while/for, short circuit, generic/local recursion, indexing, identical step/depth guards. Typed user throw/catch/finally profile implemented (AC-034): aliases/generics, terminal cancellation/budget guards, differential standalone, transaction rollback/replay and payload-free failure traces. Option/Result/match implemented (AC-035): explicit tagged values, nested exhaustive semantic patterns, aliases/generics, independent IR validation, exact budget/permission parity, algebraic catches/event inputs and standalone CLI export. Language async/Future implemented (AC-036): typed scoped hot tasks/await, cached outcomes, supervision and program join before event commit, root abort propagation, task ancestry/shared budgets and independent async standalone. Stream implemented (AC-037): owned snapshot sources/bounded FIFO channels, typed next/send/close and for-await, actual backpressure/copied values, computed localEffects, cancellation/terminal task wakeup, actor replay/rollback and independent standalone. ResourceHandle/using implemented (AC-038): owned typed cells, lexical LIFO cleanup outside execution ticks, runtime/independent standalone parity, trusted native lifecycle bindings with preflight, exact-once release attempts, late IO/cancellation/deadline failure diagnostics and event cleanup before commit. Public error/resource IDL now implemented under EMS-016. Acceptance audit confirms stable FIFO/replay/rollback/cancellation for the documented finite reference semantics. DONE for that scope; standalone state export remains an explicit EMS-060 compiler deliverable, not claimed implemented.",
       "ownerModelPolicy": [
         "GPT-6.1 Sol",
         "GPT-6 Luna"
-      ]
+      ],
+      "acceptanceEvidence": {
+        "audit": "docs/qa/CORE_ACCEPTANCE_AUDIT.md",
+        "commands": [
+          "npm test",
+          "npm run verify"
+        ],
+        "scope": "Documented finite reference profiles; M1 and global goal remain open.",
+        "tests": "507/507 PASS",
+        "verify": "87/87 PASS"
+      }
     },
     {
       "id": "EMS-016",
@@ -286,13 +296,23 @@
       "objective": "Formalize contract interface, versions, errors, pre/post and implementation refs",
       "deliverables": "IDL schema and examples",
       "acceptance": "Incompatible version/binding rejected",
-      "status": "IN_PROGRESS",
+      "status": "DONE",
       "priority": "P0",
       "ownerModelPolicy": [
         "GPT-6.1 Sol",
         "GPT-6 Luna"
       ],
-      "progress": "Initial public interface/binding IDL implemented (AC-039): strict versioned descriptors using existing canonical type grammar, deep-frozen canonical snapshots, exact interface/implementation pins, target/signature/determinism/policy checks without callback execution, transitive hidden composite effects, conservative backward compatibility rules. Finite atomic interface adapters enforce typed input/output, executable pre/postconditions and declared user/host errors in runtime and standalone; CLI comparison/checking and independent export verified. Composite interface installation implemented (AC-040): inspectable editable graph snapshot, shared runtime/standalone pre/post/error boundaries, explicit versioned contract graph and direct IR profiles with mandatory interfaceRef, missing binding/downcast/policy bypass rejection, nested rebinding preserves both boundaries, conditions survive atomic sealing, and failed postcondition rolls back event state. Public native resource binding implemented (AC-041): strict ems-resource-interface/1, execution ownership/value type, per-phase predicates/typed errors, factory postconditions after native ownership, readonly/write checks, inherited boundary chains around one callback/release, actual file descriptor closure, cancel/late IO and actor rollback. Advanced non-primitive native ABI/error variants remain future extensions; Program dependency locking implemented (AC-042): canonical IR and full typed contract/IDL/composite closure, SHA-256 exact trusted SDK source bytes plus declared dependency DAG, private callback provenance and captured adapter identity, snapshot before async verification, runtime/export/CLI verify gates. Same-version callback/source/target drift rejects before invocation. Core intrinsic ABI remains a trusted runtime root, not binary attestation; undeclared JS imports/global behavior are not inferred or sandboxed, state callback locks/native standalone remain unsupported. 500/500 tests and 84/84 verify pass; acceptance audit and common conformance are next."
+      "progress": "Initial public interface/binding IDL implemented (AC-039): strict versioned descriptors using existing canonical type grammar, deep-frozen canonical snapshots, exact interface/implementation pins, target/signature/determinism/policy checks without callback execution, transitive hidden composite effects, conservative backward compatibility rules. Finite atomic interface adapters enforce typed input/output, executable pre/postconditions and declared user/host errors in runtime and standalone; CLI comparison/checking and independent export verified. Composite interface installation implemented (AC-040): inspectable editable graph snapshot, shared runtime/standalone pre/post/error boundaries, explicit versioned contract graph and direct IR profiles with mandatory interfaceRef, missing binding/downcast/policy bypass rejection, nested rebinding preserves both boundaries, conditions survive atomic sealing, and failed postcondition rolls back event state. Public native resource binding implemented (AC-041): strict ems-resource-interface/1, execution ownership/value type, per-phase predicates/typed errors, factory postconditions after native ownership, readonly/write checks, inherited boundary chains around one callback/release, actual file descriptor closure, cancel/late IO and actor rollback. Advanced non-primitive native ABI/error variants remain future extensions; Program dependency locking implemented (AC-042): canonical IR and full typed contract/IDL/composite closure, SHA-256 exact trusted SDK source bytes plus declared dependency DAG, private callback provenance and captured adapter identity, snapshot before async verification, runtime/export/CLI verify gates. Same-version callback/source/target drift rejects before invocation. Core intrinsic ABI remains a trusted runtime root, not binary attestation; undeclared JS imports/global behavior are not inferred or sandboxed, state callback locks/native standalone remain unsupported. Acceptance audit confirms incompatible binding/version rejection and executable boundaries for the initial reference profile; DONE for that scope. Full ABI and target backend work remain separate. 507/507 tests, 87/87 verify pass; common conformance implemented under EMS-017.",
+      "acceptanceEvidence": {
+        "audit": "docs/qa/CORE_ACCEPTANCE_AUDIT.md",
+        "commands": [
+          "npm test",
+          "npm run verify"
+        ],
+        "scope": "Documented finite reference profiles; M1 and global goal remain open.",
+        "tests": "507/507 PASS",
+        "verify": "87/87 PASS"
+      }
     },
     {
       "id": "EMS-017",
@@ -305,6 +325,33 @@
       "objective": "Run same semantic fixtures through reference and compiled target",
       "deliverables": "Cross executor compare tool",
       "acceptance": "Pass deterministic suite and error trace",
+      "status": "DONE",
+      "priority": "P0",
+      "ownerModelPolicy": [
+        "GPT-6.1 Sol",
+        "GPT-6 Luna"
+      ],
+      "progress": "Common executable differential gate implemented (AC-043): 54 shared core/language/interface fixtures across node-reference, serialized IR and fresh standalone processes; lossless signed-zero/typed-error diagnostics, exact details comparison, independent expected oracle, setup-vs-semantic failure separation, copied fixture isolation, CLI reports/nonzero rejection. Tests include equally wrong executors, diagnostic/value drift, typed throw and incorrect CLI oracle. 507/507 npm tests, 87/87 verify, npm run conformance 54/54 PASS. Initial deterministic finite reference suite only; state replay/native cleanup retain their dedicated tests, state/native export unsupported; Node executors do not prove browser portability.",
+      "acceptanceEvidence": {
+        "tests": "tests/conformance.test.mjs",
+        "commands": [
+          "npm run conformance -- --out /tmp/ems-conformance-report.json",
+          "npm test",
+          "npm run verify"
+        ],
+        "docs": "docs/qa/CONFORMANCE.md"
+      }
+    },
+    {
+      "id": "EMS-018",
+      "title": "Real browser differential gate and P1 portability proof",
+      "phase": "M1/P1",
+      "dependsOn": [
+        "EMS-017"
+      ],
+      "objective": "Execute the same platform-independent EMS programs in Node and an actual browser, including independent standalone output",
+      "deliverables": "Real browser runner, shared fixture results and reproducible portable application proof",
+      "acceptance": "Actual Chromium/browser runtime and generated output match common fixture values/errors; one source works in Node/browser and standalone static host without EMS IDE. Document unsupported targets; no Node data URL counts as browser evidence.",
       "status": "TODO",
       "priority": "P0",
       "ownerModelPolicy": [
@@ -434,7 +481,8 @@
       "ownerModelPolicy": [
         "GPT-6.1 Sol",
         "GPT-6 Luna"
-      ]
+      ],
+      "progress": "Explicit remaining deliverables from core acceptance audit: compile typed state/event sessions to standalone with replay/rollback/cancellation semantics; native bindings/host calls and source maps by target gates. Reference pure/control/async/owned-resource standalone exists, production backend task remains TODO. State callback provenance/lock support also needs explicit implementation; no successful export is claimed yet."
     },
     {
       "id": "EMS-061",
