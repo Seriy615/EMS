@@ -2,6 +2,7 @@ import { fail } from '../reference/errors.mjs';
 import { Registry } from '../reference/registry.mjs';
 import { lowerGraphToIR, CORE_PROFILE, EFFECT_PROFILE } from '../ir/index.mjs';
 import { resolveType, unifyTypes, typeName } from './types.mjs';
+import { lowerControlModule } from './control.mjs';
 
 function referenceType(type, node) {
   if (type.kind === 'Type' && ['Number', 'Boolean', 'String'].includes(type.name)) return type.name;
@@ -23,7 +24,7 @@ function constant(node) {
 }
 
 /** Link typed SSA functions (including inferred generic instances) into the shared call-IR. */
-export function lowerCheckedModule(checked, entry, baseRegistry) {
+function lowerCallModule(checked, entry, baseRegistry, eager = false) {
   const registry = new Registry();
   for (const item of baseRegistry.items.values()) {
     if (item.kind === 'atomic') registry.registerAtomic(item);
@@ -58,7 +59,7 @@ export function lowerCheckedModule(checked, entry, baseRegistry) {
       inputs: Object.fromEntries(target.inputs.map((input, index) => [input.name, { type: referenceType(inputs[index], target.declaration) }])),
       output: { type: referenceType(resolveType(target.output, substitutions), target.declaration) }, nodes: [], returns: null };
     const policy = checked.policies.get(target.name);
-    let sequential = policy.effects.length || policy.capabilities.length || target.declaration.body.statements.some(statement => statement.kind === 'ExpressionStatement');
+    let sequential = eager || policy.effects.length || policy.capabilities.length || target.declaration.body.statements.some(statement => statement.kind === 'ExpressionStatement');
     if (sequential) Object.assign(graph, { effects: policy.effects, capabilities: policy.capabilities, sequence: [] });
     const environment = new Map(target.inputs.map(input => [input.name, { input: input.name }]));
     const sourceMap = {};
@@ -116,4 +117,30 @@ export function lowerCheckedModule(checked, entry, baseRegistry) {
   if (contract.kind !== 'composite') fail('UNSUPPORTED_PROFILE', 'Entry must have an EMS body');
   return { ir: lowerGraphToIR(contract.graph, registry, { profile: contract.graph.sequence || contract.effects.length || contract.capabilities.length ? EFFECT_PROFILE : CORE_PROFILE }), registry,
     provenance: { schemaVersion: 'ems-provenance/1', functions: provenance } };
+}
+
+/** Select one semantic profile from the checked module; preserve the working call-IR backend. */
+export function lowerCheckedModule(checked, entry, registry, { profile = 'auto' } = {}) {
+  if (!['auto', 'call', 'control'].includes(profile)) fail('UNSUPPORTED_PROFILE', 'Unknown frontend lowering profile');
+  let control = profile === 'control';
+  const entryTarget = checked.signatures.get(entry);
+  const pending = entryTarget?.declaration.body ? [entryTarget.declaration.body] : [];
+  const visited = new Set([entry]);
+  while (profile === 'auto' && pending.length) {
+    const node = pending.pop(); if (!node || typeof node !== 'object') continue;
+    const target = checked.calls.get(node)?.target;
+    if (target && !target.contract && !target.declaration.external && !visited.has(target.name)) {
+      visited.add(target.name); pending.push(target.declaration.body);
+    }
+    if (['IfStatement','WhileStatement','ForStatement','BreakStatement','ContinueStatement','AssignmentExpression','IndexExpression'].includes(node.kind) ||
+        node.kind === 'LetDeclaration' && node.mutable || node.kind === 'UnaryExpression' && node.operator === '!' ||
+        node.kind === 'BinaryExpression' && !['+','-','*','/'].includes(node.operator)) control = true;
+    if (node.kind === 'ArrayExpression') { try { constant(node); } catch { control = true; } }
+    for (const [key, value] of Object.entries(node)) if (key !== 'location') {
+      if (Array.isArray(value)) pending.push(...value); else if (value && typeof value === 'object') pending.push(value);
+    }
+  }
+  if (control) return lowerControlModule(checked, entry, registry);
+  try { return lowerCallModule(checked, entry, registry, profile === 'auto'); }
+  catch (error) { if (profile === 'auto' && error.code === 'RECURSIVE_COMPOSITE') return lowerControlModule(checked, entry, registry); throw error; }
 }

@@ -85,7 +85,7 @@ EMS-ошибка содержит `name: EmsError`, стабильный `code`,
 
 Чистый standalone backend отвергает любой объявленный эффект или capability в обрабатываемом графе, в том числе в неиспользуемом узле. Он не объявляет поддержку состояния, устройств, IO, async или произвольного ESM. Каждый достижимый атом должен иметь доверенную pure-JS реализацию генерации. Неподдерживаемая операция отвергается при сборке. Backend сохраняет проверку промежуточных значений, мемоизацию, порядок портов и ошибки. Скомпилированный модуль экспортирует `execute(inputs)` и не импортирует EMS.
 
-State/event срез EMS-015 реализован в `docs/spec/STATE_EVENTS.md` (AC-032): shared IR handlers, typed state, FIFO, rollback, replay и cancellation host futures. Он не заменяет полный control/async/resource runtime.
+State/event срез EMS-015 реализован в `docs/spec/STATE_EVENTS.md` (AC-032): shared IR handlers, typed state, FIFO, rollback, replay и cancellation host futures. Structured control-flow реализован по AC-033 (`CONTROL_IR.md`); он не заменяет полный async/algebraic/error/resource runtime.
 
 ## 7. Нормативное направление расширений M1
 

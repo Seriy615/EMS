@@ -12,7 +12,7 @@ const get=async p=>readFile(new URL(p,root),'utf8');
 const readJSON=async p=>JSON.parse(await get(p));
 let checks=0;
 async function check(desc, fn) { const x=await fn(); assert.ok(x,desc); checks++; console.log('✓',desc); }
-const required=['AGENTS.md','.agents/policy.json','PROJECT_GOAL.md','docs/spec/LANGUAGE_SEMANTICS.md','docs/spec/IR.md','schemas/ir.schema.json','docs/spec/STATE_EVENTS.md','schemas/reactor.schema.json','docs/qa/PROGRESS.md','docs/spec/EMS_FULL_SPEC.md','docs/plans/ROADMAP.md','docs/qa/ACCEPTANCE.md','tasks/backlog.json'];
+const required=['AGENTS.md','.agents/policy.json','PROJECT_GOAL.md','docs/spec/LANGUAGE_SEMANTICS.md','docs/spec/IR.md','schemas/ir.schema.json','docs/spec/STATE_EVENTS.md','schemas/reactor.schema.json','docs/spec/CONTROL_IR.md','schemas/control-ir.schema.json','docs/qa/PROGRESS.md','docs/spec/EMS_FULL_SPEC.md','docs/plans/ROADMAP.md','docs/qa/ACCEPTANCE.md','tasks/backlog.json'];
 for(const f of required) { await stat(new URL(f,root)); await check(`found ${f}`,()=>true); }
 const policy=await readJSON('.agents/policy.json');
 await check('models exactly Sol 6.1 + Luna 6',()=>policy.agents.approvedDisplayNames.join(',')==='GPT-6.1 Sol,GPT-6 Luna');
@@ -100,5 +100,12 @@ await check('state event replay reproduces committed trace',async()=>{
   const replay=new ReactorSession(counterManifest,counterBundle.registry,counterOptions);
   await replayEvents(replay,counterSession.trace());assert.deepEqual(replay.trace(),counterSession.trace());
   await replay.close();await counterSession.close();return true;
+});
+const controlBundle=lowerCheckedModule(typecheckModule(parseEMSModule(await get('examples/factorial.ems')),registry),'demo.Factorial',registry);
+const controlIR=parseIR(serializeIR(controlBundle.ir,controlBundle.registry),controlBundle.registry);
+await check('control IR executes checked loop semantics',async()=>controlIR.schemaVersion==='ems-ir/2' && await executeIR(controlIR,{n:5},controlBundle.registry)===120);
+const controlOutput=await import(`data:text/javascript,${encodeURIComponent(compileIRToJS(controlIR,controlBundle.registry))}`);
+await check('standalone control loop agrees and preserves execution limits',()=>{
+  assert.equal(controlOutput.execute({n:5}),120);assert.throws(()=>controlOutput.execute({n:5},{maxSteps:3}),{code:'STEP_LIMIT'});return true;
 });
 console.log(`\nEMS foundation verification passed (${checks} checks). Not production readiness.`);

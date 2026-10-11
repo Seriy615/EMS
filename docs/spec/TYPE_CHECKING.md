@@ -15,7 +15,7 @@ Generic функция проверяется для всех допустимы
 
 Проверяются сигнатуры, количество и типы аргументов, объявления/присваивания, отсутствие неизвестных имён и дубликатов, область жизни имён, Boolean-условия, коллекция в `for`, `break/continue` внутри цикла, `await` внутри async и над Future, допустимый возвращаемый тип и наличие возврата/throw на всех статически подтверждённых путях. Параметры неизменяемы; переменная требует `let mut` для присваивания. Shadowing локальных имён текущего scope запрещён; loop binding имеет отдельный scope. Необработанный выход из while консервативно не доказывает возврат.
 
-Массивы выводят общий точный тип элемента; пустой массив требует ожидаемый тип. Record expression получает структурные имена/типы полей; неизвестное поле запрещено. Индексация требует Array и Number index; проверка целочисленности/границ относится к runtime-профилю коллекций и ещё не реализована.
+Массивы выводят общий точный тип элемента; пустой массив требует ожидаемый тип. Record expression получает структурные имена/типы полей; неизвестное поле запрещено. Индексация требует Array и Number index; NumberArray index в control profile проверяет целочисленность/границы (AC-033); остальные коллекции пока не имеют runtime-профиля.
 
 Some/None и Ok/Err имеют типизированные payload. None и один из Result-конструкторов требуют ожидаемый полный тип. Match проверяет constructor/payload, области pattern binding и exhaustiveness для Option, Result, Boolean либо catch-all. Ограниченный pattern `Some(1)` не закрывает все Some; вложенный `Some(Some(v))` не закрывает `Some(None)`. Объединение нескольких ограниченных nested patterns анализируется консервативно и может требовать catch-all. Wrong payload и arm после catch-all отвергаются.
 
@@ -23,9 +23,11 @@ ResourceHandle проверяет типовую идентичность, `usin
 
 ## Исполняемый путь
 
+Начальный call backend (compatibility mode)
+
 Lowering принимает неизменяемые SSA `let`, return, арифметику `+ - * /`, unary sign, литералы, постоянные NumberArray и вызовы чистых функций/контрактов. Локальная функция становится обычным composite; generic helper специализируется по конкретным входам и также становится composite. Registry копируется в область сборки; исходный registry не изменяется.
 
-Профиль остаётся demand-driven: чистый SSA binding, не достижимый от returns, не выполняется. Порядок портов/ошибок определяет `LANGUAGE_SEMANTICS.md`. Control-flow, mutable state, async, вычисляемые массивы, algebraic values и остальные runtime-типы требуют расширенного IR и отвергаются с `UNSUPPORTED_PROFILE`, а не исполняются произвольным JS. Рекурсивный вызов допустим при проверке типов, но запрещён данным backend. Исполнители остаются теми же `executeIR`/`compileIRToJS`; второй evaluator не добавлен.
+Только explicit legacy `{profile: "call"}` без effect/expression sequence остаётся demand-driven: чистый SSA binding, не достижимый от returns, не выполняется. Порядок портов/ошибок определяет `LANGUAGE_SEMANTICS.md`. В этом explicit compatibility backend control-flow, mutable locals и computed arrays отвергаются; automatic/default frontend использует structured control IR v2 (AC-033) для их реального исполнения. Async/algebraic/resource runtime ещё unsupported. Рекурсивный вызов запрещён только legacy call backend; default/control backend использует shared depth/step guards. Общие публичные executeIR/compileIRToJS выбирают проверенную семантическую версию IR.
 
 Lowering возвращает IR, linked registry и отдельный provenance с исходными позициями функций/узлов. Полный переносимый package lock/serialization linked bundle — EMS-016/M5. IR одного вызывающего модуля пока требует его связанного registry; standalone compiler раскрывает composite и экспортирует самодостаточный JS.
 
@@ -47,10 +49,12 @@ AC-028: `tests/types.test.mjs`, `tests/check.test.mjs`, `tests/lower.test.mjs`. 
 
 Связанный extern получает реальные транзитивные declarations из registry: ложный `requires pure` отклоняется. Несвязанный extern ещё можно проверить как декларацию; его metadata не является доказательством реализации. Lowering по-прежнему требует реального binding и проверяет типовую сигнатуру, иначе `MISSING_CONTRACT`/`BINDING_SIGNATURE`. Это не загрузка произвольной библиотеки и не sandbox.
 
-Для straight-line effectful SSA lowering создаёт sequence в порядке создания операций: let statements, standalone expression statements, left-to-right arguments и return. Все такие операции, включая чистые intermediate calls, исполняются один раз по sequence: ранняя арифметическая ошибка не переносится за поздний side effect. Pure expression statements также используют sequence, и её семантика сохраняется через nested helpers. Чистый legacy SSA без expression statements сохраняет demand-driven let semantics; полноценный imperative/control профиль относится к EMS-015. Мутация, loops, await и resource lifecycle пока отвергаются при lowering.
+Для straight-line effectful SSA lowering создаёт sequence в порядке создания операций: let statements, standalone expression statements, left-to-right arguments и return. Все такие операции, включая чистые intermediate calls, исполняются один раз по sequence: ранняя арифметическая ошибка не переносится за поздний side effect. Pure expression statements также используют sequence, и её семантика сохраняется через nested helpers. Обычный текстовый frontend теперь сохраняет eager let semantics и для pure straight-line SSA через explicit sequence (AC-033). Только explicit `{profile: "call"}` compatibility mode сохраняет прежний demand-driven let; старые M0 graph/IR artifacts не меняются. Imperative/control профиль EMS-015 описан в CONTROL_IR.md. Mutable locals и loops поддержаны control lowering; await и resource lifecycle пока отвергаются.
 
 Программа с policy или sequence выбирает `ems-effects-finite/1`; обычный pure SSA — `ems-core-finite/1`. Root requirements и transitive policy входят в semantic IR; provenance остаётся sidecar. Standalone compiler выполняет чистые sequences с теми же ошибками, но явно отвергает реальные effects/capabilities: bindings для IO export ещё не реализованы.
 
 `node examples/effect-text.mjs` проверяет и исполняет `examples/effect-text.ems` с доверенным stdout adapter, печатает `first`, затем `second`. В API используются `executeIR(..., {capabilities, allowedEffects})`; CLI `module-run` допускает `[--policy <execution-policy.json>]` после input JSON. Файл содержит только capabilities и allowedEffects (см. `schemas/execution-policy.schema.json`), не runtime internals. Нет неявного grant all.
 
 Evidence: `tests/frontend-effects.test.mjs`, расширенный `tests/effect-ir.test.mjs`, `tools/verify.mjs`; AC-029..031. EMS-014 закрывает начальный effect/capability kernel, а не OS permission broker, production scheduler или поддержку file/network/device APIs.
+
+Control slice AC-033: automatic lowering выбирает ems-ir/2 для reachable control/mutation/index/computed-array forms и local recursion; if/loops и mutable locals теперь исполняются и экспортируются. См. `CONTROL_IR.md`. Async, algebraic/error/resource runtime остаются unsupported.

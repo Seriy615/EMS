@@ -28,7 +28,7 @@
         "required": ["event", "program"],
         "properties": {
           "event": { "type": "string", "pattern": "^[A-Za-z_][A-Za-z0-9_]*$" },
-          "program": { "$ref": "ir.schema.json" }
+          "program": { "oneOf": [{ "$ref": "ir.schema.json" }, { "$ref": "control-ir.schema.json" }] }
         }
       }
     }

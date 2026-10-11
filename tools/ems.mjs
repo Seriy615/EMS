@@ -25,10 +25,11 @@ function usage() {
   node tools/ems.mjs parse <source.ems>
   node tools/ems.mjs check <source.ems>
   node tools/ems.mjs module-run <source.ems> --entry <name> '<inputs-json>' [--policy <policy.json>]
+  node tools/ems.mjs module-ir <source.ems> --entry <name> --out <program.ir.json>
   node tools/ems.mjs module-build <source.ems> --entry <name> --out <output.mjs>`);
 }
 async function main() {
-  if (!file || !['validate', 'run', 'build', 'seal', 'text-parse', 'text-run', 'text-build', 'ir', 'text-ir', 'ir-run', 'ir-build', 'parse', 'check', 'module-run', 'module-build'].includes(command)) { usage(); process.exitCode = 2; return; }
+  if (!file || !['validate', 'run', 'build', 'seal', 'text-parse', 'text-run', 'text-build', 'ir', 'text-ir', 'ir-run', 'ir-build', 'parse', 'check', 'module-run', 'module-build', 'module-ir'].includes(command)) { usage(); process.exitCode = 2; return; }
   const content = await readFile(file, 'utf8');
   if (command === 'parse') { console.log(JSON.stringify(parseEMSModule(content), null, 2)); return; }
   if (command === 'check' || command.startsWith('module-')) {
@@ -51,12 +52,22 @@ async function main() {
     } else {
       if (args[2] !== '--out' || !args[3]) throw new Error('Use --out <path>');
       const dest = resolve(args[3]); await mkdir(dirname(dest), { recursive: true });
-      await writeFile(dest, compileIRToJS(bundle.ir, bundle.registry));
-      console.log(`Built independent module: ${dest}`);
+      await writeFile(dest, command === 'module-ir' ? serializeIR(bundle.ir, bundle.registry) : compileIRToJS(bundle.ir, bundle.registry));
+      console.log(`Built ${command === 'module-ir' ? 'semantic IR' : 'independent module'}: ${dest}`);
     }
     return;
   }
   const registry = createCoreRegistry();
+  if (command === 'ir-run' || command === 'ir-build') {
+    const ir = parseIR(content, registry);
+    if (command === 'ir-run') console.log(JSON.stringify({ contract: ir.id, result: await executeIR(ir, JSON.parse(args[0] || '{}'), registry) }, null, 2));
+    else {
+      if (args[0] !== '--out' || !args[1]) throw new Error('Use --out <path>');
+      const dest = resolve(args[1]); await mkdir(dirname(dest), { recursive: true });
+      await writeFile(dest, compileIRToJS(ir, registry)); console.log(`Built independent module: ${dest}`);
+    }
+    return;
+  }
   const graph = command.startsWith('ir-') ? graphFromIR(parseIR(content, registry), registry)
     : command.startsWith('text-') ? parseTextEMS(content) : JSON.parse(content);
   if (command === 'ir' || command === 'text-ir') {

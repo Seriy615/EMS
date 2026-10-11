@@ -2,8 +2,8 @@ import { fail } from '../reference/errors.mjs';
 import { Registry } from '../reference/registry.mjs';
 import { assertTypeName, assertValueType } from '../reference/types.mjs';
 import { validateRuntimeInputs } from '../reference/validate.mjs';
-import { checkGraphPolicy, assertPolicyNames } from '../semantics/effects.mjs';
-import { graphFromIR, executeIR } from '../ir/index.mjs';
+import { assertPolicyNames } from '../semantics/effects.mjs';
+import { signatureIR, checkIRPolicy, executeIR } from '../ir/index.mjs';
 import { assertSignal, checkCancellation } from './cancellation.mjs';
 
 const copy = value => structuredClone(value);
@@ -83,7 +83,7 @@ export class ReactorSession {
       fields(handler, ['event', 'program'], 'handler');
       if (typeof handler.event !== 'string' || !namePattern.test(handler.event) || this.#handlers.has(handler.event))
         fail('INVALID_REACTOR', 'Invalid or duplicate event name');
-      const program = copy(handler.program), graph = graphFromIR(program, this.#registry);
+      const program = copy(handler.program), graph = signatureIR(program, this.#registry);
       this.#handlers.set(handler.event, { program, graph });
     }
   }
@@ -95,7 +95,7 @@ export class ReactorSession {
     const handler = this.#handlers.get(event);
     if (!handler) fail('UNKNOWN_EVENT', `Unknown reactor event ${event}`);
     validateRuntimeInputs(handler.graph, inputs);
-    checkGraphPolicy(handler.graph, this.#registry, this.#policy);
+    checkIRPolicy(handler.program, this.#registry, this.#policy);
     if (this.#queue.length >= this.#maxQueue) fail('QUEUE_FULL', 'Reactor event queue is full');
     const payload = copy(inputs);
     return new Promise((resolve, reject) => {

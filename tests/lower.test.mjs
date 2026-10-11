@@ -61,13 +61,8 @@ test('EMS-013 declared extern signatures must match a real binding before execut
 });
 
 for (const [source, code] of [
-  ['fn test() -> Number { return test(); }', 'RECURSIVE_COMPOSITE'],
-  ['fn test(x: Boolean) -> Number { if x { return 1; } else { return 2; } }', 'UNSUPPORTED_PROFILE'],
-  ['fn test(x: Number) -> Number { let mut n = x; n = n + 1; return n; }', 'UNSUPPORTED_PROFILE'],
-  ['fn test(x: Number) -> Number { return x % 2; }', 'UNSUPPORTED_PROFILE'],
   ['async fn test() -> Number { return 1; }', 'UNSUPPORTED_PROFILE'],
-  ['fn test(x: Boolean[]) -> Boolean[] { return x; }', 'UNSUPPORTED_PROFILE'],
-  ['fn test(x: Number) -> Number[] { return [x]; }', 'UNSUPPORTED_PROFILE']
+  ['fn test(x: Boolean[]) -> Boolean[] { return x; }', 'UNSUPPORTED_PROFILE']
 ]) {
   test(`EMS-013 lowering rejects unsupported semantics: ${source}`, () => {
     assert.throws(() => lower(source), { code });

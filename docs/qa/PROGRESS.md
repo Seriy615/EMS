@@ -83,3 +83,15 @@ FIFO сериализует события с bounded queue (QUEUE_FULL без d
 AC-032: 13 tests подтверждают deterministic replay (успех/ошибка/queued cancel), отсутствие aliasing state/input/result/snapshot/trace, queue limits, preflight permissions, invalid bindings, cancellation в composite и сохранность queue после host throw null. Trace opt-in, по умолчанию пуст; JSON numeric trace transport/канонический -0 ещё не реализован. Baseline на 2fccc77: npm test 234/234 PASS и npm run verify 36/36 PASS. Итог npm test **247/247 PASS**, verify **40/40 PASS**, Node 22.21.0; логи `/tmp/ems-reactor-tests.log`, `/tmp/ems-reactor-verify.log`.
 
 EMS-015 IN_PROGRESS; не закрывать её по одному state slice. Следующий срез — structured control-flow IR/lowering для if/loops/mutable locals, затем language Future/Stream и lifecycle. M1/P1/IDE/deploy/глобальная цель остаются открыты. Проверенные изменения коммитить и пушить в origin main.
+
+## Продолжение — EMS-015 structured control-flow и standalone
+
+Добавлен ems-ir/2 / ems-control-finite/1: typed expressions, semantic blocks, declared/computed policies, function specializations и pinned registered calls; строгий validator отделён от AST. Control runtime и JS generator работают по одному IR; общего parser/runtime dependency в standalone нет. Старый working call/graph backend сохранён, его finite helpers переиспользуются.
+
+if/else-if, short circuit, mutable locals, lexical scopes, while/for, break/continue, generic helpers/local recursion, computed NumberArray и checked indexing реально выполняются и компилируются. Общие step/depth budgets и evaluation-depth guard дают одинаковые ошибки runtime/standalone, до native stack exhaustion. Untaken effects входят в preflight; state-control handlers подключены к ReactorSession и rollback на STEP_LIMIT. Host-cost accounting, Future/Stream, algebraic errors/resources и IO standalone ещё не реализованы.
+
+Исправлено semantic различие: own-text default теперь eager для let/expression statements также в straight-line call lowering через explicit sequence; добавление control-flow не меняет порядок ошибок pure helpers. Legacy M0 graph/IR и explicit frontend profile call остаются demand-driven. Unreachable control declaration не меняет entry profile/семантику. API signatureIR/checkIRPolicy позволяет ReactorSession работать с v1/v2, без фиктивного graph conversion.
+
+CLI module-ir/ir-run/ir-build проверены на examples/factorial.ems. Независимый модуль запускается новым процессом вне проекта. AC-033: 28 control tests (включая exact budget thresholds, guard перед сложной рекурсией, malformed IR, permissions, state rollback, CLI), пять прежних unsupported tests заменены runnable conformance. Baseline на 1721a98 — npm test 247/247 PASS, verify 40/40 PASS. Итог npm test **270/270 PASS**, npm run verify **44/44 PASS**, Node 22.21.0; логи `/tmp/ems-control-tests.log`, `/tmp/ems-control-verify.log`.
+
+EMS-015 IN_PROGRESS; следующий срез — algebraic/error execution и language futures/resource lifecycle, затем расширение cross-target conformance/IDE. M1/P1/WEB IDE/deploy и глобальная цель остаются открыты.

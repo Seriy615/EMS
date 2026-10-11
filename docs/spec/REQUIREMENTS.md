@@ -6,9 +6,9 @@
 |---|---|---|---|
 | LANG-01 | Один язык, текстовая и визуальная формы с единой семантикой | M1–M2 | partial: учебный текстовый поднабор |
 | LANG-02 | Типы: базовые, составные, generic, Result, Stream, resource | M1 | partial: AST type pass/generics (AC-028); runtime пока finite core |
-| LANG-03 | Условия, циклы, функции, события, ошибки, async | M1–M3 | partial: located AST для control/error/async syntax (AC-027); исполнение planned |
-| LANG-04 | Формальная семантика effectful/dataflow и concurrency | M1 | partial: finite core + explicit effect sequence (AC-025, AC-030/031); finite event/state transactions (AC-032); control/concurrency expansion planned |
-| LANG-05 | AST/HIR/IR не зависят от координат канваса | M1 | partial: typed IR v1, located AST и pure SSA lowering (AC-026..028); full control lowering planned |
+| LANG-03 | Условия, циклы, функции, события, ошибки, async | M1–M3 | partial: structured if/loops/functions runtime/standalone (AC-033), events (AC-032); error/async syntax AC-027, full execution planned |
+| LANG-04 | Формальная семантика effectful/dataflow и concurrency | M1 | partial: finite core + explicit effect sequence (AC-025, AC-030/031); finite event/state transactions (AC-032); structured control/loops/recursion (AC-033); concurrency expansion planned |
+| LANG-05 | AST/HIR/IR не зависят от координат канваса | M1 | partial: typed IR v1, located AST и pure SSA lowering (AC-026..028); structured control lowering AC-033; full algebraic/async lowering planned |
 | CONT-01 | Публичная спецификация контракта, version IDL | M1 | partial |
 | CONT-02 | Статическая проверка соединений и типов | M0 | M0 demo |
 | CONT-03 | Atomic contract как нераскрываемая граница графа | M0–M5 | M0 demo |
@@ -33,7 +33,7 @@
 | UI-03 | Select running widget and inspect its graph | M2–M3 | planned |
 | UI-04 | Browser DOM and native UI semantic conformance | M6 | planned |
 | RUNT-01 | Reference executable dataflow graphs | M0 | M0 demo |
-| RUNT-02 | Scheduler, async, state, resource lifecycle | M1–M3 | partial: FIFO transactional state events/cancellation (AC-032); language futures/resources planned |
+| RUNT-02 | Scheduler, async, state, resource lifecycle | M1–M3 | partial: FIFO transactional state events/cancellation (AC-032); structured control runtime/standalone (AC-033); language futures/resources planned |
 | RUNT-03 | Sandboxed plugin and explicit effect permissions | M5–M10 | planned |
 | COMP-01 | Validated EMS IR and optimizer | M1–M4 | partial: validated finite core IR v1 (AC-026); optimizer planned |
 | COMP-02 | Standalone Web JS pure compile without IDE/runtime | M0–M4 | M0 demo |

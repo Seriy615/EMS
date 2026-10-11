@@ -1,10 +1,10 @@
 # Состояние и события: finite reactor profile
 
-EMS-015, G-03/11/13/14; AC-032. Реализация: `src/runtime/reactor.mjs`, общий `src/reference/runtime.mjs`. Это начальный event/state срез; control-flow языка, Future/Stream, ресурсы и distributed scheduler остаются отдельными этапами.
+EMS-015, G-03/11/13/14; AC-032. Реализация: `src/runtime/reactor.mjs`, общий `src/reference/runtime.mjs`. Это начальный event/state срез; расширение control-flow, Future/Stream, ресурсы и distributed scheduler остаются отдельными этапами.
 
 ## Общая программа
 
-Descriptor `ems-reactor/1` содержит id/version, массив типизированных state slots `{id, type, initial}` и handlers `{event, program}`. `program` — существующий EMS IR, без отдельного языка обработчиков. Его можно получить из текста или графа. Descriptor не содержит canvas, JavaScript callback handlers или скрытого выполнения библиотек. JSON Schema: `schemas/reactor.schema.json`; executable validator дополнительно проверяет уникальность, типы initial values, реальные state bindings и linked IR.
+Descriptor `ems-reactor/1` содержит id/version, массив типизированных state slots `{id, type, initial}` и handlers `{event, program}`. `program` — существующий EMS IR v1 или structured control IR v2, без отдельного языка обработчиков. Его можно получить из текста или графа. Descriptor не содержит canvas, JavaScript callback handlers или скрытого выполнения библиотек. JSON Schema: `schemas/reactor.schema.json`; executable validator дополнительно проверяет уникальность, типы initial values, реальные state bindings и linked IR.
 
 `createStateRegistry(base, state)` создаёт копию registry и добавляет для каждой ячейки `state.<id>.read() -> T` и `state.<id>.write(value: T) -> T`. Их эффекты/capabilities соответственно `state.read` и `state.write`. Реализация получает текущую transaction через runtime context; памяти ячеек в registry нет. Вне reactor event вызов даёт `STATE_CONTEXT`. Два session с одним registry имеют независимое состояние. Поддержаны только finite Number, NumberArray, Boolean и String; arrays копируются на входах/выходах и границах snapshots/transactions.
 
@@ -38,4 +38,4 @@ In-memory structured cloning сохраняет signed zero; каноничес�
 
 `node examples/counter.mjs` выполняет текстовую программу `examples/counter.ems`: события +1,+2,-1 дают count=2, повторное воспроизведение даёт 2. `tests/reactor.test.mjs` проверяет FIFO и replay, rollback, isolation/copies, queue limits, queued/active cancel, late writes, close, malformed declarations и permissions. Stateful standalone export отвергается существующим pure backend; IDE/browser/native поддержка этим Node evidence не подтверждается.
 
-EMS-015 остаётся IN_PROGRESS: далее structured control-flow IR/lowering для if/loops/mutable locals, language futures/cancellation budget, error/resource lifecycle и расширенный replay/conformance. M1 целиком открыт.
+Structured control-flow IR/lowering для if/loops/mutable locals реализован по AC-033 и работает в этих transactions. EMS-015 остаётся IN_PROGRESS: далее language futures/cancellation budget, algebraic/error/resource lifecycle и расширенный replay/conformance. M1 целиком открыт.

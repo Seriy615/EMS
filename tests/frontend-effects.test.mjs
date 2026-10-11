@@ -40,7 +40,7 @@ test('recursive effect inference reaches a fixed point before any execution', ()
   const { registry, calls } = fixture();
   const checked = check('fn test() -> Number { return helper(); } fn helper() -> Number { let value = host.write(1); return test(); }', registry);
   assert.deepEqual(checked.policies.get('test'), { effects: ['log.write'], capabilities: ['log.access'] });
-  assert.throws(() => lowerCheckedModule(checked, 'test', registry), { code: 'RECURSIVE_COMPOSITE' });
+  assert.equal(lowerCheckedModule(checked, 'test', registry).ir.schemaVersion, 'ems-ir/2');
   assert.deepEqual(calls, []);
 });
 

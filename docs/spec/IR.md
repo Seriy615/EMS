@@ -49,3 +49,7 @@ node tools/ems.mjs ir-build dist/avg5.ir.json --out dist/avg5-from-ir.mjs
 Чистый `ems-core-finite/1` отвергает наблюдаемые контракты и непустые последовательности, включая вложенные. `compileIRToJS` отвергает программы с реальными effect/capability declarations с `UNSUPPORTED_TARGET`: portable effect binding/linker пока не реализован. Чистые явные sequences исполняются и экспортируются с сохранением ошибок и memo; сам профиль не является причиной отказа. `compileStandaloneJS` также проверяет транзитивные декларации, включая неиспользуемые composite, и сохраняет чистые явные последовательности.
 
 Воспроизводимый trusted stdout пример: `node examples/effect-sequence.mjs` печатает `first`, затем `second`, хотя хранение узлов обратное. Это реальный host console adapter, не sandbox, File API или полноценный compiler backend. Evidence: `tests/effect-ir.test.mjs`, AC-030. Canvas/provenance по-прежнему вне семантического IR; pinned direct versions не заменяют transitive implementation lock.
+
+## Структурированный control IR v2
+
+`ems-ir/2`, `ems-control-finite/1` определены отдельно в `CONTROL_IR.md` и `schemas/control-ir.schema.json` (AC-033). Общие parse/serialize/execute/compile APIs поддерживают обе версии; преобразование control blocks в M0 dataflow graph не заявляется. Текстовый default lowering имеет eager statement semantics также в call IR через explicit sequence; legacy M0 artifacts и explicit frontend profile call сохраняют прежний demand-driven профиль.

@@ -3,7 +3,10 @@ import { assertTypeName, assertValueType, typeOfValue } from '../reference/types
 import { validateGraph } from '../reference/validate.mjs';
 import { executeGraph } from '../reference/runtime.mjs';
 import { compileStandaloneJS } from '../reference/compiler.mjs';
-import { analyzeGraphEffects, validateEffectSequence } from '../semantics/effects.mjs';
+import { analyzeGraphEffects, validateEffectSequence, checkGraphPolicy } from '../semantics/effects.mjs';
+import { CONTROL_VERSION, validateControlIR, serializeControlIR } from './control.mjs';
+import { executeControlIR, checkControlPolicy, controlSignature } from '../runtime/control.mjs';
+import { compileControlJS } from '../compiler/control.mjs';
 
 export const IR_VERSION = 'ems-ir/1';
 export const CORE_PROFILE = 'ems-core-finite/1';
@@ -161,18 +164,22 @@ export function graphFromIR(ir, registry) {
 
 /** Deterministic semantic serialization; canvas and provenance are separate artifacts. */
 export function serializeIR(ir, registry) {
+  if (ir?.schemaVersion === CONTROL_VERSION) return serializeControlIR(ir, registry);
   return JSON.stringify(lowerGraphToIR(graphFromIR(ir, registry), registry, { profile: ir.profile }), null, 2) + '\n';
 }
 export function parseIR(source, registry) {
   let ir;
   try { ir = JSON.parse(source); } catch { fail('INVALID_IR', 'Malformed IR JSON'); }
+  if (ir?.schemaVersion === CONTROL_VERSION) { validateControlIR(ir, registry); return JSON.parse(serializeControlIR(ir, registry)); }
   graphFromIR(ir, registry);
   return lowerGraphToIR(graphFromIR(ir, registry), registry, { profile: ir.profile });
 }
 export function executeIR(ir, inputs, registry, options = {}) {
+  if (ir?.schemaVersion === CONTROL_VERSION) return executeControlIR(ir, inputs, registry, options);
   return executeGraph(graphFromIR(ir, registry), inputs, registry, options);
 }
 export function compileIRToJS(ir, registry) {
+  if (ir?.schemaVersion === CONTROL_VERSION) return compileControlJS(ir, registry);
   return compileStandaloneJS(graphFromIR(ir, registry), registry);
 }
 
@@ -181,4 +188,14 @@ export function graphProvenance(graph, source) {
   text(source, 'source');
   return { schemaVersion: 'ems-provenance/1', source,
     nodes: Object.fromEntries(graph.nodes.map((node, index) => [node.id, { pointer: `/nodes/${index}` }])) };
+}
+
+/** Return the validated public input/output signature without pretending control IR is a dataflow graph. */
+export function signatureIR(ir, registry) {
+  if (ir?.schemaVersion === CONTROL_VERSION) return controlSignature(validateControlIR(ir, registry).entry);
+  const graph = graphFromIR(ir, registry); return { id: graph.id, inputs: graph.inputs, output: graph.output };
+}
+export function checkIRPolicy(ir, registry, options = {}) {
+  if (ir?.schemaVersion === CONTROL_VERSION) return checkControlPolicy(validateControlIR(ir, registry).policy, options);
+  return checkGraphPolicy(graphFromIR(ir, registry), registry, options);
 }

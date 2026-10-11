@@ -64,25 +64,7 @@ export function compileStandaloneJS(graph, registry) {
   const inputNames = JSON.stringify(Object.keys(graph.inputs));
   return `// EMS reference output. Standalone JavaScript, NO EMS runtime dependency.
 // Pure finite-number profile; trusted implementations only.
-function __fail(code, message, details = {}) {
-  const error = new Error(message);
-  error.name = 'EmsError'; error.code = code; error.details = details;
-  throw error;
-}
-function __type(value) {
-  if (typeof value === 'number' && Number.isFinite(value)) return 'Number';
-  if (typeof value === 'boolean') return 'Boolean';
-  if (typeof value === 'string') return 'String';
-  if (Array.isArray(value) && Array.from(value).every(x => typeof x === 'number' && Number.isFinite(x))) return 'NumberArray';
-  return 'Unknown';
-}
-function __assertType(value, expected, context) {
-  const received = __type(value);
-  if (received !== expected) __fail('TYPE_MISMATCH', context + ': expected ' + expected + ', got ' + received, { expected, received, context });
-}
-function __divide(a,b) { if (b === 0) __fail('DIV_BY_ZERO', 'Division by zero'); return a / b; }
-function __min(a) { if (!a.length) __fail('EMPTY_ARRAY', 'core.min: empty list'); return a.reduce((x,y)=>Math.min(x,y),Infinity); }
-function __max(a) { if (!a.length) __fail('EMPTY_ARRAY', 'core.max: empty list'); return a.reduce((x,y)=>Math.max(x,y),-Infinity); }
+${standaloneHelpersJS()}
 export function execute(inputs) {
   if (!inputs || typeof inputs !== 'object' || Array.isArray(inputs)) __fail('INVALID_INPUT', 'Input values must be an object');
 ${checks.join('\n')}
@@ -111,4 +93,27 @@ export function compiledAtomicManifest(graph) {
     implementationBinding: { kind: 'esm', entry: './module.mjs', symbol: 'execute', trustedOnly: true },
     notes: 'Opaque to EMS visual editor. Executable bytecode/JS remains reverse engineerable.'
   };
+}
+
+/** Shared standalone finite-value checks used by graph and control backends. */
+export function standaloneHelpersJS() {
+  return `function __fail(code, message, details = {}) {
+  const error = new Error(message);
+  error.name = 'EmsError'; error.code = code; error.details = details;
+  throw error;
+}
+function __type(value) {
+  if (typeof value === 'number' && Number.isFinite(value)) return 'Number';
+  if (typeof value === 'boolean') return 'Boolean';
+  if (typeof value === 'string') return 'String';
+  if (Array.isArray(value) && Array.from(value).every(x => typeof x === 'number' && Number.isFinite(x))) return 'NumberArray';
+  return 'Unknown';
+}
+function __assertType(value, expected, context) {
+  const received = __type(value);
+  if (received !== expected) __fail('TYPE_MISMATCH', context + ': expected ' + expected + ', got ' + received, { expected, received, context });
+}
+function __divide(a,b) { if (b === 0) __fail('DIV_BY_ZERO', 'Division by zero'); return a / b; }
+function __min(a) { if (!a.length) __fail('EMPTY_ARRAY', 'core.min: empty list'); return a.reduce((x,y)=>Math.min(x,y),Infinity); }
+function __max(a) { if (!a.length) __fail('EMPTY_ARRAY', 'core.max: empty list'); return a.reduce((x,y)=>Math.max(x,y),-Infinity); }`;
 }
