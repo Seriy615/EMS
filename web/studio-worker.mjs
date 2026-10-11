@@ -5,6 +5,7 @@ import {runTextDraft} from '/src/studio/text.mjs';
 
 let stepper=null,started=false;
 self.onmessage=async event=>{
+ if(event.data?.type==='debug-breakpoints'){try{stepper?.update(event.data.token,event.data.breakpoints);}catch{}return;}
  if(event.data?.type==='debug-resume'){stepper?.resume(event.data.token,event.data.mode);return;}
  if(started)return;started=true;
  let failurePath=null;
@@ -12,9 +13,10 @@ self.onmessage=async event=>{
   const request=event.data,editor=new ProjectEditor(parseProject(request.project));
   if(request.selected)editor.openContract(request.selected);
   self.postMessage({type:'validated',id:editor.workspace.graph.id});
+  if(Object.hasOwn(request,'debugOptions')&&!request.debug)throw Object.assign(new Error('Debug options need debug mode'),{code:'INVALID_DEBUG_OPTION'});
   if(request.debug){
    if(request.debug!==true||!['graph','text'].includes(request.action)||request.action==='graph'&&hasCollections(editor.workspace.graph,editor.registry))throw Object.assign(new Error('Пошаговая отладка visual Map/Filter пока не поддержана; используйте текст EMS'),{code:'UNSUPPORTED_DEBUG_PROFILE'});
-   stepper=new GraphStepper(pause=>self.postMessage({type:'paused',pause}));
+   stepper=new GraphStepper(pause=>self.postMessage({type:'paused',pause}),request.debugOptions);
   }
   let value;
   if(request.action==='graph')value=await editor.run({onNodeFailure:path=>{failurePath??=path;},onNodeEnter:stepper?event=>stepper.enter(event):undefined});

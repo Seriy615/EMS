@@ -50,3 +50,24 @@ Deadline/Stop client по-прежнему прекращает **весь Worke
 UI: «Отладка событий (новый запуск)» создаёт новый preview с initial state; затем actual control нажатие/ввод создаёт событие. «Шаг»/«Продолжить событие» управляют gate, terminal panel сообщает commit/rejection. «Остановить отладку» сохраняет отображаемое confirmed состояние и закрывает Worker. «Начать заново» возвращает обычный preview. Исходник выделяется только для открытого того же handler и совпадающего authored snapshot; editor inputs остаются отзывчивыми.
 
 Acceptance: real Worker FIFO0→1→2/unique event IDs, unknown/stale resumes, source mismatch before init, missing grants, invalid callbacks before enqueue, pause deadline and Stop; actual write to draft followed by return pause, confirmed1 remains1 after termination; direct local AbortSignal rolls back same draft and marks cancelled trace. Actual Chromium source selection/Step/Continue commit1, second event paused after draft write but snapshot1, Stop/CANCELLED/ordinary restart1. Полные debugger breakpoints/Step Over/value redaction classification, compiled/native debugging и whole visual parity остаются открытыми; глобальная цель не закрывается AC-067.
+
+## Operation breakpoints (AC-069)
+
+`GraphStepper(onPause, {start: 'step' | 'continue', breakpoints})` использует исходные runtime enter hooks. Step останавливается перед следующей фактической операцией. Continue выполняет операции до точного совпадения точки; повторный Continue снова останавливается на той же операции при следующей итерации или вызове. Невызванная функция, неиспользуемый demand-узел и ленивая невыбранная ветка не создают остановок. Остановка composite-узла совпадает с последним элементом callPath, а не с каждым потомком в его caller path.
+
+Точки — максимум64 уникальных записей, каждый адрес ограничен1024 UTF-16 units, разрешены только три поля:
+
+- `{profile: 'graph', graph, node}` — точный ID графа и операции;
+- `{profile: 'control', function, node}` — ID функции и структурный путь `/body/...` из свежего provenance.
+
+Дубликаты удаляются, неизвестные профили/поля и значения вместо метаданных отвергаются `INVALID_DEBUG_BREAKPOINT`. Gate options разрешают только `start` и `breakpoints`; ошибочная конфигурация — `INVALID_DEBUG_OPTION`. Неисполняемый или отсутствующий адрес не совпадает ни с одной операцией. Верификация типов/эффектов/permissions по-прежнему выполняется до enter hooks; breakpoint не предоставляет capabilities.
+
+`update(token, points)` меняет политику только текущей паузы, копирует входной список и не освобождает выполнение. Старый токен не меняет gate. Continue пересматривает queued concurrent entries: совпадающие остаются остановками, остальные освобождаются в существующей очереди; дополнительного evaluator/scheduler не создаётся. Cancellation и hard Worker deadline остаются прежними.
+
+Studio Worker принимает начальные `debugOptions` только для debug execution и отдельное `{type:'debug-breakpoints', token, breakpoints}` во время паузы. Некорректная live update игнорируется, старая валидная политика сохраняется. Клиент `setBreakpoints` валидирует список до transport; Step/Continue token protocol и pause metadata не меняются.
+
+В IDE графовая точка добавляется в свойствах выбранной операции и отмечается красной точкой. В тексте «Точка под курсором» компилирует текущий typed source и выбирает минимальный provenance range, содержащий cursor offset; комментарий/пробел вне executable range — `NO_DEBUG_LOCATION`. Литерал также является исполняемой операцией control IR. Раздел «Точки останова» позволяет идти сразу до точки, поставить её на текущей паузе и удалить все точки без освобождения текущего исполнения.
+
+Точки эфемерны: не входят в IR, canvas, exported code или saved project. Их identity включает проект, semantic graph/library и точный текст/entry/lowering. Изменение программы или переключение профиля сбрасывает точки; переименование, viewport и input values не меняют operation identity. Уже исполняющийся Worker продолжает собственный снимок; после правки IDE не применяет новые точки к старому снимку. Full persistent source anchors, UI event breakpoint authoring, Step Over/Out, native/compiled debug transport и value-policy debugger остаются отдельными незавершёнными требованиями.
+
+Evidence: `tests/breakpoints.test.mjs`, `tests/browser/breakpoints.test.mjs`, `tools/verify.mjs`, live case в `tools/deploy-smoke.mjs`.

@@ -517,3 +517,16 @@ Baseline **694/694 Node,133/133 verify PASS**; после изменений **6
 
 Логи: `/tmp/ems-design-deploy.log`, `/tmp/ems-design-live-smoke.log`, `/tmp/ems-design-live-preview.log`, `/tmp/ems-design-vps-before.log`, `/tmp/ems-design-vps-after.log`. EMS-036 DONE по AC-068. Документационный commit после этой приёмки не заменяет опубликованный artifact208c177. Глобальная цель и EMS-033/032 остаются открытыми.
 
+
+## EMS-033 — operation breakpoints, AC-069
+
+Предыдущая goal-итерация EMS-036 дала реальный прогресс: проверенная переработка Studio опубликована, текущий baseline `e4fcdea`/live208c177. Для текущего среза baseline **694/694 Node,133/133 verify PASS**.
+
+Реализованы bounded graph/control breakpoints в исходном `GraphStepper`, run-to-point/Continue с повторным совпадением в циклах, точное leaf/composite address matching, token-guarded live policy update и concurrent queue. IDE: graph inspector point/marker, text cursor→fresh typed provenance point, clear/current-pause point, collapsed run-to-point settings. Metadata не входит в IR/saved project/standalone; exact program/source identity сбрасывает точки при изменении программы, inputs/viewport/name сохраняют их. UI event breakpoint authoring, Step Over/Out, persistent anchors/value policy/native/compiled transport остаются открытыми; EMS-033 IN_PROGRESS.
+
+Итог **703/703 Node,134/134 verify,31/31 Chromium PASS**. Новые9 Node cases: actual graph/control/call-IR loops/lazy branches/nested composites, concurrent queue, copied policies/stale tokens/invalid bounded fields, cancellation/capability denial, independent compiled parity. Real Chromium: graph breakpoint→5/live clear/repeat, text cursor three stops→3, changed inputs preserve points/changed source clears. Existing graph/text/UI authoring/export/debugger scenarios passed unchanged. Verify includes original loop execution→three point stops→3. Live smoke расширен graph point5/text-loop3; remote evidence будет добавлена после checked publication. После визуальной проверки заполненного inspector исправлены контраст обычных controls и видимый статус паузы; final browser31/31 PASS (`/tmp/ems-breakpoints-browser-final.log`).
+
+Логи: `/tmp/ems-breakpoints-baseline-{tests,verify}.log`, `/tmp/ems-breakpoints-focused.log`, `/tmp/ems-breakpoints-regression.log`, `/tmp/ems-breakpoints-browser-focused.log`, `/tmp/ems-breakpoints-{tests,verify,browser}.log`. В текущих локальных прогонах Worker failure не наблюдался; причина исторического intermittent transport сбоя этим не доказана и production stability не объявляется.
+
+Следующий срез EMS-033: Step Over/Out на тех же enter events с корректными function/call frames, lazy control/resource/future semantics и source witnesses; глобальная цель языка/экосистемы остаётся активной.
+

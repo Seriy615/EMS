@@ -339,4 +339,10 @@ await check('UI event diagnostics leave draft state private until the existing t
  const runtime=new UIRuntime(standaloneUIApplication,standaloneUIBase,{policy:{capabilities:['ui.render','state.read','state.write'],allowedEffects:['ui.render','state.read','state.write']}}),events=[];
  try{const value=await runtime.dispatch('increment','press',undefined,{onControlEnter:event=>{events.push(event);assert.equal(runtime.snapshot().count,0);}});return value===1&&runtime.snapshot().count===1&&events.length>0&&events.every(event=>!Object.hasOwn(event,'state'));}finally{await runtime.close();}
 });
+await check('source breakpoints stop each actual loop iteration without changing its output',async()=>{
+ const {GraphStepper}=await import('../src/studio/debugger.mjs'),{breakpointAtTextOffset}=await import('../src/studio/breakpoints.mjs'),{compileTextDraft}=await import('../src/studio/text.mjs');
+ const draft={source:'fn count()->Number {let mut x=0;while x<3 {x=x+1;}return x;}',entry:'count',lowering:'auto'},editor=new ProjectEditor(),bundle=compileTextDraft(draft,editor),point=breakpointAtTextOffset(bundle,draft.source.indexOf('x+1')+1),events=[];
+ const gate=new GraphStepper(pause=>{events.push(pause);gate.resume(pause.token,'continue');},{start:'continue',breakpoints:[point]});
+ return await runTextDraft(draft,editor,{}, {onControlEnter:event=>gate.enter(event)})===3&&events.length===3&&events.every(event=>event.node===point.node&&event.function===point.function);
+});
 console.log(`\nEMS foundation verification passed (${checks} checks). Not production readiness.`);

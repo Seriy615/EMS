@@ -490,25 +490,27 @@
         "GPT-6.1 Sol",
         "GPT-6 Luna"
       ],
-      "progress": "AC-063 failure/lifecycle, AC-065 graph stepping, AC-066 text/control source stepping, AC-067 persistent UI event transaction stepping implemented on existing evaluators/Kernel. Checked source witness, payload-free typed locations, event ID/token gates, FIFO/commit/rollback, Stop/deadline and confirmed snapshots verified. Full breakpoints/Step Over/nested visual/source linkage/value policy/native/compiled debugging remain open; intermittent Worker startup root cause unproven, bounded QA diagnostics retained.",
+      "progress": "AC-063/065/066/067 plus AC-069 operation breakpoints on original graph/control evaluators. Exact leaf/cursor provenance stops, run-to-point/Continue repeated loop hits, stale tokens/copied bounded policies/concurrent queues/cancellation/capability preflight/compiled parity and actual Chromium verified. Full UI event breakpoint authoring/Step Over-Out/persistent source anchors/value policy/native-compiled debugging remain open; historical Worker startup cause unproven.",
       "evidence": {
-        "scope": "Graph/text/control/UI event stepping on existing interpreted runtime, not full debugger",
+        "scope": "Graph/text/control/UI event stepping plus graph/text operation breakpoints; not full debugger",
         "docs": "docs/spec/IDE_RUNTIME_DIAGNOSTICS.md",
         "testFiles": [
-          "tests/ui-debugger.test.mjs",
-          "tests/browser/ui-debugger.test.mjs",
-          "tests/ui-worker.test.mjs"
+          "tests/breakpoints.test.mjs",
+          "tests/browser/breakpoints.test.mjs",
+          "tests/graph-debugger.test.mjs",
+          "tests/control-debugger.test.mjs",
+          "tests/ui-debugger.test.mjs"
         ],
-        "tests": "694/694 PASS",
-        "verify": "133/133 PASS",
-        "browserTests": "29/29 PASS",
+        "tests": "703/703 PASS",
+        "verify": "134/134 PASS",
+        "browserTests": "31/31 PASS",
         "commands": [
           "npm test",
           "npm run verify",
           "npm run browser:test"
         ],
         "deployedRevision": "f1b478a4471490a61f8a1c928c45218fc5244c01",
-        "live": "Actual public authenticated Chromium UI event pause confirmed0→Step→Continue commit1 PASS; graph/composite/AVG5/text source/counter/auth gates preserved. See docs/qa/DEPLOYMENT.md."
+        "live": "Last accepted deployment is the earlier UI stepping artifact; new operation breakpoints passed local703/134/31 and are pending checked publication/live graph5 and text-loop3."
       }
     },
     {

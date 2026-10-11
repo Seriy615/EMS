@@ -102,6 +102,7 @@
 </label>
 <button id="text-from-graph">Из графа</button>
 <button id="text-to-graph">Применить в граф</button>
+<button id="text-breakpoint" title="Поставить или убрать остановку на операции под курсором">Точка под курсором</button>
 <button id="text-ir">Показать IR</button>
 <button id="text-compile">Экспорт JS</button>
 </div>
@@ -132,6 +133,8 @@
 <pre id="output" aria-live="polite">Создайте граф и нажмите «Запустить».</pre>
 <div id="error" role="alert"></div>
 <pre id="debug-location" aria-live="polite"></pre>
+<details class="breakpoint-settings"><summary>Точки останова (<span id="breakpoint-count">0</span>)</summary><p class="hint">Выберите блок и поставьте точку в свойствах; в тексте используйте «Точка под курсором». Изменение программы сбрасывает точки.</p><label><input id="debug-run-to-breakpoint" type="checkbox"> При отладке сразу идти до точки</label><button id="debug-breakpoint" disabled>Точка на текущей операции</button><button id="clear-breakpoints">Убрать все точки</button><pre id="breakpoint-list"></pre></details>
+
 <details>
 <summary>Журнал запуска</summary>
 <pre id="execution-log" aria-live="polite"></pre>

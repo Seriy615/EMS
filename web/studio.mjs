@@ -1,3 +1,5 @@
+import {breakpointForEvent} from '/src/studio/debugger.mjs';
+import {breakpointAtTextOffset,graphBreakpointIdentity} from '/src/studio/breakpoints.mjs';
 import {ProjectManager} from '/src/studio/manager.mjs';
 import {STANDARD_CONTRACTS} from '/src/stdlib/finite.mjs';
 import {ProjectEditor,newProject,parseProject} from '/src/studio/project.mjs';
@@ -13,19 +15,38 @@ const el=(tag,text,style)=>{const node=document.createElement(tag);if(text!==und
 const identity=()=> 'p'+crypto.randomUUID().replaceAll('-','');
 let store,editor,selected=null,pending=null,failedNode=null,textMode=false,textProjectId=null,textStorage;
 const managedId=new URLSearchParams(location.search).get('project'),manager=managedId?new ProjectManager(localStorage):null;
-let activeExecution=null;
+let activeExecution=null,pausedOperation=null,executionBreakpointIdentity=null;
+let breakpointIdentity=null,breakpoints=[];
+function currentBreakpointIdentity(){const program=textMode?JSON.stringify({profile:'text',source:$('text-source').value,entry:$('text-entry').value.trim(),lowering:$('text-lowering').value,library:graphBreakpointIdentity(editor.project)}):'graph:'+graphBreakpointIdentity(editor.project);return editor.project.id+':'+program;}
+function syncBreakpoints(){
+ const identity=currentBreakpointIdentity();if(identity!==breakpointIdentity){breakpointIdentity=identity;breakpoints=[];}
+ $('breakpoint-count').textContent=String(breakpoints.length);
+ $('breakpoint-list').textContent=breakpoints.map(point=>(point.graph??point.function)+' / '+point.node).join('\n')||'Выберите блок в графе или операцию в тексте.';
+ $('debug-breakpoint').disabled=!pausedOperation||executionBreakpointIdentity!==identity;
+}
+function toggleBreakpoint(point){
+ syncBreakpoints();const key=JSON.stringify(point),index=breakpoints.findIndex(item=>JSON.stringify(item)===key);
+ if(index>=0)breakpoints.splice(index,1);else{if(breakpoints.length>=64)throw Object.assign(new Error('Не более 64 точек'),{code:'INVALID_DEBUG_BREAKPOINT'});breakpoints.push(point);}
+ if(activeExecution&&executionBreakpointIdentity===breakpointIdentity)activeExecution.setBreakpoints(breakpoints);
+ syncBreakpoints();render();
+}
+$('debug-breakpoint').onclick=()=>{try{if(pausedOperation&&executionBreakpointIdentity===currentBreakpointIdentity())toggleBreakpoint(breakpointForEvent(pausedOperation));}catch(error){report(error);}};
+$('clear-breakpoints').onclick=()=>{syncBreakpoints();breakpoints=[];if(activeExecution&&executionBreakpointIdentity===breakpointIdentity)activeExecution.setBreakpoints([]);syncBreakpoints();render();};
+$('text-breakpoint').onclick=()=>{try{toggleBreakpoint(breakpointAtTextOffset(textAPI.compileTextDraft(draft(),editor),$('text-source').selectionStart));}catch(error){sourceError(error);}};
+
 async function executeStudio(action,draft,inputs,debug=false){
- $('execution-log').textContent='';$('debug-location').textContent='';$('debug').disabled=true;
- const job=startStudioExecution({action,project:editor.serialize(),selected:editor.selectedContract,draft,inputs,debug},{timeout:debug?60000:5000,onPause:pause=>{
- $('debug-step').disabled=false;$('debug-continue').disabled=false;
+ syncBreakpoints();executionBreakpointIdentity=breakpointIdentity;pausedOperation=null;syncBreakpoints();
+ $('output').textContent=debug?'Отладка: выполняется…':'Выполняется…';$('execution-log').textContent='';$('debug-location').textContent='';$('debug').disabled=true;
+ const job=startStudioExecution({action,project:editor.serialize(),selected:editor.selectedContract,draft,inputs,debug,...(debug?{debugOptions:{breakpoints,start:$('debug-run-to-breakpoint').checked?'continue':'step'}}:{})},{timeout:debug?60000:5000,onPause:pause=>{
+ pausedOperation=pause;$('output').textContent='Пауза. Нажмите «Шаг» или «Продолжить».';syncBreakpoints();$('debug-step').disabled=false;$('debug-continue').disabled=false;
  const where=pause.profile==='control'?pause.callStack.join(' → ')+' / '+pause.node+' ('+pause.kind+') → '+(pause.type??'statement'):pause.callPath.map(call=>call.graph+' / '+call.node+' → '+call.contract).join('\n')+'\nВходы: '+JSON.stringify(pause.inputs)+' → '+pause.output;
  $('debug-location').textContent='Пауза перед операцией (снимок программы)\n'+where+(pause.location?'\nСтрока '+pause.location.start.line+', столбец '+pause.location.start.column:'');
  if(action==='text'&&pause.location&&$('text-source').value===draft.source){$('text-source').focus();$('text-source').setSelectionRange(pause.location.start.offset,pause.location.end.offset);}
  const at=pause.callPath?.find(call=>call.graph===editor.workspace.graph.id);if(action==='graph'&&at){selected=at.node;render();}
  },onLog:record=>{if(debug&&['finished','failed'].includes(record.type))$('debug-location').textContent=(record.type==='finished'?'Отладка завершена':'Отладка остановлена: '+record.code)+'\n'+$('debug-location').textContent.replace('Пауза перед операцией (снимок программы)','Последняя операция (снимок программы)');const message=record.type==='started'?'Запуск '+record.action:record.type==='validated'?'Проект проверен: '+record.id:record.type==='finished'?'Выполнение завершено':'Выполнение остановлено: '+record.code;$('execution-log').textContent+=message+'\n';}});activeExecution=job;$('stop').disabled=false;
- try{return await job.promise;}finally{if(activeExecution===job)activeExecution=null;$('stop').disabled=true;$('debug').disabled=false;$('debug-step').disabled=true;$('debug-continue').disabled=true;}
+ try{return await job.promise;}finally{if(activeExecution===job)activeExecution=null;pausedOperation=null;syncBreakpoints();$('stop').disabled=true;$('debug').disabled=false;$('debug-step').disabled=true;$('debug-continue').disabled=true;}
 }
-for(const [id,mode] of [['debug-step','step'],['debug-continue','continue']])$(id).onclick=()=>{if(activeExecution?.resume(mode)){$('debug-step').disabled=true;$('debug-continue').disabled=true;}};
+for(const [id,mode] of [['debug-step','step'],['debug-continue','continue']])$(id).onclick=()=>{if(activeExecution?.resume(mode)){$('output').textContent='Отладка: выполняется…';pausedOperation=null;syncBreakpoints();$('debug-step').disabled=true;$('debug-continue').disabled=true;}};
 $('stop').onclick=()=>activeExecution?.cancel();
 function report(error){$('error').textContent=`${error.code??'ERROR'}: ${error.message}`;}
 try{if(manager){const record=manager.load(managedId);if(record?.kind!=='graph')throw new Error('Графовый проект не найден');store={load:id=>{const record=manager.load(id??managedId);return record?.kind==='graph'?parseProject(record.source):null;},list:()=>manager.list().filter(record=>record.kind==='graph'),save:project=>{manager.save({id:project.id,name:project.name,kind:'graph',source:new ProjectEditor(project).serialize(),draft:manager.load(project.id)?.draft??null});history.replaceState(null,'','/?project='+encodeURIComponent(project.id));}};}else store=new ProjectStorage(localStorage);editor=new ProjectEditor(store.load()??newProject(identity()));}catch(error){if(manager){report(error);throw error;}editor=new ProjectEditor(newProject(identity()));report(error);}
@@ -45,7 +66,7 @@ function port(ref,destination,title,type){
  return row;
 }
 function card(id,title,kind,index){
- const node=el('article',undefined,`card ${id.startsWith('input:')?'input-card':id==='output'?'output-card':''} ${selected===id?'selected':''} ${failedNode===id?'invalid':''}`),at=position(id,index);node.dataset.card=id;node.style.left=at.x+'px';node.style.top=at.y+'px';
+ const node=el('article',undefined,`card ${id.startsWith('input:')?'input-card':id==='output'?'output-card':''} ${selected===id?'selected':''} ${failedNode===id?'invalid':''}`),at=position(id,index);node.classList.toggle('breakpoint',breakpoints.some(point=>point.profile==='graph'&&point.graph===editor.workspace.graph.id&&point.node===id));node.dataset.card=id;node.style.left=at.x+'px';node.style.top=at.y+'px';
  const header=el('header');header.append(el('strong',title),el('small',kind));node.append(header);
  node.onclick=()=>{selected=id;inspector();document.querySelectorAll('.card').forEach(card=>card.classList.toggle('selected',card.dataset.card===id));};
  header.onpointerdown=event=>{
@@ -67,6 +88,7 @@ function wires(){
 }
 function render(){
  $('nodes').replaceChildren();const graph=editor.workspace.graph;
+ syncBreakpoints();
  $('canvas-guide').hidden=graph.nodes.length>0||Object.keys(graph.inputs).length>0;
  for(const [name,input]of Object.entries(graph.inputs)){const node=card(`input:${name}`,name,'вход');node.append(port({input:name},null,name,input.type));$('nodes').append(node);}
  graph.nodes.forEach((definition,index)=>{const contract=editor.registry.resolve(definition.uses),node=card(definition.id,titles[contract.id]??contract.id,contract.kind==='composite'?'граф':contract.kind==='collection'?'коллекция':'атом',index);for(const [name,type]of Object.entries(contract.inputs))node.append(port(null,{id:definition.id,port:name},name,typeof type==='string'?type:type.type));node.append(port({node:definition.id},null,definition.id,contract.output));$('nodes').append(node);});
@@ -81,6 +103,7 @@ function inspector(){
   const name=selected.slice(6),input=editor.workspace.graph.inputs[name];if(!input){selected=null;return;}panel.append(el('strong',name),el('p',input.type));const field=el('textarea');field.value=json(editor.workspace.inputs[name]);field.dataset.inputValue=name;const apply=el('button','Применить значение');apply.onclick=()=>change(()=>editor.setInput(name,JSON.parse(field.value)));panel.append(el('label','Значение (JSON)'),field,apply);
  }else{
   const node=editor.workspace.graph.nodes.find(node=>node.id===selected);if(!node){selected=null;return;}const contract=editor.registry.resolve(node.uses);if(contract.kind==='composite'){const expand=el('button','Раскрыть граф');expand.id='expand';expand.onclick=()=>change(()=>{editor.openContract(contract.id);selected=null;});panel.append(expand);}panel.append(el('strong',titles[contract.id]??contract.id),el('p',`${contract.id} · ${node.id} → ${contract.output}`));
+  const point={profile:'graph',graph:editor.workspace.graph.id,node:node.id},has=breakpoints.some(item=>JSON.stringify(item)===JSON.stringify(point)),stop=el('button',has?'● Убрать точку останова':'○ Точка останова');stop.id='node-breakpoint';stop.setAttribute('aria-pressed',String(has));stop.disabled=textMode;stop.onclick=()=>{try{toggleBreakpoint(point);}catch(error){report(error);}};panel.append(stop);
   if(contract.kind==='collection'){
    panel.append(el('p',contract.collection.operation.toUpperCase()+' · '+contract.collection.callback.id));const field=el('select');field.dataset.collectionCallback=contract.id;
    const output=contract.collection.operation==='map'?'Number':'Boolean';for(const item of editor.registry.items.values()){const inputs=Object.values(item.inputs).map(spec=>typeof spec==='string'?spec:spec.type);if(['atomic','composite'].includes(item.kind)&&inputs.length===1&&inputs[0]==='Number'&&item.output===output){const option=el('option',item.id);option.value=item.id;field.append(option);}}
@@ -165,13 +188,13 @@ function setDraft(value){$('text-source').value=value.source;$('text-entry').val
 function saveDraft(){try{if(!textStorage)throw new Error('Хранилище черновика недоступно');textStorage.save(editor.project.id,draft());$('text-status').textContent='Черновик сохранён локально. Граф изменяется только после «Применить».';}catch(error){$('text-status').textContent='Черновик не сохранён';report(error);}}
 function sourceError(error){report(error);const location=error.details?.location;if(location){$('error').textContent+='\nСтрока '+location.start.line+', столбец '+location.start.column;$('text-source').focus();$('text-source').setSelectionRange(location.start.offset,location.end.offset);}}
 function syncTextProject(){const stored=textStorage?.load(editor.project.id);if(stored)setDraft(stored);else generateDraft();textProjectId=editor.project.id;}
-function generateDraft(){const value=textAPI.textFromWorkspace(editor);setDraft({...value,inputs:json(editor.workspace.inputs)});textProjectId=editor.project.id;saveDraft();}
+function generateDraft(){const value=textAPI.textFromWorkspace(editor);setDraft({...value,inputs:json(editor.workspace.inputs)});textProjectId=editor.project.id;saveDraft();syncBreakpoints();}
 $('text-mode').onclick=()=>{
  try{if(!textMode&&textProjectId!==editor.project.id)syncTextProject();
- textMode=!textMode;document.body.classList.toggle('text-mode',textMode);$('text-panel').hidden=!textMode;$('text-mode').textContent=textMode?'Граф':'Текст';if(!textMode)render();}catch(error){sourceError(error);}
+ textMode=!textMode;document.body.classList.toggle('text-mode',textMode);$('text-panel').hidden=!textMode;$('text-mode').textContent=textMode?'Граф':'Текст';if(!textMode)render();else{syncBreakpoints();inspector();}}catch(error){sourceError(error);}
 };
 $('text-from-graph').onclick=()=>{try{generateDraft();$('error').textContent='';}catch(error){sourceError(error);}};
-for(const id of ['text-source','text-entry','text-lowering','text-inputs'])$(id).addEventListener('input',saveDraft);
+for(const id of ['text-source','text-entry','text-lowering','text-inputs'])$(id).addEventListener('input',()=>{saveDraft();syncBreakpoints();});
 const graphRun=$('run').onclick;
 async function runText(debug=false){
  if(!textMode)return graphRun();$('run').disabled=true;$('error').textContent='';const started=performance.now();
