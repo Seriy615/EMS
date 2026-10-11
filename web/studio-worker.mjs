@@ -19,11 +19,11 @@ self.onmessage=async event=>{
   if(Object.hasOwn(request,'debugOptions')&&!request.debug)throw Object.assign(new Error('Debug options need debug mode'),{code:'INVALID_DEBUG_OPTION'});
   if(request.debug){
    if(request.debug!==true||!['graph','text'].includes(request.action)||request.action==='graph'&&hasCollections(editor.workspace.graph,editor.registry))throw Object.assign(new Error('Пошаговая отладка visual Map/Filter пока не поддержана; используйте текст EMS'),{code:'UNSUPPORTED_DEBUG_PROFILE'});
-   stepper=new GraphStepper(pause=>{try{self.postMessage({type:'paused',pause:inspection?validateInspectionPause(pause,inspection):pause});}catch{self.postMessage({ok:false,error:{code:'INVALID_INSPECTION_SNAPSHOT',message:'Invalid or unauthorized inspection message',details:{}}});self.close();}},request.debugOptions);
+   stepper=new GraphStepper(pause=>{try{self.postMessage({type:'paused',pause:inspection?validateInspectionPause(inspection.graphs&&!Object.hasOwn(pause,'location')?{...pause,location:null}:pause,inspection):pause});}catch{self.postMessage({ok:false,error:{code:'INVALID_INSPECTION_SNAPSHOT',message:'Invalid or unauthorized inspection message',details:{}}});self.close();}},request.debugOptions);
   }
   let value;
-  if(request.action==='graph')value=await editor.run({onFrameExit:stepper?event=>stepper.leave(event):undefined,onNodeFailure:path=>{failurePath??=path;},onNodeEnter:stepper?event=>stepper.enter(event):undefined});
-  else if(request.action==='text')value=await runTextDraft(request.draft,editor,request.inputs,{...(inspection?{inspection:inspection.policy}:{}),onFrameExit:stepper?event=>stepper.leave(event):undefined,onNodeEnter:stepper?event=>stepper.enter(event):undefined,onControlEnter:stepper?event=>stepper.enter(event):undefined});
+  if(request.action==='graph')value=await editor.run({...(inspection?.graphs?{graphInspection:inspection.policy}:{}),onFrameExit:stepper?event=>stepper.leave(event):undefined,onNodeFailure:path=>{failurePath??=path;},onNodeEnter:stepper?event=>stepper.enter(event):undefined});
+  else if(request.action==='text')value=await runTextDraft(request.draft,editor,request.inputs,{...(inspection?{[inspection.graphs?'graphInspection':'inspection']:inspection.policy}:{}),onFrameExit:stepper?event=>stepper.leave(event):undefined,onNodeEnter:stepper?event=>stepper.enter(event):undefined,onControlEnter:stepper?event=>stepper.enter(event):undefined});
   else throw Object.assign(new Error('Unknown execution request'),{code:'INVALID_EXECUTION'});
   self.postMessage({ok:true,value});
  }catch(error){self.postMessage({ok:false,error:{code:error.code??'HOST_ERROR',message:error.name==='EmsError'?error.message:'Ошибка обработки программы',details:error.details??{},failurePath}});}

@@ -14,13 +14,13 @@ test('source-owned grant reconstructs actual typed scopes; detached transport re
  assert.ok(events.some(e=>Object.is(e.inspection.variables.find(v=>v.name==='x')?.value,-0)));
  const copied=validateInspectionPause(pause,prepared);assert.equal(copied.inspection.variables[1].value,1);copied.inspection.variables[0].value[0]=100;assert.deepEqual(pause.inspection.variables[0].value,[2,3]);
 });
-test('inspection is refused for stale source, disabled debugging, graphs, call IR, unknown or ambiguous grants',()=>{
+test('inspection is refused for stale source, disabled debugging, wrong profiles and unknown or ambiguous grants',()=>{
  const req=request();const ordinary={...req};delete ordinary.inspection;assert.equal(prepareStudioInspection(ordinary),null);
- for(const change of [{debug:false},{action:'graph'}])assert.throws(()=>prepareStudioInspection({...req,...change}),{code:'UNSUPPORTED_INSPECTION_TRANSPORT'});
+ for(const change of [{debug:false}])assert.throws(()=>prepareStudioInspection({...req,...change}),{code:'UNSUPPORTED_INSPECTION_TRANSPORT'});
  assert.throws(()=>prepareStudioInspection({...req,draft:{...draft,source:'// shift\n'+draft.source}}),{code:'STALE_INSPECTION_SOURCE'});
  assert.throws(()=>prepareStudioInspection(request(['unknown'])),{code:'INVALID_INSPECTION_POLICY'});
  const shadow={source:'fn main()->Number {if true {let x=1;}else {let x=2;}return 0;}',entry:'main',lowering:'auto'};assert.throws(()=>prepareStudioInspection({...req,draft:shadow,inspection:{...req.inspection,...shadow}}),{code:'INVALID_INSPECTION_POLICY'});
- const pure={source:'fn main()->Number {return 1;}',entry:'main',lowering:'call'};assert.throws(()=>prepareStudioInspection({...req,draft:pure,inspection:{...req.inspection,...pure,policy:{allow:[]}}}),{code:'UNSUPPORTED_INSPECTION_PROFILE'});
+ const pure={source:'fn main()->Number {return 1;}',entry:'main',lowering:'call'};assert.ok(prepareStudioInspection({...req,draft:pure,inspection:{...req.inspection,...pure,policy:{allow:[]}}}).graphs);
 
 });
 test('unauthorized fields, names, types, statuses and protected payloads are rejected without echoing data',async()=>{
