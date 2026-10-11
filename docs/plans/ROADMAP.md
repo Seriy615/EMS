@@ -133,3 +133,8 @@ Unified local project catalog now creates/opens/copies/renames/imports/exports g
 ## Переход к owner P0 publication — EMS-035
 
 Требования первой браузерной версии сопоставлены с actual Node/Chromium сценариями в docs/qa/WEB_IDE_MVP.md. Пробел AVG5 закрывается настоящим reusable expandable six-operation project; graph runtime failures now identify exact node/caller without changing semantics; execution lifecycle log implemented. EMS-033 remains IN_PROGRESS for full step/control/source debugger. EMS-035 tracks isolated authenticated dev publication (checked clean Git revision, named service/vhost/cert/auth/logs/rollback and live domain/browser proof); prepared scripts are not evidence of deployment. Full language/platform/IDE/AI/ecosystem goal stays active regardless of P0 publication.
+
+
+## Owner P0 dev publication принята — EMS-035 DONE
+
+Release dc7ced8 опубликован на https://dev-ems.d-mash.ru после 678/130/25 PASS. Live Chromium подтвердил собственный reusable expandable composite15/reopen15, AVG5 и counter1; TLS/auth/access boundaries, recovery, реальный rollback/restore и сохранность других сервисов проверены (docs/qa/DEPLOYMENT.md). Следующий этап — EMS-033 полноценный graph/control/source debugger и дальнейшее общее visual/text authoring по существующему IR. Полная глобальная цель PROJECT_GOAL.md остаётся активной; первая dev публикация не закрывает production/native/FFI/distribution/AI/platform ecosystem.

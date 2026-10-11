@@ -36,13 +36,13 @@ ssh ems-vps 'bash /opt/ems-language-dev/current/deploy/rollback.sh'
 
 ## Фактическое состояние
 
-Подготовка: SSH/root access, nginx active, Node24.19.0, certbot установлен, port18877 отсутствует в просмотренных listeners; disk7.5GB free, RAM2420MB available. Existing stage services active. Public DNS корректен, публичный HTTPS имеет SAN mismatch (curl60). Успех публикации и live smoke ещё не заявлен; после выполнения добавляются конкретные SHA и фактические evidence.
+Подготовка: SSH/root access, nginx active, Node24.19.0, certbot установлен, port18877 отсутствует в просмотренных listeners; disk7.5GB free, RAM2420MB available. Existing stage services active. Public DNS корректен, публичный HTTPS имеет SAN mismatch (curl60). Это исходная инвентаризация до публикации; результаты выполненных запусков приведены ниже.
 
 ### Первый запуск — 412bf38
 
 Gated local tests677/130/24 прошли повторно внутри deployment. Isolated configs/user/release созданы; certbot действительно выпустил сертификат для `dev-ems.d-mash.ru`. Service exited0 без listen: existing CLI entrypoint сравнивал symlink argv path с physical import URL и не вызывал start. Local readiness не прошёл; deploy завершился ошибкой, previous successful artifact отсутствовал. TLS nginx reload после readiness не выполнялся; live success не заявлен. Прежние unrelated конфигурации не заменены.
 
-Исправление: CLI сравнивает realpath, regression test запускает настоящий процесс через release symlink и проверяет GET200. Provision сохраняет previous только для active/ready предыдущего сервиса, не записывает failed startup как успешную rollback target. Новый release требуется повторно проверить и развернуть.
+Исправление: CLI сравнивает realpath, regression test запускает настоящий процесс через release symlink и проверяет GET200. Provision сохраняет previous только для active/ready предыдущего сервиса, не записывает failed startup как успешную rollback target. Исправление проверено и опубликовано в следующем запуске.
 
 ### Первая успешная публикация — f356ee3
 
@@ -52,4 +52,13 @@ Gated deploy снова прошёл678 Node/130 verify/24 Chromium tests и о�
 
 Recovery: принудительно завершён только новый EMS service main PID19022; systemd восстановил PID19242, localhost readiness PASS, NRestarts1, memory≈17MiB. Шесть прочих enabled nginx configs имеют те же SHA256; nginx и четыре observed stage services active, ничего из них не перезапущено принудительно/не заменено. Логи: /tmp/ems-live-deploy-fixed.log, /tmp/ems-live-smoke-auth.log, /tmp/ems-live-recovery.log, /tmp/ems-vps-{before,after}-deploy.log.
 
-Actual rollback ещё требует второй successful release: первый failed artifact412bf38 не принят как previous. До проверки переключения нельзя считать rollback gate завершённым.
+Первый failed artifact412bf38 не принят как previous. Проверка отката между двумя успешными release приведена ниже.
+
+
+### Вторая успешная публикация, реальный откат и восстановление — dc7ced8
+
+Полный gated deploy проверил **678/678 Node, 130/130 verify, 25/25 Chromium PASS** и опубликовал `dc7ced833cd3c021cf9388269e0d6effb3cf96df`. Реальный rollback переключил current на `f356ee3cbc01f1ad540676c664da551c3f54a3fe`; SHA256 отдаваемого README изменился с `921e66ef8eaaaa2f6bc8a0e47f632f0f37902232e872afb9ee7818e6e80fb558` на `eb5c8dd0bf0433b70acc477abfd4968b56065e6be09f0b023a827e8fc62f0277`. Live authenticated Chromium smoke прошёл на откатанной версии. Затем восстановлен уже проверенный artifact dc7ced8; current снова указывает на него, previous — f356ee3.
+
+Финальный live smoke: HTTPS/auth/access boundaries PASS; actual Chromium create/connect 7+8→15, создание пользовательского composite user.LiveSum, reuse/expand/run→15, повторное открытие→15, раскрытие/исполнение AVG5 и DOM counter→1 PASS. Service active, localhost18877, User=ems-language-dev, MemoryCurrent20615168, MemoryMax134217728, CPUQuota25%, TasksMax32, ProtectHome=yes, ProtectSystem=strict, NoNewPrivileges=yes. Все шесть прочих enabled nginx config SHA256 совпали с исходными; nginx и четыре просмотренных staging service active.
+
+Логи этой сессии: `/tmp/ems-live-deploy-second.log`, `/tmp/ems-live-rollback.log`, `/tmp/ems-live-smoke-rollback.log`, `/tmp/ems-live-restore.log`, `/tmp/ems-live-smoke-final.log`, `/tmp/ems-vps-final.log`. Это временные локальные логи; воспроизводимые команды и проверяемые результаты сохраняются здесь. Последующий commit документации и расширенного smoke не меняет опубликованный application artifact dc7ced8. Owner P0 dev publication принята; production/MFA/server sync/full debugger/native targets остаются открытыми.

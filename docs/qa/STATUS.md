@@ -1,8 +1,10 @@
 # Current implementation status
 
-## EMS-035/033 — owner MVP proof и подготовка publication
+## EMS-035 DONE — owner P0 Web IDE опубликована
 
-678/678 Node PASS,130/130 verify PASS,24/24 browser PASS. Исправлен symlink CLI entrypoint, добавлен настоящий process regression; первый deployment412bf38 выявил это, не прошёл readiness и не объявлен успешным. f356ee3 опубликован: verified HTTPS/auth/live Chromium graph15/reopen15/AVG5/counter1 и service recovery PASS. Rollback второго successful release ещё требует evidence. Named local scenarios и границы — docs/qa/WEB_IDE_MVP.md. Реальный composite AVG5/вложенность/shared edit/reopen, точная graph failure location/lifecycle log. Actual domain TLS/auth/Chromium/recovery evidence есть; initial failed412bf38 исправлен и не принят как предыдущий успешный artifact. Откат требует второго successful release; полная production acceptance не заявлена. Глобальная цель и full step/control/source debugger остаются открытыми.
+**678/678 Node, 130/130 verify, 25/25 Chromium PASS** внутри gated deploy release `dc7ced833cd3c021cf9388269e0d6effb3cf96df`. https://dev-ems.d-mash.ru: проверенный TLS, HTTPS401 без доступа, authenticated create/connect/run15, создание/reuse/expand собственного composite15, reopen15, AVG5 и DOM counter1 PASS. Service recovery и реальный rollback на f356ee3 с повторной браузерной проверкой прошли; затем восстановлен dc7ced8 и live smoke повторён. Другие nginx configs сохранены, observed staging services active. Evidence: docs/qa/DEPLOYMENT.md и WEB_IDE_MVP.md.
+
+EMS-035 закрыта только для согласованной первой dev публикации. EMS-033 IN_PROGRESS: exact graph failures/lifecycle log есть, полный step/control/source debugger впереди. Глобальная цель языка/экосистемы, full visual parity, native/platform breadth и production acceptance остаются открытыми. Исторические результаты ниже относятся к указанным предыдущим итерациям.
 
 ## Последняя проверка — EMS-050 unified local project catalog, AC-062
 

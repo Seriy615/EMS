@@ -450,3 +450,13 @@ Fixed entrypoint gates: npm test678/678 PASS, verify130/130 PASS, browser24/24 P
 Автовосстановление: завершён только main PID нового сервиса,19022→19242; NRestarts1/readiness PASS. SHA256 шести чужих nginx-конфигураций не изменились, пять наблюдавшихся сервисов active. Для проверки rollback нужен второй успешный artifact; failed412bf38 не принят как предыдущий. Далее — full browser auth gate, commit/push evidence и test client correction, gated second release, actual rollback/restore/live verification. Глобальная цель активна; первая браузерная версия работает, полный production/native/full-language debugger остаётся открытым.
 
 Auth client correction final browser gate:25/25 PASS, logs /tmp/ems-auth-browser.log. Core Node678/verify130 уже проверены для неизменённого application code; publication tool повторит полные gates для следующего clean committed artifact. Password/path contents не печатаются.
+
+
+## EMS-035 — публикация, реальный rollback/restore и финальная приёмка
+
+Task: EMS-035 | Model: owner-approved Sol6.1/Luna6 policy; actual ID telemetry unavailable; no subagents/fallback.
+Changed: после реального HTTP authentication challenge regression опубликован gated artifact dc7ced833cd3c021cf9388269e0d6effb3cf96df. Live smoke расширен actual create/reuse/expand пользовательского composite, без изменения application semantics. Актуализированы статус, roadmap и MVP/deployment evidence. Credentials вне Git; предоставлены владельцу по его явному запросу, в документацию не внесены.
+Tests: full gated npm test678/678, npm run verify130/130, npm run browser:test25/25 PASS (/tmp/ems-live-deploy-second.log). Actual rollback dc7ced8→f356ee3 изменил current и README SHA256; live smoke на откатанном artifact PASS; восстановление dc7ced8 и расширенный финальный live smoke PASS. Ранее actual service recovery PASS. Логи /tmp/ems-live-{rollback,smoke-rollback,restore,smoke-final}.log и /tmp/ems-vps-final.log.
+Acceptance evidence: доверенный domain TLS/auth/401/301/200/403/405; browser graph15/custom composite reuse-expand15/reopen15, AVG5, counter1. Dedicated restricted service active; шесть прочих nginx hashes неизменны, observed staging services active. EMS-035 DONE в конечном owner P0 dev scope. Документационный commit после доказательства не заменяет live artifact dc7ced8.
+Risks/limits: browser-local storage/explicit export backup, finite JS/DOM backend; full step/control/source debugger, full visual parity, production identity/native/FFI/platform/AI/ecosystem не закрыты. Глобальная цель активна.
+Next unblocked task: EMS-033 полноценная отладка графа/контрольных обработчиков на общем IR с точной source correspondence и conformance evidence; не переписывать работающее ядро/IDE.

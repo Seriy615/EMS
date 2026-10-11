@@ -1064,13 +1064,13 @@
       "objective": "Verify actual owner calculator/expandable AVG5/counter/project scenarios and publish an authenticated isolated development IDE to the designated domain",
       "deliverables": "Named MVP evidence, reusable AVG5 project, checked Git release automation, dedicated service/auth/TLS/logging/rollback, live Chromium proof",
       "acceptance": "Local Node/Chromium scenarios pass; HTTPS domain verifies, unauthenticated users receive401, authenticated create/connect/run/reopen/AVG5/counter pass; recovery/rollback and other service preservation recorded",
-      "status": "IN_PROGRESS",
+      "status": "DONE",
       "priority": "P0",
       "ownerModelPolicy": [
         "GPT-6.1 Sol",
         "GPT-6 Luna"
       ],
-      "progress": "Local mandatory scenario audit performed; reusable AVG5 and execution lifecycle/precise graph failure diagnostics implemented. Deployment tooling prepared; public SAN mismatch observed. Remote deployment success not yet claimed. See docs/qa/WEB_IDE_MVP.md and DEPLOYMENT.md."
+      "progress": "Owner P0 live dev publication accepted: gated dc7ced833cd3c021cf9388269e0d6effb3cf96df passed678/130/25; trusted HTTPS/auth/access boundaries, actual Chromium graph15/custom composite reuse-expand15/reopen15/AVG5/counter1, service recovery, actual rollback to f356ee3 and restore, unrelated config/service preservation PASS. See docs/qa/DEPLOYMENT.md and WEB_IDE_MVP.md. Full production/global language goal remains open."
     }
   ]
 }
