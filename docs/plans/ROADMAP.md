@@ -121,3 +121,7 @@ Source-owned control handlers имеют typed structural graph/SVG selection/no
 ## Точка продолжения после AC-060
 
 Control source graph supports real structured literal/operator/call/instruction insert-delete operations with frontend/IR validation and actual Node/compiler/Chromium outcomes. Initial graph editing advanced; free operand wiring/control canvas/catalog selection/layout/source trace/unified project manager still open. Owner MVP gate/deploy follow those dependencies; global language/runtime/compiler/platform/ecosystem goal stays active.
+
+## Точка продолжения после AC-061
+
+Actual typed contract catalog и lexical value→named call port connection работают в control source graph с source binding identity/visibility/type/effect checks и single execution of producers. Initial source graph connection gate verified Node/compiler/actual Chromium. Remaining full graphical control/operand wiring/layout/collection projection/source trace/project manager and owner MVP audit stay open; deploy follows gates, global EMS goal intact.

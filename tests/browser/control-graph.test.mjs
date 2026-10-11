@@ -21,3 +21,14 @@ test('actual graph forms change call arguments, insert a statement, delete it an
  assert.deepEqual(result,{call:3,inserted:63,deleted:3,literal:4,operator:5,preserved:true});
  }finally{await browser?.close();await server.close();}
 });
+
+test('actual graph catalog and typed port controls reconnect parameters and computed locals',async()=>{
+ const server=await startStudioServer({port:0});let browser;
+ try{browser=await launchChromium();const page=await browser.page(server.origin+'/web/ui-demo.html');
+ const result=await page.evaluate(`(async()=>{const demo=await import('/web/ui-demo.mjs'),{handlerSourceGraph}=await import('/src/studio/control-graph.mjs');const end=Date.now()+15000;function selectCall(){document.querySelector('#open-control-graph').click();const g=handlerSourceGraph(demo.editor,'change'),call=g.nodes.find(n=>n.contract?.id==='state.count.write');document.querySelector('[data-control-node="'+call.id+'"]').dispatchEvent(new MouseEvent('click'));return g;}async function settle(before){while(demo.editor.source===before){if(Date.now()>end)throw new Error('Port edit did not settle');await new Promise(r=>setTimeout(r,10));}await demo.startDemo();}async function runTwice(){document.querySelector('[data-ems-ui="increment"]').click();document.querySelector('[data-ems-ui="increment"]').click();await demo.applicationController.idle();return demo.applicationController.runtime.snapshot().count;}
+ let g=selectCall();const catalog=[...document.querySelector('#graph-contract-catalog').options].map(option=>option.value),port=document.querySelector('#graph-target-port').selectedOptions[0].textContent;document.querySelector('#graph-value-source').value=g.nodes.find(n=>n.kind==='Parameter').id;let before=demo.editor.source;document.querySelector('#connect-graph-port').click();await settle(before);const parameter=await runTwice();
+ g=selectCall();document.querySelector('#graph-contract-catalog').value='state.count.write';document.querySelector('#choose-graph-contract').click();document.querySelector('#graph-call-arguments').value='delta*3';before=demo.editor.source;document.querySelector('#apply-graph-operation').click();await settle(before);const chosen=await runTwice();
+ g=selectCall();document.querySelector('#graph-value-source').value=g.nodes.find(n=>n.kind==='LetDeclaration').id;before=demo.editor.source;document.querySelector('#connect-graph-port').click();await settle(before);const local=await runTwice();return {catalog:catalog.includes('std.number.abs')&&catalog.includes('state.count.write'),port,parameter,chosen,local,bindings:handlerSourceGraph(demo.editor,'change').edges.filter(e=>e.kind==='binding').length};})()`);
+ assert.equal(result.catalog,true);assert.equal(result.port,'value : Number');assert.equal(result.parameter,1);assert.equal(result.chosen,3);assert.equal(result.local,2);assert.ok(result.bindings>0);
+ }finally{await browser?.close();await server.close();}
+});

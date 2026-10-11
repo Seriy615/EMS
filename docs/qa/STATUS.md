@@ -1,5 +1,12 @@
 # Current implementation status
 
+## Последняя проверка — EMS-032 catalog/typed lexical ports, AC-061
+
+`npm test` **668/668 PASS**, `npm run verify` **128/128 PASS**, `npm run browser:test` **20/20 PASS**. Baseline1c69b3e:664/127/19. Node22 / actual Chromium156. Arbitrary wires/full control canvas/collection projection/unified manager/MVP/deploy/global goal открыты.
+
+Actual registry/source-function catalog содержит signatures/policies/kinds/native handle metadata без execution. Typed graph показывает parameters/locals/definition-use edges и named call inputs. Lexical connection переиспользует binding, а не копирует computation; actual effectful producer executes once. AST identity/visibility protects sibling/function/scope selection, frontend types/policies validate candidate before commit. Browser parameter1 after2 events/catalog call3/computed local2. Initial connection via forms, not arbitrary mouse wiring. Логи `/tmp/ems-graph-ports-{tests,verify,browser}.log`; details — docs/spec/CONTROL_GRAPH.md.
+
+
 ## Последняя проверка — EMS-032 structured graph operations, AC-060
 
 `npm test` **664/664 PASS**, `npm run verify` **127/127 PASS**, `npm run browser:test` **19/19 PASS**. Baseline c3a4556:660/126/18. Node22 / actual Chromium156. Full AC-012/free wiring/layout/unified manager/MVP/deploy/global goal открыты.
