@@ -508,8 +508,8 @@
           "npm run verify",
           "npm run browser:test"
         ],
-        "deployedRevision": "d2639e8d53ebb1c44b69bdaf992ada15f69f04ce",
-        "live": "Earlier Over/Out release d2639e8 remains live; UI source/graph points passed local716/136/34, pending gated publication and live UI commits1/2/3."
+        "deployedRevision": "50f40ddee56bb3166084b5cc23835fa67a14c881",
+        "live": "Exact gated716/136/34 PASS; trusted public HTTPS/auth/access and actual Chromium UI source points/private pause→commit1/live clear→2/next event3 PASS. Existing graph/composite/reopen15, AVG5/text6, graph5/text3 and Over/Out7/UI1 preserved; foreign six config hashes/five services unchanged."
       },
       "nextSlice": "Persistent source debugger anchors across safe source edits: checked stable operation identity, exact reattachment evidence and refusal on deleted/ambiguous/changed semantic operations; preserve IR and source witnesses."
     },

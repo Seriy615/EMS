@@ -562,3 +562,10 @@ AC-070 опубликован: current `d2639e8d53ebb1c44b69bdaf992ada15f69f04ce
 
 Remote publication pending exact gate. EMS-033 IN_PROGRESS: persistent source anchors, value/secret inspection policy, native/compiled transports и full IDE parity открыты. Следующий срез — устойчивые source anchors для debugger при безопасных source edits с проверяемым переназначением и отказом при неоднозначности; общий язык/экосистема остаются активной целью.
 
+
+
+### AC-071 — опубликованный UI breakpoint slice
+
+Опубликован checked release `50f40ddee56bb3166084b5cc23835fa67a14c881` на `https://dev-ems.d-mash.ru`; previous — `d2639e8d53ebb1c44b69bdaf992ada15f69f04ce`. Повторный exact gate **716/716 Node,136/136 verify,34/34 Chromium PASS**, deploy/public smoke terminal0. Actual public trusted HTTPS/auth/access checks и Chromium UI source points/private pause→commit1/live clear→commit2/next event3 PASS; прежние graph/composite/reopen15, AVG5, text debugger6, graph point5/text loop3 и Over/Out7/UI commit1 сохранены. Шесть чужих nginx hashes и пять observed active service states совпали до/после. Dedicated service active, MemoryCurrent18558976, MemoryMax134217728, TasksMax32, Userems-language-dev, ProtectHomeyes, ProtectSystemstrict, NoNewPrivilegesyes, listener127.0.0.1:18877. Логи `/tmp/ems-ui-points-deploy.log`, `/tmp/ems-ui-points-live-smoke.log`, `/tmp/ems-ui-points-vps-before.log`, `/tmp/ems-ui-points-vps-after.log`. Последующий evidence-only commit не заменяет live artifact50f40dd.
+
+EMS-033 IN_PROGRESS; persistent source anchors, value/secret policy, native/compiled transports и full parity открыты. Глобальная цель активна.
