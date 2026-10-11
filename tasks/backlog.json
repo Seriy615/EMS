@@ -490,11 +490,13 @@
         "GPT-6.1 Sol",
         "GPT-6 Luna"
       ],
-      "progress": "AC-063..074 interpreted graph/control/UI stepping, breakpoints, Over/Out, durable contexts and bounded typed core inspection implemented. AC-076 adds exact source-owned grants, independently checked client/Worker pause DTO and explicit ephemeral pure-control Studio value panel. Checked release6cf20cff960c0aed363f14024623ff687bc5d7c6 passed748/140/43 and public HTTPS actual panel x1/result1/protected/clear/source-revoke plus all prior smoke proofs. Full earlier browser42/43 had blank native UI Worker startup failure; focused UI5/5 and final43/43 do not establish root cause or fix. Formal taint, scope-address grants, effectful UI state, call IR/native/compiled inspection and full parity remain open. AC-077 adds bounded privacy-preserving QA worker/module/server lifecycle evidence; actual controlled404/401/throw/reply and12 UI restarts verified. Final clean commit54b3095c2254fb0820abee0fbabb07126bcbe6dd passed752/140/45 and public HTTPS smoke using new local QA probe; live frontend remains6cf20cf. Original intermittent startup cause unproven; no retry or timeout change. AC-078 per-declaration core grants/v2 DTO and typed UI selection implemented for repeated valid lexical names; shared in-memory IR node occurrence bug corrected. Legacy unique-name/v1 compatibility retained. Local758/141/46 and final labels1 PASS; exact committed publication pending.",
+      "progress": "AC-063..074 interpreted graph/control/UI stepping, breakpoints, Over/Out, durable contexts and bounded typed core inspection implemented. AC-076 adds exact source-owned grants, independently checked client/Worker pause DTO and explicit ephemeral pure-control Studio value panel. Checked release6cf20cff960c0aed363f14024623ff687bc5d7c6 passed748/140/43 and public HTTPS actual panel x1/result1/protected/clear/source-revoke plus all prior smoke proofs. Full earlier browser42/43 had blank native UI Worker startup failure; focused UI5/5 and final43/43 do not establish root cause or fix. Formal taint, scope-address grants, effectful UI state, call IR/native/compiled inspection and full parity remain open. AC-077 adds bounded privacy-preserving QA worker/module/server lifecycle evidence; actual controlled404/401/throw/reply and12 UI restarts verified. Final clean commit54b3095c2254fb0820abee0fbabb07126bcbe6dd passed752/140/45 and public HTTPS smoke using new local QA probe; live frontend remains6cf20cf. Original intermittent startup cause unproven; no retry or timeout change. AC-078 per-declaration core grants/v2 DTO and typed UI selection implemented for repeated valid lexical names; shared in-memory IR node occurrence bug corrected. Legacy unique-name/v1 compatibility retained. Corrected exact release26fd89163d2d217f3c8f3012c50c2dc87714da7b passed758/141/48 and public declared active7/inactive99/non-disclosure proof plus all prior smoke. First gate45/46 failed on native UI startup/incomplete module response; full artifact and default-passive target probe/12 recovery regression added, universal root cause remains unproven.",
       "evidence": {
-        "scope": "Original interpreted graph/control/UI debugger plus checked opt-in pure-control value transport/panel; full debugger and other inspection profiles remain open; bounded QA worker/module/HTTP evidence added under AC-077, original intermittent native failure cause unproven",
+        "scope": "Original interpreted graph/control/UI debugger plus checked opt-in pure-control value transport/panel; full debugger and other inspection profiles remain open; bounded QA worker/module/HTTP evidence added under AC-077, original intermittent native failure cause unproven; per-declaration control grants/v2 and IR occurrence alias fix under AC-078",
         "docs": "docs/spec/IDE_RUNTIME_DIAGNOSTICS.md",
         "testFiles": [
+          "tests/inspection-declarations.test.mjs",
+          "tests/browser/inspection-declarations.test.mjs",
           "tests/worker-diagnostics.test.mjs",
           "tests/browser/worker-diagnostics.test.mjs",
           "tests/inspection-transport.test.mjs",
@@ -509,9 +511,9 @@
           "tests/step-frames.test.mjs",
           "tests/breakpoints.test.mjs"
         ],
-        "tests": "752/752 PASS",
-        "verify": "140/140 PASS",
-        "browserTests": "45/45 PASS",
+        "tests": "758/758 PASS",
+        "verify": "141/141 PASS",
+        "browserTests": "48/48 PASS",
         "commands": [
           "npm test",
           "npm run verify",
@@ -519,8 +521,8 @@
         ],
         "deployedRevision": "5bcd6abd41446073073db4e6e4f902a015488246",
         "live": "Final exact740/139/40 PASS; trusted public HTTPS/auth/access and Chromium typed core snapshot x1/result1/default-empty/protected-program and ungranted sentinel absence PASS. Existing graph/composite/reopen15/AVG5/text6/points5-loop3/OverOut7/UI1/live-clear1-2-3/safe-anchor/durable-Studio preserved; six foreign hashes/five active services unchanged. Core API only, IDE value transport/panel remain open.",
-        "liveRevision": "6cf20cff960c0aed363f14024623ff687bc5d7c6",
-        "publicSmoke": "PASS; opt-in actual x1/result1, clear/protected/revoke and all previous proofs"
+        "liveRevision": "26fd89163d2d217f3c8f3012c50c2dc87714da7b",
+        "publicSmoke": "PASS; declared then active7/inactive99/sibling non-disclosure, protected opt-inx1/clear/revoke and all prior proofs"
       },
       "nextSlice": "Source-owned checked pure control inspection grants, strict bounded Worker DTO validation and explicit owner opt-in IDE panel; default no values, protected/effect/handle refusal, exact source/frame identity, detached snapshots and real non-leakage cases. Formal secret taint/effectful UI/native/compiled inspection remain separate."
     },
