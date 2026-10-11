@@ -110,13 +110,15 @@ test('pure compiler rejects effects hidden in an unused composite', () => {
   assert.deepEqual(calls, []);
 });
 
-test('pure compiler and core IR reject nested sequences even without effect metadata', () => {
+test('pure compiler preserves nested pure sequences while core IR rejects erasure', async () => {
   const registry = createCoreRegistry();
   const inner = { schemaVersion: '0.1', id: 'test.pure.sequence', version: '1.0.0', inputs: {}, output: { type: 'Number' },
-    nodes: [{ id: 'sum', uses: 'core.add', args: { a: { literal: 1 }, b: { literal: 2 } } }], sequence: ['sum'], returns: { literal: 1 } };
+    nodes: [{ id: 'sum', uses: 'core.div', args: { a: { literal: 1 }, b: { literal: 0 } } }], sequence: ['sum'], returns: { literal: 1 } };
   registry.registerComposite({ id: inner.id, graph: inner });
   const outer = { ...inner, id: 'test.pure.outer', nodes: [{ id: 'unused', uses: inner.id, args: {} }] };
   delete outer.sequence;
-  assert.throws(() => compileStandaloneJS(outer, registry), { code: 'UNSUPPORTED_TARGET' });
+  outer.sequence = ['unused'];
+  const module = await import(`data:text/javascript,${encodeURIComponent(compileStandaloneJS(outer, registry))}`);
+  assert.throws(() => module.execute({}), { code: 'DIV_BY_ZERO' });
   assert.throws(() => lowerGraphToIR(outer, registry), { code: 'UNSUPPORTED_PROFILE' });
 });

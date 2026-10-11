@@ -19,7 +19,7 @@ Generic функция проверяется для всех допустимы
 
 Some/None и Ok/Err имеют типизированные payload. None и один из Result-конструкторов требуют ожидаемый полный тип. Match проверяет constructor/payload, области pattern binding и exhaustiveness для Option, Result, Boolean либо catch-all. Ограниченный pattern `Some(1)` не закрывает все Some; вложенный `Some(Some(v))` не закрывает `Some(None)`. Объединение нескольких ограниченных nested patterns анализируется консервативно и может требовать catch-all. Wrong payload и arm после catch-all отвергаются.
 
-ResourceHandle проверяет типовую идентичность, `using` требует handle. Это **не** доказательство ownership, закрытия, thread affinity или FFI ABI; lifecycle реализуется отдельно. Типизация try/catch требует явного типа catch binding в этом профиле; преобразование реальных host exceptions и полный error IDL остаются EMS-016. Effect declarations ещё не доказывают чистоту: это EMS-014.
+ResourceHandle проверяет типовую идентичность, `using` требует handle. Это **не** доказательство ownership, закрытия, thread affinity или FFI ABI; lifecycle реализуется отдельно. Типизация try/catch требует явного типа catch binding в этом профиле; преобразование реальных host exceptions и полный error IDL остаются EMS-016. Effect pass EMS-014 проверяет декларации и транзитивные вызовы; чистота доверенного host-кода по-прежнему зависит от честности его metadata.
 
 ## Исполняемый путь
 
@@ -38,3 +38,19 @@ node tools/ems.mjs module-build examples/avg5.ems --entry demo.AverageOfFiveArit
 По умолчанию type expansion ограничена 20 000 узлами, expression traversal — 100 000; на превышение возвращается located `TYPE_LIMIT`. Это budget checker, не изоляция произвольного host-кода.
 
 AC-028: `tests/types.test.mjs`, `tests/check.test.mjs`, `tests/lower.test.mjs`. Проверяются типы, generic soundness, aliases, unions/collections/resource types, algebraic patterns, ошибочные scope/control/async cases, явное разрешение imports и budgets. Новый AST frontend выполняет arithmetic AVG5 через общий IR и runtime, специализирует generic helpers и экспортирует JS, проверенный отдельным процессом вне workspace. Это закрывает задачу типизации и начальный pure lowering; M1 остаётся открыт до effects, полного runtime control/state/async, IDL и полного conformance harness.
+
+## Эффекты, интерфейсные требования и текстовое исполнение — AC-031
+
+`typecheckModule` теперь возвращает `policies: Map<name, { effects, capabilities }>` вместе с типами и вызовами. Отдельный `checkModuleEffects` строит call graph и распространяет декларации до неподвижной точки, в том числе через forward calls, generic helpers и рекурсивные связи. Проверка консервативна: учитывает оба ответвления, unused bindings и обработчики; catch не удаляет наблюдаемые эффекты. Ни inference, ни extern linking checks не вызывают host implementations.
+
+Без `requires` policy выводится. `requires pure` утверждает отсутствие effects и capabilities. `requires effect("log.write"), capability("stdout.write")` задаёт допустимый интерфейсный набор; inference не может его превышать (`EFFECT_MISMATCH` с source location). Набор может быть шире actual calls: interface requirements сохраняются и требуют grants даже при отсутствии наблюдаемого вызова. Неизвестное имя requirement, повтор pure или сочетание pure с effect/capability — `INVALID_REQUIREMENT`; пустые/повторные policy names — `INVALID_POLICY`.
+
+Связанный extern получает реальные транзитивные declarations из registry: ложный `requires pure` отклоняется. Несвязанный extern ещё можно проверить как декларацию; его metadata не является доказательством реализации. Lowering по-прежнему требует реального binding и проверяет типовую сигнатуру, иначе `MISSING_CONTRACT`/`BINDING_SIGNATURE`. Это не загрузка произвольной библиотеки и не sandbox.
+
+Для straight-line effectful SSA lowering создаёт sequence в порядке создания операций: let statements, standalone expression statements, left-to-right arguments и return. Все такие операции, включая чистые intermediate calls, исполняются один раз по sequence: ранняя арифметическая ошибка не переносится за поздний side effect. Pure expression statements также используют sequence, и её семантика сохраняется через nested helpers. Чистый legacy SSA без expression statements сохраняет demand-driven let semantics; полноценный imperative/control профиль относится к EMS-015. Мутация, loops, await и resource lifecycle пока отвергаются при lowering.
+
+Программа с policy или sequence выбирает `ems-effects-finite/1`; обычный pure SSA — `ems-core-finite/1`. Root requirements и transitive policy входят в semantic IR; provenance остаётся sidecar. Standalone compiler выполняет чистые sequences с теми же ошибками, но явно отвергает реальные effects/capabilities: bindings для IO export ещё не реализованы.
+
+`node examples/effect-text.mjs` проверяет и исполняет `examples/effect-text.ems` с доверенным stdout adapter, печатает `first`, затем `second`. В API используются `executeIR(..., {capabilities, allowedEffects})`; CLI `module-run` допускает `[--policy <execution-policy.json>]` после input JSON. Файл содержит только capabilities и allowedEffects (см. `schemas/execution-policy.schema.json`), не runtime internals. Нет неявного grant all.
+
+Evidence: `tests/frontend-effects.test.mjs`, расширенный `tests/effect-ir.test.mjs`, `tools/verify.mjs`; AC-029..031. EMS-014 закрывает начальный effect/capability kernel, а не OS permission broker, production scheduler или поддержку file/network/device APIs.

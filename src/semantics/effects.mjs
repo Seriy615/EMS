@@ -25,7 +25,11 @@ export function analyzeGraphEffects(graph, registry) {
   }
   function analyze(current, stack) {
     validateGraph(current, registry);
-    const effects = new Set(), capabilities = new Set(), nodes = {};
+    const declaredEffects = Object.hasOwn(current, 'effects') ? current.effects : [];
+    const declaredCapabilities = Object.hasOwn(current, 'capabilities') ? current.capabilities : [];
+    assertPolicyNames(declaredEffects, 'effects');
+    assertPolicyNames(declaredCapabilities, 'capabilities');
+    const effects = new Set(declaredEffects), capabilities = new Set(declaredCapabilities), nodes = {};
     for (const node of current.nodes) {
       const summary = contractSummary(registry.resolve(node.uses), stack);
       Object.defineProperty(nodes, node.id, { value: summary, enumerable: true });

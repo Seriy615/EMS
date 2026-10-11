@@ -1,6 +1,6 @@
 import { fail } from './errors.mjs';
 import { validateGraph } from './validate.mjs';
-import { analyzeGraphEffects } from '../semantics/effects.mjs';
+import { analyzeGraphEffects, validateEffectSequence } from '../semantics/effects.mjs';
 
 /**
  * Reference pure JS target. Emits each reachable node once per composite call,
@@ -11,18 +11,7 @@ export function compileStandaloneJS(graph, registry) {
   const policy = analyzeGraphEffects(graph, registry);
   if (policy.effects.length || policy.capabilities.length)
     fail('UNSUPPORTED_TARGET', 'Effects or capabilities cannot be erased during standalone compilation');
-  const inspected = new Set();
-  function rejectSequences(current) {
-    if (Object.hasOwn(current, 'sequence') && (!Array.isArray(current.sequence) || current.sequence.length))
-      fail('UNSUPPORTED_TARGET', 'Pure standalone target does not support explicit call sequences');
-    for (const node of current.nodes) {
-      const contract = registry.resolve(node.uses);
-      if (contract.kind === 'composite' && !inspected.has(contract.id)) {
-        inspected.add(contract.id); rejectSequences(contract.graph);
-      }
-    }
-  }
-  rejectSequences(graph);
+  validateEffectSequence(graph, registry);
   const statements = [];
   let nextValue = 0;
   function compileExpression(currentGraph, boundInputs, stack) {
@@ -30,8 +19,6 @@ export function compileStandaloneJS(graph, registry) {
       fail('RECURSIVE_COMPOSITE', `Recursive composite in compiler: ${currentGraph.id}`);
     const nextStack = [...stack, currentGraph.id];
     const { nodes } = validateGraph(currentGraph, registry);
-    if (Object.hasOwn(currentGraph, 'sequence') && (!Array.isArray(currentGraph.sequence) || currentGraph.sequence.length))
-      fail('UNSUPPORTED_TARGET', 'Pure standalone target does not support explicit call sequences');
     // A pure target cannot accept effectful declarations, including unused ones.
     for (const node of nodes.values()) {
       const contract = registry.resolve(node.uses);
@@ -63,6 +50,7 @@ export function compileStandaloneJS(graph, registry) {
       memo.set(id, value);
       return value;
     }
+    for (const id of currentGraph.sequence ?? []) compileNode(id);
     return expression(currentGraph.returns);
   }
 

@@ -7,7 +7,7 @@
 | LANG-01 | Один язык, текстовая и визуальная формы с единой семантикой | M1–M2 | partial: учебный текстовый поднабор |
 | LANG-02 | Типы: базовые, составные, generic, Result, Stream, resource | M1 | partial: AST type pass/generics (AC-028); runtime пока finite core |
 | LANG-03 | Условия, циклы, функции, события, ошибки, async | M1–M3 | partial: located AST для control/error/async syntax (AC-027); исполнение planned |
-| LANG-04 | Формальная семантика effectful/dataflow и concurrency | M1 | partial: finite pure core (AC-025); state/effects/concurrency planned |
+| LANG-04 | Формальная семантика effectful/dataflow и concurrency | M1 | partial: finite core + explicit effect sequence (AC-025, AC-030/031); state/concurrency planned |
 | LANG-05 | AST/HIR/IR не зависят от координат канваса | M1 | partial: typed IR v1, located AST и pure SSA lowering (AC-026..028); full control lowering planned |
 | CONT-01 | Публичная спецификация контракта, version IDL | M1 | partial |
 | CONT-02 | Статическая проверка соединений и типов | M0 | M0 demo |
@@ -16,7 +16,7 @@
 | CONT-05 | Запечатать composite в compiled atomic artifact | M0–M5 | M0 demo JS |
 | CONT-06 | Лицензия, видимость, редактируемость отдельно от atomic | M1–M10 | documented |
 | CONT-07 | Версии, lockfile, совместимость и migration | M1–M5 | planned |
-| CONT-08 | Effect/capability/pre/postcondition проверка | M1–M3 | partial runtime capability |
+| CONT-08 | Effect/capability/pre/postcondition проверка | M1–M3 | partial: transitive runtime preflight and AST/IR effects (AC-029..031); pre/postconditions planned |
 | FFI-01 | Импорт внешней библиотеки как пакета атомарных контрактов | M5 | M0 trusted ESM demo |
 | FFI-02 | ABI, ownership, async, callbacks, error conversion | M5 | planned |
 | FFI-03 | C ABI/Rust/C++ via bridge; WASM/WIT | M5–M6 | planned |

@@ -24,7 +24,7 @@ function usage() {
   node tools/ems.mjs ir-build <program.ir.json> --out <output.mjs>
   node tools/ems.mjs parse <source.ems>
   node tools/ems.mjs check <source.ems>
-  node tools/ems.mjs module-run <source.ems> --entry <name> '<inputs-json>'
+  node tools/ems.mjs module-run <source.ems> --entry <name> '<inputs-json>' [--policy <policy.json>]
   node tools/ems.mjs module-build <source.ems> --entry <name> --out <output.mjs>`);
 }
 async function main() {
@@ -38,7 +38,15 @@ async function main() {
     if (args[0] !== '--entry' || !args[1]) throw new Error('Use --entry <name>');
     const bundle = lowerCheckedModule(checked, args[1], base);
     if (command === 'module-run') {
-      const result = await executeIR(bundle.ir, JSON.parse(args[2] || '{}'), bundle.registry);
+      let policy = {};
+      if (args.length > 3) {
+        if (args.length !== 5 || args[3] !== '--policy') throw new Error('Use --policy <execution-policy.json> after inputs');
+        policy = JSON.parse(await readFile(args[4], 'utf8'));
+        if (!policy || typeof policy !== 'object' || Array.isArray(policy) ||
+            Object.keys(policy).some(key => !['capabilities', 'allowedEffects'].includes(key)))
+          throw new Error('Execution policy only accepts capabilities and allowedEffects');
+      }
+      const result = await executeIR(bundle.ir, JSON.parse(args[2] || '{}'), bundle.registry, policy);
       console.log(JSON.stringify({ contract: bundle.ir.id, result }, null, 2));
     } else {
       if (args[2] !== '--out' || !args[3]) throw new Error('Use --out <path>');

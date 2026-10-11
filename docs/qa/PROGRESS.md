@@ -63,3 +63,13 @@ AC-029 подтверждена executable тестами: отказ на по�
 AC-030: десять executable тестов в `tests/effect-ir.test.mjs`; runtime/IR roundtrip, negative cases, nested order/preflight, denied grants, host failure и compiler rejection. Исправлен пропуск compiler: unused composite мог скрыть вложенный effect. Теперь transitive preflight запрещает такие экспорты до emitJS. `examples/effect-sequence.mjs` — настоящий trusted stdout adapter, не FFI sandbox или portable file implementation.
 
 Baseline на 98cc910: 215/215 тестов, 33/33 verify. Итог: `npm test` 225/225 PASS, `npm run verify` 33/33 PASS; Node 22.21.0, логи `/tmp/ems-effect-ir-tests.log`, `/tmp/ems-effect-ir-verify.log`. EMS-014 IN_PROGRESS: следующий срез — AST effect declarations/checker и текстовое lowering в effect IR; затем EMS-015 state/events/control. M1/P1/IDE/deploy остаются открыты.
+
+## Продолжение — EMS-014 завершена в finite kernel; AST → effects IR
+
+`src/frontend/effects.mjs` выводит policy через call graph worklist, включая generic/forward/recursive calls. located pure assertions и explicit budgets проверены; linked extern не может скрыть binding metadata. Без annotation policy выводится; explicit interface requirements сохраняются отдельным root requirements IR. Никакой host-код при checker/linker не исполняется.
+
+Lowering effectful SSA и expression statements формирует ordered sequences; ошибки чистых intermediate операций предшествуют поздним действиям. Pure sequences через nested helpers также сохраняются в standalone. Effectful standalone отвергается до emitJS; полного IO linker нет. Reference input policy по умолчанию пустая; CLI добавляет явный --policy с ограниченным envelope, опубликована execution policy schema. Пример `node examples/effect-text.mjs` реально печатает first/second из собственного EMS source через доверенный adapter.
+
+AC-031: 10 frontend effect tests плюс расширенные IR/compiler negative checks; старый unsupported effect-annotation тест заменён проверкой реализованного пути. Baseline на 25c4004: 225/225 tests и 33/33 verify. Итог `npm test` **234/234 PASS**, `npm run verify` **36/36 PASS**; логи `/tmp/ems-ast-effects-tests.log` и `/tmp/ems-ast-effects-verify.log`, Node 22.21.0. EMS-014 DONE по AC-029..031 в описанном finite kernel; не объявлять runtime sandbox, IO backend или весь M1 завершёнными.
+
+Следующая готовая задача — EMS-015: control-flow/state/events/cancellation и deterministic replay, необходимые для рабочего UI/IDE. Глобальная цель, P1, WEB IDE MVP и deploy остаются открыты. Все проверенные изменения отправлять в git@github.com:Seriy615/EMS.git.

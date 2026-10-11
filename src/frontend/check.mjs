@@ -1,5 +1,6 @@
 import { fail } from '../reference/errors.mjs';
 import { normalizeType, resolveType, unifyTypes, typeName } from './types.mjs';
+import { checkModuleEffects } from './effects.mjs';
 
 const term = (name, args = []) => ({ kind: 'Type', name, arguments: args });
 const primitive = name => term(name);
@@ -291,5 +292,7 @@ export function typecheckModule(ast, registry, { imports = new Map(), maxTypeNod
     const context = { output: target.output, parameters: new Set(target.parameters), async: target.async, loops: 0 };
     if (!block(target.declaration.body, scope, context)) diagnostic('MISSING_RETURN', `Not every path returns from ${target.name}`, target.declaration);
   }
-  return { ast, signatures, types, calls };
+  const checked = { ast, signatures, types, calls };
+  checked.policies = checkModuleEffects(checked, registry);
+  return checked;
 }

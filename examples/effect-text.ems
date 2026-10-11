@@ -1,0 +1,8 @@
+extern contract demo.stdout(message: String) -> String
+  requires effect("log.write"), capability("stdout.write");
+
+export fn demo.OrderedLogs() -> String
+  requires effect("log.write"), capability("stdout.write") {
+  demo.stdout("first");
+  return demo.stdout("second");
+}

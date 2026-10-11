@@ -2,9 +2,9 @@
 
 ## Последняя проверка — ядро перед IDE
 
-`npm test` **225/225 PASS**, `npm run verify` **33/33 PASS**. EMS-010..013 DONE для документированных начальных профилей (AC-025..028); M1 целиком не завершён. Новый текстовый AST frontend типизируется и реально исполняет чистые программы/generic helpers через общий IR/runtime, экспортирует standalone. Полные эффекты, состояние, события, async runtime и lifecycle ещё впереди.
+`npm test` **234/234 PASS**, `npm run verify` **36/36 PASS**. EMS-010..014 DONE для документированных начальных профилей (AC-025..031); M1 целиком не завершён. Новый текстовый AST frontend типизируется и реально исполняет чистые программы/generic helpers через общий IR/runtime, экспортирует standalone. Полные эффекты, состояние, события, async runtime и lifecycle ещё впереди.
 
-EMS-014 IN_PROGRESS: транзитивный policy preflight встроен в `executeGraph` (AC-029). Вложенные/unused декларации проверяются до первого host-вызова; раздельные grants и ошибочные списки проверены в `tests/effects.test.mjs`. Effect IR и explicit nested sequencing проверены по AC-030; AST effect pass/lowering ещё не завершён. Глобальная цель остаётся активной. WEB IDE MVP и деплой разрешены, но по уточнению владельца сначала продолжается ядро. Deploy не выполнен; TLS SAN mismatch остаётся обнаруженным инфраструктурным дефектом.
+EMS-014 DONE для начального finite effect/capability kernel: транзитивный policy preflight встроен в `executeGraph` (AC-029). Вложенные/unused декларации проверяются до первого host-вызова; раздельные grants и ошибочные списки проверены в `tests/effects.test.mjs`. Effect IR и explicit nested sequencing проверены по AC-030; AST effect pass, straight-line lowering, interface requirements и pure sequence export проверены по AC-031. Следующая задача EMS-015 — control/state/events/cancellation; production permissions и IO compiler bindings остаются впереди. Глобальная цель остаётся активной. WEB IDE MVP и деплой разрешены, но по уточнению владельца сначала продолжается ядро. Deploy не выполнен; TLS SAN mismatch остаётся обнаруженным инфраструктурным дефектом.
 
 ## Текущее состояние после EMS-012
 

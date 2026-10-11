@@ -1,6 +1,6 @@
 import { fail } from '../reference/errors.mjs';
 import { Registry } from '../reference/registry.mjs';
-import { lowerGraphToIR } from '../ir/index.mjs';
+import { lowerGraphToIR, CORE_PROFILE, EFFECT_PROFILE } from '../ir/index.mjs';
 import { resolveType, unifyTypes, typeName } from './types.mjs';
 
 function referenceType(type, node) {
@@ -22,7 +22,7 @@ function constant(node) {
   fail('UNSUPPORTED_PROFILE', 'Computed array literals require a collection IR extension', { location: node.location });
 }
 
-/** Link typed pure SSA functions (including inferred generic instances) into the shared call-IR. */
+/** Link typed SSA functions (including inferred generic instances) into the shared call-IR. */
 export function lowerCheckedModule(checked, entry, baseRegistry) {
   const registry = new Registry();
   for (const item of baseRegistry.items.values()) {
@@ -37,8 +37,8 @@ export function lowerCheckedModule(checked, entry, baseRegistry) {
   const version = checked.ast.package?.version ?? '0.1.0';
   function specialize(target, inputs) {
     if (target.contract) return target.name;
-    if (target.async || target.declaration.requirements.some(requirement => requirement.name !== 'pure'))
-      fail('UNSUPPORTED_PROFILE', `${target.name}: effects or async require a richer IR`, { location: target.declaration.location });
+    if (target.async)
+      fail('UNSUPPORTED_PROFILE', `${target.name}: async EMS requires a richer IR`, { location: target.declaration.location });
     if (target.declaration.external) {
       const contract = registry.resolve(target.name);
       const declaredInputs = target.inputs.map((input, index) => [input.name, referenceType(inputs[index], target.declaration)]);
@@ -57,11 +57,21 @@ export function lowerCheckedModule(checked, entry, baseRegistry) {
     const graph = { schemaVersion: '0.1', id, version,
       inputs: Object.fromEntries(target.inputs.map((input, index) => [input.name, { type: referenceType(inputs[index], target.declaration) }])),
       output: { type: referenceType(resolveType(target.output, substitutions), target.declaration) }, nodes: [], returns: null };
+    const policy = checked.policies.get(target.name);
+    let sequential = policy.effects.length || policy.capabilities.length || target.declaration.body.statements.some(statement => statement.kind === 'ExpressionStatement');
+    if (sequential) Object.assign(graph, { effects: policy.effects, capabilities: policy.capabilities, sequence: [] });
     const environment = new Map(target.inputs.map(input => [input.name, { input: input.name }]));
     const sourceMap = {};
     function operation(uses, args, node) {
+      const implementation = registry.resolve(uses);
+      if (!sequential && implementation.kind === 'composite' && Object.hasOwn(implementation.graph, 'sequence')) {
+        sequential = true;
+        Object.assign(graph, { effects: policy.effects, capabilities: policy.capabilities, sequence: graph.nodes.map(node => node.id) });
+      }
       const name = `value_${graph.nodes.length}`;
-      graph.nodes.push({ id: name, uses, args }); sourceMap[name] = node.location;
+      graph.nodes.push({ id: name, uses, args });
+      if (sequential) graph.sequence.push(name);
+      sourceMap[name] = node.location;
       return { node: name };
     }
     function expression(node) {
@@ -94,15 +104,16 @@ export function lowerCheckedModule(checked, entry, baseRegistry) {
     for (const statement of target.declaration.body.statements) {
       if (statement.kind === 'LetDeclaration' && !statement.mutable) environment.set(statement.name, expression(statement.value));
       else if (statement.kind === 'ReturnStatement') graph.returns = expression(statement.value);
+      else if (statement.kind === 'ExpressionStatement') expression(statement.value);
       else fail('UNSUPPORTED_PROFILE', `${statement.kind} requires control/state/effect IR`, { location: statement.location });
     }
-    registry.registerComposite({ id, version, graph });
+    registry.registerComposite({ id, version, graph, ...policy });
     building.delete(key); instances.set(key, id); provenance[id] = { location: target.declaration.location, nodes: sourceMap };
     return id;
   }
   const id = specialize(entrySignature, entrySignature.inputs.map(input => input.type));
   const contract = registry.resolve(id);
   if (contract.kind !== 'composite') fail('UNSUPPORTED_PROFILE', 'Entry must have an EMS body');
-  return { ir: lowerGraphToIR(contract.graph, registry), registry,
+  return { ir: lowerGraphToIR(contract.graph, registry, { profile: contract.graph.sequence || contract.effects.length || contract.capabilities.length ? EFFECT_PROFILE : CORE_PROFILE }), registry,
     provenance: { schemaVersion: 'ems-provenance/1', functions: provenance } };
 }

@@ -67,8 +67,7 @@ for (const [source, code] of [
   ['fn test(x: Number) -> Number { return x % 2; }', 'UNSUPPORTED_PROFILE'],
   ['async fn test() -> Number { return 1; }', 'UNSUPPORTED_PROFILE'],
   ['fn test(x: Boolean[]) -> Boolean[] { return x; }', 'UNSUPPORTED_PROFILE'],
-  ['fn test(x: Number) -> Number[] { return [x]; }', 'UNSUPPORTED_PROFILE'],
-  ['fn test() -> Number requires effect("file.write") { return 1; }', 'UNSUPPORTED_PROFILE']
+  ['fn test(x: Number) -> Number[] { return [x]; }', 'UNSUPPORTED_PROFILE']
 ]) {
   test(`EMS-013 lowering rejects unsupported semantics: ${source}`, () => {
     assert.throws(() => lower(source), { code });

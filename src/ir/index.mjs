@@ -3,7 +3,7 @@ import { assertTypeName, assertValueType, typeOfValue } from '../reference/types
 import { validateGraph } from '../reference/validate.mjs';
 import { executeGraph } from '../reference/runtime.mjs';
 import { compileStandaloneJS } from '../reference/compiler.mjs';
-import { validateEffectSequence } from '../semantics/effects.mjs';
+import { analyzeGraphEffects, validateEffectSequence } from '../semantics/effects.mjs';
 
 export const IR_VERSION = 'ems-ir/1';
 export const CORE_PROFILE = 'ems-core-finite/1';
@@ -77,6 +77,10 @@ export function lowerGraphToIR(graph, registry, { profile = CORE_PROFILE } = {})
   validateGraph(graph, registry);
   if (![CORE_PROFILE, EFFECT_PROFILE].includes(profile)) fail('UNSUPPORTED_PROFILE', `Unknown profile ${profile}`);
   if (profile === CORE_PROFILE && Object.hasOwn(graph, 'sequence') && (!Array.isArray(graph.sequence) || graph.sequence.length)) fail('UNSUPPORTED_PROFILE', 'Core IR cannot erase an explicit sequence');
+  if (profile === CORE_PROFILE) {
+    const policy = analyzeGraphEffects(graph, registry);
+    if (policy.effects.length || policy.capabilities.length) fail('UNSUPPORTED_PROFILE', 'Core IR cannot erase graph policy');
+  }
   const policy = profile === EFFECT_PROFILE ? validateEffectSequence(graph, registry, { required: true }) : null;
   const operations = [...graph.nodes].sort((a, b) => a.id < b.id ? -1 : a.id > b.id ? 1 : 0).map(node => {
     const contract = registry.resolve(node.uses);
@@ -92,7 +96,7 @@ export function lowerGraphToIR(graph, registry, { profile = CORE_PROFILE } = {})
     schemaVersion: IR_VERSION, profile, id: graph.id, version: graph.version,
     inputs: Object.entries(graph.inputs).map(([name, spec]) => ({ name, type: spec.type })),
     output: { type: graph.output.type }, operations, result: fromReference(graph.returns),
-    ...(policy ? { policy: { effects: policy.effects, capabilities: policy.capabilities }, sequence: graph.sequence ?? [] } : {})
+    ...(policy ? { policy: { effects: policy.effects, capabilities: policy.capabilities }, sequence: graph.sequence ?? [], requirements: { effects: [...(graph.effects ?? [])].sort(), capabilities: [...(graph.capabilities ?? [])].sort() } } : {})
   };
   // Keep lowering and deserialization on the same structural and type gate.
   graphFromIR(ir, registry);
@@ -104,7 +108,7 @@ export function graphFromIR(ir, registry) {
   if (!ir || ir.schemaVersion !== IR_VERSION) fail('IR_VERSION', `Expected ${IR_VERSION}`);
   if (![CORE_PROFILE, EFFECT_PROFILE].includes(ir.profile)) fail('UNSUPPORTED_PROFILE', 'Unknown IR profile');
   const effectful = ir.profile === EFFECT_PROFILE;
-  object(ir, ['schemaVersion', 'profile', 'id', 'version', 'inputs', 'output', 'operations', 'result', ...(effectful ? ['policy', 'sequence'] : [])], 'IR');
+  object(ir, ['schemaVersion', 'profile', 'id', 'version', 'inputs', 'output', 'operations', 'result', ...(effectful ? ['policy', 'sequence', 'requirements'] : [])], 'IR');
   text(ir.id, 'IR.id'); text(ir.version, 'IR.version');
   if (!Array.isArray(ir.inputs) || !Array.isArray(ir.operations)) fail('INVALID_IR', 'Expected input/operation arrays');
   object(ir.output, ['type'], 'IR.output'); assertTypeName(ir.output.type, 'IR.output');
@@ -137,9 +141,10 @@ export function graphFromIR(ir, registry) {
   });
   const graph = { schemaVersion: '0.1', id: ir.id, version: ir.version, inputs,
     output: { type: ir.output.type }, nodes, returns: toReference(ir.result),
-    ...(effectful ? { sequence: ir.sequence } : {}) };
+    ...(effectful ? { sequence: ir.sequence, effects: ir.requirements?.effects, capabilities: ir.requirements?.capabilities } : {}) };
   validateGraph(graph, registry);
   if (effectful) {
+    object(ir.requirements, ['effects', 'capabilities'], 'IR.requirements');
     const summary = validateEffectSequence(graph, registry, { required: true });
     function samePolicy(actual, expected) {
       object(actual, ['effects', 'capabilities'], 'IR.policy');
@@ -168,7 +173,6 @@ export function executeIR(ir, inputs, registry, options = {}) {
   return executeGraph(graphFromIR(ir, registry), inputs, registry, options);
 }
 export function compileIRToJS(ir, registry) {
-  if (ir.profile === EFFECT_PROFILE) { graphFromIR(ir, registry); fail('UNSUPPORTED_TARGET', 'Effect IR requires a target with explicit effect bindings'); }
   return compileStandaloneJS(graphFromIR(ir, registry), registry);
 }
 

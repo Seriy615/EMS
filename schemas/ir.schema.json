@@ -190,6 +190,32 @@
         "pattern": "^[A-Za-z_][A-Za-z0-9_]*$"
       },
       "uniqueItems": true
+    },
+    "requirements": {
+      "type": "object",
+      "properties": {
+        "effects": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^[-a-zA-Z0-9_.]+$"
+          },
+          "uniqueItems": true
+        },
+        "capabilities": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^[-a-zA-Z0-9_.]+$"
+          },
+          "uniqueItems": true
+        }
+      },
+      "required": [
+        "effects",
+        "capabilities"
+      ],
+      "additionalProperties": false
     }
   },
   "required": [
@@ -352,7 +378,8 @@
       "then": {
         "required": [
           "policy",
-          "sequence"
+          "sequence",
+          "requirements"
         ],
         "properties": {
           "operations": {
@@ -375,6 +402,11 @@
             {
               "required": [
                 "sequence"
+              ]
+            },
+            {
+              "required": [
+                "requirements"
               ]
             }
           ]

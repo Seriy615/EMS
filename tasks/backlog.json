@@ -249,13 +249,13 @@
       "objective": "Model file/net/device/etc effects in IR and verifier",
       "deliverables": "Effect checker and capability schema",
       "acceptance": "No unauthorized effect silently compiled",
-      "status": "IN_PROGRESS",
+      "status": "DONE",
       "priority": "P0",
       "ownerModelPolicy": [
         "GPT-6.1 Sol",
         "GPT-6 Luna"
       ],
-      "progress": "Transitive policy analysis integrated into executeGraph before any host call (AC-029), including nested/unused nodes; capability/effect gates and declaration/grant validation tested. Effect IR profile and explicit nested sequencing implemented (AC-030); forged metadata and reversed dependencies rejected; pure compiler rejects hidden unused composite effects. AST effect checking/lowering remains pending; trusted-host execution is not a sandbox."
+      "progress": "Transitive policy analysis integrated into executeGraph before any host call (AC-029), including nested/unused nodes; capability/effect gates and declaration/grant validation tested. Effect IR profile and explicit nested sequencing implemented (AC-030); forged metadata and reversed dependencies rejected; pure compiler rejects hidden unused composite effects. AST fixed-point policy inference, pure/explicit budgets, extern checks, straight-line sequence lowering and CLI explicit grant file implemented (AC-031). Interface requirements survive IR. Pure sequences export; effectful compilation is explicitly unsupported. DONE for finite effect kernel; OS broker, full control/async and IO backends remain separate work."
     },
     {
       "id": "EMS-015",
