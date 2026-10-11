@@ -1,0 +1,15 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {startStudioServer} from '../../tools/serve.mjs';
+import {launchChromium} from '../../tools/lib/chromium.mjs';
+
+test('actual Chromium runs typed opt-in inspection; the current Studio Worker explicitly rejects unimplemented value transport',async()=>{
+ const server=await startStudioServer({port:0});let browser;
+ try{browser=await launchChromium();const page=await browser.page(server.origin);const result=await page.evaluate(`(async()=>{
+  await import('/web/studio.mjs');const {parseEMSModule}=await import('/src/frontend/index.mjs'),{typecheckModule}=await import('/src/frontend/check.mjs'),{lowerCheckedModule}=await import('/src/frontend/lower.mjs'),{executeIR}=await import('/src/ir/index.mjs'),{createCoreRegistry}=await import('/src/reference/registry.mjs');const registry=createCoreRegistry(),source='fn main(secret:String)->Number {let mut x=0;x=x+1;return x;}',bundle=lowerCheckedModule(typecheckModule(parseEMSModule(source),registry),'main',registry,{profile:'control'}),events=[];
+  const value=await executeIR(bundle.ir,{secret:'BROWSER_PRIVATE_SENTINEL'},bundle.registry,{inspection:{allow:[{function:'main',names:['x']}]},onControlEnter:e=>events.push(e)}),atReturn=events.find(e=>e.kind==='return').inspection.variables[0];const protectedEvents=[];await executeIR(bundle.ir,{secret:'BROWSER_PRIVATE_SENTINEL'},bundle.registry,{inspection:{allow:[{function:'main',names:['secret','x']}],protectedFunctions:['main']},onControlEnter:e=>protectedEvents.push(e)});
+  const {ProjectEditor}=await import('/src/studio/project.mjs'),{startStudioExecution}=await import('/src/studio/execution-client.mjs'),project=new ProjectEditor().serialize(),draft={source:'fn run()->Number {let mut x=0;return x+1;}',entry:'run',lowering:'auto'};let code;try{await startStudioExecution({action:'text',project,draft,inputs:{},inspection:{allow:[]}}).promise;}catch(error){code=error.code;}
+  const pauses=[];const job=startStudioExecution({action:'text',project,draft,inputs:{},debug:true},{onPause:e=>{pauses.push(e);job.resume('continue');}});const ordinary=await job.promise;return {value,atReturn,leak:JSON.stringify(events).includes('BROWSER_PRIVATE_SENTINEL'),protectedLeak:JSON.stringify(protectedEvents).includes('BROWSER_PRIVATE_SENTINEL'),protectedStatus:protectedEvents.every(e=>e.inspection.variables.every(v=>v.status==='protected-program'&&!Object.hasOwn(v,'value'))),code,ordinary,pauses:pauses.length,workerValues:pauses.some(e=>Object.hasOwn(e,'inspection'))};
+ })()`);assert.equal(result.value,1);assert.deepEqual(result.atReturn,{name:'x',type:'Number',status:'value',value:1});assert.equal(result.leak,false);assert.equal(result.protectedLeak,false);assert.equal(result.protectedStatus,true);assert.equal(result.code,'UNSUPPORTED_INSPECTION_TRANSPORT');assert.equal(result.ordinary,1);assert.equal(result.pauses,1);assert.equal(result.workerValues,false);
+ }finally{await browser?.close();await server.close();}
+});

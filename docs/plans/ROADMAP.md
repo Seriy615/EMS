@@ -163,3 +163,8 @@ Control statement/expression stepping и fresh source sidecar работают �
 ## После AC-073 — сохранение local debugger contexts
 
 Durable checked graph/text Studio + source-owned UI поддерживают reopening/mode/source/library changes отдельно от semantic IR. EMS-033 IN_PROGRESS: следующий срез — typed runtime inspection с явной opt-in bounded allowlist policy, default payload-free behavior, исключением secret/resource/future/stream values и доказательством absence of leakage через Worker/IDE. Native/compiled transports и full debugger parity следуют после определения этой границы. Общая цель языка/компилятора/платформ/экосистемы сохраняется.
+
+
+## После AC-074 — core inspection policy
+
+Реализованы реальные typed runtime projection, finite copier, protection и budgets; это foundation core API, а не завершённый IDE inspector. Следующий EMS-033 срез: source-owned typed grants → strict bounded Worker DTO → explicit local opt-in panel для pure control profile с default absence of values и secret/protected refusal tests. Effectful UI state, formal secret taint/declassification и native/compiled inspection требуют дальнейшего определения и отдельной приёмки семантики. Глобальная цель сохраняет полный scope.

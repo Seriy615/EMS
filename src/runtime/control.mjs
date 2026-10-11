@@ -1,3 +1,4 @@
+import {createControlInspector,inspectionPatternTypes} from './inspection.mjs';
 import {DIAGNOSTIC_FRAMES,diagnosticFrames,nextDiagnosticFrame,notifyDiagnosticExit} from './diagnostic-frames.mjs';
 import {controlNodeEntries} from '../ir/control-addresses.mjs';
 import { createResourceScope,resourceBudgetOptions,executeResourceOperation,resourceCleanupOutcome } from './resources.mjs';
@@ -29,12 +30,14 @@ export async function executeControlIR(ir, inputs, registry, options = {}) {
   assertSignal(options.signal); checkCancellation(options.signal);
   const checked = validateControlIR(ir, registry); checkControlPolicy(checked.policy, options);
   validateControlInputs(checked.entry, inputs);
+  if(options.inspection!==undefined&&typeof options.onControlEnter!=='function')fail('INVALID_INSPECTION_POLICY','Inspection requires a control diagnostic observer');
+  const inspect=options.inspection===undefined?null:createControlInspector(ir,options.inspection);
   const budget = controlBudgetOptions(options); let steps = 0;
   const diagnostics=diagnosticFrames(options);
   const addresses=new WeakMap();
   if(options.onControlEnter)for(const fn of ir.functions)for(const [path,node] of controlNodeEntries(fn))addresses.set(node,path);
-  async function observe(node,frame){
-    const event={phase:'enter',profile:'control',function:frame.function,node:addresses.get(node),kind:node.kind,type:node.type??null,callStack:[...frame.callStack],frames:[...frame.frames],step:steps};
+  async function observe(node,frame,scope){
+    const event={phase:'enter',profile:'control',function:frame.function,node:addresses.get(node),kind:node.kind,type:node.type??null,callStack:[...frame.callStack],frames:[...frame.frames],step:steps,...(inspect?{inspection:inspect(frame.function,scope)}:{})};
     try{await awaitCancellable(options.onControlEnter(event),options.signal);}catch{/* Diagnostics cannot replace semantic errors. */}
     checkCancellation(options.signal);
   }
@@ -51,7 +54,7 @@ export async function executeControlIR(ir, inputs, registry, options = {}) {
     tick();
     if (++frame.evaluationDepth > 256) { frame.evaluationDepth--; fail('EVALUATION_DEPTH', 'Control expression depth exhausted', { maxEvaluationDepth: 256 }); }
     try {
-    if(options.onControlEnter)await observe(node,frame);
+    if(options.onControlEnter)await observe(node,frame,scope);
     let value;
     switch (node.kind) {
       case 'literal': value = decodeControlLiteral(node.value, node.type); break;
@@ -77,7 +80,8 @@ export async function executeControlIR(ir, inputs, registry, options = {}) {
         const operation = async (taskFrame = frame) => {
           if (node.target.kind === 'function') return invoke(target, args, taskFrame);
           const params = Object.fromEntries(Object.keys(target.inputs).map((key, index) => [key, args[index]]));
-          const result = target.kind==='resource'?await resources.acquire(target,params):target.kind === 'composite' ? await executeGraph(target.graph, params, registry, {...options,[DIAGNOSTIC_FRAMES]:{allocator:diagnostics.allocator,stack:frame.frames}})
+          const graphOptions={...options};delete graphOptions.inspection;
+          const result = target.kind==='resource'?await resources.acquire(target,params):target.kind === 'composite' ? await executeGraph(target.graph, params, registry, {...graphOptions,signal:options.signal,[DIAGNOSTIC_FRAMES]:{allocator:diagnostics.allocator,stack:frame.frames}})
             : await awaitCancellable(target.execute(params, Object.freeze({ signal: options.signal, state: options.state })), options.signal);
           if(target.kind!=='resource')assertValueType(result, target.output, 'result of ' + node.target.id); return result;
         };
@@ -94,10 +98,10 @@ export async function executeControlIR(ir, inputs, registry, options = {}) {
     try{return await run();}catch(error){pending=error;hasError=true;throw error;}finally{if(resources){let escape;try{if(exitValue?.kind==='return')resources.escaping(exitValue.value,owned);}catch(error){escape=error;}const failures=await resources.dispose(owned,pending,hasError);resourceCleanupOutcome(escape??pending,!!escape||hasError,failures);}}
     async function run(){
     for (const statement of body) {
-      tick();if(options.onControlEnter)await observe(statement,frame); let exit;
+      tick();if(options.onControlEnter)await observe(statement,frame,scope); let exit;
       switch (statement.kind) {
-        case 'using':{const value=resources.claim(await expression(statement.value,scope,frame),owner);owned.push(value);scope.set(statement.name,{value});break;}
-        case 'let': scope.set(statement.name, { value: await expression(statement.value, scope, frame) }); break;
+        case 'using':{const value=resources.claim(await expression(statement.value,scope,frame),owner);owned.push(value);scope.set(statement.name,{value,type:statement.type});break;}
+        case 'let': scope.set(statement.name, { value: await expression(statement.value, scope, frame),type:statement.type }); break;
         case 'expression': await expression(statement.value, scope, frame); break;
         case 'return': exitValue={kind:'return',value:await expression(statement.value,scope,frame)};return exitValue;
         case 'throw': throw makeControlThrow(await expression(statement.value, scope, frame), statement.value.type);
@@ -108,7 +112,7 @@ export async function executeControlIR(ir, inputs, registry, options = {}) {
             catch (error) {
               const handler = statement.handler;
               if (!handler || !matchesControlCatch(error, handler.type)) throw error;
-              const nested = new Map(scope); nested.set(handler.binding, { value: controlCatchValue(error, handler.type) });
+              const nested = new Map(scope); nested.set(handler.binding, { value: controlCatchValue(error, handler.type),type:handler.type });
               exit = await block(handler.body, nested, frame);
             }
           } catch (error) { pending = error; hasError = true; }
@@ -128,7 +132,8 @@ export async function executeControlIR(ir, inputs, registry, options = {}) {
           for (const arm of statement.arms) {
             const bindings = matchControlPattern(arm.pattern, value, tick);
             if (bindings !== null) { const nested = new Map(scope);
-              for (const [name, value] of bindings) nested.set(name, { value });
+              const types=inspect?inspectionPatternTypes(arm.pattern,statement.value.type):null;
+              for (const [name, value] of bindings) nested.set(name, { value,type:types?.get(name) });
               exit = await block(arm.body, nested, frame); break;
             }
           }
@@ -148,14 +153,14 @@ export async function executeControlIR(ir, inputs, registry, options = {}) {
           while (true) {
             tick(); const item=await streams.next(stream);checkCancellation(options.signal);
             if (item.tag === 'None') break;
-            tick();const nested=new Map(scope);nested.set(statement.binding,{value:item.value});
+            tick();const nested=new Map(scope);nested.set(statement.binding,{value:item.value,type:statement.iterable.type.slice(7,-1)});
             const result=await block(statement.body,nested,frame);if(result?.kind==='return'){exitValue=result;return result;}if(result?.kind==='break')break;
           }
           break;
         }
         case 'for': {
           const values = [...await expression(statement.iterable, scope, frame)];
-          for (const value of values) { tick(); const nested = new Map(scope); nested.set(statement.binding, { value });
+          for (const value of values) { tick(); const nested = new Map(scope); nested.set(statement.binding, { value,type:'Number' });
             const result = await block(statement.body, nested, frame); if (result?.kind === 'return'){exitValue=result;return result;} if (result?.kind === 'break') break;
           } break;
         }
@@ -167,7 +172,7 @@ export async function executeControlIR(ir, inputs, registry, options = {}) {
   async function invoke(fn, args, parent = { depth: 0, evaluationDepth: 0 }) {
     tick(); const frame = { depth: parent.depth + 1, evaluationDepth: parent.evaluationDepth, function:fn.id,frames:nextDiagnosticFrame(diagnostics,parent.frames??diagnostics.stack),callStack:[...(parent.callStack??[]),fn.id] };
     if (frame.depth > budget.maxDepth) fail('CALL_DEPTH', 'Control call depth exhausted', { maxDepth: budget.maxDepth });
-    const scope = new Map(fn.inputs.map((input, index) => [input.name, { value: args[index] }]));
+    const scope = new Map(fn.inputs.map((input, index) => [input.name, { value: args[index],type:input.type }]));
     try{const outcome = await block(fn.body, scope, frame); validateValue(outcome?.value, fn.output.type, 'control return'); return outcome.value;}finally{notifyDiagnosticExit(options,frame.frames);}
   }
   let result,pending,hasError=false;

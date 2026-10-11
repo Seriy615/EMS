@@ -10,7 +10,8 @@ self.onmessage=async event=>{
  if(started)return;started=true;
  let failurePath=null;
  try{
-  const request=event.data,editor=new ProjectEditor(parseProject(request.project));
+  const request=event.data;if(Object.hasOwn(request,'inspection'))throw Object.assign(new Error('Inspection transport requires a checked adapter'),{code:'UNSUPPORTED_INSPECTION_TRANSPORT'});
+  const editor=new ProjectEditor(parseProject(request.project));
   if(request.selected)editor.openContract(request.selected);
   self.postMessage({type:'validated',id:editor.workspace.graph.id});
   if(Object.hasOwn(request,'debugOptions')&&!request.debug)throw Object.assign(new Error('Debug options need debug mode'),{code:'INVALID_DEBUG_OPTION'});

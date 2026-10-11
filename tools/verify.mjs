@@ -352,6 +352,11 @@ await check('Step Over/Out follows actual activation frames and original control
  const value=await runTextDraft(draft,new ProjectEditor(),{}, {onControlEnter:event=>gate.enter(event),onFrameExit:event=>{exits.push(event);gate.leave(event);}});
  return value===7&&events.length===2&&events[0].node==='/body/0'&&events[1].node==='/body/1'&&events[0].frames[0]===events[1].frames[0]&&exits.some(event=>event.frames.length===2);
 });
+await check('Explicit control inspection copies real typed values and defaults to payload-free diagnostics',async()=>{
+ const registry=createCoreRegistry(),source='fn main()->Number {let mut x=0;x=x+1;return x;}',bundle=lowerCheckedModule(typecheckModule(parseEMSModule(source),registry),'main',registry,{profile:'control'}),plain=[],events=[];
+ assert.equal(await executeIR(bundle.ir,{},bundle.registry,{onControlEnter:event=>plain.push(event)}),1);assert.ok(plain.every(event=>!Object.hasOwn(event,'inspection')));
+ assert.equal(await executeIR(bundle.ir,{},bundle.registry,{inspection:{allow:[{function:'main',names:['x']}]},onControlEnter:event=>events.push(event)}),1);assert.equal(events.find(event=>event.kind==='return').inspection.variables[0].value,1);return true;
+});
 await check('Studio debugger storage restores checked text points separately from graph policy',async()=>{
  const {StudioDebuggerStorage,studioDebuggerContext,resolveStudioDebugger}=await import('../src/studio/debugger-storage.mjs'),{captureSourceBreakpoint}=await import('../src/studio/source-anchors.mjs'),{breakpointAtTextOffset}=await import('../src/studio/breakpoints.mjs'),{compileTextDraft}=await import('../src/studio/text.mjs'),{ProjectEditor,newProject}=await import('../src/studio/project.mjs');
  const editor=new ProjectEditor(newProject('debugStoreVerify')),draft={source:'fn main()->Number {let mut x=0;return x+1;}',entry:'main',lowering:'auto'},bundle=compileTextDraft(draft,editor),anchor=captureSourceBreakpoint(bundle,breakpointAtTextOffset(bundle,draft.source.indexOf('return'))),values=new Map(),storage={getItem:key=>values.get(key)??null,setItem:(key,value)=>values.set(key,value)},store=new StudioDebuggerStorage(storage,editor.project.id);store.save([{context:studioDebuggerContext(editor,draft),point:anchor.point,anchor}]);

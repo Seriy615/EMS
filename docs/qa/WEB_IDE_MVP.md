@@ -43,3 +43,6 @@ SSH `ems-vps` доступен; public A domain →85.198.64.183. До этой 
 
 
 Studio теперь сохраняет графические и текстовые точки локально для каждого проекта. Переход «Граф ↔ Текст», смена entry/lowering и повторное открытие сохраняют отдельные contexts; непривязанные точки не останавливают программу. Изменённая библиотека отображается как `library-changed`, Undo может восстановить привязку. «Убрать все точки проекта» очищает все его contexts. Файл импорта всегда открывается как новый проект и не наследует локальную отладку; export программы не содержит points. Ошибка хранилища оставляет прежнюю pause policy. Cross-tab synchronization и inspection runtime values пока открыты.
+
+
+Ядро control runtime поддерживает opt-in typed inspection (AC-074), но панель значений IDE ещё не подключена. Текущие Worker pauses остаются без runtime values; запрос на неподдерживаемый inspection transport явно отклоняется. Следующий срез добавит checked source grants и bounded DTO, затем панель для разрешённых pure control values. Secret/effectful UI state и native/compiled profiles не объявляются поддержанными.

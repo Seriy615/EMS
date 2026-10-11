@@ -490,11 +490,13 @@
         "GPT-6.1 Sol",
         "GPT-6 Luna"
       ],
-      "progress": "AC-063..073 original graph/control/UI stepping, checked source anchors and durable project-owned Studio graph/text contexts implemented. Fresh restore, mode/entry/lowering/library identity, inactive drift/Undo, atomic storage/quota and export/import/copy isolation verified. Value-secret policy/native-compiled transports/full parity/cross-tab sync remain open; historical Worker cause unproven.",
+      "progress": "AC-063..074 interpreted debugging, durable checked contexts and opt-in typed control inspection core implemented. Real frame/scopes, detached finite values, protected-program/effects/handle exclusions, bounded whole-value snapshots and payload-free defaults verified. Worker inspection transport explicitly unsupported until checked adapter; IDE panel/formal secret taint/native-compiled transports/full parity remain open.",
       "evidence": {
-        "scope": "Original interpreted graph/text/control/UI stepping, source anchors and durable project-owned local debugger contexts; not full value/native/compiled debugger",
+        "scope": "Original interpreted graph/control/UI debugger and typed pure control inspection core; no IDE value panel or native/compiled inspection",
         "docs": "docs/spec/IDE_RUNTIME_DIAGNOSTICS.md",
         "testFiles": [
+          "tests/inspection.test.mjs",
+          "tests/browser/inspection.test.mjs",
           "tests/debugger-storage.test.mjs",
           "tests/browser/debugger-storage.test.mjs",
           "tests/source-anchors.test.mjs",
@@ -504,18 +506,18 @@
           "tests/step-frames.test.mjs",
           "tests/breakpoints.test.mjs"
         ],
-        "tests": "729/729 PASS",
-        "verify": "138/138 PASS",
-        "browserTests": "39/39 PASS",
+        "tests": "739/739 PASS",
+        "verify": "139/139 PASS",
+        "browserTests": "40/40 PASS",
         "commands": [
           "npm test",
           "npm run verify",
           "npm run browser:test"
         ],
         "deployedRevision": "a36a331f50ffc4bca996dedb36e8dad158d997e5",
-        "live": "Exact committed729/138/39 PASS; trusted public HTTPS/auth/access and actual Chromium Studio reopen/mode graph1-text1/exact source pause/result1/graph1 PASS. Existing graph/composite/reopen15/AVG5/text6/points5-loop3/OverOut7/UI1/live-clear1-2-3/safe anchor private0→commit1 preserved; six foreign hashes/five active services unchanged."
+        "live": "Priora36a331 live; core inspection local739/139/40 PASS/final focused10, pending exact gate/public core proof."
       },
-      "nextSlice": "Typed opt-in bounded runtime inspection policy: payload-free default, explicit allowlist and secret/resource/future/stream exclusions, real frame-scoped values with detached snapshots and Worker/IDE non-leakage proofs. Keep original runtime and IR semantics."
+      "nextSlice": "Source-owned checked pure control inspection grants, strict bounded Worker DTO validation and explicit owner opt-in IDE panel; default no values, protected/effect/handle refusal, exact source/frame identity, detached snapshots and real non-leakage cases. Formal secret taint/effectful UI/native/compiled inspection remain separate."
     },
     {
       "id": "EMS-034",
