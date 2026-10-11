@@ -1,0 +1,9 @@
+package demo.algebraic @ "0.1.0";
+
+// One portable contract: explicit absence and success/failure, without host null.
+export fn demo.Resolve(value: Option<Number>) -> Result<Number, String> requires pure {
+  match value {
+    Some(number) => { return Ok(number + 1); },
+    None => { return Err("missing value"); }
+  }
+}

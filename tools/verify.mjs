@@ -12,7 +12,7 @@ const get=async p=>readFile(new URL(p,root),'utf8');
 const readJSON=async p=>JSON.parse(await get(p));
 let checks=0;
 async function check(desc, fn) { const x=await fn(); assert.ok(x,desc); checks++; console.log('✓',desc); }
-const required=['AGENTS.md','.agents/policy.json','PROJECT_GOAL.md','docs/spec/LANGUAGE_SEMANTICS.md','docs/spec/IR.md','schemas/ir.schema.json','docs/spec/STATE_EVENTS.md','schemas/reactor.schema.json','docs/spec/CONTROL_IR.md','schemas/control-ir.schema.json','docs/qa/PROGRESS.md','docs/spec/EMS_FULL_SPEC.md','docs/plans/ROADMAP.md','docs/qa/ACCEPTANCE.md','tasks/backlog.json'];
+const required=['AGENTS.md','.agents/policy.json','PROJECT_GOAL.md','docs/spec/LANGUAGE_SEMANTICS.md','docs/spec/IR.md','schemas/ir.schema.json','docs/spec/STATE_EVENTS.md','schemas/reactor.schema.json','docs/spec/CONTROL_IR.md','schemas/control-ir.schema.json','schemas/control-finite-ir.schema.json','schemas/control-algebraic-ir.schema.json','docs/spec/CONTROL_ALGEBRAIC.md','docs/qa/PROGRESS.md','docs/spec/EMS_FULL_SPEC.md','docs/plans/ROADMAP.md','docs/qa/ACCEPTANCE.md','tasks/backlog.json'];
 for(const f of required) { await stat(new URL(f,root)); await check(`found ${f}`,()=>true); }
 const policy=await readJSON('.agents/policy.json');
 await check('models exactly Sol 6.1 + Luna 6',()=>policy.agents.approvedDisplayNames.join(',')==='GPT-6.1 Sol,GPT-6 Luna');
@@ -118,5 +118,19 @@ await check('finally cannot suppress exhausted execution budget',async()=>{
   await assert.rejects(executeIR(guarded.ir,{},registry,{maxSteps:10}),{code:'STEP_LIMIT'});
   const output=await import(`data:text/javascript,${encodeURIComponent(compileIRToJS(guarded.ir,registry))}`);
   assert.throws(()=>output.execute({},{maxSteps:10}),{code:'STEP_LIMIT'});return true;
+});
+const algebraicBundle=lowerCheckedModule(typecheckModule(parseEMSModule(await get('examples/algebraic.ems')),registry),'demo.Resolve',registry);
+const algebraicIR=parseIR(serializeIR(algebraicBundle.ir,registry),registry);
+await check('algebraic control IR preserves typed presence and absence',async()=>{
+  assert.equal(algebraicIR.profile,'ems-control-algebraic/1');
+  assert.deepEqual(await executeIR(algebraicIR,{value:{tag:'Some',value:4}},registry),{tag:'Ok',value:5});
+  assert.deepEqual(await executeIR(algebraicIR,{value:{tag:'None'}},registry),{tag:'Err',value:'missing value'});return true;
+});
+const algebraicOutput=await import(`data:text/javascript,${encodeURIComponent(compileIRToJS(algebraicIR,registry))}`);
+await check('algebraic standalone matches runtime and rejects host null',async()=>{
+  assert.deepEqual(algebraicOutput.execute({value:{tag:'Some',value:4}}),{tag:'Ok',value:5});
+  assert.deepEqual(algebraicOutput.execute({value:{tag:'None'}}),{tag:'Err',value:'missing value'});
+  assert.throws(()=>algebraicOutput.execute({value:null}),{code:'TYPE_MISMATCH'});
+  await assert.rejects(executeIR(algebraicIR,{value:null},registry),{code:'TYPE_MISMATCH'});return true;
 });
 console.log(`\nEMS foundation verification passed (${checks} checks). Not production readiness.`);

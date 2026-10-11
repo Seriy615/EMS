@@ -1,3 +1,4 @@
+import { parseControlType, controlTypeName, controlVariants, assertControlValueType, cloneControlValue, matchControlPattern, validateControlInputs } from '../semantics/control-algebraic.mjs';
 import { fail } from '../reference/errors.mjs';
 import { compileStandaloneJS, standaloneHelpersJS } from '../reference/compiler.mjs';
 import { validateControlIR, decodeControlLiteral } from '../ir/control.mjs';
@@ -34,6 +35,7 @@ export function compileControlJS(ir, registry) {
       case 'unary': result = `unaryControlValue(${quote(node.operator)},${expression(node.value, scope)})`; break;
       case 'binary': result = ['&&', '||'].includes(node.operator) ? `(${expression(node.left, scope)} ${node.operator} ${expression(node.right, scope)})`
         : `binaryControlValue(${quote(node.operator)},${expression(node.left, scope)},${expression(node.right, scope)})`; break;
+      case 'construct': result = node.arguments.length ? `({tag:${quote(node.tag)},value:${expression(node.arguments[0],scope)}})` : `({tag:${quote(node.tag)}})`; break;
       case 'call': {
         const args = node.arguments.map(node => expression(node, scope)).join(',');
         if (node.target.kind === 'function') result = `${functionNames.get(node.target.id)}(${args})`;
@@ -65,6 +67,20 @@ export function compileControlJS(ir, registry) {
           } else lines.push(attempted);
           break;
         }
+        case 'match': {
+          const value = `__match${nextLocal++}`, matched = `__matched${nextLocal++}`;
+          lines.push(`{const ${value}=${expression(statement.value, scope)};let ${matched}=false;`);
+          for (const arm of statement.arms) {
+            const bindings = `__bindings${nextLocal++}`, nested = new Map(scope), declarations = [];
+            function collect(pattern) {
+              if (pattern.kind === 'binding') { const local = `__local${nextLocal++}`; nested.set(pattern.name, local); declarations.push(`const ${local}=${bindings}.get(${quote(pattern.name)});`); }
+              if (pattern.kind === 'constructor') pattern.arguments.forEach(collect);
+            }
+            collect(arm.pattern);
+            lines.push(`if(!${matched}){const ${bindings}=matchControlPattern(${quote(arm.pattern)},${value},__tick);if(${bindings}!==null){${matched}=true;${declarations.join('')}${block(arm.body,nested)}}}`);
+          }
+          lines.push('}'); break;
+        }
         case 'break': case 'continue': lines.push(`${statement.kind};`); break;
         case 'block': lines.push(`{${block(statement.body, scope)}}`); break;
         case 'if': lines.push(`if(${expression(statement.condition, scope)}){${block(statement.then, scope)}}else{${block(statement.otherwise, scope)}}`); break;
@@ -80,20 +96,17 @@ export function compileControlJS(ir, registry) {
     return `function ${functionNames.get(fn.id)}(${parameters.join(',')}){__tick();if(++__depth>__budget.maxDepth){__depth--;fail('CALL_DEPTH','Control call depth exhausted',{maxDepth:__budget.maxDepth});}try{${block(fn.body, scope)}}finally{__depth--;}}`;
   });
   const entry = checked.entry;
-  const inputChecks = entry.inputs.map(input => `if(!Object.hasOwn(inputs,${quote(input.name)}))fail('MISSING_INPUT',${quote('Missing input ' + input.name)});__assertType(inputs[${quote(input.name)}],${quote(input.type)},${quote('inputs.' + input.name)});`).join('\n');
   return `// EMS control IR standalone output. Pure finite values; no EMS dependency.\n${standaloneHelpersJS()}
-const fail=__fail,assertValueType=__assertType;
-${[equalControlValues, binaryControlValue, unaryControlValue, indexControlValue, controlBudgetOptions, assertSignal, checkCancellation, makeControlThrow, matchesControlCatch, controlCatchValue, terminalControlError].map(fn => fn.toString()).join('\n')}
+const fail=__fail,assertPrimitiveValueType=__assertType,assertValueType=assertControlValueType;
+${[parseControlType, controlTypeName, controlVariants, assertControlValueType, cloneControlValue, matchControlPattern, validateControlInputs, equalControlValues, binaryControlValue, unaryControlValue, indexControlValue, controlBudgetOptions, assertSignal, checkCancellation, makeControlThrow, matchesControlCatch, controlCatchValue, terminalControlError].map(fn => fn.toString()).join('\n')}
 const __params=(names,values)=>Object.fromEntries(names.map((name,index)=>[name,values[index]]));
 ${wrappers.join('\n')}
 export function execute(inputs,options={}){
 assertSignal(options.signal);checkCancellation(options.signal);
-if(!inputs||typeof inputs!=='object'||Array.isArray(inputs))fail('INVALID_INPUT','Input values must be an object');
-${inputChecks}
-for(const name of Object.keys(inputs))if(!${quote(entry.inputs.map(input => input.name))}.includes(name))fail('EXTRA_INPUT','Unexpected input '+name);
+validateControlInputs(${quote({inputs:entry.inputs})},inputs);
 const __budget=controlBudgetOptions(options);let __steps=0,__depth=0,__evaluationDepth=0;
 function __tick(){checkCancellation(options.signal);if(++__steps>__budget.maxSteps)fail('STEP_LIMIT','Control execution step budget exhausted',{maxSteps:__budget.maxSteps});}
-function __value(type,fn){__tick();if(++__evaluationDepth>256){__evaluationDepth--;fail('EVALUATION_DEPTH','Control expression depth exhausted',{maxEvaluationDepth:256});}try{const value=fn();checkCancellation(options.signal);__assertType(value,type,'control expression');return value;}finally{__evaluationDepth--;}}
+function __value(type,fn){__tick();if(++__evaluationDepth>256){__evaluationDepth--;fail('EVALUATION_DEPTH','Control expression depth exhausted',{maxEvaluationDepth:256});}try{const value=fn();checkCancellation(options.signal);assertControlValueType(value,type,'control expression');return value;}finally{__evaluationDepth--;}}
 ${definitions.join('\n')}
 return ${functionNames.get(entry.id)}(${entry.inputs.map(input => `inputs[${quote(input.name)}]`).join(',')});
 }\n`;

@@ -1,6 +1,6 @@
 # Пользовательские исключения и finally: control error profile
 
-EMS-015, AC-034, G-01/03/11/12. Профиль `ems-control-errors/1`, semantic artifact `ems-ir/2`. Реализация: `src/semantics/control-errors.mjs`, общий control validator/runtime/compiler. Это исполняемый error slice; algebraic Option/Result, полный error IDL, Future/Stream и resource lifecycle ещё впереди.
+EMS-015, AC-034, G-01/03/11/12. Профиль `ems-control-errors/1`, semantic artifact `ems-ir/2`. Реализация: `src/semantics/control-errors.mjs`, общий control validator/runtime/compiler. Это исполняемый error slice; Option/Result/match реализованы отдельным расширением CONTROL_ALGEBRAIC.md; полный error IDL, Future/Stream и resource lifecycle ещё впереди.
 
 ## Значения и catch
 
@@ -40,4 +40,4 @@ node tools/ems.mjs ir-run dist/recovery.ir.json '{"value":-5}'
 node tools/ems.mjs ir-build dist/recovery.ir.json --out dist/recovery.mjs
 ```
 
-Пример демонстрирует numeric user-value recovery. Tests: `tests/control-errors.test.mjs` — 29 positive/negative/differential tests: primitive/array/alias/generic catches, nesting/rethrow, signed zero, lexical shadowing, return/break/continue/finally priority, terminal failure preservation, exact budgets, malformed/profile IR, effects, state rollback/replay, trace omission и independent CLI/process export. Node evidence не закрывает browser/native P1. Следующая часть EMS-015 — Option/Result/match, затем language futures и lifecycle.
+Пример демонстрирует numeric user-value recovery. Tests: `tests/control-errors.test.mjs` — 29 positive/negative/differential tests: primitive/array/alias/generic catches, nesting/rethrow, signed zero, lexical shadowing, return/break/continue/finally priority, terminal failure preservation, exact budgets, malformed/profile IR, effects, state rollback/replay, trace omission и independent CLI/process export. Node evidence не закрывает browser/native P1. Следующая часть EMS-015 — language futures и lifecycle.

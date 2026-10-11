@@ -100,10 +100,20 @@ class Parser {
     if (this.take('<')) { do { params.push(this.identifier()); } while (this.take(',')); this.expect('>'); }
     return params;
   }
+  typeClose() {
+    // In type context, >= closes the generic and starts the initializer.
+    if (this.is('>=')) {
+      const token = this.token, middle = { ...token.location.start, offset: token.location.start.offset + 1, column: token.location.start.column + 1 };
+      this.tokens.splice(this.index, 1,
+        { kind: 'symbol', value: '>', location: { start: token.location.start, end: middle } },
+        { kind: 'symbol', value: '=', location: { start: middle, end: token.location.end } });
+    }
+    return this.expect('>');
+  }
   type() {
     return this.nested(() => {
       const start = this.token, name = this.qualified(), args = [];
-      if (this.take('<')) { do { args.push(this.type()); } while (this.take(',')); this.expect('>'); }
+      if (this.take('<')) { do { args.push(this.type()); } while (this.take(',')); this.typeClose(); }
       let result = this.node('NamedType', start, { name, arguments: args });
       while (this.take('[')) { this.expect(']'); result = this.node('NamedType', start, { name: 'Array', arguments: [result] }); }
       return result;

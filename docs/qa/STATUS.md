@@ -2,9 +2,11 @@
 
 ## Последняя проверка — ядро перед IDE
 
-`npm test` **299/299 PASS**, `npm run verify` **47/47 PASS**. EMS-010..014 DONE для документированных начальных профилей (AC-025..031); M1 целиком не завершён. Новый текстовый AST frontend типизируется и реально исполняет чистые программы/generic helpers через общий IR/runtime, экспортирует standalone. Finite state/events и отмена host futures реализованы по AC-032. Structured control-flow и pure standalone реализованы по AC-033. Typed user exceptions/finally добавлены по AC-034; language async, algebraic values и lifecycle ещё впереди.
+`npm test` **332/332 PASS**, `npm run verify` **52/52 PASS**. EMS-010..014 DONE для документированных начальных профилей (AC-025..031); M1 целиком не завершён. Новый текстовый AST frontend типизируется и реально исполняет чистые программы/generic helpers через общий IR/runtime, экспортирует standalone. Finite state/events и отмена host futures реализованы по AC-032. Structured control-flow и pure standalone реализованы по AC-033. Typed user exceptions/finally добавлены по AC-034; Option/Result/match исполнение и standalone добавлены по AC-035 (33 tests); language async и lifecycle ещё впереди.
 
-EMS-014 DONE для начального finite effect/capability kernel: транзитивный policy preflight встроен в `executeGraph` (AC-029). Вложенные/unused декларации проверяются до первого host-вызова; раздельные grants и ошибочные списки проверены в `tests/effects.test.mjs`. Effect IR и explicit nested sequencing проверены по AC-030; AST effect pass, straight-line lowering, interface requirements и pure sequence export проверены по AC-031. EMS-015 IN_PROGRESS: transactional state events, bounded FIFO, replay и cancellation проверены; control IR v2/runtime/standalone также проверены по AC-033; typed user exceptions/finally также проверены по AC-034; следующий срез — Option/Result/match и language futures; production permissions и IO compiler bindings остаются впереди. Глобальная цель остаётся активной. WEB IDE MVP и деплой разрешены, но по уточнению владельца сначала продолжается ядро. Deploy не выполнен; TLS SAN mismatch остаётся обнаруженным инфраструктурным дефектом.
+EMS-014 DONE для начального finite effect/capability kernel: транзитивный policy preflight встроен в `executeGraph` (AC-029). Вложенные/unused декларации проверяются до первого host-вызова; раздельные grants и ошибочные списки проверены в `tests/effects.test.mjs`. Effect IR и explicit nested sequencing проверены по AC-030; AST effect pass, straight-line lowering, interface requirements и pure sequence export проверены по AC-031. EMS-015 IN_PROGRESS: transactional state events, bounded FIFO, replay и cancellation проверены; control IR v2/runtime/standalone также проверены по AC-033; typed user exceptions/finally также проверены по AC-034; Option/Result/match проверены по AC-035; следующий срез — language futures и lifecycle; production permissions и IO compiler bindings остаются впереди. Глобальная цель остаётся активной. WEB IDE MVP и деплой разрешены, но по уточнению владельца сначала продолжается ядро. Deploy не выполнен; TLS SAN mismatch остаётся обнаруженным инфраструктурным дефектом.
+
+Baseline перед AC-035: cbcd5b7, 299/299 tests и 47/47 verify. Текущие логи: `/tmp/ems-algebraic-tests.log`, `/tmp/ems-algebraic-verify.log`; Node 22.21.0. Новые схемы разделяют прежние finite/error профили и algebraic profile; executable validation — обязательный gate. Полная история — PROGRESS.md.
 
 ## Текущее состояние после EMS-012
 
@@ -36,7 +38,7 @@ EMS-010 завершена как нормативный начальный пр
 
 **Model restriction:** only GPT-6.1 Sol / GPT-6 Luna for any agent work; no GPT-5.6 Sol / Astra.
 
-**Next action:** continue EMS-015 Option/Result/match and language async/lifecycle, from `docs/qa/PROGRESS.md`. Bootstrap sections below describe the original scaffold, not completed M1.
+**Next action:** continue EMS-015 language async/lifecycle, from `docs/qa/PROGRESS.md`. Bootstrap sections below describe the original scaffold, not completed M1.
 
 Точная ревизия без Git: `docs/qa/evidence/2026-10-11-core.json` содержит SHA-256 implementation/test/spec-format файлов и aggregate snapshot `2495e5f62507e4819ee55a7b8a7c4b73638d096b13b88fae991f98ccb7d78602`. Metadata состояния QA обновляется отдельно от этого semantic/source snapshot.
 

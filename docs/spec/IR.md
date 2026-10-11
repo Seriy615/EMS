@@ -55,3 +55,5 @@ node tools/ems.mjs ir-build dist/avg5.ir.json --out dist/avg5-from-ir.mjs
 `ems-ir/2`, `ems-control-finite/1` определены отдельно в `CONTROL_IR.md` и `schemas/control-ir.schema.json` (AC-033). Общие parse/serialize/execute/compile APIs поддерживают обе версии; преобразование control blocks в M0 dataflow graph не заявляется. Текстовый default lowering имеет eager statement semantics также в call IR через explicit sequence; legacy M0 artifacts и explicit frontend profile call сохраняют прежний demand-driven профиль.
 
 Control error profile `ems-control-errors/1` (artifact ems-ir/2) добавляет typed user throw/catch/finally по AC-034. Старый control finite profile их не принимает. Семантика и ограничения cleanup описаны в CONTROL_ERRORS.md.
+
+Algebraic profile `ems-control-algebraic/1` добавляет canonical Option/Result types, tagged construct expressions и exhaustive match statements (AC-035, CONTROL_ALGEBRAIC.md). Общий control schema entrypoint разделяет finite/error и algebraic profiles; standalone и runtime используют одинаковые portable validators/pattern semantics.

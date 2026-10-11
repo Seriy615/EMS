@@ -1,7 +1,7 @@
 import { fail } from '../reference/errors.mjs';
 import { Registry } from '../reference/registry.mjs';
 import { assertTypeName, assertValueType } from '../reference/types.mjs';
-import { validateRuntimeInputs } from '../reference/validate.mjs';
+import { validateControlInputs } from '../semantics/control-algebraic.mjs';
 import { assertPolicyNames } from '../semantics/effects.mjs';
 import { signatureIR, checkIRPolicy, executeIR } from '../ir/index.mjs';
 import { assertSignal, checkCancellation } from './cancellation.mjs';
@@ -94,7 +94,7 @@ export class ReactorSession {
     assertSignal(signal);
     const handler = this.#handlers.get(event);
     if (!handler) fail('UNKNOWN_EVENT', `Unknown reactor event ${event}`);
-    validateRuntimeInputs(handler.graph, inputs);
+    validateControlInputs({ inputs: Object.entries(handler.graph.inputs).map(([name, input]) => ({ name, type: input.type })) }, inputs);
     checkIRPolicy(handler.program, this.#registry, this.#policy);
     if (this.#queue.length >= this.#maxQueue) fail('QUEUE_FULL', 'Reactor event queue is full');
     const payload = copy(inputs);

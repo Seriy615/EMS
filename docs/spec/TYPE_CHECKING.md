@@ -58,3 +58,5 @@ AC-028: `tests/types.test.mjs`, `tests/check.test.mjs`, `tests/lower.test.mjs`. 
 Evidence: `tests/frontend-effects.test.mjs`, расширенный `tests/effect-ir.test.mjs`, `tools/verify.mjs`; AC-029..031. EMS-014 закрывает начальный effect/capability kernel, а не OS permission broker, production scheduler или поддержку file/network/device APIs.
 
 Control slice AC-033: automatic lowering выбирает ems-ir/2 для reachable control/mutation/index/computed-array forms и local recursion; if/loops и mutable locals теперь исполняются и экспортируются. См. `CONTROL_IR.md`. Typed user throws/catches/finally добавлены по AC-034 (CONTROL_ERRORS.md); async, algebraic/resource runtime остаются unsupported.
+
+Исполняемый Option/Result/match профиль: `CONTROL_ALGEBRAIC.md` (AC-035). Local generic specializations, aliases, nested patterns и typed catch используют общий control IR; Registry foreign/state binding ABI остаётся primitive.

@@ -1,9 +1,11 @@
 import { fail } from '../reference/errors.mjs';
-import { assertTypeName, assertValueType } from '../reference/types.mjs';
+import { assertTypeName } from '../reference/types.mjs';
+import { parseControlType, controlTypeName, controlVariants, assertControlValueType } from '../semantics/control-algebraic.mjs';
 import { analyzeGraphEffects, assertPolicyNames } from '../semantics/effects.mjs';
 
 export const CONTROL_VERSION = 'ems-ir/2';
 export const CONTROL_PROFILE = 'ems-control-finite/1';
+export const CONTROL_ALGEBRAIC_PROFILE = 'ems-control-algebraic/1';
 export const CONTROL_ERROR_PROFILE = 'ems-control-errors/1';
 const names = /^[A-Za-z_][A-Za-z0-9_]*$/;
 export function controlFields(value, keys) {
@@ -18,7 +20,7 @@ function text(value) { if (typeof value !== 'string' || !value) fail('INVALID_IR
 export function decodeControlLiteral(value, type) {
   const number = n => n === '-0' ? -0 : n;
   const result = type === 'Number' ? number(value) : type === 'NumberArray' && Array.isArray(value) ? value.map(number) : value;
-  assertValueType(result, type, 'control literal'); return result;
+  assertControlValueType(result, type, 'control literal'); return result;
 }
 function policy(value) {
   controlFields(value, ['effects', 'capabilities']);
@@ -34,17 +36,19 @@ export function controlContractPolicy(contract, registry) {
 /** Strict structured control verifier. Policy is recomputed from linked implementations and local call edges. */
 export function validateControlIR(ir, registry) {
   if (ir?.schemaVersion !== CONTROL_VERSION) fail('IR_VERSION', `Expected ${CONTROL_VERSION}`);
-  if (![CONTROL_PROFILE, CONTROL_ERROR_PROFILE].includes(ir.profile)) fail('UNSUPPORTED_PROFILE', `Expected ${CONTROL_PROFILE}`);
+  if (![CONTROL_PROFILE, CONTROL_ERROR_PROFILE, CONTROL_ALGEBRAIC_PROFILE].includes(ir.profile)) fail('UNSUPPORTED_PROFILE', `Expected ${CONTROL_PROFILE}`);
   controlFields(ir, ['schemaVersion', 'profile', 'id', 'version', 'entry', 'functions']); text(ir.id); text(ir.version); text(ir.entry);
   array(ir.functions); if (ir.functions.length > 1000) fail('IR_LIMIT', 'Too many control functions');
+  const algebraic = ir.profile === CONTROL_ALGEBRAIC_PROFILE;
+  const assertType = (type, context) => algebraic ? parseControlType(type) : assertTypeName(type, context);
   const functions = new Map(), summaries = new Map(), edges = new Map(); let nodes = 0;
   for (const fn of ir.functions) {
     controlFields(fn, ['id', 'inputs', 'output', 'requirements', 'policy', 'body']); text(fn.id);
     if (functions.has(fn.id)) fail('INVALID_IR', 'Duplicate function');
     array(fn.inputs); const inputNames = new Set();
-    for (const input of fn.inputs) { controlFields(input, ['name', 'type']); name(input.name); assertTypeName(input.type, 'control input');
+    for (const input of fn.inputs) { controlFields(input, ['name', 'type']); name(input.name); assertType(input.type, 'control input');
       if (inputNames.has(input.name)) fail('INVALID_IR', 'Duplicate input'); inputNames.add(input.name); }
-    controlFields(fn.output, ['type']); assertTypeName(fn.output.type, 'control output'); policy(fn.requirements); policy(fn.policy);
+    controlFields(fn.output, ['type']); assertType(fn.output.type, 'control output'); policy(fn.requirements); policy(fn.policy);
     functions.set(fn.id, fn); summaries.set(fn.id, { effects: new Set(fn.requirements.effects), capabilities: new Set(fn.requirements.capabilities) }); edges.set(fn.id, new Set());
   }
   if (!functions.has(ir.entry)) fail('INVALID_IR', 'Unknown entry function');
@@ -52,10 +56,10 @@ export function validateControlIR(ir, registry) {
   function limit(depth) { if (++nodes > 20000 || depth > 128) fail('IR_LIMIT', 'Control IR exceeds structural budget'); }
   for (const fn of functions.values()) {
     function expression(node, scope, depth) {
-      limit(depth); if (!node || typeof node !== 'object') fail('INVALID_IR', 'Expected expression'); assertTypeName(node.type, 'expression');
+      limit(depth); if (!node || typeof node !== 'object') fail('INVALID_IR', 'Expected expression'); assertType(node.type, 'expression');
       let actual;
       switch (node.kind) {
-        case 'literal': controlFields(node, ['kind', 'type', 'value']); decodeControlLiteral(node.value, node.type); actual = node.type; break;
+        case 'literal': if (node.type.includes('<')) fail('INVALID_IR', 'Algebraic values require construct expression'); controlFields(node, ['kind', 'type', 'value']); decodeControlLiteral(node.value, node.type); actual = node.type; break;
         case 'local': controlFields(node, ['kind', 'type', 'name']); name(node.name);
           if (!scope.has(node.name)) fail('UNKNOWN_SYMBOL', `Unknown local ${node.name}`); actual = scope.get(node.name).type; break;
         case 'array': controlFields(node, ['kind', 'type', 'elements']); array(node.elements);
@@ -77,6 +81,15 @@ export function validateControlIR(ir, registry) {
           else { if (!['+', '-', '*', '/', '%', '<', '<=', '>', '>='].includes(node.operator)) fail('INVALID_IR', 'Unknown binary operator');
             expect(left, 'Number'); actual = ['<', '<=', '>', '>='].includes(node.operator) ? 'Boolean' : 'Number'; }
           break;
+        }
+        case 'construct': {
+          if (!algebraic) fail('UNSUPPORTED_PROFILE', 'Constructors require algebraic profile');
+          controlFields(node, ['kind', 'type', 'tag', 'arguments']); array(node.arguments);
+          const payload = controlVariants(node.type)?.get(node.tag);
+          if (!payload) fail('TYPE_MISMATCH', 'Constructor does not match declared type');
+          if (node.arguments.length !== payload.length) fail('CALL_ARITY', 'Constructor argument count mismatch');
+          node.arguments.forEach((argument, index) => expect(expression(argument, scope, depth + 1), controlTypeName(payload[index])));
+          actual = node.type; break;
         }
         case 'call': {
           controlFields(node, ['kind', 'type', 'target', 'arguments']); array(node.arguments); let target;
@@ -102,20 +115,63 @@ export function validateControlIR(ir, registry) {
         limit(depth); if (!statement || typeof statement !== 'object') fail('INVALID_IR', 'Expected control statement');
         if (terminated) fail('UNREACHABLE_CODE', 'Control statement after exit');
         switch (statement.kind) {
-          case 'let': controlFields(statement, ['kind', 'name', 'type', 'mutable', 'value']); name(statement.name); assertTypeName(statement.type, 'local');
+          case 'let': controlFields(statement, ['kind', 'name', 'type', 'mutable', 'value']); name(statement.name); assertType(statement.type, 'local');
             if (scope.has(statement.name)) fail('DUPLICATE_SYMBOL', 'Duplicate local');
             if (typeof statement.mutable !== 'boolean') fail('INVALID_IR', 'Invalid mutability');
             expect(expression(statement.value, scope, depth + 1), statement.type); scope.set(statement.name, { type: statement.type, mutable: statement.mutable }); break;
+          case 'match': {
+            if (!algebraic) fail('UNSUPPORTED_PROFILE', 'Match requires algebraic profile');
+            controlFields(statement, ['kind', 'value', 'arms']); array(statement.arms);
+            const type = expression(statement.value, scope, depth + 1), variants = controlVariants(type);
+            const covered = new Set(); let total = false, exits = true;
+            function pattern(node, type, nested, level) {
+              limit(level);
+              if (!node || typeof node !== 'object') fail('INVALID_IR', 'Expected pattern');
+              switch (node.kind) {
+                case 'wildcard': controlFields(node, ['kind']); return { total: true, complete: true };
+                case 'binding': controlFields(node, ['kind', 'name']); name(node.name);
+                  if (nested.has(node.name)) fail('DUPLICATE_SYMBOL', 'Duplicate pattern binding');
+                  nested.set(node.name, { type, mutable: false }); return { total: true, complete: true };
+                case 'literal': if (node.type.includes('<')) fail('INVALID_IR', 'Algebraic values require construct expression'); controlFields(node, ['kind', 'type', 'value']);
+                  if (!['Number','Boolean','String'].includes(type)) fail('TYPE_MISMATCH', 'Literal pattern requires scalar type');
+                  expect(node.type, type); decodeControlLiteral(node.value, type); return { total: false, complete: false };
+                case 'constructor': {
+                  controlFields(node, ['kind', 'tag', 'arguments']); array(node.arguments);
+                  const payload = controlVariants(type)?.get(node.tag);
+                  if (!payload) fail('TYPE_MISMATCH', 'Pattern constructor does not match type');
+                  if (node.arguments.length !== payload.length) fail('CALL_ARITY', 'Pattern arity mismatch');
+                  let complete = true;
+                  node.arguments.forEach((argument, index) => { complete = pattern(argument, controlTypeName(payload[index]), nested, level + 1).total && complete; });
+                  return { total: false, complete };
+                }
+                default: fail('INVALID_IR', 'Unknown pattern');
+              }
+            }
+            for (const arm of statement.arms) {
+              controlFields(arm, ['pattern', 'body']);
+              if (total) fail('UNREACHABLE_CODE', 'Arm after catch-all');
+              const nested = new Map(scope), coverage = pattern(arm.pattern, type, nested, depth + 1);
+              const variant = arm.pattern.kind === 'constructor' ? arm.pattern.tag : null;
+              if (variant && covered.has(variant)) fail('UNREACHABLE_CODE', 'Variant already covered');
+              if (variant && coverage.complete) covered.add(variant);
+              if (arm.pattern.kind === 'literal' && type === 'Boolean') covered.add(String(arm.pattern.value));
+              total ||= coverage.total;
+              exits = block(arm.body, nested, loops, depth + 1) && exits;
+            }
+            if (!total && !(variants && [...variants.keys()].every(tag => covered.has(tag))) && !(type === 'Boolean' && covered.has('true') && covered.has('false')))
+              fail('NON_EXHAUSTIVE_MATCH', 'Match does not cover every value');
+            terminated = exits; break;
+          }
           case 'throw':
-            if (ir.profile !== CONTROL_ERROR_PROFILE) fail('UNSUPPORTED_PROFILE', 'User throws require control error profile');
+            if (![CONTROL_ERROR_PROFILE, CONTROL_ALGEBRAIC_PROFILE].includes(ir.profile)) fail('UNSUPPORTED_PROFILE', 'User throws require control error profile');
             controlFields(statement, ['kind', 'value']); expression(statement.value, scope, depth + 1); terminated = true; break;
           case 'try': {
-            if (ir.profile !== CONTROL_ERROR_PROFILE) fail('UNSUPPORTED_PROFILE', 'Try requires control error profile');
+            if (![CONTROL_ERROR_PROFILE, CONTROL_ALGEBRAIC_PROFILE].includes(ir.profile)) fail('UNSUPPORTED_PROFILE', 'Try requires control error profile');
             controlFields(statement, ['kind', 'body', 'handler', 'finalizer']);
             if (statement.handler === null && statement.finalizer === null) fail('INVALID_IR', 'Try requires catch or finally');
             const attempted = block(statement.body, scope, loops, depth + 1); let handled = false;
             if (statement.handler !== null) {
-              const handler = statement.handler; controlFields(handler, ['binding', 'type', 'body']); name(handler.binding); assertTypeName(handler.type, 'catch type');
+              const handler = statement.handler; controlFields(handler, ['binding', 'type', 'body']); name(handler.binding); assertType(handler.type, 'catch type');
               const nested = new Map(scope); nested.set(handler.binding, { type: handler.type, mutable: false });
               handled = block(handler.body, nested, loops, depth + 1);
             }

@@ -1,6 +1,6 @@
 import { fail } from '../reference/errors.mjs';
 import { assertValueType } from '../reference/types.mjs';
-import { validateRuntimeInputs } from '../reference/validate.mjs';
+import { assertControlValueType, validateControlInputs, matchControlPattern } from '../semantics/control-algebraic.mjs';
 import { executeGraph } from '../reference/runtime.mjs';
 import { validateControlIR, decodeControlLiteral } from '../ir/control.mjs';
 import { assertPolicyNames } from '../semantics/effects.mjs';
@@ -21,7 +21,7 @@ export function controlSignature(fn) {
 export async function executeControlIR(ir, inputs, registry, options = {}) {
   assertSignal(options.signal); checkCancellation(options.signal);
   const checked = validateControlIR(ir, registry); checkControlPolicy(checked.policy, options);
-  validateRuntimeInputs(controlSignature(checked.entry), inputs);
+  validateControlInputs(checked.entry, inputs);
   const budget = controlBudgetOptions(options); let steps = 0, depth = 0, evaluationDepth = 0;
   function tick() { checkCancellation(options.signal); if (++steps > budget.maxSteps) fail('STEP_LIMIT', 'Control execution step budget exhausted', { maxSteps: budget.maxSteps }); }
   async function expression(node, scope) {
@@ -42,6 +42,7 @@ export async function executeControlIR(ir, inputs, registry, options = {}) {
         else if (node.operator === '||') value = left || await expression(node.right, scope);
         else value = binaryControlValue(node.operator, left, await expression(node.right, scope)); break;
       }
+      case 'construct': value = node.arguments.length ? { tag: node.tag, value: await expression(node.arguments[0], scope) } : { tag: node.tag }; break;
       case 'call': {
         const args = []; for (const argument of node.arguments) args.push(await expression(argument, scope));
         checkCancellation(options.signal);
@@ -56,7 +57,7 @@ export async function executeControlIR(ir, inputs, registry, options = {}) {
         break;
       }
     }
-    checkCancellation(options.signal); assertValueType(value, node.type, 'control expression'); return value;
+    checkCancellation(options.signal); assertControlValueType(value, node.type, 'control expression'); return value;
     } finally { evaluationDepth--; }
   }
   async function block(body, parent) {
@@ -90,6 +91,17 @@ export async function executeControlIR(ir, inputs, registry, options = {}) {
           if (hasError) throw pending;
           break;
         }
+        case 'match': {
+          const value = await expression(statement.value, scope);
+          for (const arm of statement.arms) {
+            const bindings = matchControlPattern(arm.pattern, value, tick);
+            if (bindings !== null) { const nested = new Map(scope);
+              for (const [name, value] of bindings) nested.set(name, { value });
+              exit = await block(arm.body, nested); break;
+            }
+          }
+          break;
+        }
         case 'break': case 'continue': return { kind: statement.kind };
         case 'block': exit = await block(statement.body, scope); break;
         case 'if': exit = await block(await expression(statement.condition, scope) ? statement.then : statement.otherwise, scope); break;
@@ -113,7 +125,7 @@ export async function executeControlIR(ir, inputs, registry, options = {}) {
     tick(); if (++depth > budget.maxDepth) { depth--; fail('CALL_DEPTH', 'Control call depth exhausted', { maxDepth: budget.maxDepth }); }
     try {
       const scope = new Map(fn.inputs.map((input, index) => [input.name, { value: args[index] }]));
-      const outcome = await block(fn.body, scope); assertValueType(outcome?.value, fn.output.type, 'control return'); return outcome.value;
+      const outcome = await block(fn.body, scope); assertControlValueType(outcome?.value, fn.output.type, 'control return'); return outcome.value;
     } finally { depth--; }
   }
   return invoke(checked.entry, checked.entry.inputs.map(input => inputs[input.name]));
