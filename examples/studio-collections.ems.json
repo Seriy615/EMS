@@ -1,0 +1,529 @@
+{
+  "schemaVersion": "ems-studio-project/3",
+  "id": "main",
+  "name": "Новый проект",
+  "graph": {
+    "schemaVersion": "0.1",
+    "id": "project.main",
+    "version": "1.0.0",
+    "inputs": {
+      "value": {
+        "type": "Number"
+      },
+      "values": {
+        "type": "NumberArray"
+      }
+    },
+    "output": {
+      "type": "NumberArray"
+    },
+    "nodes": [
+      {
+        "id": "n1",
+        "uses": "std.number.greater",
+        "args": {
+          "a": {
+            "input": "value"
+          },
+          "b": {
+            "literal": {
+              "type": "Number",
+              "value": 2
+            }
+          }
+        }
+      },
+      {
+        "id": "n2",
+        "uses": "user.Abs",
+        "args": {
+          "values": {
+            "input": "values"
+          }
+        }
+      },
+      {
+        "id": "n3",
+        "uses": "user.Filter",
+        "args": {
+          "values": {
+            "node": "n2"
+          }
+        }
+      }
+    ],
+    "returns": {
+      "node": "n3"
+    }
+  },
+  "inputs": {
+    "value": 1,
+    "values": [
+      -2,
+      "-0",
+      3
+    ]
+  },
+  "canvas": {
+    "positions": {
+      "input:value": {
+        "x": 40,
+        "y": 170
+      },
+      "n1": {
+        "x": 280,
+        "y": 70
+      },
+      "input:values": {
+        "x": 40,
+        "y": 290
+      },
+      "n2": {
+        "x": 530,
+        "y": 70
+      },
+      "n3": {
+        "x": 280,
+        "y": 230
+      }
+    },
+    "view": {
+      "x": 0,
+      "y": 0,
+      "scale": 1
+    }
+  },
+  "references": [
+    {
+      "id": "std.number.greater",
+      "version": "1.0.0"
+    },
+    {
+      "id": "user.Abs",
+      "version": "1.0.0"
+    },
+    {
+      "id": "user.Filter",
+      "version": "1.0.0"
+    }
+  ],
+  "contracts": [
+    {
+      "graph": {
+        "schemaVersion": "0.1",
+        "id": "user.Positive",
+        "version": "1.0.0",
+        "inputs": {
+          "value": {
+            "type": "Number"
+          }
+        },
+        "output": {
+          "type": "Boolean"
+        },
+        "nodes": [
+          {
+            "id": "n1",
+            "uses": "std.number.greater",
+            "args": {
+              "a": {
+                "input": "value"
+              },
+              "b": {
+                "literal": {
+                  "type": "Number",
+                  "value": 2
+                }
+              }
+            }
+          }
+        ],
+        "returns": {
+          "node": "n1"
+        }
+      },
+      "inputs": {
+        "value": 1
+      },
+      "canvas": {
+        "positions": {
+          "input:value": {
+            "x": 40,
+            "y": 170
+          },
+          "n1": {
+            "x": 280,
+            "y": 70
+          }
+        },
+        "view": {
+          "x": 0,
+          "y": 0,
+          "scale": 1
+        }
+      },
+      "references": [
+        {
+          "id": "std.number.greater",
+          "version": "1.0.0"
+        }
+      ]
+    }
+  ],
+  "collections": [
+    {
+      "id": "user.Abs",
+      "version": "1.0.0",
+      "operation": "map",
+      "callback": {
+        "id": "std.number.abs",
+        "version": "1.0.0"
+      }
+    },
+    {
+      "id": "user.Filter",
+      "version": "1.0.0",
+      "operation": "filter",
+      "callback": {
+        "id": "user.Positive",
+        "version": "1.0.0"
+      }
+    }
+  ],
+  "ir": {
+    "entry": "__ems_visual_0_g00007000007200006f00006a00006500006300007400002e00006d00006100006900006e_v00003100002e00003000002e000030_c00003100002e00003000002e000030",
+    "functions": [
+      {
+        "body": [
+          {
+            "kind": "let",
+            "mutable": true,
+            "name": "__ems_collection_0_result",
+            "type": "NumberArray",
+            "value": {
+              "elements": [],
+              "kind": "array",
+              "type": "NumberArray"
+            }
+          },
+          {
+            "binding": "__ems_collection_0_item",
+            "body": [
+              {
+                "kind": "expression",
+                "value": {
+                  "kind": "assign",
+                  "name": "__ems_collection_0_result",
+                  "type": "NumberArray",
+                  "value": {
+                    "arguments": [
+                      {
+                        "kind": "local",
+                        "name": "__ems_collection_0_result",
+                        "type": "NumberArray"
+                      },
+                      {
+                        "arguments": [
+                          {
+                            "kind": "local",
+                            "name": "__ems_collection_0_item",
+                            "type": "Number"
+                          }
+                        ],
+                        "kind": "call",
+                        "target": {
+                          "id": "std.number.abs",
+                          "kind": "contract",
+                          "version": "1.0.0"
+                        },
+                        "type": "Number"
+                      }
+                    ],
+                    "kind": "call",
+                    "target": {
+                      "id": "std.array.append",
+                      "kind": "contract",
+                      "version": "1.0.0"
+                    },
+                    "type": "NumberArray"
+                  }
+                }
+              }
+            ],
+            "iterable": {
+              "kind": "local",
+              "name": "__ems_collection_0_values",
+              "type": "NumberArray"
+            },
+            "kind": "for"
+          },
+          {
+            "kind": "return",
+            "value": {
+              "kind": "local",
+              "name": "__ems_collection_0_result",
+              "type": "NumberArray"
+            }
+          }
+        ],
+        "id": "__ems_collection_0",
+        "inputs": [
+          {
+            "name": "__ems_collection_0_values",
+            "type": "NumberArray"
+          }
+        ],
+        "output": {
+          "type": "NumberArray"
+        },
+        "policy": {
+          "capabilities": [],
+          "effects": []
+        },
+        "requirements": {
+          "capabilities": [],
+          "effects": []
+        }
+      },
+      {
+        "body": [
+          {
+            "kind": "let",
+            "mutable": true,
+            "name": "__ems_collection_1_result",
+            "type": "NumberArray",
+            "value": {
+              "elements": [],
+              "kind": "array",
+              "type": "NumberArray"
+            }
+          },
+          {
+            "binding": "__ems_collection_1_item",
+            "body": [
+              {
+                "condition": {
+                  "arguments": [
+                    {
+                      "kind": "local",
+                      "name": "__ems_collection_1_item",
+                      "type": "Number"
+                    }
+                  ],
+                  "kind": "call",
+                  "target": {
+                    "id": "__ems_visual_1_g00007500007300006500007200002e00005000006f000073000069000074000069000076000065_v00003100002e00003000002e000030_c00003100002e00003000002e000030",
+                    "kind": "function"
+                  },
+                  "type": "Boolean"
+                },
+                "kind": "if",
+                "otherwise": [],
+                "then": [
+                  {
+                    "kind": "expression",
+                    "value": {
+                      "kind": "assign",
+                      "name": "__ems_collection_1_result",
+                      "type": "NumberArray",
+                      "value": {
+                        "arguments": [
+                          {
+                            "kind": "local",
+                            "name": "__ems_collection_1_result",
+                            "type": "NumberArray"
+                          },
+                          {
+                            "kind": "local",
+                            "name": "__ems_collection_1_item",
+                            "type": "Number"
+                          }
+                        ],
+                        "kind": "call",
+                        "target": {
+                          "id": "std.array.append",
+                          "kind": "contract",
+                          "version": "1.0.0"
+                        },
+                        "type": "NumberArray"
+                      }
+                    }
+                  }
+                ]
+              }
+            ],
+            "iterable": {
+              "kind": "local",
+              "name": "__ems_collection_1_values",
+              "type": "NumberArray"
+            },
+            "kind": "for"
+          },
+          {
+            "kind": "return",
+            "value": {
+              "kind": "local",
+              "name": "__ems_collection_1_result",
+              "type": "NumberArray"
+            }
+          }
+        ],
+        "id": "__ems_collection_1",
+        "inputs": [
+          {
+            "name": "__ems_collection_1_values",
+            "type": "NumberArray"
+          }
+        ],
+        "output": {
+          "type": "NumberArray"
+        },
+        "policy": {
+          "capabilities": [],
+          "effects": []
+        },
+        "requirements": {
+          "capabilities": [],
+          "effects": []
+        }
+      },
+      {
+        "body": [
+          {
+            "kind": "let",
+            "mutable": false,
+            "name": "__ems_node_2",
+            "type": "NumberArray",
+            "value": {
+              "arguments": [
+                {
+                  "kind": "local",
+                  "name": "values",
+                  "type": "NumberArray"
+                }
+              ],
+              "kind": "call",
+              "target": {
+                "id": "__ems_collection_0",
+                "kind": "function"
+              },
+              "type": "NumberArray"
+            }
+          },
+          {
+            "kind": "let",
+            "mutable": false,
+            "name": "__ems_node_3",
+            "type": "NumberArray",
+            "value": {
+              "arguments": [
+                {
+                  "kind": "local",
+                  "name": "__ems_node_2",
+                  "type": "NumberArray"
+                }
+              ],
+              "kind": "call",
+              "target": {
+                "id": "__ems_collection_1",
+                "kind": "function"
+              },
+              "type": "NumberArray"
+            }
+          },
+          {
+            "kind": "return",
+            "value": {
+              "kind": "local",
+              "name": "__ems_node_3",
+              "type": "NumberArray"
+            }
+          }
+        ],
+        "id": "__ems_visual_0_g00007000007200006f00006a00006500006300007400002e00006d00006100006900006e_v00003100002e00003000002e000030_c00003100002e00003000002e000030",
+        "inputs": [
+          {
+            "name": "value",
+            "type": "Number"
+          },
+          {
+            "name": "values",
+            "type": "NumberArray"
+          }
+        ],
+        "output": {
+          "type": "NumberArray"
+        },
+        "policy": {
+          "capabilities": [],
+          "effects": []
+        },
+        "requirements": {
+          "capabilities": [],
+          "effects": []
+        }
+      },
+      {
+        "body": [
+          {
+            "kind": "let",
+            "mutable": false,
+            "name": "__ems_node_5",
+            "type": "Boolean",
+            "value": {
+              "arguments": [
+                {
+                  "kind": "local",
+                  "name": "__ems_input_4",
+                  "type": "Number"
+                },
+                {
+                  "kind": "literal",
+                  "type": "Number",
+                  "value": 2
+                }
+              ],
+              "kind": "call",
+              "target": {
+                "id": "std.number.greater",
+                "kind": "contract",
+                "version": "1.0.0"
+              },
+              "type": "Boolean"
+            }
+          },
+          {
+            "kind": "return",
+            "value": {
+              "kind": "local",
+              "name": "__ems_node_5",
+              "type": "Boolean"
+            }
+          }
+        ],
+        "id": "__ems_visual_1_g00007500007300006500007200002e00005000006f000073000069000074000069000076000065_v00003100002e00003000002e000030_c00003100002e00003000002e000030",
+        "inputs": [
+          {
+            "name": "__ems_input_4",
+            "type": "Number"
+          }
+        ],
+        "output": {
+          "type": "Boolean"
+        },
+        "policy": {
+          "capabilities": [],
+          "effects": []
+        },
+        "requirements": {
+          "capabilities": [],
+          "effects": []
+        }
+      }
+    ],
+    "id": "__ems_visual_0_g00007000007200006f00006a00006500006300007400002e00006d00006100006900006e_v00003100002e00003000002e000030_c00003100002e00003000002e000030",
+    "profile": "ems-control-finite/1",
+    "schemaVersion": "ems-ir/2",
+    "version": "1.0.0"
+  }
+}

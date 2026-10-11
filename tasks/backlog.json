@@ -484,23 +484,32 @@
       "objective": "Provide real typed blocks needed by the owner-approved WEB IDE MVP through the shared kernel",
       "deliverables": "Value/logic/comparison/conditional/text/array contracts and catalog with executable implementations, compiler support and negative tests",
       "acceptance": "Programs built from the expanded catalog run through shared IR/runtime; deterministic contracts match standalone. Map/Filter contract parameters and effects are explicitly typed/validated; no dummy unsupported blocks or second executor. Document lazy control vs eager value selection semantics.",
-      "status": "IN_PROGRESS",
+      "status": "DONE",
       "priority": "P0",
       "ownerModelPolicy": [
         "GPT-6.1 Sol",
         "GPT-6 Luna"
       ],
-      "progress": "AC-048 primitive finite library and AC-049 typed static NumberArray Map/Filter source templates implemented. Reference parameters are actual source/generic/atomic/composite callables, checked for signatures/transitive effects/local handles; hygienic normalization uses existing control loops/functions and shared budgets/runtime/compiler, aliases/throws/versions/lock tested. Catalog v2 separates36 installed contracts and2 typed templates. Actual Studio text pipeline and independent Chromium export pass. Visual collection authoring and control workspace persistence remain required before DONE; no fake blocks, String callback substitution or second executor. See docs/spec/COLLECTION_TEMPLATES.md.",
+      "progress": "AC-048/049/050:36 real primitive contracts, typed static source Map/Filter and visual typed atomic/composite callback authoring/editing, shared control IR/runtime/compiler/budgets, v3 authoring+pinned references+verified IR persistence. Actual Chromium creates/edits/saves/reopens program; standalone Node process and independent browser origin run without EMS sources. Initial pure NumberArray scope documented in docs/spec/STUDIO_COLLECTIONS.md; full AC-012/control canvas and global goal remain open.",
       "acceptanceEvidence": {
-        "scope": "Primitive library + static typed source collections; visual/persistence and full EMS-034/global goal open.",
-        "docs": "docs/spec/COLLECTION_TEMPLATES.md",
-        "tests": "596/596 PASS",
-        "verify": "103/103 PASS",
-        "browserTests": "8/8 PASS",
+        "scope": "Initial finite library:36 primitives and pure typed NumberArray Map/Filter source/visual applications. Dynamic callables, general element types and full text/control canvas parity are future extensions.",
+        "docs": "docs/spec/STUDIO_COLLECTIONS.md",
+        "example": "examples/studio-collections.ems.json",
+        "tests": "608/608 PASS",
+        "verify": "106/106 PASS",
+        "browserTests": "9/9 PASS",
         "commands": [
           "npm test",
           "npm run verify",
           "npm run browser:test"
+        ],
+        "testFiles": [
+          "tests/stdlib.test.mjs",
+          "tests/collections.test.mjs",
+          "tests/studio-collections.test.mjs",
+          "tests/browser/stdlib.test.mjs",
+          "tests/browser/collections.test.mjs",
+          "tests/browser/studio-collections.test.mjs"
         ]
       }
     },

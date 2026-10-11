@@ -1,5 +1,17 @@
 # Current implementation status
 
+## Последняя проверка — EMS-034 visual typed collections
+
+`npm test` **608/608 PASS**, `npm run verify` **106/106 PASS**, `npm run browser:test` **9/9 PASS**. Node22 / actual Chromium156. Baseline f743691:596/596 tests,103/103 verify,8/8 browser. AC-050 реализован; EMS-034 DONE для initial finite library/pure NumberArray typed parameters. Full AC-012, WEB IDE MVP, deploy и global goal открыты.
+
+Visual bindings выбирают real typed atomic/composite callbacks с exact versions/transitive pure policy. Ordinary graph lowering preserves demand memo/sequence и inlines editable callbacks в existing control frontend/IR, без нового evaluator/per-element budget. Map/Filter/share budget/throws и standalone совпадают. v3 сохраняет root/definitions/canvas/inputs/refs/bindings и проверяемый root IR witness; tampered pins/IR и циклы отвергаются. v1/v2 unchanged; Undo/storage/text Apply preserve library.
+
+12 новых Node tests: actual shared runtime/text/compiler, fresh independent Node process, callback edits/storage/undo, signatures/versions/cycles/effects/no invocation, order/signed zero/lazy/sequence, shared steps/depth/cancel, semantic closure version lock, strict codec shapes and JSON field-order independence. Actual browser создаёт predicate и Map→Filter, edits/Undo/Redo/Save/FromGraph/Run/reopen, затем saved graph exported module работает на independent origin после shutdown runtime server без /src requests. Example examples/studio-collections.ems.json returns[3]. Schemas17 parsed/local refs resolved; отдельный schema engine не запускался. Логи /tmp/ems-visual-collections-tests-final.log, /tmp/ems-visual-collections-verify-final.log, /tmp/ems-visual-collections-browser-final.log; targeted12/12. git diff --check PASS. No new dependencies/VPS changes. Revision — commit содержащий отчёт, parent f743691.
+
+Limits: pure NumberArray visual callbacks, static source references; full control text→canvas Apply запрещён, direct source call visual binding ID unsupported. Owned public-interface collection graph lowering rejects rather than dropping guards. Native/dynamic callable/async mappings и production linear builder не заявлены. Next ready EMS-050 semantic UI/DOM/reactor counter; затем authoring/persistence/standalone UI/third demo/full MVP/authorized HTTPS auth deploy. Verified slices commit/push origin main git@github.com:Seriy615/EMS.git, без force и субагентов.
+
+## Предыдущая проверка — source collections
+
 ## Последняя проверка — EMS-034 typed source Map/Filter
 
 `npm test` **596/596 PASS**, `npm run verify` **103/103 PASS**, `npm run browser:test` **8/8 PASS**. Node22/actual Chromium156. Baseline8b946bd:578/578 tests,100/100 verify. AC-049 реализован для static pure NumberArray templates через обычный control IR. EMS-034 IN_PROGRESS до visual authoring/persistence; full MVP/AC-012/UI counter/deploy/global goal остаются открыты.

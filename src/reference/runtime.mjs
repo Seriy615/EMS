@@ -35,6 +35,7 @@ export async function executeGraph(graph, inputs, registry, options = {}) {
     for (const cap of contract.capabilities) {
       if (!allowed.has(cap)) fail('PERMISSION_DENIED', `${contract.id} requires ${cap}`, { contract: contract.id, capability: cap });
     }
+    if(contract.kind==='collection')fail('UNSUPPORTED_PROFILE','Collection bindings require graph-to-control lowering');
     const params = Object.create(null);
     for (const key of Object.keys(contract.inputs)) params[key] = await refValue(node.args[key]);
     checkCancellation(options.signal);

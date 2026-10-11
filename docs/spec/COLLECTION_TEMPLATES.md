@@ -1,6 +1,6 @@
 # Типизированные Map/Filter — исходник и общий control IR
 
-EMS-034 IN_PROGRESS, AC-049. Реализованы pure статические contract-reference parameters для NumberArray в текстовом EMS. Это работающие typed templates, нормализуемые в обычные semantic loops/functions/calls, не String callback lookup и не второй executor. Generic first-class callable values, closures, effectful/async-output callbacks и визуальные collection blocks пока не реализованы.
+EMS-034 initial finite acceptance DONE, AC-049/050. Реализованы pure статические contract-reference parameters для NumberArray в текстовом EMS. Это работающие typed templates, нормализуемые в обычные semantic loops/functions/calls, не String callback lookup и не второй executor. Generic first-class callable values, closures, effectful/async-output callbacks пока не реализованы; visual bindings описаны в STUDIO_COLLECTIONS.md.
 
 ```ems
 fn square(value:Number)->Number {return value*value;}
@@ -24,11 +24,11 @@ Control steps/call depth/cancellation — один execution domain: helper loop
 
 ## Каталог, export и ограничения редактора
 
-Machine catalog теперь ems-stdlib-catalog/2: 36 installed primitive contracts плюс отдельные templates с typed callback signature и pure policy. Template не выдаётся за установленный atomic String-callable contract. tools/stdlib-catalog.mjs показывает actual interface/implementation data отдельно от compile-time templates. v1 catalog не включал templates; program/project schemas не меняются.
+Machine catalog теперь ems-stdlib-catalog/2: 36 installed primitive contracts плюс отдельные templates с typed callback signature и pure policy. Template не выдаётся за установленный atomic String-callable contract. tools/stdlib-catalog.mjs показывает actual interface/implementation data отдельно от compile-time templates. v1 catalog не включал templates; Source templates используют прежние IR schemas; visual project v3 имеет отдельную authoring schema.
 
 Compiler/runtime/serializeIR/parseIR/lock используют обычный проверяемый control IR. Atomic/composite callback versions сохраняются в contract targets; lock включает actual closure и отвергает callback replacement. Standalone содержит реальные helper/mapper bodies и исходные error/budget guards, не требует EMS imports/service.
 
-Studio text mode исполняет templates в существующем disposable Worker и показывает настоящий IR; Control Apply в нынешний dataflow canvas получает UNSUPPORTED_VISUAL_PROFILE. Source draft локально сохраняется, но project v1/v2 не содержит full control source/IR. Визуальная authoring/persistence typed Map/Filter и расширение control workspace остаются обязательной незавершённой частью EMS-034/032. Ни AC-049, ни наличие текстового синтаксиса не закрывают full WEB IDE MVP.
+Studio text mode исполняет templates в существующем disposable Worker и показывает настоящий IR; Control Apply в нынешний dataflow canvas получает UNSUPPORTED_VISUAL_PROFILE. Source draft локально сохраняется, но project v1/v2 не содержит full control source/IR. Визуальная authoring/persistence typed Map/Filter реализована через project v3 (STUDIO_COLLECTIONS.md); произвольное control workspace/source mapping остаётся EMS-032. Ни AC-049, ни наличие текстового синтаксиса не закрывают full WEB IDE MVP.
 
 ## Evidence
 

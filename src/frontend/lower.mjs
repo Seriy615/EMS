@@ -34,6 +34,7 @@ function lowerCallModule(checked, entry, baseRegistry, eager = false, preserveGr
   for (const item of baseRegistry.items.values()) {
     if (item.kind === 'atomic') registry.registerAtomic(item);
     else if(item.kind==='resource')registry.registerResource(item);
+    else if(item.kind==='collection')registry.items.set(item.id,item);
     else registry.registerComposite(item);
   }
   const entrySignature = checked.signatures.get(entry);
@@ -71,6 +72,7 @@ function lowerCallModule(checked, entry, baseRegistry, eager = false, preserveGr
     const sourceMap = {};
     function operation(uses, args, node, hint) {
       const implementation = registry.resolve(uses);
+      if(implementation.kind==='collection')fail('UNSUPPORTED_PROFILE','Visual collection bindings require their graph frontend',{location:node.location});
       if (!sequential && implementation.kind === 'composite' && Object.hasOwn(implementation.graph, 'sequence')) {
         sequential = true;
         Object.assign(graph, { effects: policy.effects, capabilities: policy.capabilities, sequence: graph.nodes.map(node => node.id) });

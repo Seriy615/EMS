@@ -30,6 +30,7 @@ function policy(value) {
   for (const field of ['effects', 'capabilities']) assertPolicyNames(value[field], field);
 }
 export function controlContractPolicy(contract, registry) {
+  if(contract.kind==='collection')fail('UNSUPPORTED_PROFILE','Collection bindings must be lowered to control functions');
   if(contract.kind==='resource')return {effects:[...contract.effects].sort(),capabilities:[...contract.capabilities].sort()};
   const literals = { Number: 0, NumberArray: [], Boolean: false, String: '' };
   const graph = { schemaVersion: '0.1', id: 'control:policy', inputs: {}, output: { type: contract.output },

@@ -65,3 +65,5 @@ Each AC ID must link to executable test output / exact command / revision. The M
 ## Proof storage
 
 Record command outputs, test counts, environment and revision in `docs/qa/STATUS.md` (or release-specific evidence files). Do not mark AC-X PASS from static markdown or screenshot alone if it requires executable behavior.
+
+| AC-050 | Visual typed collection binding authoring shares control semantics and strict project persistence | real typed atomic/composite callbacks, editing/undo/caller result, v3 signed authoring+pins+verified IR, malformed/cycle/effect/signature gates, lazy/sequence and shared budgets, fresh Node standalone and actual DOM creation/reopen/independent browser export after runtime shutdown; tests/studio-collections.test.mjs, tests/browser/studio-collections.test.mjs | M2 initial NumberArray library; full AC-012/MVP open |

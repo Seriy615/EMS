@@ -7,7 +7,7 @@ const titles={'core.add':'Сложение','core.sub':'Вычитание','cor
 Object.assign(titles,{'std.logic.and':'И','std.logic.or':'Или','std.logic.not':'Не','std.number.equal':'Равно','std.number.notEqual':'Не равно','std.number.less':'Меньше','std.number.lessEqual':'Меньше или равно','std.number.greater':'Больше','std.number.greaterEqual':'Больше или равно','std.number.abs':'Модуль числа','std.number.floor':'Округлить вниз','std.number.ceil':'Округлить вверх','std.number.round':'Округлить','std.text.concat':'Соединить текст','std.text.equal':'Текст равен','std.text.length':'Длина текста','std.text.contains':'Текст содержит','std.text.slice':'Фрагмент текста','std.text.toNumber':'Текст → число','std.text.fromNumber':'Число → текст','std.array.length':'Длина массива','std.array.at':'Элемент массива','std.array.append':'Добавить элемент','std.array.concat':'Соединить массивы','std.array.reverse':'Обратить массив','std.array.sort':'Сортировать числа','std.array.slice':'Фрагмент массива','std.array.contains':'Массив содержит'});
 for(const [type,title] of Object.entries({Number:'Число',Boolean:'Логическое значение',String:'Текст',NumberArray:'Числовой массив'})){titles['std.value.'+type]=title;titles['std.select.'+type]='Выбор: '+title.toLowerCase();}
 const standardMetadata=new Map(STANDARD_CONTRACTS.map(item=>[item.id,item]));
-const categories={number:'Числа',value:'Значения',logic:'Логика',comparison:'Сравнения',selection:'Выбор значения (входы вычислены)',text:'Текст',array:'Числовые массивы',custom:'Составные контракты'};
+const categories={number:'Числа',value:'Значения',logic:'Логика',comparison:'Сравнения',selection:'Выбор значения (входы вычислены)',text:'Текст',array:'Числовые массивы',collection:'Map / Filter',custom:'Составные контракты'};
 const el=(tag,text,style)=>{const node=document.createElement(tag);if(text!==undefined)node.textContent=text;if(style)node.className=style;return node;};
 const identity=()=> 'p'+crypto.randomUUID().replaceAll('-','');
 let store,editor,selected=null,pending=null,failedNode=null,textMode=false,textProjectId=null,textStorage;
@@ -58,9 +58,9 @@ function wires(){
 function render(){
  $('nodes').replaceChildren();const graph=editor.workspace.graph;
  for(const [name,input]of Object.entries(graph.inputs)){const node=card(`input:${name}`,name,'вход');node.append(port({input:name},null,name,input.type));$('nodes').append(node);}
- graph.nodes.forEach((definition,index)=>{const contract=editor.registry.resolve(definition.uses),node=card(definition.id,titles[contract.id]??contract.id,contract.kind==='composite'?'граф':'атом',index);for(const [name,type]of Object.entries(contract.inputs))node.append(port(null,{id:definition.id,port:name},name,typeof type==='string'?type:type.type));node.append(port({node:definition.id},null,definition.id,contract.output));$('nodes').append(node);});
+ graph.nodes.forEach((definition,index)=>{const contract=editor.registry.resolve(definition.uses),node=card(definition.id,titles[contract.id]??contract.id,contract.kind==='composite'?'граф':contract.kind==='collection'?'коллекция':'атом',index);for(const [name,type]of Object.entries(contract.inputs))node.append(port(null,{id:definition.id,port:name},name,typeof type==='string'?type:type.type));node.append(port({node:definition.id},null,definition.id,contract.output));$('nodes').append(node);});
  const output=card('output','Результат функции','выход');output.append(port(null,{id:'output',port:'return'},'return',graph.output.type));$('nodes').append(output);
- $('project-name').value=editor.project.name;$('undo').disabled=!editor.history.length;$('redo').disabled=!editor.future.length;$('connection-status').textContent=pending?'Выберите вход. Esc — отменить.':'';view();catalog();inspector();if(textMode&&textProjectId!==editor.project.id)syncTextProject();$('scope').textContent=editor.selectedContract??'Основная программа';$('collapse').disabled=!editor.navigation.length;requestAnimationFrame(wires);
+ $('project-name').value=editor.project.name;$('undo').disabled=!editor.history.length;$('redo').disabled=!editor.future.length;$('connection-status').textContent=pending?'Выберите вход. Esc — отменить.':'';view();catalog();collectionChoices();inspector();if(textMode&&textProjectId!==editor.project.id)syncTextProject();$('scope').textContent=editor.selectedContract??'Основная программа';$('collapse').disabled=!editor.navigation.length;requestAnimationFrame(wires);
 }
 function json(value){if(Object.is(value,-0))return '-0';if(Array.isArray(value))return '['+value.map(json).join(',')+']';if(value&&typeof value==='object')return '{'+Object.entries(value).map(([key,item])=>JSON.stringify(key)+':'+json(item)).join(',')+'}';return JSON.stringify(value);}
 function inspector(){
@@ -70,6 +70,13 @@ function inspector(){
   const name=selected.slice(6),input=editor.workspace.graph.inputs[name];if(!input){selected=null;return;}panel.append(el('strong',name),el('p',input.type));const field=el('textarea');field.value=json(editor.workspace.inputs[name]);field.dataset.inputValue=name;const apply=el('button','Применить значение');apply.onclick=()=>change(()=>editor.setInput(name,JSON.parse(field.value)));panel.append(el('label','Значение (JSON)'),field,apply);
  }else{
   const node=editor.workspace.graph.nodes.find(node=>node.id===selected);if(!node){selected=null;return;}const contract=editor.registry.resolve(node.uses);if(contract.kind==='composite'){const expand=el('button','Раскрыть граф');expand.id='expand';expand.onclick=()=>change(()=>{editor.openContract(contract.id);selected=null;});panel.append(expand);}panel.append(el('strong',titles[contract.id]??contract.id),el('p',`${contract.id} · ${node.id} → ${contract.output}`));
+  if(contract.kind==='collection'){
+   panel.append(el('p',contract.collection.operation.toUpperCase()+' · '+contract.collection.callback.id));const field=el('select');field.dataset.collectionCallback=contract.id;
+   const output=contract.collection.operation==='map'?'Number':'Boolean';for(const item of editor.registry.items.values()){const inputs=Object.values(item.inputs).map(spec=>typeof spec==='string'?spec:spec.type);if(['atomic','composite'].includes(item.kind)&&inputs.length===1&&inputs[0]==='Number'&&item.output===output){const option=el('option',item.id);option.value=item.id;field.append(option);}}
+   field.value=contract.collection.callback.id;const apply=el('button','Изменить преобразование');apply.onclick=()=>change(()=>editor.setCollectionCallback(contract.id,field.value));panel.append(field,apply);
+   if(editor.project.contracts.some(item=>item.graph.id===contract.collection.callback.id)){const open=el('button','Открыть преобразование');open.dataset.openCollectionCallback=contract.id;open.onclick=()=>change(()=>{editor.openContract(contract.collection.callback.id);selected=null;});panel.append(open);}
+  }
+
   for(const [name,ref]of Object.entries(node.args)){
    const section=el('div',undefined,'argument');section.append(el('label',`${name} · ${contract.inputs[name]}`));
    if(Object.hasOwn(ref,'literal')){const field=el('textarea');field.value=json(ref.literal);field.dataset.literal=name;const apply=el('button','Применить');apply.onclick=()=>change(()=>editor.literal(node.id,name,JSON.parse(field.value)));section.append(field,apply);}
@@ -83,20 +90,28 @@ function catalog(){
  for(const [key,title] of Object.entries(categories)){
   if(category&&category!==key)continue;let heading=false;
   for(const contract of editor.registry.items.values()){
-   const metadata=standardMetadata.get(contract.id),group=contract.kind==='composite'?'custom':metadata?.category??(['core.sum','core.min','core.max'].includes(contract.id)?'array':'number');
+   const metadata=standardMetadata.get(contract.id),group=contract.kind==='collection'?'collection':contract.kind==='composite'?'custom':metadata?.category??(['core.sum','core.min','core.max'].includes(contract.id)?'array':'number');
    const signature=Object.entries(contract.inputs).map(([name,type])=>name+':'+(typeof type==='string'?type:type.type)).join(', ')+' → '+contract.output;
    if(group!==key||query&&!(contract.id+' '+(titles[contract.id]??'')+' '+signature).toLowerCase().includes(query))continue;
    if(!heading){$('catalog').append(el('h3',title));heading=true;}
-   const row=el('div',undefined,'catalog-item'),button=el('button',(titles[contract.id]??contract.id)+(contract.kind==='composite'?' ▧':''));button.dataset.contract=contract.id;button.title=contract.id+' · '+signature+(metadata?' · '+metadata.summary:'');button.onclick=()=>change(()=>{selected=editor.addNode(contract.id);});row.append(button);
+   const label=contract.kind==='collection'?contract.collection.operation.toUpperCase()+' · '+contract.id:(titles[contract.id]??contract.id);const row=el('div',undefined,'catalog-item'),button=el('button',label+(contract.kind==='composite'?' ▧':''));button.dataset.contract=contract.id;button.title=contract.id+' · '+signature+(metadata?' · '+metadata.summary:'');button.onclick=()=>change(()=>{selected=editor.addNode(contract.id);});row.append(button);
    if(contract.kind==='composite'){
     const open=el('button','Открыть');open.dataset.openContract=contract.id;open.onclick=()=>change(()=>{editor.openContract(contract.id);selected=null;});
     const remove=el('button','Удалить');remove.dataset.deleteContract=contract.id;remove.onclick=()=>change(()=>{editor.removeComposite(contract.id);selected=null;});row.append(open,remove);
    }
-   row.append(el('small',signature,'signature'));$('catalog').append(row);count++;
+   if(contract.kind==='collection'){const remove=el('button','Удалить');remove.dataset.deleteCollection=contract.id;remove.onclick=()=>change(()=>editor.removeCollection(contract.id));row.append(remove);}
+   row.append(el('small',signature+(contract.kind==='collection'?' · '+contract.collection.callback.id:''),'signature'));$('catalog').append(row);count++;
   }
  }
  if(!count)$('catalog').append(el('p','Контракты не найдены.','hint'));
 }
+function collectionChoices(){
+ const field=$('collection-callback'),previous=field.value;field.replaceChildren();const output=$('collection-operation').value==='map'?'Number':'Boolean';
+ for(const item of editor.registry.items.values()){const inputs=Object.values(item.inputs).map(spec=>typeof spec==='string'?spec:spec.type);if(['atomic','composite'].includes(item.kind)&&inputs.length===1&&inputs[0]==='Number'&&item.output===output){const option=el('option',item.id+' · Number → '+output);option.value=item.id;field.append(option);}}
+ if([...field.options].some(option=>option.value===previous))field.value=previous;$('create-collection').disabled=!field.options.length;
+}
+$('collection-operation').addEventListener('change',collectionChoices);
+$('create-collection').onclick=()=>change(()=>editor.createCollection($('collection-id').value.trim(),$('collection-operation').value,$('collection-callback').value));
 $('catalog-search').addEventListener('input',catalog);$('catalog-category').addEventListener('change',catalog);
 $('add-input').onsubmit=event=>{event.preventDefault();change(()=>{const name=$('input-name').value.trim();editor.addInput(name,$('input-type').value);selected=`input:${name}`;$('input-name').value='';});};
 $('project-name').onchange=()=>change(()=>editor.edit(project=>{project.name=$('project-name').value;}));$('save').onclick=save;

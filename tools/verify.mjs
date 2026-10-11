@@ -33,6 +33,8 @@ await check('standard library text and persisted graph example execute shared se
 await stat(new URL('docs/spec/COLLECTION_TEMPLATES.md',root));await check('found docs/spec/COLLECTION_TEMPLATES.md',()=>true);
 await check('typed collection templates execute through shared control IR',async()=>{const source=await get('examples/collection-pipeline.ems'),draft={source,entry:'analyze',lowering:'auto'};return JSON.stringify(await runTextDraft(draft,new ProjectEditor(),{values:[-3,0,2]}))==='[9,4]';});
 await check('catalog distinguishes installed contracts and typed collection templates',()=>standardCatalog().schemaVersion==='ems-stdlib-catalog/2'&&standardCatalog().contracts.length===36&&standardCatalog().templates.length===2);
+for(const file of ['docs/spec/STUDIO_COLLECTIONS.md','schemas/studio-collection-project.schema.json']){await stat(new URL(file,root));await check(`found ${file}`,()=>true);}
+await check('saved visual collection authoring and verified control IR execute independently',async()=>{const source=await get('examples/studio-collections.ems.json'),editor=new ProjectEditor(parseProject(source));const module=await import('data:text/javascript,'+encodeURIComponent(editor.compile()));return editor.serialize()===source&&JSON.stringify(await editor.run())==='[3]'&&JSON.stringify(module.execute(editor.project.inputs))==='[3]';});
 const policy=await readJSON('.agents/policy.json');
 await check('models exactly Sol 6.1 + Luna 6',()=>policy.agents.approvedDisplayNames.join(',')==='GPT-6.1 Sol,GPT-6 Luna');
 await check('fallback disabled',()=>policy.agents.allowImplicitModelFallback===false);

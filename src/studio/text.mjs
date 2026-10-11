@@ -1,3 +1,4 @@
+import {hasCollections,collectionSource} from './collections.mjs';
 import {Registry} from '../reference/registry.mjs';
 import {fail} from '../reference/errors.mjs';
 import {parseEMSModule} from '../frontend/index.mjs';
@@ -34,7 +35,7 @@ export function projectFromText(draft,editor,inputs){
  const graph=graphFromIR(bundle.ir,bundle.registry),target=editor.selectedContract;
  if(target&&graph.id!==target)fail('ENTRY_MISMATCH','Text entry must match the selected composite');
  const project=target?structuredClone(editor.project):newProject(editor.project.id,editor.project.name);
- if(!target){project.graph=graph;project.inputs=structuredClone(inputs);project.canvas=layout(graph,editor.project.canvas);}
+ if(!target){if(editor.project.collections)project.collections=structuredClone(editor.project.collections);project.graph=graph;project.inputs=structuredClone(inputs);project.canvas=layout(graph,editor.project.canvas);}
  project.contracts=[];
  for(const item of bundle.registry.items.values())if(item.kind==='composite'&&item.id!==project.graph.id){
   const body=structuredClone(item.graph),old=editor.project.contracts.find(item=>item.graph.id===body.id);project.contracts.push({graph:body,inputs:target===body.id?structuredClone(inputs):Object.fromEntries(Object.entries(body.inputs).map(([name,spec])=>[name,old?.graph.inputs[name]?.type===spec.type?structuredClone(old.inputs[name]):defaultValue(spec.type)])),canvas:layout(body,old?.canvas)});
@@ -46,6 +47,7 @@ export function projectFromText(draft,editor,inputs){
 /** Export one workspace against the project's existing typed library. Unsupported naming/order fails explicitly. */
 export function textFromWorkspace(editor){
  const graph=editor.workspace.graph,registry=editor.registry;
+ if(hasCollections(graph,registry))return {...collectionSource(graph,registry),lowering:'auto'};
  const keywords=new Set(['return','let','fn','contract','if','else','while','for','true','false','async','export','extern','package','import','as','match','using','mut','throw','try','catch','finally','break','continue','in','await']);
  function name(value){if(typeof value!=='string'||!value.split('.').every(part=>/^[A-Za-z_][A-Za-z0-9_]*$/.test(part)&&!keywords.has(part)))fail('UNSUPPORTED_TEXT_EXPORT','Name cannot be represented in current EMS grammar');return value;}
  const type=value=>value==='NumberArray'?'Number[]':value;

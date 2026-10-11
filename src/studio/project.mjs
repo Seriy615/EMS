@@ -1,3 +1,5 @@
+import {serializeCollectionProject,decodeCollectionProject,verifyCollectionProject,validateCollectionAuthoring} from './project-v3.mjs';
+import {collectionItem,checkCollection,hasCollections,lowerCollectionGraph} from './collections.mjs';
 import { Registry, createCoreRegistry } from '../reference/registry.mjs';
 import { validateGraph, validateRuntimeInputs } from '../reference/validate.mjs';
 import { assertValueType } from '../reference/types.mjs';
@@ -37,16 +39,20 @@ export function projectRegistry(project, base = createCoreRegistry()) {
     if(descriptor.graph?.id===project.graph?.id)fail('DUPLICATE_CONTRACT','Composite conflicts with entry graph');
     registry.registerComposite({id:descriptor.graph.id,version:descriptor.graph.version,graph:descriptor.graph});
   }
+  const collections=project.collections??[];if(!Array.isArray(collections)||collections.length>50)fail('PROJECT_LIMIT','Invalid collection bindings');
+  for(const spec of collections){const item=collectionItem(spec);if(item.id===project.graph?.id||registry.items.has(item.id))fail('DUPLICATE_CONTRACT','Collection binding conflicts with contract');registry.items.set(item.id,item);}
   const visited=new Map(),active=new Set();
   function visit(id) {
     if(visited.has(id))return visited.get(id);
     if(active.has(id)||active.size>=32)fail('RECURSIVE_COMPOSITE','Composite dependency cycle/depth');
     active.add(id);const item=registry.resolve(id);let cost=1;
+    if(item.kind==='collection')cost+=visit(item.collection.callback.id);
     if(item.kind==='composite')for(const node of item.graph.nodes){cost+=visit(node.uses);if(cost>10000)fail('PROJECT_LIMIT','Composite expansion exceeds 10000 operations');}
     active.delete(id);visited.set(id,cost);return cost;
   }
   for(const descriptor of contracts)visit(descriptor.graph.id);
   let entryCost=1;for(const node of project.graph?.nodes??[]){entryCost+=visit(node.uses);if(entryCost>10000)fail('PROJECT_LIMIT','Entry expansion exceeds 10000 operations');}
+  for(const spec of collections){visit(spec.id);checkCollection(registry.resolve(spec.id),registry);}
   return registry;
 }
 export function workspaceProfile(graph,registry) {
@@ -60,12 +66,13 @@ function validateWorkspace(workspace, registry) {
   if(workspace.graph.nodes.length>1000||Object.keys(workspace.graph.inputs).length>100)fail('PROJECT_LIMIT','Workspace too large');
   if(workspace.graph.nodes.some(node=>node.id==='output'||!namePattern.test(node.id))||Object.keys(workspace.graph.inputs).some(name=>!namePattern.test(name)))fail('INVALID_NAME','Invalid or reserved graph name');
   validateRuntimeInputs(workspace.graph,workspace.inputs);validateCanvas(workspace.canvas,workspace.graph);
-  lowerGraphToIR(workspace.graph,registry,{profile:workspaceProfile(workspace.graph,registry)});
+  lowerWorkspace(workspace.graph,registry);
 }
 export function validateProject(project, base = createCoreRegistry()) {
-  fields(project,Object.hasOwn(project,'contracts')?['id','name','graph','inputs','canvas','contracts']:['id','name','graph','inputs','canvas']);
+  fields(project,['id','name','graph','inputs','canvas',...(Object.hasOwn(project,'contracts')?['contracts']:[]),...(Object.hasOwn(project,'collections')?['collections']:[])]);
   if(typeof project.id!=='string'||!namePattern.test(project.id)||typeof project.name!=='string'||!project.name.trim()||project.name.length>200)fail('INVALID_PROJECT','Invalid project identity');
   const registry=projectRegistry(project,base);
+  if(project.collections?.length)validateCollectionAuthoring(project);
   validateWorkspace(project,registry);for(const descriptor of project.contracts??[])validateWorkspace(descriptor,registry);
   if([project,...(project.contracts??[])].reduce((count,workspace)=>count+workspace.graph.nodes.length,0)>1000)fail('PROJECT_LIMIT','Too many total nodes');
   return project;
@@ -75,11 +82,13 @@ function encodeInputs(project) {
   return Object.fromEntries(Object.entries(project.inputs).map(([name, value]) => [name,
     project.graph.inputs[name].type === 'Number' ? encodeNumber(value) : project.graph.inputs[name].type === 'NumberArray' ? value.map(encodeNumber) : value]));
 }
+export function lowerWorkspace(graph,registry){workspaceProfile(graph,registry);return hasCollections(graph,registry)?lowerCollectionGraph(graph,registry).ir:lowerGraphToIR(graph,registry,{profile:workspaceProfile(graph,registry)});}
 function serializeWorkspace(workspace,registry) {
   return {ir:JSON.parse(serializeIR(lowerGraphToIR(workspace.graph,registry,{profile:workspaceProfile(workspace.graph,registry)}),registry)),inputs:encodeInputs(workspace),canvas:workspace.canvas};
 }
 export function serializeProject(project, base = createCoreRegistry()) {
   validateProject(project,base);const registry=projectRegistry(project,base),contracts=project.contracts??[];
+  if(project.collections?.length)return serializeCollectionProject(project,registry,lowerWorkspace(project.graph,registry));
   return JSON.stringify({schemaVersion:contracts.length?'ems-studio-project/2':'ems-studio-project/1',id:project.id,name:project.name,
     ...serializeWorkspace(project,registry),...(contracts.length?{contracts:[...contracts].sort((a,b)=>a.graph.id<b.graph.id?-1:a.graph.id>b.graph.id?1:0).map(workspace=>serializeWorkspace(workspace,registry))}:{})},null,2)+'\n';
 }
@@ -93,6 +102,7 @@ function parseWorkspace(data,registry) {
 export function parseProject(source, base = createCoreRegistry()) {
   if(typeof source!=='string'||source.length>4*1024*1024)fail('PROJECT_LIMIT','Project file too large');
   let data;try{data=JSON.parse(source);}catch{fail('INVALID_PROJECT','Malformed project JSON');}
+  if(data?.schemaVersion==='ems-studio-project/3'){const project=validateProject(decodeCollectionProject(data),base),registry=projectRegistry(project,base);verifyCollectionProject(data,project,registry,lowerWorkspace(project.graph,registry));return project;}
   if(!['ems-studio-project/1','ems-studio-project/2'].includes(data?.schemaVersion))fail('PROJECT_VERSION','Unsupported project schema');
   fields(data,['schemaVersion','id','name','ir','inputs','canvas',...(data.schemaVersion.endsWith('/2')?['contracts']:[])]);
   let registry=base;
@@ -138,7 +148,10 @@ export class ProjectEditor {
   removeComposite(id) {
     this.edit(project=>{if(!project.contracts.some(item=>item.graph.id===id))fail('MISSING_CONTRACT','Unknown composite');project.contracts=project.contracts.filter(item=>item.graph.id!==id);});
   }
-  compile() {return compileIRToJS(lowerGraphToIR(this.workspace.graph,this.registry,{profile:workspaceProfile(this.workspace.graph,this.registry)}),this.registry);}
+  createCollection(id,operation,callback){const target=this.registry.resolve(callback);this.edit(project=>{project.collections??=[];project.collections.push({id,version:'1.0.0',operation,callback:{id:callback,version:target.version}});});return id;}
+  setCollectionCallback(id,callback){const target=this.registry.resolve(callback);this.edit(project=>{const spec=project.collections?.find(item=>item.id===id);if(!spec)fail('MISSING_CONTRACT','Unknown collection binding');spec.callback={id:callback,version:target.version};});}
+  removeCollection(id){this.edit(project=>{if(!project.collections?.some(item=>item.id===id))fail('MISSING_CONTRACT','Unknown collection binding');project.collections=project.collections.filter(item=>item.id!==id);});}
+  compile() {return compileIRToJS(lowerWorkspace(this.workspace.graph,this.registry),this.registry);}
   addNode(contractId) {
     const contract = this.registry.resolve(contractId); let index = 1;
     while (this.workspace.graph.nodes.some(node => node.id === `n${index}`) || Object.hasOwn(this.workspace.graph.inputs, `n${index}`)) index++;
@@ -200,8 +213,8 @@ export class ProjectEditor {
   move(id, x, y) { this.editWorkspace(project => { project.canvas.positions[id] = { x, y }; }); }
   viewport(view) { this.editWorkspace(project => { project.canvas.view = view; }); }
   serialize() { return serializeProject(this.project, this.baseRegistry); }
-  async run() {
-    const project = clone(this.workspace), ir = parseIR(serializeIR(lowerGraphToIR(project.graph, this.registry,{profile:workspaceProfile(project.graph,this.registry)}), this.registry), this.registry);
-    return executeIR(ir, project.inputs, this.registry);
+  async run(options={}) {
+    const project = clone(this.workspace), ir = parseIR(serializeIR(lowerWorkspace(project.graph,this.registry), this.registry), this.registry);
+    return executeIR(ir, project.inputs, this.registry,options);
   }
 }
