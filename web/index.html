@@ -9,10 +9,10 @@
 </head>
 <body>
 <header class="app-header">
-<a class="brand" href="/web/projects.html">EMS <span>Studio</span></a> <span class="header-divider"></span>
+<a class="brand" href="/web/projects.html">EMS <span>Studio</span></a> <span class="header-divider"></span><span class="editor-label">Редактор программы</span>
 <input id="project-name" aria-label="Название проекта">
 <select id="projects" aria-label="Открыть проект"></select>
-<a href="/web/ui-demo.html">Интерфейс приложения</a>
+<a class="ui-link" href="/web/ui-demo.html">Редактор интерфейса ↗</a>
 <button id="new">Новый</button>
 <button id="save" class="primary">Сохранить</button>
 <details class="file-actions"><summary>Файл</summary><button id="export" title="Скачать резервную копию проекта">Экспорт</button>
@@ -20,33 +20,18 @@
 </details><input id="file" type="file" accept=".json" hidden>
 </header>
 <div class="toolbar">
-<span id="save-status" role="status">Локальный проект</span>
-<button id="undo">↶ Отменить</button>
-<button id="redo">↷ Повторить</button>
-<select id="examples" aria-label="Примеры">
-<option value="">Примеры…</option>
-<option value="sum">Сумма двух чисел</option>
-<option value="avg">AVG5 — составной, не WCA</option>
-<option value="library">Массив → текст</option>
-</select>
-
-<button id="text-mode" title="Переключить граф и исходный код EMS">Текст</button>
-<span class="grow"></span>
-<button id="zoom-out" aria-label="Уменьшить масштаб">−</button>
-<span id="zoom">100%</span>
-<button id="zoom-in" aria-label="Увеличить масштаб">+</button>
-<button id="run">▶ Запустить</button>
-<button id="debug">Отладка</button>
-<button id="debug-step" disabled>Шаг</button>
-<button id="debug-over" disabled title="Выполнить текущую операцию, пропуская её внутренние шаги">Через операцию</button><button id="debug-out" disabled title="Продолжить до вызывающей функции или завершения">Из функции</button>
-<button id="debug-continue" disabled>Продолжить</button>
-<button id="stop" disabled>Остановить</button>
+<div class="mode-switch" role="group" aria-label="Представление программы"><button id="graph-view" aria-pressed="true">◈ Граф</button><button id="text-mode" aria-pressed="false" title="Открыть исходный код EMS">⌘ Код</button></div>
+<select id="examples" aria-label="Примеры"><option value="">Открыть пример…</option><option value="sum">Сумма двух чисел</option><option value="avg">AVG5 — составной, не WCA</option><option value="library">Массив → текст</option></select>
+<div class="history-actions"><button id="undo" title="Отменить изменение">↶ Отменить</button><button id="redo" title="Повторить изменение">↷ Повторить</button></div>
+<span class="grow"></span><span id="save-status" role="status">Локальный проект</span>
+<button id="run">▶ Запустить</button><button id="stop" disabled>■ Остановить</button>
+<details class="debug-tools"><summary>Отладка</summary><div class="debug-menu"><p class="hint">Остановите выполнение и пройдите программу по шагам.</p><button id="debug">Начать отладку</button><button id="debug-step" disabled>Шаг</button><button id="debug-over" disabled title="Выполнить текущую операцию, пропуская её внутренние шаги">Через операцию</button><button id="debug-out" disabled title="Продолжить до вызывающей функции или завершения">Из функции</button><button id="debug-continue" disabled>Продолжить</button></div></details>
 </div>
 <main>
 <aside>
-<div class="panel-label">01 · Соберите программу</div><h2>Блоки и входы</h2>
+<details class="library-section" open><summary>＋ Библиотека блоков</summary><div class="panel-label">Библиотека</div><h2>Добавить блок</h2>
 <p class="hint">Выберите операцию ниже — блок появится на поле. Соединяйте круглые выходы со входами.</p>
-<input id="catalog-search" type="search" aria-label="Поиск контрактов" placeholder="Имя, ID или тип…">
+<input id="catalog-search" type="search" aria-label="Поиск контрактов" placeholder="Найти операцию…">
 <select id="catalog-category" aria-label="Категория контрактов">
 <option value="">Все категории</option>
 <option value="number">Числа</option>
@@ -60,7 +45,7 @@
 <option value="custom">Составные</option>
 </select>
 <div id="catalog"></div>
-<h2>Данные на входе</h2><p class="hint">Добавьте параметр, затем задайте его значение в свойствах справа.</p>
+</details><details class="input-settings"><summary>＋ Параметры программы</summary><h2>Данные на входе</h2><p class="hint">Добавьте параметр, затем задайте его значение в свойствах справа.</p>
 <form id="add-input">
 <input id="input-name" placeholder="Имя входа" aria-label="Имя входа" required>
 <select id="input-type" aria-label="Тип входа">
@@ -70,7 +55,7 @@
 <option>Boolean</option>
 </select>
 <button>+ Добавить вход</button>
-</form>
+</form></details>
 <details class="advanced"><summary>Свои контракты и коллекции</summary><h2>Составной контракт</h2>
 <input id="composite-id" placeholder="user.Sum" aria-label="ID составного контракта">
 <button id="create-composite">Создать из текущего графа</button>
@@ -85,18 +70,18 @@
 <p class="hint">Select, And и Or вычисляют все входы. Ленивые if / && / || доступны в тексте.</p>
 </details></aside>
 <section class="workspace">
-<div class="scope-bar"><span class="panel-label">02 · Программа</span>
+<div class="scope-bar"><span class="panel-label">Граф программы</span>
 <button id="main-graph">Основная</button>
 <button id="collapse">← Назад</button>
 <strong id="scope">Основная программа</strong>
-<button id="compile">Экспорт JS</button>
+<div class="canvas-tools"><button id="zoom-out" aria-label="Уменьшить масштаб">−</button><span id="zoom">100%</span><button id="zoom-in" aria-label="Увеличить масштаб">+</button><button id="compile" title="Скачать самостоятельную JavaScript программу">Скачать приложение</button></div>
 </div>
 <div class="canvas-help">Перемещение за заголовок · Фон — панорамирование · Колесо — масштаб</div>
 <section id="text-panel" hidden>
-<div class="text-controls">
+<div class="code-heading"><div><span class="panel-label">Исходный код</span><h2>Программа EMS</h2></div><button id="text-compile">Скачать приложение</button></div><div class="text-controls">
 <label>Функция <input id="text-entry" aria-label="Точка входа текста">
 </label>
-<label>Вычисления <select id="text-lowering">
+<details class="text-advanced"><summary>Настройки и инструменты</summary><div class="text-tool-list"><label>Вычисления <select id="text-lowering">
 <option value="auto">Последовательные (обычный EMS)</option>
 <option value="call">По зависимостям (dataflow SSA)</option>
 </select>
@@ -105,14 +90,14 @@
 <button id="text-to-graph">Применить в граф</button>
 <button id="text-breakpoint" title="Поставить или убрать остановку на операции под курсором">Точка под курсором</button>
 <button id="text-ir">Показать IR</button>
-<button id="text-compile">Экспорт JS</button>
+</div></details>
 </div>
-<p id="text-status">Текстовый кандидат; граф меняется только после «Применить».</p>
+<p id="text-status">Запускайте код напрямую. Чтобы обновить граф, откройте инструменты и выберите «Применить в граф».</p>
 <textarea id="text-source" spellcheck="false" aria-label="Исходный код EMS"></textarea>
 <label class="text-inputs">Аргументы (JSON)<textarea id="text-inputs" spellcheck="false" aria-label="Аргументы текстовой программы"></textarea>
 </label>
 </section>
-<div id="canvas-guide" class="canvas-guide"><span class="guide-icon">＋</span><h2>Начните с простой программы</h2><p>Откройте «Сумма двух чисел» в примерах сверху<br>или добавьте блок из списка слева.</p><small>Соедините выход блока с «Результатом функции», затем нажмите «Запустить».</small></div><div id="viewport">
+<div id="canvas-guide" class="canvas-guide"><span class="guide-icon">◈</span><span class="panel-label">Ваша первая программа</span><h2>От идеи — к работающей программе</h2><p>Начните с готового примера. Вы увидите, как блоки соединяются и превращают входные данные в результат.</p><button id="start-example" class="primary">Открыть сумму двух чисел →</button><div class="guide-steps"><span>1. Откройте пример</span><span>2. Измените значения</span><span>3. Нажмите «Запустить»</span></div></div><div id="viewport">
 <div id="world">
 <svg id="wires" width="4000" height="4000" aria-label="Соединения">
 </svg>
@@ -121,17 +106,17 @@
 </div>
 </section>
 <aside class="inspector">
-<div class="panel-label">03 · Настройте блок</div><h2>Свойства</h2>
+<div class="panel-label">Выбранный блок</div><h2>Свойства</h2>
 <div id="inspector"></div>
 </aside>
 </main>
 <section class="execution">
 <div>
-<strong>Результат запуска</strong>
+<strong><span class="result-dot"></span> Результат</strong>
 <span id="duration"></span>
 <span id="connection-status"></span>
 </div>
-<pre id="output" aria-live="polite">Создайте граф и нажмите «Запустить».</pre>
+<pre id="output" aria-live="polite">Здесь появится результат. Откройте пример и нажмите «Запустить».</pre>
 <div id="error" role="alert"></div>
 <pre id="debug-location" aria-live="polite"></pre>
 <details class="breakpoint-settings"><summary>Точки останова (<span id="breakpoint-count">0</span>)</summary><p class="hint">Выберите блок и поставьте точку в свойствах; в тексте используйте «Точка под курсором». Точки сохраняются локально. Изменённые операции или библиотека могут снять привязку; экспорт программы не включает точки.</p><label><input id="debug-run-to-breakpoint" type="checkbox"> При отладке сразу идти до точки</label><button id="debug-breakpoint" disabled>Точка на текущей операции</button><button id="clear-breakpoints">Убрать все точки проекта</button><pre id="breakpoint-list"></pre></details>

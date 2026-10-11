@@ -26,3 +26,29 @@ test('Studio onboarding leads to a running example; file actions and narrow work
   }
  }finally{await browser?.close();await server.close();}
 });
+
+test('Studio exposes distinct stable views, a real first-run button and compact mobile library',async()=>{
+ const server=await startStudioServer({port:0});let browser;
+ try{
+  browser=await launchChromium();const page=await browser.page(server.origin);await page.viewport(1440,900);
+  await page.evaluate(`import('/web/studio.mjs')`);
+  async function click(selector){await page.evaluate(`document.querySelector(${JSON.stringify(selector)}).scrollIntoView({block:'nearest'})`);const at=await page.evaluate(`(()=>{const el=document.querySelector(${JSON.stringify(selector)}),r=el.getBoundingClientRect();if(document.elementFromPoint(r.x+r.width/2,r.y+r.height/2)!==el)throw Error('Control covered: '+${JSON.stringify(selector)});return {x:r.x+r.width/2,y:r.y+r.height/2};})()`);await page.mouse('mousePressed',{...at,button:'left',buttons:1,clickCount:1});await page.mouse('mouseReleased',{...at,button:'left',buttons:0,clickCount:1});}
+  assert.equal(await page.evaluate(`document.querySelector('.debug-tools').open`),false);
+  await click('#start-example');await click('#run');
+  assert.equal(await page.evaluate(`(async()=>{const end=Date.now()+5000;while(document.querySelector('#run').disabled){if(Date.now()>end)throw Error('Example execution timeout');await new Promise(r=>setTimeout(r,10));}return document.querySelector('#output').textContent;})()`),'5');
+  await click('#text-mode');await click('#text-mode');
+  assert.equal(await page.evaluate(`document.body.classList.contains('text-mode')&&document.querySelector('#text-mode').getAttribute('aria-pressed')==='true'`),true);
+  await click('#graph-view');await click('#graph-view');
+  assert.equal(await page.evaluate(`!document.body.classList.contains('text-mode')&&document.querySelector('#graph-view').getAttribute('aria-pressed')==='true'`),true);
+  await click('.debug-tools summary');await click('#debug');
+  assert.equal(await page.evaluate(`(async()=>{const end=Date.now()+5000;while(document.querySelector('#debug-step').disabled){if(Date.now()>end)throw Error('Debug pause timeout');await new Promise(r=>setTimeout(r,10));}return document.querySelector('.debug-tools').open;})()`),true);
+  await click('#stop');await page.evaluate(`(async()=>{while(document.querySelector('#run').disabled)await new Promise(r=>setTimeout(r,10));document.querySelector('.debug-tools').open=false;})()`);
+  await click('#new');await page.viewport(390,844);
+  await page.evaluate(`new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r)))`);
+  assert.equal(await page.evaluate(`document.querySelector('.library-section').open`),false);
+  assert.equal(await page.evaluate(`document.documentElement.scrollWidth<=innerWidth`),true);
+  await click('#start-example');await click('.library-section summary');
+  assert.equal(await page.evaluate(`document.querySelector('.library-section').open&&document.querySelector('[data-contract="core.add"]').getBoundingClientRect().height>0`),true);
+  await page.close();
+ }finally{await browser?.close();await server.close();}
+});

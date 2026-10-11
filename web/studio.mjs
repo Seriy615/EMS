@@ -49,7 +49,7 @@ async function executeStudio(action,draft,inputs,debug=false){
  syncBreakpoints();executionBreakpointIdentity=breakpointIdentity;pausedOperation=null;syncBreakpoints();
  $('output').textContent=debug?'Отладка: выполняется…':'Выполняется…';$('execution-log').textContent='';$('debug-location').textContent='';$('debug').disabled=true;
  const job=startStudioExecution({action,project:editor.serialize(),selected:editor.selectedContract,draft,inputs,debug,...(debug?{debugOptions:{breakpoints,start:$('debug-run-to-breakpoint').checked?'continue':'step'}}:{})},{timeout:debug?60000:5000,onPause:pause=>{
- pausedOperation=pause;$('output').textContent='Пауза. Нажмите «Шаг» или «Продолжить».';syncBreakpoints();$('debug-over').disabled=false;$('debug-out').disabled=false;$('debug-step').disabled=false;$('debug-continue').disabled=false;
+ document.querySelector('.debug-tools').open=true;pausedOperation=pause;$('output').textContent='Пауза. Нажмите «Шаг» или «Продолжить».';syncBreakpoints();$('debug-over').disabled=false;$('debug-out').disabled=false;$('debug-step').disabled=false;$('debug-continue').disabled=false;
  const where=pause.profile==='control'?pause.callStack.join(' → ')+' / '+pause.node+' ('+pause.kind+') → '+(pause.type??'statement'):pause.callPath.map(call=>call.graph+' / '+call.node+' → '+call.contract).join('\n')+'\nВходы: '+JSON.stringify(pause.inputs)+' → '+pause.output;
  $('debug-location').textContent='Пауза перед операцией (снимок программы)\n'+where+(pause.location?'\nСтрока '+pause.location.start.line+', столбец '+pause.location.start.column:'');
  if(action==='text'&&pause.location&&$('text-source').value===draft.source){$('text-source').focus();$('text-source').setSelectionRange(pause.location.start.offset,pause.location.end.offset);}
@@ -201,10 +201,14 @@ function saveDraft(){try{if(!textStorage)throw new Error('Хранилище ч�
 function sourceError(error){report(error);const location=error.details?.location;if(location){$('error').textContent+='\nСтрока '+location.start.line+', столбец '+location.start.column;$('text-source').focus();$('text-source').setSelectionRange(location.start.offset,location.end.offset);}}
 function syncTextProject(){const stored=textStorage?.load(editor.project.id);if(stored)setDraft(stored);else generateDraft();textProjectId=editor.project.id;}
 function generateDraft(){const value=textAPI.textFromWorkspace(editor);setDraft({...value,inputs:json(editor.workspace.inputs)});textProjectId=editor.project.id;saveDraft();syncBreakpoints();}
-$('text-mode').onclick=()=>{
- try{if(!textMode&&textProjectId!==editor.project.id)syncTextProject();
- textMode=!textMode;document.body.classList.toggle('text-mode',textMode);$('text-panel').hidden=!textMode;$('text-mode').textContent=textMode?'Граф':'Текст';if(!textMode)render();else{syncBreakpoints();inspector();}}catch(error){sourceError(error);}
-};
+function setTextMode(next){
+ if(textMode===next)return;
+ try{if(next&&textProjectId!==editor.project.id)syncTextProject();
+ textMode=next;document.body.classList.toggle('text-mode',textMode);$('text-panel').hidden=!textMode;$('text-mode').setAttribute('aria-pressed',String(textMode));$('graph-view').setAttribute('aria-pressed',String(!textMode));if(!textMode)render();else{syncBreakpoints();inspector();}}catch(error){sourceError(error);}
+}
+$('text-mode').onclick=()=>setTextMode(true);
+$('graph-view').onclick=()=>setTextMode(false);
+$('start-example').onclick=()=>{const examples=$('examples');examples.value='sum';examples.dispatchEvent(new Event('change'));};
 $('text-from-graph').onclick=()=>{try{generateDraft();$('error').textContent='';}catch(error){sourceError(error);}};
 for(const id of ['text-source','text-entry','text-lowering','text-inputs'])$(id).addEventListener('input',()=>{saveDraft();syncBreakpoints();});
 const graphRun=$('run').onclick;
@@ -214,8 +218,13 @@ async function runText(debug=false){
 };
 $('run').onclick=()=>runText();
 $('text-ir').onclick=()=>{try{const bundle=textAPI.compileTextDraft(draft(),editor);$('output').textContent=JSON.stringify({ir:bundle.ir,provenance:bundle.provenance},null,2);$('error').textContent='';}catch(error){sourceError(error);}};
-$('text-to-graph').onclick=()=>{try{const value=textAPI.projectFromText(draft(),editor,JSON.parse($('text-inputs').value));editor.edit(project=>Object.assign(project,value.project));selected=null;textMode=false;document.body.classList.remove('text-mode');$('text-panel').hidden=true;$('text-mode').textContent='Текст';save();render();$('error').textContent='';}catch(error){sourceError(error);}};
+$('text-to-graph').onclick=()=>{try{const value=textAPI.projectFromText(draft(),editor,JSON.parse($('text-inputs').value));editor.edit(project=>Object.assign(project,value.project));selected=null;textMode=false;document.body.classList.remove('text-mode');$('text-panel').hidden=true;$('text-mode').setAttribute('aria-pressed','false');$('graph-view').setAttribute('aria-pressed','true');save();render();$('error').textContent='';}catch(error){sourceError(error);}};
 const graphCompile=$('compile').onclick;
 $('compile').onclick=()=>{if(!textMode)return graphCompile();try{const url=URL.createObjectURL(new Blob([textAPI.compileTextJS(draft(),editor)],{type:'text/javascript'})),anchor=el('a');anchor.href=url;anchor.download='text-program.mjs';anchor.click();setTimeout(()=>URL.revokeObjectURL(url),1000);}catch(error){sourceError(error);}};
 
 $('text-compile').onclick=()=>$('compile').click();
+
+// Compact library on narrow screens keeps the program and first action in view.
+const compactLibrary=matchMedia('(max-width:520px)');
+function syncLibraryLayout(){document.querySelector('.library-section').open=!compactLibrary.matches;}
+compactLibrary.addEventListener('change',syncLibraryLayout);syncLibraryLayout();
