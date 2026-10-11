@@ -1,3 +1,4 @@
+import {workerProbeSource,createModuleDiagnostics} from './worker-diagnostics.mjs';
 import { spawn } from 'node:child_process';
 import { constants } from 'node:fs';
 import { mkdtemp, rm, access } from 'node:fs/promises';
@@ -62,12 +63,25 @@ export async function launchChromium() {
         pending.set(id, { resolve, reject, timer }); socket.send(JSON.stringify({ id, method, params, ...(sessionId ? { sessionId } : {}) }));
       });
     }
-    async function page(url,{headers={},credentials=null}={}) {
+    async function page(url,{headers={},credentials=null,httpDiagnostics=()=>null}={}) {
       const { targetId } = await send('Target.createTarget', { url: 'about:blank' });
       const { sessionId } = await send('Target.attachToTarget', { targetId, flatten: true });
       await send('Page.enable', {}, sessionId);
-      // Trusted QA only: retain bounded startup errors without changing application error redaction.
-      await send('Page.addScriptToEvaluateOnNewDocument',{source:`globalThis.__emsQAWorkerErrors=[];const EMSNativeWorker=globalThis.Worker;globalThis.Worker=class extends EMSNativeWorker{constructor(...args){super(...args);this.addEventListener('error',event=>{if(globalThis.__emsQAWorkerErrors.length<10)globalThis.__emsQAWorkerErrors.push({message:String(event.message??'').slice(0,512),filename:String(event.filename??'').slice(0,512),line:event.lineno??null});});}};`},sessionId);
+      // Observe module loads and lifecycle without pausing or restarting any Worker.
+      const moduleDiagnostics=createModuleDiagnostics(url),ownedSessions=new Set([sessionId]);
+      const diagnosticListener=message=>{
+        if(!ownedSessions.has(message.sessionId))return;
+        moduleDiagnostics.accept(message);
+        if(message.method==='Target.attachedToTarget'&&message.params.targetInfo?.type==='worker'){
+          const childSession=message.params.sessionId;ownedSessions.add(childSession);
+          send('Network.enable',{},childSession).catch(()=>{});
+        }
+        if(message.method==='Target.detachedFromTarget')ownedSessions.delete(message.params.sessionId);
+      };
+      listeners.add(diagnosticListener);
+      await send('Network.enable',{},sessionId);
+      await send('Target.setAutoAttach',{autoAttach:true,waitForDebuggerOnStart:false,flatten:true},sessionId);
+      await send('Page.addScriptToEvaluateOnNewDocument',{source:workerProbeSource()},sessionId);
 
       let authenticationListener;
       if(credentials){
@@ -98,12 +112,13 @@ export async function launchChromium() {
         viewport: (width,height) => send('Emulation.setDeviceMetricsOverride',{width,height,deviceScaleFactor:1,mobile:false},sessionId),
         mouse: (type,params) => send('Input.dispatchMouseEvent',{type,...params},sessionId),
         downloads: directory => send('Browser.setDownloadBehavior',{behavior:'allow',downloadPath:directory}),
+        async diagnostics(){const result=await send('Runtime.evaluate',{expression:'JSON.stringify({workers:globalThis.__emsQAWorkers??[],errors:globalThis.__emsQAWorkerErrors??[]})',returnByValue:true},sessionId);return {...JSON.parse(result.result.value),modules:moduleDiagnostics.snapshot(),http:httpDiagnostics()};},
         async evaluate(expression) {
           const result = await send('Runtime.evaluate', { expression, awaitPromise: true, returnByValue: true }, sessionId);
-          if (result.exceptionDetails){const diagnostics=await send('Runtime.evaluate',{expression:'JSON.stringify(globalThis.__emsQAWorkerErrors??[])',returnByValue:true},sessionId);throw new Error(JSON.stringify(result.exceptionDetails)+' Worker startup diagnostics: '+diagnostics.result.value+' Browser diagnostics: '+browserDiagnostics);}
+          if (result.exceptionDetails){const diagnostics=await send('Runtime.evaluate',{expression:'JSON.stringify({workers:globalThis.__emsQAWorkers??[],errors:globalThis.__emsQAWorkerErrors??[]})',returnByValue:true},sessionId);throw new Error(JSON.stringify(result.exceptionDetails)+' Worker startup diagnostics: '+diagnostics.result.value+' Module diagnostics: '+JSON.stringify(moduleDiagnostics.snapshot())+' HTTP module diagnostics: '+JSON.stringify(httpDiagnostics())+' Browser diagnostics: '+browserDiagnostics);}
           return result.result.value;
         },
-        close: () => {if(authenticationListener)listeners.delete(authenticationListener);return send('Target.closeTarget', { targetId });}
+        close: () => {listeners.delete(diagnosticListener);if(authenticationListener)listeners.delete(authenticationListener);return send('Target.closeTarget', { targetId });}
       };
     }
     return { executable, version: await send('Browser.getVersion'), page, close };

@@ -5,9 +5,9 @@ import {launchChromium} from '../../tools/lib/chromium.mjs';
 import {fixture,policy} from '../helpers/ui-fixture.mjs';
 
 test('actual browser counter renders semantic UI and DOM buttons execute EMS state programs',async()=>{
- const server=await startStudioServer({port:0});let browser;
+ const server=await startStudioServer({port:0,recordModules:true});let browser;
  try{
-  browser=await launchChromium();const page=await browser.page(server.origin+'/web/ui-demo.html');
+  browser=await launchChromium();const page=await browser.page(server.origin+'/web/ui-demo.html',{httpDiagnostics:()=>server.moduleDiagnostics()});
   async function check(){
    const demo=await import('/web/ui-demo.mjs'),value=()=>document.querySelector('[data-ems-ui="count"]')?.textContent;
    const initial=value();document.querySelector('[data-ems-ui="increment"]').click();document.querySelector('[data-ems-ui="increment"]').click();document.querySelector('[data-ems-ui="decrement"]').click();await demo.applicationController.idle();
@@ -19,7 +19,7 @@ test('actual browser counter renders semantic UI and DOM buttons execute EMS sta
 });
 
 test('DOM adapter preserves rollback, typed inputs, XSS boundaries and listener/session cleanup',async()=>{
- const {application}=fixture(),server=await startStudioServer({port:0});let browser;
+ const {application}=fixture(),server=await startStudioServer({port:0,recordModules:true});let browser;
  try{
   browser=await launchChromium();const page=await browser.page(server.origin);
   async function check(application,policy){
@@ -43,9 +43,9 @@ test('DOM adapter preserves rollback, typed inputs, XSS boundaries and listener/
 });
 
 test('actual UI workspace validates signed project edits, undo/save/download/import and reopens the saved program',async()=>{
- const {mkdtemp,readFile,rm}=await import('node:fs/promises'),{tmpdir}=await import('node:os'),{join}=await import('node:path'),directory=await mkdtemp(join(tmpdir(),'ems-ui-project-browser-')),server=await startStudioServer({port:0});let browser;
+ const {mkdtemp,readFile,rm}=await import('node:fs/promises'),{tmpdir}=await import('node:os'),{join}=await import('node:path'),directory=await mkdtemp(join(tmpdir(),'ems-ui-project-browser-')),server=await startStudioServer({port:0,recordModules:true});let browser;
  try{
-  browser=await launchChromium();const page=await browser.page(server.origin+'/web/ui-demo.html');
+  browser=await launchChromium();const page=await browser.page(server.origin+'/web/ui-demo.html',{httpDiagnostics:()=>server.moduleDiagnostics()});
   async function edit(){
    const demo=await import('/web/ui-demo.mjs'),field=document.querySelector('#ui-source'),original=field.value,data=JSON.parse(original);
    async function wait(predicate){const deadline=Date.now()+5000;while(!predicate()){if(Date.now()>deadline)throw new Error('UI apply timeout');await new Promise(resolve=>setTimeout(resolve,10));}}
@@ -63,8 +63,8 @@ test('actual UI workspace validates signed project edits, undo/save/download/imp
   async function openSaved(){document.querySelector('#open-ui').click();const deadline=Date.now()+5000;while(document.querySelector('[data-ems-ui="count"]')?.textContent!=='-0'){if(Date.now()>deadline)throw new Error('Open saved timeout');await new Promise(resolve=>setTimeout(resolve,10));}return document.querySelector('#error').textContent;}
   assert.equal(await page.evaluate('('+openSaved.toString()+')()'),'');
 
-  await page.close();const reopened=await browser.page(server.origin+'/web/ui-demo.html');assert.equal(await reopened.evaluate("(async()=>{await import('/web/ui-demo.mjs');return document.querySelector('[data-ems-ui=\"count\"]').textContent;})()"),'-0');
-  await reopened.evaluate("localStorage.setItem('ems.studio.ui.v1','{')");await reopened.close();const corrupt=await browser.page(server.origin+'/web/ui-demo.html');
+  await page.close();const reopened=await browser.page(server.origin+'/web/ui-demo.html',{httpDiagnostics:()=>server.moduleDiagnostics()});assert.equal(await reopened.evaluate("(async()=>{await import('/web/ui-demo.mjs');return document.querySelector('[data-ems-ui=\"count\"]').textContent;})()"),'-0');
+  await reopened.evaluate("localStorage.setItem('ems.studio.ui.v1','{')");await reopened.close();const corrupt=await browser.page(server.origin+'/web/ui-demo.html',{httpDiagnostics:()=>server.moduleDiagnostics()});
   async function inspectCorrupt(){await import('/web/ui-demo.mjs');return {error:document.querySelector('#error').textContent,value:document.querySelector('[data-ems-ui="count"]')?.textContent,saved:localStorage.getItem('ems.studio.ui.v1')};}
   assert.deepEqual(await corrupt.evaluate('('+inspectCorrupt.toString()+')()'),{error:'INVALID_UI_PROJECT',value:'0',saved:'{'});
 
@@ -72,9 +72,9 @@ test('actual UI workspace validates signed project edits, undo/save/download/imp
 });
 
 test('actual forms create a counter from empty UI, edit EMS handler and restore source after reopen',async()=>{
- const server=await startStudioServer({port:0});let browser;
+ const server=await startStudioServer({port:0,recordModules:true});let browser;
  try{
-  browser=await launchChromium();const page=await browser.page(server.origin+'/web/ui-demo.html');
+  browser=await launchChromium();const page=await browser.page(server.origin+'/web/ui-demo.html',{httpDiagnostics:()=>server.moduleDiagnostics()});
   async function create(){
    const demo=await import('/web/ui-demo.mjs'),set=(id,value)=>{document.getElementById(id).value=value;};
    async function change(id){const before=demo.editor.source;document.getElementById(id).click();const deadline=Date.now()+5000;while(demo.editor.source===before){if(document.getElementById('error').textContent)throw new Error(document.getElementById('error').textContent);if(Date.now()>deadline)throw new Error('Author change timeout: '+id);await new Promise(resolve=>setTimeout(resolve,10));}await demo.startDemo();}
@@ -90,7 +90,7 @@ test('actual forms create a counter from empty UI, edit EMS handler and restore 
    document.getElementById('redo-ui').click();await demo.startDemo();document.getElementById('save-ui').click();set('handler-select','increment');document.getElementById('load-handler').click();return {first,second,undone,preserved,source:document.getElementById('handler-source').value,schema:JSON.parse(demo.editor.source).schemaVersion,inspect:document.getElementById('handler-inspect').textContent.includes('ems-ir/2'),error:document.getElementById('error').textContent};
   }
   const updated='fn update(delta:Number)->Number {return state.count.write(state.count.read()+delta*2);}';assert.deepEqual(await page.evaluate('('+create.toString()+')()'),{first:'1',second:'2',undone:'1',preserved:true,source:updated,schema:'ems-ui-project/2',inspect:true,error:''});
-  await page.close();const reopened=await browser.page(server.origin+'/web/ui-demo.html');
+  await page.close();const reopened=await browser.page(server.origin+'/web/ui-demo.html',{httpDiagnostics:()=>server.moduleDiagnostics()});
   async function restore(){const demo=await import('/web/ui-demo.mjs');document.getElementById('handler-select').value='increment';document.getElementById('load-handler').click();document.querySelector('[data-ems-ui="plus"]').click();await demo.applicationController.idle();return {source:document.getElementById('handler-source').value,value:document.querySelector('[data-ems-ui="display"]').textContent};}
   assert.deepEqual(await reopened.evaluate('('+restore.toString()+')()'),{source:updated,value:'2'});
  }finally{await browser?.close();await server.close();}
@@ -99,9 +99,9 @@ test('actual forms create a counter from empty UI, edit EMS handler and restore 
 test('actual browser worker deadline and Stop leave editor responsive and a fresh session recovers',async()=>{
  const {UIProjectEditor}=await import('../../src/studio/ui-project.mjs'),{application,base}=fixture(),editor=new UIProjectEditor(application,base);editor.applyHandler('increment','fn bounded(delta:Number)->Number {state.count.write(99);while true {} return delta;}','bounded');const source=editor.source,healthy=serializeHealthy();
  function serializeHealthy(){return new UIProjectEditor(application,base).source;}
- const server=await startStudioServer({port:0});let browser;
+ const server=await startStudioServer({port:0,recordModules:true});let browser;
  try{
-  browser=await launchChromium();const page=await browser.page(server.origin+'/web/ui-demo.html');
+  browser=await launchChromium();const page=await browser.page(server.origin+'/web/ui-demo.html',{httpDiagnostics:()=>server.moduleDiagnostics()});
   async function check(source,healthy,policy){
    await import('/web/ui-demo.mjs');const {createUIWorkerRuntime}=await import('/src/ui/worker-client.mjs');
    const worker=await createUIWorkerRuntime(source,{policy,timeout:1});let responsive=false;setTimeout(()=>{document.querySelector('#state-id').value='responsive';responsive=true;},0);
