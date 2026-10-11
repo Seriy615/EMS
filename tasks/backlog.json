@@ -484,12 +484,13 @@
       "objective": "Step through executions, view types/effects/state safely",
       "deliverables": "Debugger panels",
       "acceptance": "Pinpoint node and hide secrets",
-      "status": "TODO",
+      "status": "IN_PROGRESS",
       "priority": "P1",
       "ownerModelPolicy": [
         "GPT-6.1 Sol",
         "GPT-6 Luna"
-      ]
+      ],
+      "progress": "Initial graph failure observer locates exact atomic leaf/caller without changing semantic errors; Worker lifecycle logs and actual browser DIV_BY_ZERO highlight implemented. Full step/source/control/state debugger remains open."
     },
     {
       "id": "EMS-034",
@@ -1050,6 +1051,26 @@
         "GPT-6.1 Sol",
         "GPT-6 Luna"
       ]
+    },
+    {
+      "id": "EMS-035",
+      "title": "Owner Web IDE MVP acceptance and isolated dev deployment",
+      "phase": "M2/M3 owner P0",
+      "dependsOn": [
+        "EMS-030",
+        "EMS-031",
+        "EMS-034"
+      ],
+      "objective": "Verify actual owner calculator/expandable AVG5/counter/project scenarios and publish an authenticated isolated development IDE to the designated domain",
+      "deliverables": "Named MVP evidence, reusable AVG5 project, checked Git release automation, dedicated service/auth/TLS/logging/rollback, live Chromium proof",
+      "acceptance": "Local Node/Chromium scenarios pass; HTTPS domain verifies, unauthenticated users receive401, authenticated create/connect/run/reopen/AVG5/counter pass; recovery/rollback and other service preservation recorded",
+      "status": "IN_PROGRESS",
+      "priority": "P0",
+      "ownerModelPolicy": [
+        "GPT-6.1 Sol",
+        "GPT-6 Luna"
+      ],
+      "progress": "Local mandatory scenario audit performed; reusable AVG5 and execution lifecycle/precise graph failure diagnostics implemented. Deployment tooling prepared; public SAN mismatch observed. Remote deployment success not yet claimed. See docs/qa/WEB_IDE_MVP.md and DEPLOYMENT.md."
     }
   ]
 }

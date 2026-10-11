@@ -1,0 +1,29 @@
+# Managed by EMS language deployment
+[Unit]
+Description=EMS language development IDE static server
+After=network.target
+StartLimitIntervalSec=60
+StartLimitBurst=5
+[Service]
+Type=simple
+User=ems-language-dev
+Group=ems-language-dev
+WorkingDirectory=/opt/ems-language-dev/current
+Environment=PORT=18877
+ExecStart=/usr/local/bin/node /opt/ems-language-dev/current/tools/serve.mjs
+Restart=on-failure
+RestartSec=2
+NoNewPrivileges=true
+PrivateTmp=true
+PrivateDevices=true
+ProtectSystem=strict
+ProtectHome=true
+RestrictAddressFamilies=AF_INET AF_INET6 AF_UNIX
+MemoryMax=128M
+CPUQuota=25%
+TasksMax=32
+LimitNOFILE=512
+StandardOutput=journal
+StandardError=journal
+[Install]
+WantedBy=multi-user.target

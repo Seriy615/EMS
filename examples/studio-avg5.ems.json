@@ -1,0 +1,272 @@
+{
+  "schemaVersion": "ems-studio-project/2",
+  "id": "avg5",
+  "name": "AVG5 — арифметика, не WCA",
+  "ir": {
+    "schemaVersion": "ems-ir/1",
+    "profile": "ems-core-finite/1",
+    "id": "demo.AVG5Application",
+    "version": "1.0.0",
+    "inputs": [
+      {
+        "name": "times",
+        "type": "NumberArray"
+      }
+    ],
+    "output": {
+      "type": "Number"
+    },
+    "operations": [
+      {
+        "id": "avg5",
+        "contract": {
+          "id": "demo.AverageOfFiveArithmetic",
+          "version": "0.1.0"
+        },
+        "arguments": [
+          {
+            "port": "times",
+            "value": {
+              "kind": "input",
+              "name": "times"
+            }
+          }
+        ],
+        "type": "Number"
+      }
+    ],
+    "result": {
+      "kind": "node",
+      "id": "avg5"
+    }
+  },
+  "inputs": {
+    "times": [
+      12.4,
+      11.85,
+      13.2,
+      12.1,
+      14
+    ]
+  },
+  "canvas": {
+    "positions": {
+      "input:times": {
+        "x": 30,
+        "y": 80
+      },
+      "avg5": {
+        "x": 280,
+        "y": 70
+      },
+      "output": {
+        "x": 1030,
+        "y": 160
+      }
+    },
+    "view": {
+      "x": 0,
+      "y": 0,
+      "scale": 1
+    }
+  },
+  "contracts": [
+    {
+      "ir": {
+        "schemaVersion": "ems-ir/1",
+        "profile": "ems-core-finite/1",
+        "id": "demo.AverageOfFiveArithmetic",
+        "version": "0.1.0",
+        "inputs": [
+          {
+            "name": "times",
+            "type": "NumberArray"
+          }
+        ],
+        "output": {
+          "type": "Number"
+        },
+        "operations": [
+          {
+            "id": "average",
+            "contract": {
+              "id": "core.div",
+              "version": "1.0.0"
+            },
+            "arguments": [
+              {
+                "port": "a",
+                "value": {
+                  "kind": "node",
+                  "id": "remove_high"
+                }
+              },
+              {
+                "port": "b",
+                "value": {
+                  "kind": "literal",
+                  "type": "Number",
+                  "value": 3
+                }
+              }
+            ],
+            "type": "Number"
+          },
+          {
+            "id": "highest",
+            "contract": {
+              "id": "core.max",
+              "version": "1.0.0"
+            },
+            "arguments": [
+              {
+                "port": "values",
+                "value": {
+                  "kind": "input",
+                  "name": "times"
+                }
+              }
+            ],
+            "type": "Number"
+          },
+          {
+            "id": "lowest",
+            "contract": {
+              "id": "core.min",
+              "version": "1.0.0"
+            },
+            "arguments": [
+              {
+                "port": "values",
+                "value": {
+                  "kind": "input",
+                  "name": "times"
+                }
+              }
+            ],
+            "type": "Number"
+          },
+          {
+            "id": "remove_high",
+            "contract": {
+              "id": "core.sub",
+              "version": "1.0.0"
+            },
+            "arguments": [
+              {
+                "port": "a",
+                "value": {
+                  "kind": "node",
+                  "id": "remove_low"
+                }
+              },
+              {
+                "port": "b",
+                "value": {
+                  "kind": "node",
+                  "id": "highest"
+                }
+              }
+            ],
+            "type": "Number"
+          },
+          {
+            "id": "remove_low",
+            "contract": {
+              "id": "core.sub",
+              "version": "1.0.0"
+            },
+            "arguments": [
+              {
+                "port": "a",
+                "value": {
+                  "kind": "node",
+                  "id": "total"
+                }
+              },
+              {
+                "port": "b",
+                "value": {
+                  "kind": "node",
+                  "id": "lowest"
+                }
+              }
+            ],
+            "type": "Number"
+          },
+          {
+            "id": "total",
+            "contract": {
+              "id": "core.sum",
+              "version": "1.0.0"
+            },
+            "arguments": [
+              {
+                "port": "values",
+                "value": {
+                  "kind": "input",
+                  "name": "times"
+                }
+              }
+            ],
+            "type": "Number"
+          }
+        ],
+        "result": {
+          "kind": "node",
+          "id": "average"
+        }
+      },
+      "inputs": {
+        "times": [
+          12.4,
+          11.85,
+          13.2,
+          12.1,
+          14
+        ]
+      },
+      "canvas": {
+        "positions": {
+          "input:times": {
+            "x": 30,
+            "y": 80
+          },
+          "total": {
+            "x": 280,
+            "y": 70
+          },
+          "lowest": {
+            "x": 520,
+            "y": 70
+          },
+          "highest": {
+            "x": 760,
+            "y": 70
+          },
+          "remove_low": {
+            "x": 280,
+            "y": 240
+          },
+          "remove_high": {
+            "x": 520,
+            "y": 240
+          },
+          "average": {
+            "x": 760,
+            "y": 240
+          },
+          "output": {
+            "x": 1030,
+            "y": 160
+          }
+        },
+        "view": {
+          "x": 0,
+          "y": 0,
+          "scale": 1
+        }
+      }
+    }
+  ]
+}

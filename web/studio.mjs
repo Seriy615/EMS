@@ -15,7 +15,8 @@ let store,editor,selected=null,pending=null,failedNode=null,textMode=false,textP
 const managedId=new URLSearchParams(location.search).get('project'),manager=managedId?new ProjectManager(localStorage):null;
 let activeExecution=null;
 async function executeStudio(action,draft,inputs){
- const job=startStudioExecution({action,project:editor.serialize(),selected:editor.selectedContract,draft,inputs});activeExecution=job;$('stop').disabled=false;
+ $('execution-log').textContent='';
+ const job=startStudioExecution({action,project:editor.serialize(),selected:editor.selectedContract,draft,inputs},{onLog:record=>{const message=record.type==='started'?'Запуск '+record.action:record.type==='validated'?'Проект проверен: '+record.id:record.type==='finished'?'Выполнение завершено':'Выполнение остановлено: '+record.code;$('execution-log').textContent+=message+'\n';}});activeExecution=job;$('stop').disabled=false;
  try{return await job.promise;}finally{if(activeExecution===job)activeExecution=null;$('stop').disabled=true;}
 }
 $('stop').onclick=()=>activeExecution?.cancel();
@@ -120,7 +121,7 @@ $('project-name').onchange=()=>change(()=>editor.edit(project=>{project.name=$('
 $('new').onclick=()=>change(()=>{editor=new ProjectEditor(newProject(identity()));selected=null;$('output').textContent='Новый проект';});
 $('projects').onchange=()=>change(()=>{const project=store.load($('projects').value);if(!project)throw new Error('Проект не найден');editor=new ProjectEditor(project);selected=null;});
 $('undo').onclick=()=>change(()=>editor.undo());$('redo').onclick=()=>change(()=>editor.redo());
-$('run').onclick=async()=>{ $('run').disabled=true;$('error').textContent='';const started=performance.now();try{$('output').textContent=json(await executeStudio('graph'));}catch(error){$('output').textContent='Выполнение остановлено';report(error);}finally{$('duration').textContent=(performance.now()-started).toFixed(1)+' мс';$('run').disabled=false;} };
+$('run').onclick=async()=>{ $('run').disabled=true;$('error').textContent='';failedNode=null;render();const started=performance.now();try{$('output').textContent=json(await executeStudio('graph'));}catch(error){$('output').textContent='Выполнение остановлено';const at=error.failurePath?.find(call=>call.graph===editor.workspace.graph.id);if(at){selected=failedNode=at.node;render();}report(error);}finally{$('duration').textContent=(performance.now()-started).toFixed(1)+' мс';$('run').disabled=false;} };
 function zoom(factor){change(()=>{const view=editor.workspace.canvas.view;editor.viewport({...view,scale:Math.min(2,Math.max(.25,view.scale*factor))});});}
 $('zoom-in').onclick=()=>zoom(1.2);$('zoom-out').onclick=()=>zoom(1/1.2);$('viewport').onwheel=event=>{event.preventDefault();zoom(event.deltaY<0?1.1:1/1.1);};
 $('viewport').onpointerdown=event=>{
@@ -133,7 +134,7 @@ $('export').onclick=()=>{try{const url=URL.createObjectURL(new Blob([editor.seri
 $('import').onclick=()=> $('file').click();$('file').onchange=async()=>{const file=$('file').files[0];if(!file)return;try{if(file.size>4*1024*1024)throw new Error('Файл слишком большой');const source=await file.text();change(()=>{const project=parseProject(source);if(store?.list().some(saved=>saved.id===project.id)){project.id=identity();project.name=project.name.slice(0,180)+' (импорт)';}editor=new ProjectEditor(project);selected=null;});}catch(error){report(error);}$('file').value='';};
 $('examples').onchange=async()=>{
  const choice=$('examples').value;if(!choice)return;try{const project=newProject(identity(),choice==='avg'?'Среднее пяти — арифметика':'Сумма двух чисел');
- if(choice==='avg'){project.graph=await fetch('/examples/avg5.graph.json').then(response=>response.json());project.inputs={times:[12.4,11.85,13.2,12.1,14]};}
+ if(choice==='avg'){const saved=parseProject(await fetch('/examples/studio-avg5.ems.json').then(response=>response.text()));saved.id=project.id;Object.assign(project,saved);}
  else if(choice==='library'){const saved=parseProject(await fetch('/examples/studio-library.ems.json').then(response=>response.text()));saved.id=project.id;saved.name='Массив → текст';Object.assign(project,saved);}
  else{project.graph.inputs={a:{type:'Number'},b:{type:'Number'}};project.inputs={a:2,b:3};project.graph.nodes=[{id:'sum',uses:'core.add',args:{a:{input:'a'},b:{input:'b'}}}];project.graph.returns={node:'sum'};}
  Object.keys(project.graph.inputs).forEach((name,index)=>{project.canvas.positions[`input:${name}`]={x:30,y:100+index*130};});project.graph.nodes.forEach((node,index)=>{project.canvas.positions[node.id]={x:300+(index%2)*270,y:60+Math.floor(index/2)*200};});project.canvas.positions.output={x:850,y:150};change(()=>{editor=new ProjectEditor(project);selected=null;});

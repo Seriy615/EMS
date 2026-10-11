@@ -318,4 +318,7 @@ await check('unified project catalog preserves source-owned UI and imports a sep
  const {ProjectManager}=await import('../src/studio/manager.mjs');const values=new Map(),manager=new ProjectManager({getItem:key=>values.get(key)??null,setItem:(key,value)=>values.set(key,value)});
  manager.import(await get('examples/ui-source-counter.ems-ui.json'),'counter');const original=manager.export('counter');manager.import(original,'copy');return manager.load('copy').source===manager.load('counter').source&&manager.export('counter')===original&&manager.list().length===2;
 });
+await check('AVG5 Studio example has a real reusable six-operation composite',async()=>{
+ const project=parseProject(await get('examples/studio-avg5.ems.json')),editor=new ProjectEditor(project);editor.setInput('times',[1,2,3,4,5]);return project.contracts.length===1&&project.contracts[0].graph.nodes.length===6&&await editor.run()===3;
+});
 console.log(`\nEMS foundation verification passed (${checks} checks). Not production readiness.`);

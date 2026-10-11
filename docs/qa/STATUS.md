@@ -1,5 +1,9 @@
 # Current implementation status
 
+## EMS-035/033 — owner MVP proof и подготовка publication
+
+677/677 Node PASS,130/130 verify PASS,24/24 browser PASS (только после terminal browser result). Named local scenarios и границы — docs/qa/WEB_IDE_MVP.md. Реальный composite AVG5/вложенность/shared edit/reopen, точная graph failure location/lifecycle log. Deployment tooling подготовлен; public domain пока имеет TLS SAN mismatch, remote success требует actual release/auth/HTTPS/Chromium/recovery/rollback evidence. Глобальная цель и full step/control/source debugger остаются открытыми.
+
 ## Последняя проверка — EMS-050 unified local project catalog, AC-062
 
 Каталог `/web/projects.html` объединяет graph/text/UI проекты: create/open/copy/rename/import/export, старые JSON импортируются копиями. Managed graph сохраняет graph+draft в одной записи; UI сохраняет applied source после Worker restart. Старые storage не мигрируются и не удаляются. Existing core codecs проверяют IR/pins/UI/source witnesses; no handler execution during import. Scope — docs/spec/PROJECT_MANAGER.md.

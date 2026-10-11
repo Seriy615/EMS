@@ -7,6 +7,7 @@ import { assertSignal, checkCancellation, awaitCancellable } from '../runtime/ca
 
 /** Reference-only sequential async dataflow evaluator. Not a security sandbox, production scheduler or real-time engine. */
 export async function executeGraph(graph, inputs, registry, options = {}) {
+  if(options.onNodeFailure!==undefined&&typeof options.onNodeFailure!=='function')fail('INVALID_OPTION','Expected node failure observer');
   assertSignal(options.signal);
   checkCancellation(options.signal);
   const { nodes } = validateGraph(graph, registry);
@@ -39,13 +40,16 @@ export async function executeGraph(graph, inputs, registry, options = {}) {
     const params = Object.create(null);
     for (const key of Object.keys(contract.inputs)) params[key] = await refValue(node.args[key]);
     checkCancellation(options.signal);
+    const callPath=[...(options.callPath??[]),{graph:graph.id,node:id,contract:contract.id}];
+    try {
     const result = contract.kind === 'composite'
-      ? await executeGraph(contract.graph, params, registry, { capabilities: [...allowed], allowedEffects: options.allowedEffects ?? [], callStack: nextStack, signal: options.signal, state: options.state })
-      : await awaitCancellable(contract.execute(params, Object.freeze({ signal: options.signal, state: options.state })), options.signal);
+      ? await executeGraph(contract.graph, params, registry, { capabilities: [...allowed], allowedEffects: options.allowedEffects ?? [], callStack: nextStack, signal: options.signal, state: options.state, callPath, onNodeFailure: options.onNodeFailure })
+      : await awaitCancellable(contract.execute(params, Object.freeze({ signal: options.signal, state: options.state, callPath, onNodeFailure: options.onNodeFailure })), options.signal);
     checkCancellation(options.signal);
     assertValueType(result, contract.output, `result of ${contract.id}`);
     memo.set(id, result);
     return result;
+    } catch(error) { try { options.onNodeFailure?.(structuredClone(callPath)); } catch { /* Observers cannot change program failures. */ } throw error; }
   }
   for (const id of graph.sequence ?? []) await compute(id);
   const result = await refValue(graph.returns);

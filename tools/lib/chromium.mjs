@@ -61,10 +61,11 @@ export async function launchChromium() {
         pending.set(id, { resolve, reject, timer }); socket.send(JSON.stringify({ id, method, params, ...(sessionId ? { sessionId } : {}) }));
       });
     }
-    async function page(url) {
+    async function page(url,{headers={}}={}) {
       const { targetId } = await send('Target.createTarget', { url: 'about:blank' });
       const { sessionId } = await send('Target.attachToTarget', { targetId, flatten: true });
       await send('Page.enable', {}, sessionId);
+      if(Object.keys(headers).length){await send('Network.enable',{},sessionId);await send('Network.setExtraHTTPHeaders',{headers},sessionId);}
       const loaded = new Promise((resolve, reject) => {
         const timer = setTimeout(() => { listeners.delete(listener); reject(new Error('Page load timeout')); }, 10000);
         const listener = message => {

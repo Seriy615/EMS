@@ -129,3 +129,7 @@ Actual typed contract catalog и lexical value→named call port connection ра
 ## Точка продолжения после AC-062
 
 Unified local project catalog now creates/opens/copies/renames/imports/exports graph/text/UI programs using existing typed codecs and source witnesses. Applied graph and UI changes survive refresh with actual execution. Legacy storage remains accessible; server sync/full multipane graph debugger/visual parity remain separate work. Next: audit each owner P0 WEB IDE MVP scenario against real Node/Chromium evidence, close missing calculator/reusable expandable arithmetic AVG5/counter/project/type/error acceptance, then authorized isolated authenticated HTTPS deploy with rollback and domain checks. Do not gate accepted P0 deployment on unrelated P1/P2 features. Global goal remains full language/runtime/compiler/platform/ecosystem.
+
+## Переход к owner P0 publication — EMS-035
+
+Требования первой браузерной версии сопоставлены с actual Node/Chromium сценариями в docs/qa/WEB_IDE_MVP.md. Пробел AVG5 закрывается настоящим reusable expandable six-operation project; graph runtime failures now identify exact node/caller without changing semantics; execution lifecycle log implemented. EMS-033 remains IN_PROGRESS for full step/control/source debugger. EMS-035 tracks isolated authenticated dev publication (checked clean Git revision, named service/vhost/cert/auth/logs/rollback and live domain/browser proof); prepared scripts are not evidence of deployment. Full language/platform/IDE/AI/ecosystem goal stays active regardless of P0 publication.
