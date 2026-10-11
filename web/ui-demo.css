@@ -13,3 +13,5 @@ a{color:var(--accent)}#control-graph:empty{display:none}.author-panel fieldset:h
 .field-label{display:inline-flex;flex-direction:column;vertical-align:bottom;gap:4px;margin:4px 8px 10px 0;max-width:100%;font-size:11px;color:var(--muted)}.field-label input,.field-label select{margin:0;max-width:100%}.field-label+button{margin-bottom:10px}#event-inputs label{flex-wrap:wrap}
 
 .preview-controls{margin-top:16px}.preview-controls #ui-debug-location{flex-basis:100%;margin:8px 0}.preview-controls #ui-debug-location:empty{display:none}
+
+#ui-debug-over:disabled,#ui-debug-out:disabled{display:none}

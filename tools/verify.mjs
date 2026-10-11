@@ -345,4 +345,11 @@ await check('source breakpoints stop each actual loop iteration without changing
  const gate=new GraphStepper(pause=>{events.push(pause);gate.resume(pause.token,'continue');},{start:'continue',breakpoints:[point]});
  return await runTextDraft(draft,editor,{}, {onControlEnter:event=>gate.enter(event)})===3&&events.length===3&&events.every(event=>event.node===point.node&&event.function===point.function);
 });
+await check('Step Over/Out follows actual activation frames and original control output',async()=>{
+ const {GraphStepper}=await import('../src/studio/debugger.mjs'),events=[],exits=[];
+ const draft={source:'fn child(x:Number)->Number {return x*2;} fn test()->Number {let mut a=child(3);let b=a+1;return b;}',entry:'test',lowering:'auto'};
+ const gate=new GraphStepper(pause=>{events.push(pause);gate.resume(pause.token,events.length===1?'over':'out');});
+ const value=await runTextDraft(draft,new ProjectEditor(),{}, {onControlEnter:event=>gate.enter(event),onFrameExit:event=>{exits.push(event);gate.leave(event);}});
+ return value===7&&events.length===2&&events[0].node==='/body/0'&&events[1].node==='/body/1'&&events[0].frames[0]===events[1].frames[0]&&exits.some(event=>event.frames.length===2);
+});
 console.log(`\nEMS foundation verification passed (${checks} checks). Not production readiness.`);

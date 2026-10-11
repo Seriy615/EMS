@@ -1,3 +1,4 @@
+import {DIAGNOSTIC_FRAMES,diagnosticFrames,nextDiagnosticFrame,notifyDiagnosticExit} from './diagnostic-frames.mjs';
 import {controlNodeEntries} from '../ir/control-addresses.mjs';
 import { createResourceScope,resourceBudgetOptions,executeResourceOperation,resourceCleanupOutcome } from './resources.mjs';
 import { createStreamScope, executeStreamOperation, streamBudgetOptions } from './streams.mjs';
@@ -23,15 +24,17 @@ export function controlSignature(fn) {
 
 /** Execute semantic blocks. Every statement/expression/call shares one bounded step/depth domain. */
 export async function executeControlIR(ir, inputs, registry, options = {}) {
+  if(options.onFrameExit!==undefined&&typeof options.onFrameExit!=='function')fail('INVALID_OPTION','Expected frame exit observer');
   if(options.onControlEnter!==undefined&&typeof options.onControlEnter!=='function')fail('INVALID_OPTION','Expected control entry observer');
   assertSignal(options.signal); checkCancellation(options.signal);
   const checked = validateControlIR(ir, registry); checkControlPolicy(checked.policy, options);
   validateControlInputs(checked.entry, inputs);
   const budget = controlBudgetOptions(options); let steps = 0;
+  const diagnostics=diagnosticFrames(options);
   const addresses=new WeakMap();
   if(options.onControlEnter)for(const fn of ir.functions)for(const [path,node] of controlNodeEntries(fn))addresses.set(node,path);
   async function observe(node,frame){
-    const event={phase:'enter',profile:'control',function:frame.function,node:addresses.get(node),kind:node.kind,type:node.type??null,callStack:[...frame.callStack],step:steps};
+    const event={phase:'enter',profile:'control',function:frame.function,node:addresses.get(node),kind:node.kind,type:node.type??null,callStack:[...frame.callStack],frames:[...frame.frames],step:steps};
     try{await awaitCancellable(options.onControlEnter(event),options.signal);}catch{/* Diagnostics cannot replace semantic errors. */}
     checkCancellation(options.signal);
   }
@@ -74,12 +77,12 @@ export async function executeControlIR(ir, inputs, registry, options = {}) {
         const operation = async (taskFrame = frame) => {
           if (node.target.kind === 'function') return invoke(target, args, taskFrame);
           const params = Object.fromEntries(Object.keys(target.inputs).map((key, index) => [key, args[index]]));
-          const result = target.kind==='resource'?await resources.acquire(target,params):target.kind === 'composite' ? await executeGraph(target.graph, params, registry, options)
+          const result = target.kind==='resource'?await resources.acquire(target,params):target.kind === 'composite' ? await executeGraph(target.graph, params, registry, {...options,[DIAGNOSTIC_FRAMES]:{allocator:diagnostics.allocator,stack:frame.frames}})
             : await awaitCancellable(target.execute(params, Object.freeze({ signal: options.signal, state: options.state })), options.signal);
           if(target.kind!=='resource')assertValueType(result, target.output, 'result of ' + node.target.id); return result;
         };
         value = (node.target.kind === 'function' ? target.async : node.target.async)
-          ? futures.start(node.type.slice(7,-1), () => operation({ depth: frame.depth, evaluationDepth: 0,callStack:frame.callStack })) : await operation();
+          ? futures.start(node.type.slice(7,-1), () => operation({ depth: frame.depth, evaluationDepth: 0,callStack:frame.callStack,frames:frame.frames })) : await operation();
         break;
       }
     }
@@ -162,10 +165,10 @@ export async function executeControlIR(ir, inputs, registry, options = {}) {
   }
   }
   async function invoke(fn, args, parent = { depth: 0, evaluationDepth: 0 }) {
-    tick(); const frame = { depth: parent.depth + 1, evaluationDepth: parent.evaluationDepth, function:fn.id,callStack:[...(parent.callStack??[]),fn.id] };
+    tick(); const frame = { depth: parent.depth + 1, evaluationDepth: parent.evaluationDepth, function:fn.id,frames:nextDiagnosticFrame(diagnostics,parent.frames??diagnostics.stack),callStack:[...(parent.callStack??[]),fn.id] };
     if (frame.depth > budget.maxDepth) fail('CALL_DEPTH', 'Control call depth exhausted', { maxDepth: budget.maxDepth });
     const scope = new Map(fn.inputs.map((input, index) => [input.name, { value: args[index] }]));
-    const outcome = await block(fn.body, scope, frame); validateValue(outcome?.value, fn.output.type, 'control return'); return outcome.value;
+    try{const outcome = await block(fn.body, scope, frame); validateValue(outcome?.value, fn.output.type, 'control return'); return outcome.value;}finally{notifyDiagnosticExit(options,frame.frames);}
   }
   let result,pending,hasError=false;
   try {result=await invoke(checked.entry,checked.entry.inputs.map(input=>inputs[input.name]));if(futures)await futures.join();}

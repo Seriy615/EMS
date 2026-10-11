@@ -1,3 +1,4 @@
+import {DIAGNOSTIC_FRAMES,diagnosticFrames,nextDiagnosticFrame,notifyDiagnosticExit} from '../runtime/diagnostic-frames.mjs';
 import { resolveCompositeBoundary, checkContractConditions, checkContractFailure } from '../contracts/conditions.mjs';
 import { fail } from './errors.mjs';
 import { assertValueType } from './types.mjs';
@@ -7,6 +8,7 @@ import { assertSignal, checkCancellation, awaitCancellable } from '../runtime/ca
 
 /** Reference-only sequential async dataflow evaluator. Not a security sandbox, production scheduler or real-time engine. */
 export async function executeGraph(graph, inputs, registry, options = {}) {
+  if(options.onFrameExit!==undefined&&typeof options.onFrameExit!=='function')fail('INVALID_OPTION','Expected frame exit observer');
   if(options.onNodeFailure!==undefined&&typeof options.onNodeFailure!=='function')fail('INVALID_OPTION','Expected node failure observer');
   if(options.onNodeEnter!==undefined&&typeof options.onNodeEnter!=='function')fail('INVALID_OPTION','Expected node entry observer');
   assertSignal(options.signal);
@@ -17,6 +19,8 @@ export async function executeGraph(graph, inputs, registry, options = {}) {
   validateEffectSequence(graph, registry);
   const boundary=resolveCompositeBoundary(graph,registry);
   if(boundary)checkContractConditions(boundary.conditions.pre,inputs,undefined,'pre',boundary.id);
+  const diagnostics=diagnosticFrames(options),frames=nextDiagnosticFrame(diagnostics);
+  const childDiagnostics={allocator:diagnostics.allocator,stack:frames};
   try {
   const allowed = new Set(options.capabilities ?? []);
   const callStack = options.callStack ?? [];
@@ -44,13 +48,13 @@ export async function executeGraph(graph, inputs, registry, options = {}) {
     const callPath=[...(options.callPath??[]),{graph:graph.id,node:id,contract:contract.id}];
     try {
     if(options.onNodeEnter){
-      const event=structuredClone({phase:'enter',callPath,inputs:Object.fromEntries(Object.entries(contract.inputs).map(([name,type])=>[name,typeof type==='string'?type:type.type])),output:contract.output,effects:contract.effects,capabilities:contract.capabilities});
+      const event=structuredClone({phase:'enter',callPath,frames,inputs:Object.fromEntries(Object.entries(contract.inputs).map(([name,type])=>[name,typeof type==='string'?type:type.type])),output:contract.output,effects:contract.effects,capabilities:contract.capabilities});
       try { await awaitCancellable(options.onNodeEnter(event),options.signal); } catch { /* Diagnostics cannot replace semantic errors. */ }
       checkCancellation(options.signal);
     }
     const result = contract.kind === 'composite'
-      ? await executeGraph(contract.graph, params, registry, { capabilities: [...allowed], allowedEffects: options.allowedEffects ?? [], callStack: nextStack, signal: options.signal, state: options.state, callPath, onNodeFailure: options.onNodeFailure, onNodeEnter: options.onNodeEnter })
-      : await awaitCancellable(contract.execute(params, Object.freeze({ signal: options.signal, state: options.state, callPath, onNodeFailure: options.onNodeFailure, onNodeEnter: options.onNodeEnter })), options.signal);
+      ? await executeGraph(contract.graph, params, registry, { capabilities: [...allowed], allowedEffects: options.allowedEffects ?? [], callStack: nextStack, signal: options.signal, state: options.state, callPath, onNodeFailure: options.onNodeFailure, onNodeEnter: options.onNodeEnter,onFrameExit:options.onFrameExit,[DIAGNOSTIC_FRAMES]:childDiagnostics })
+      : await awaitCancellable(contract.execute(params, Object.freeze({ signal: options.signal, state: options.state, callPath, onNodeFailure: options.onNodeFailure, onNodeEnter: options.onNodeEnter,onFrameExit:options.onFrameExit,[DIAGNOSTIC_FRAMES]:childDiagnostics })), options.signal);
     checkCancellation(options.signal);
     assertValueType(result, contract.output, `result of ${contract.id}`);
     memo.set(id, result);
@@ -64,4 +68,5 @@ export async function executeGraph(graph, inputs, registry, options = {}) {
   if(boundary)checkContractConditions(boundary.conditions.post,inputs,result,'post',boundary.id);
   return result;
   }catch(error){if(boundary)checkContractFailure(error,boundary.errors,boundary.id);throw error;}
+  finally{notifyDiagnosticExit(options,frames);}
 }

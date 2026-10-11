@@ -23,7 +23,7 @@ export function compileTextDraft(draft,editor){
  bundle.ir=parseIR(serializeIR(bundle.ir,bundle.registry),bundle.registry);return bundle;
 }
 export async function runTextDraft(draft,editor,inputs,options={}){
- for(const key of ['onNodeEnter','onControlEnter'])if(options[key]!==undefined&&typeof options[key]!=='function')fail('INVALID_OPTION','Expected diagnostic observer');
+ for(const key of ['onNodeEnter','onControlEnter','onFrameExit'])if(options[key]!==undefined&&typeof options[key]!=='function')fail('INVALID_OPTION','Expected diagnostic observer');
  const bundle=compileTextDraft(draft,editor);
  const locate=event=>{
   const call=event.callPath?.at(-1),fn=event.function??call?.graph,node=event.node??call?.node;

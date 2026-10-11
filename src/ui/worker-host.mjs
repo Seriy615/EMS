@@ -24,13 +24,13 @@ export function createUIWorkerHost(send){
     send({id,ok:true,value:null,snapshot:runtime.snapshot(),view:runtime.view(),trace:runtime.trace()});return;
    }
    fields(request,['action','id','node','event','value']);if(request.action!=='dispatch'||!runtime)fail('INVALID_UI_WORKER','Expected initialized UI dispatch');last=id;
-   let observe;
+   let observe,exit;
    if(debug){
     const handler=nodes.get(request.node)?.events[request.event]?.handler;
-    const gate=new GraphStepper(pause=>send({id,type:'paused',pause:{...pause,handler}}));gates.set(id,gate);
+    const gate=new GraphStepper(pause=>send({id,type:'paused',pause:{...pause,handler}}));gates.set(id,gate);exit=event=>gate.leave(event);
     observe=event=>{const call=event.callPath?.at(-1),fn=event.function??call?.graph,node=event.node??call?.node;return gate.enter({...event,location:structuredClone(maps.get(handler)?.functions[fn]?.nodes?.[node]??null)});};
    }
-   const value=await runtime.dispatch(request.node,request.event,request.value,{onControlEnter:observe,onNodeEnter:observe});
+   const value=await runtime.dispatch(request.node,request.event,request.value,{onControlEnter:observe,onNodeEnter:observe,onFrameExit:exit});
    gates.delete(id);
    send({id,ok:true,value,snapshot:runtime.snapshot(),view:runtime.view(),trace:runtime.trace()});
   }catch(error){

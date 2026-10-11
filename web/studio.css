@@ -14,3 +14,5 @@ body{background:var(--bg)}.app-header{height:70px;flex:none;background:white;pad
 .card.breakpoint header::before{content:'●';color:#d94452;font-size:13px;margin-right:6px}.breakpoint-settings{font-size:12px}.breakpoint-settings label{display:inline-flex;gap:8px;align-items:center;margin-right:12px}#breakpoint-list{color:var(--muted);font-size:11px;white-space:pre-wrap}#debug-breakpoint:disabled{display:none}
 
 button,input,select,textarea{background:var(--surface);color:var(--ink);border-color:var(--line)}button:hover{background:var(--soft);border-color:#adc0f5}#node-breakpoint[aria-pressed="true"]{background:#fff1f2;border-color:#efb4ba;color:#ae2e3d}body:has(#debug-step:not(:disabled)) .execution{height:250px}
+
+#debug-over:disabled,#debug-out:disabled{display:none}

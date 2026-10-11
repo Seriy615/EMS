@@ -490,29 +490,28 @@
         "GPT-6.1 Sol",
         "GPT-6 Luna"
       ],
-      "progress": "AC-063/065/066/067 plus AC-069 operation breakpoints on original graph/control evaluators. Exact leaf/cursor provenance stops, run-to-point/Continue repeated loop hits, stale tokens/copied bounded policies/concurrent queues/cancellation/capability preflight/compiled parity and actual Chromium verified. Full UI event breakpoint authoring/Step Over-Out/persistent source anchors/value policy/native-compiled debugging remain open; historical Worker startup cause unproven.",
+      "progress": "AC-063/065/066/067/069 plus AC-070 activation-aware graph/control/UI Over/Out on original evaluator frames and exit notifications. Nested/recursive/async/mixed ancestry, breakpoints/stale tokens, copied payload-free metadata/cancellation/cleanup/budgets/errors/IR and compiled parity, actual Chromium Studio and transactional UI Over/Out verified. UI event breakpoint authoring/persistent anchors/value policy/native-compiled debugging remain open; historical Worker cause unproven.",
       "evidence": {
-        "scope": "Graph/text/control/UI event stepping plus graph/text operation breakpoints; not full debugger",
+        "scope": "Original interpreted graph/text/control/UI stepping, graph/text breakpoints and activation-aware Over/Out; not full debugger",
         "docs": "docs/spec/IDE_RUNTIME_DIAGNOSTICS.md",
         "testFiles": [
+          "tests/step-frames.test.mjs",
+          "tests/browser/step-frames.test.mjs",
           "tests/breakpoints.test.mjs",
-          "tests/browser/breakpoints.test.mjs",
-          "tests/graph-debugger.test.mjs",
-          "tests/control-debugger.test.mjs",
           "tests/ui-debugger.test.mjs"
         ],
-        "tests": "703/703 PASS",
-        "verify": "134/134 PASS",
-        "browserTests": "31/31 PASS",
+        "tests": "711/711 PASS",
+        "verify": "135/135 PASS",
+        "browserTests": "33/33 PASS",
         "commands": [
           "npm test",
           "npm run verify",
           "npm run browser:test"
         ],
         "deployedRevision": "55763fb591d227fab96645ecdf0400f93be94956",
-        "live": "Actual public authenticated Chromium graph run-to-breakpoint5/text cursor three loop stops3 PASS; previous graph15/composite15/reopen15/AVG5/text debugger6/counter1/UI event commit1/auth gates retained. Exact gated703/134/31 PASS; unrelated vhost hashes and observed active services unchanged. See docs/qa/DEPLOYMENT.md."
+        "live": "Earlier breakpoint artifact55763fb remains live; new activation-aware Over/Out local711/135/33 PASS pending exact gated publication and public control7/UIcommit1 evidence."
       },
-      "nextSlice": "Step Over/Out requires original evaluator activation identities for nested/recursive/concurrent async frames, typed payload-free metadata and source witnesses, cancellation/resource/lazy/queue/compiled parity and actual Chromium acceptance; never infer identity solely from function name or depth."
+      "nextSlice": "Source-owned UI event breakpoints with fresh handler witness, per-event ID/token/FIFO/private draft/commit/rollback, precise source cursor and graph operation targets; preserve execution-local frames and Over/Out."
     },
     {
       "id": "EMS-034",

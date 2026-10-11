@@ -1,5 +1,18 @@
 # Current implementation status
 
+## EMS-033 — activation-aware Step Over/Out, AC-070
+
+Предыдущая goal-итерация — progress: graph/text breakpoints AC-069 опубликованы55763fb, evidence commit1cb49f8. Текущий baseline **703/703 Node,134/134 verify PASS**.
+
+В существующих graph/control evaluator выделяются execution-local frames, отличающие рекурсивные и одноимённые async activations. Control→composite graph и nested graphs разделяют ancestry/allocator. Новый detached `onFrameExit` не ждёт возвращённый Promise, не подменяет ошибки, и позволяет gate отличать раннюю операцию async-родителя от настоящего возвращения. Over пропускает структурные потомки операции и вложенные вызовы, Out ждёт выхода выбранного кадра и следующей реальной операции предка либо normal terminal result. Early async ancestor/sibling progress не блокируется; explicit breakpoints прерывают stepping plan. IR, compiler semantics, FIFO/private draft/commit и permissions не изменены. Studio и UI worker modes/key whitelist согласованы; кнопки доступны только на паузе.
+
+**711/711 Node,135/135 verify,33/33 Chromium PASS**. Новые8 Node/2 browser scenarios: nested/recursive/async/mixed graph-control identities, exit/Over/Out, breakpoints/stale tokens/missing metadata refusal, detached exit/rejected/unresolved observers, cancellation/resource cleanup/step budgets/errors, canonical IR and independently compiled output. Chromium: AVG5 Over completion, source Over→next statement/Out→caller or7, UI private0→Over→Out commit1 и second draft write Stop keeps1. Actual live smoke дополнен control Over/Out7 и UI commit1; remote evidence pending checked publication. Скриншот реальной source-паузы после Over `/tmp/ems-step-frames.png` просмотрен; выбран именно следующий statement.
+
+Первые Node-focused fixtures с прямолинейным auto source ожидали control, но были корректно lowered в call IR: fixtures явно требуют control через mutable binding; проверка IR/behavior не ослаблена. First focused browser5/6: Studio Worker startup error, bounded QA fields message/filename empty, точная причина неизвестна; самостоятельный probe2/2 и полный33/33 PASS без runtime retries/ослабленных assertions. Историческая transport stability не объявлена исправленной.
+
+Логи `/tmp/ems-step-frames-baseline-{tests,verify}.log`, `/tmp/ems-step-frames-regression.log`, `/tmp/ems-step-frames-focused-final.log`, `/tmp/ems-step-frames-tests.log`, `/tmp/ems-step-frames-verify-final.log`, `/tmp/ems-step-frames-browser-focused.log`, `/tmp/ems-step-frames-browser-probe.log`, `/tmp/ems-step-frames-browser.log`. EMS-033 IN_PROGRESS: UI event breakpoint authoring, persistent anchors/value policy/native/compiled transport остаются открытыми. Глобальная цель не завершена; следующий срез — source-owned UI event breakpoints с original FIFO/commit/rollback и handler witness.
+
+
 ## EMS-033 — operation breakpoints, AC-069
 
 Предыдущая goal-итерация EMS-036 дала реальный прогресс: проверенная переработка Studio опубликована, текущий baseline `e4fcdea`/live208c177. Для текущего среза baseline **694/694 Node,133/133 verify PASS**.

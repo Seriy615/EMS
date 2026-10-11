@@ -22,7 +22,7 @@ test('control debugger pauses the real evaluator and exact source sidecar surviv
  assert.ok(events.some(e=>e.function==='twice'&&e.callStack.join('/')==='test/twice'));
  assert.ok(!events.some(e=>e.kind==='call'&&source.slice(e.location.start.offset,e.location.end.offset)==='core.div(1,0)'));
  assert.equal(events.filter(e=>e.node==='/body/1/condition'&&e.kind==='binary').length,3);
- for(const event of events){assert.ok(event.location);assert.deepEqual(Object.keys(event).sort(),['phase','profile','function','node','kind','type','callStack','step','location'].sort());assert.ok(event.location.end.offset<=source.length);}
+ for(const event of events){assert.ok(event.location);assert.deepEqual(Object.keys(event).sort(),['phase','profile','function','node','kind','type','callStack','frames','step','location'].sort());assert.ok(event.location.end.offset<=source.length);}
 });
 test('observer mutation/rejection preserves user catches, finally and terminal budgets/cancellation',async()=>{
  const editor=new ProjectEditor(),text=draft('fn test()->Number {try {throw 1;} catch(e:Number){return e+2;} finally {let checked=4;}}');

@@ -24,7 +24,7 @@ test('nested operation locations and type metadata are detached and contain no r
  const root={...graph,id:'test.Root',nodes:[{id:'wrapper',uses:'user.Debug',args:{}}],returns:{node:'wrapper'}},events=[];
  assert.equal(await executeGraph(root,{},registry,{onNodeEnter:event=>{events.push(structuredClone(event));event.callPath.length=0;event.inputs.a='String';}}),225);
  assert.deepEqual(events.map(e=>e.callPath.map(c=>c.node)),[['wrapper'],['wrapper','first'],['wrapper','last']]);
- assert.deepEqual(Object.keys(events[1]).sort(),['phase','callPath','inputs','output','effects','capabilities'].sort());
+ assert.deepEqual(Object.keys(events[1]).sort(),['phase','callPath','frames','inputs','output','effects','capabilities'].sort());
  assert.equal(registry.resolve('core.add').inputs.a,'Number');assert.equal(JSON.stringify(events).includes('225'),false);
 });
 test('observer rejection does not change semantics and cancellation terminates an unresolved pause',async()=>{

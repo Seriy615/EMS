@@ -19,8 +19,8 @@ self.onmessage=async event=>{
    stepper=new GraphStepper(pause=>self.postMessage({type:'paused',pause}),request.debugOptions);
   }
   let value;
-  if(request.action==='graph')value=await editor.run({onNodeFailure:path=>{failurePath??=path;},onNodeEnter:stepper?event=>stepper.enter(event):undefined});
-  else if(request.action==='text')value=await runTextDraft(request.draft,editor,request.inputs,{onNodeEnter:stepper?event=>stepper.enter(event):undefined,onControlEnter:stepper?event=>stepper.enter(event):undefined});
+  if(request.action==='graph')value=await editor.run({onFrameExit:stepper?event=>stepper.leave(event):undefined,onNodeFailure:path=>{failurePath??=path;},onNodeEnter:stepper?event=>stepper.enter(event):undefined});
+  else if(request.action==='text')value=await runTextDraft(request.draft,editor,request.inputs,{onFrameExit:stepper?event=>stepper.leave(event):undefined,onNodeEnter:stepper?event=>stepper.enter(event):undefined,onControlEnter:stepper?event=>stepper.enter(event):undefined});
   else throw Object.assign(new Error('Unknown execution request'),{code:'INVALID_EXECUTION'});
   self.postMessage({ok:true,value});
  }catch(error){self.postMessage({ok:false,error:{code:error.code??'HOST_ERROR',message:error.name==='EmsError'?error.message:'Ошибка обработки программы',details:error.details??{},failurePath}});}
