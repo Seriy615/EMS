@@ -490,11 +490,12 @@
         "GPT-6.1 Sol",
         "GPT-6 Luna"
       ],
-      "progress": "AC-063..074 interpreted debugging, durable checked contexts and opt-in typed control inspection core implemented. Real frame/scopes, detached finite values, protected-program/effects/handle exclusions, bounded whole-value snapshots and payload-free defaults verified. Worker inspection transport explicitly unsupported until checked adapter; IDE panel/formal secret taint/native-compiled transports/full parity remain open. AC-076 checked source-owned transport and explicit ephemeral pure-control panel implemented; focused8 Node/5 Chromium PASS, full gate/public evidence pending. Full debugger/effectful UI/formal taint/native-compiled transports remain open.",
+      "progress": "AC-063..074 interpreted graph/control/UI stepping, breakpoints, Over/Out, durable contexts and bounded typed core inspection implemented. AC-076 adds exact source-owned grants, independently checked client/Worker pause DTO and explicit ephemeral pure-control Studio value panel. Checked release6cf20cff960c0aed363f14024623ff687bc5d7c6 passed748/140/43 and public HTTPS actual panel x1/result1/protected/clear/source-revoke plus all prior smoke proofs. Full earlier browser42/43 had blank native UI Worker startup failure; focused UI5/5 and final43/43 do not establish root cause or fix. Formal taint, scope-address grants, effectful UI state, call IR/native/compiled inspection and full parity remain open.",
       "evidence": {
-        "scope": "Original interpreted graph/control/UI debugger and typed pure control inspection core; no IDE value panel or native/compiled inspection",
+        "scope": "Original interpreted graph/control/UI debugger plus checked opt-in pure-control value transport/panel; full debugger and other inspection profiles remain open",
         "docs": "docs/spec/IDE_RUNTIME_DIAGNOSTICS.md",
         "testFiles": [
+          "tests/inspection-transport.test.mjs",
           "tests/inspection.test.mjs",
           "tests/browser/inspection.test.mjs",
           "tests/debugger-storage.test.mjs",
@@ -506,16 +507,18 @@
           "tests/step-frames.test.mjs",
           "tests/breakpoints.test.mjs"
         ],
-        "tests": "740/740 PASS",
-        "verify": "139/139 PASS",
-        "browserTests": "40/40 PASS",
+        "tests": "748/748 PASS",
+        "verify": "140/140 PASS",
+        "browserTests": "43/43 PASS",
         "commands": [
           "npm test",
           "npm run verify",
           "npm run browser:test"
         ],
         "deployedRevision": "5bcd6abd41446073073db4e6e4f902a015488246",
-        "live": "Final exact740/139/40 PASS; trusted public HTTPS/auth/access and Chromium typed core snapshot x1/result1/default-empty/protected-program and ungranted sentinel absence PASS. Existing graph/composite/reopen15/AVG5/text6/points5-loop3/OverOut7/UI1/live-clear1-2-3/safe-anchor/durable-Studio preserved; six foreign hashes/five active services unchanged. Core API only, IDE value transport/panel remain open."
+        "live": "Final exact740/139/40 PASS; trusted public HTTPS/auth/access and Chromium typed core snapshot x1/result1/default-empty/protected-program and ungranted sentinel absence PASS. Existing graph/composite/reopen15/AVG5/text6/points5-loop3/OverOut7/UI1/live-clear1-2-3/safe-anchor/durable-Studio preserved; six foreign hashes/five active services unchanged. Core API only, IDE value transport/panel remain open.",
+        "liveRevision": "6cf20cff960c0aed363f14024623ff687bc5d7c6",
+        "publicSmoke": "PASS; opt-in actual x1/result1, clear/protected/revoke and all previous proofs"
       },
       "nextSlice": "Source-owned checked pure control inspection grants, strict bounded Worker DTO validation and explicit owner opt-in IDE panel; default no values, protected/effect/handle refusal, exact source/frame identity, detached snapshots and real non-leakage cases. Formal secret taint/effectful UI/native/compiled inspection remain separate."
     },
