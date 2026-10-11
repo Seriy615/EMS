@@ -510,8 +510,8 @@
           "npm run verify",
           "npm run browser:test"
         ],
-        "deployedRevision": "50f40ddee56bb3166084b5cc23835fa67a14c881",
-        "live": "Prior50f40dd live; source anchors local723/137/36, pending exact gate/public reattachment probe."
+        "deployedRevision": "17a7dfef861797ffbf4e84d1c95221d33574e9b6",
+        "live": "Exact committed gate723/137/36 PASS; trusted public HTTPS/auth/access and Chromium shifted handler fresh point/private0→commit1; changed operation disabled/next commit1 PASS. Existing graph/composite/reopen15/AVG5/text6/points5-loop3/OverOut7/UI1/live-clear1-2-3 preserved; six foreign hashes/five services unchanged."
       },
       "nextSlice": "Durable Studio debugger sidecar: project/library identity, fresh checked restoration across reopening/mode changes, explicit import/export scope; retain invalid/ambiguous anchors inactive. Then typed value/secret inspection policy."
     },
