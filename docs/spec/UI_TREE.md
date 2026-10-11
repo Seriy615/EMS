@@ -40,3 +40,5 @@ Initial profile поддерживает literal/state bindings, semantic events
 
 tests/ui.test.mjs: actual EMS handlers/FIFO/isolated copies, editable input guard/typed throw rollback, permissions and hidden effects/no host call, invalid trees/bindings/types/DOM escapes, cancellation/close/signed zero и saved counter.
 tests/browser/ui.test.mjs: actual browser counter DOM clicks, reset/close, denied mount preserves host, duplicate host rejection, rollback/control input restoration, String/Boolean event type mapping, focus/accessibility, malicious-looking text remains inert, disabled button and detached listeners/closed session.
+
+AC-057: shared UIKernel +compiled ReactorKernel и existing DOM adapter теперь включаются в independent module/static package. Initial profile parity и actual Chromium DOM after EMS origin shutdown проверены; CLI/API/limits — UI_EXPORT.md. Full graphical handler authoring, IDE package download, native/PWA/production и MVP остаются открытыми.

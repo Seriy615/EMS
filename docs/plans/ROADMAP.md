@@ -105,3 +105,7 @@ EMS-060 IN_PROGRESS: независимые control state handlers с kernel wit
 ## Точка продолжения после AC-056
 
 EMS-060 initial state session export теперь реализован: compiled и interpreted handlers подключаются к одному ReactorKernel. Node/actual Chromium доказывают FIFO/rollback/replay/cancellation и independent execution. EMS-060 остаётся IN_PROGRESS для production/native/maps/state provenance. Следующий core→UI шаг EMS-061 — независимый semantic UI/DOM package над готовым session; полный handler canvas/unified manager и owner scenarios остаются gates WEB IDE MVP. Deploy после его приёмки, global goal активна.
+
+## Точка продолжения после AC-057
+
+Одна semantic UI/state программа теперь исполняется в EMS и экспортируется CLI в independent DOM package; Node semantic runtime и actual Chromium controls после остановки EMS origin проверены. EMS-061 IN_PROGRESS для initial dependency scope, не полный PWA/production. Следующий IDE шаг — package download/export, затем control handler canvas и unified project manager, полный owner MVP audit. Native/platform breadth, source maps/state provenance и ecosystem global goal открыты. Deploy после MVP gate.

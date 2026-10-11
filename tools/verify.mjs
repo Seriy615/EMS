@@ -2,6 +2,7 @@
 import assert from 'node:assert/strict';
 import {compileStateControlJS} from '../src/compiler/control.mjs';
 import {compileReactorJS} from '../src/compiler/reactor.mjs';
+import {compileUIJS} from '../src/compiler/ui.mjs';
 import { readFile, stat, open } from 'node:fs/promises';
 import { createCoreRegistry, parseTextEMS, validateGraph, executeGraph, compileStandaloneJS, compiledAtomicManifest, registerCompiledAtomic, registerTrustedJSBindings } from '../src/reference/index.mjs';
 import { lowerGraphToIR, serializeIR, parseIR, executeIR, compileIRToJS, graphProvenance } from '../src/ir/index.mjs';
@@ -272,5 +273,14 @@ await check('independent state session owns FIFO commits and deterministic repla
 await check('independent state session close cancels queued writes before commit',async()=>{
  const s=standaloneReactorModule.createSession({policy:{capabilities:['state.read','state.write'],allowedEffects:['state.read','state.write']}});
  const pending=assert.rejects(s.dispatch('update',{delta:100}),{code:'CANCELLED'});await s.close();await pending;await assert.rejects(s.dispatch('update',{delta:1}),{code:'SESSION_CLOSED'});return s.snapshot().count===0;
+});
+const standaloneUIBase=createCoreRegistry(),standaloneUIApplication=parseUIProject(await get('examples/ui-source-counter.ems-ui.json'),standaloneUIBase);
+const standaloneUIModule=await import(`data:text/javascript,${encodeURIComponent(compileUIJS(standaloneUIApplication,standaloneUIBase))}`);
+await check('independent semantic UI dispatches actual state events without EMS imports',async()=>{
+ const s=standaloneUIModule.createRuntime({policy:{capabilities:['ui.render','state.read','state.write'],allowedEffects:['ui.render','state.read','state.write']}});
+ try{await s.dispatch('increment','press');await s.dispatch('increment','press');await s.dispatch('decrement','press');return s.snapshot().count===1&&s.view().children[1].props.text==='1';}finally{await s.close();}
+});
+await check('independent UI preflight denies missing state grants before preview',()=>{
+ assert.throws(()=>standaloneUIModule.createRuntime({policy:{capabilities:['ui.render'],allowedEffects:['ui.render']}}),{code:'PERMISSION_DENIED'});return true;
 });
 console.log(`\nEMS foundation verification passed (${checks} checks). Not production readiness.`);

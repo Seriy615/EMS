@@ -1,5 +1,12 @@
 # Current implementation status
 
+## Последняя проверка — EMS-061 independent DOM package, AC-057
+
+`npm test` **653/653 PASS**, `npm run verify` **124/124 PASS**, `npm run browser:test` **16/16 PASS**; `npm run export:ui` PASS. Baseline ac01032:646/122/15. Node22 / actual Chromium156. EMS-061 IN_PROGRESS для initial finite profile; full IDE package export/control handler canvas/unified manager/PWA/native/maps/state locks/MVP/deploy/global goal открыты.
+
+UIRuntime и compiled output используют один UIKernel, прежний ReactorKernel и existing mountDOMRuntime. CompileUIJS проверяет semantic UI+IR, сохраняет signed values/own port names; runtime проверяет ui.render и все handler policies до preview. CLI требует explicit policy, проверяет source→IR witness и pins до записи четырёх static files. Fresh Node executes semantic UI без EMS imports. Actual Chromium воспроизводит те же clicks/inputs/checkbox, rollback/disabled/focus/labels/inert text/close на nested independent static host после остановки EMS origin, без `/src/`/`/web/` requests. Логи `/tmp/ems-ui-export-{tests,verify,browser}.log`; limits/API — docs/spec/UI_EXPORT.md.
+
+
 ## Последняя проверка — EMS-060 standalone state session, AC-056
 
 `npm test` **646/646 PASS**, `npm run verify` **122/122 PASS**, `npm run browser:test` **15/15 PASS**. Baseline44e1eaa:638/120/14. Node22 / actual Chromium156. EMS-060 IN_PROGRESS; независимая finite state session доказана, production/native backend/source maps/state lock/full UI/MVP/deploy/global goal открыты.

@@ -1,0 +1,4 @@
+{
+  "capabilities": ["ui.render", "state.read", "state.write"],
+  "allowedEffects": ["ui.render", "state.read", "state.write"]
+}

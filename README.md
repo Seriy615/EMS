@@ -105,3 +105,7 @@ UI preview handlers now run in a persistent Worker with the same reactor semanti
 ## Standalone state session (initial finite profile)
 
 `npm run export:reactor` builds `dist/counter-session.mjs` from the saved source-owned counter project. The independent module exports `createSession` and `replayEvents`, with the same FIFO transaction kernel as the interpreter. Explicit state permissions are required. Node and Chromium execution, rollback, replay and cancellation are verified; DOM/UI packaging and production/native backends remain open. See [STATE_COMPILER.md](docs/spec/STATE_COMPILER.md).
+
+## Standalone DOM application (initial finite profile)
+
+`npm run export:ui` builds `dist/counter-ui` from the saved source-owned project with explicit grants in `examples/ui-policy.json`. Serve that directory on a static host: it runs without EMS IDE or service, including nested URLs. Node semantic execution and actual Chromium controls after EMS origin shutdown are verified. IDE package download, PWA/native UI and full MVP remain open. See [UI_EXPORT.md](docs/spec/UI_EXPORT.md).
