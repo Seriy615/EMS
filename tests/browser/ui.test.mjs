@@ -70,3 +70,28 @@ test('actual UI workspace validates signed project edits, undo/save/download/imp
 
  }finally{await browser?.close();await server.close();await rm(directory,{recursive:true,force:true});}
 });
+
+test('actual forms create a counter from empty UI, edit EMS handler and restore source after reopen',async()=>{
+ const server=await startStudioServer({port:0});let browser;
+ try{
+  browser=await launchChromium();const page=await browser.page(server.origin+'/web/ui-demo.html');
+  async function create(){
+   const demo=await import('/web/ui-demo.mjs'),set=(id,value)=>{document.getElementById(id).value=value;};
+   async function change(id){const before=demo.editor.source;document.getElementById(id).click();const deadline=Date.now()+5000;while(demo.editor.source===before){if(document.getElementById('error').textContent)throw new Error(document.getElementById('error').textContent);if(Date.now()>deadline)throw new Error('Author change timeout: '+id);await new Promise(resolve=>setTimeout(resolve,10));}await demo.startDemo();}
+   await change('new-ui');set('state-id','count');set('state-type','Number');set('state-initial','0');await change('add-state-ui');
+   const initial='fn update(delta:Number)->Number {return state.count.write(state.count.read()+delta);}';set('handler-event','increment');set('handler-entry','update');set('handler-source',initial);await change('apply-handler');
+   set('widget-id','display');set('widget-kind','text');set('widget-parent','root');await change('add-widget');set('widget-select','display');document.getElementById('widget-select').dispatchEvent(new Event('change'));set('property-name','text');set('property-mode','number');set('property-value','count');await change('set-property');
+   set('widget-id','plus');set('widget-kind','button');set('widget-parent','root');await change('add-widget');set('widget-select','plus');document.getElementById('widget-select').dispatchEvent(new Event('change'));set('event-handler','increment');document.getElementById('event-handler').dispatchEvent(new Event('change'));document.querySelector('[data-event-value="delta"]').value='1';await change('set-event');
+   document.querySelector('[data-ems-ui="plus"]').click();await demo.applicationController.idle();const first=document.querySelector('[data-ems-ui="display"]').textContent;
+   const updated='fn update(delta:Number)->Number {return state.count.write(state.count.read()+delta*2);}';set('handler-event','increment');set('handler-entry','update');set('handler-source',updated);await change('apply-handler');document.querySelector('[data-ems-ui="plus"]').click();await demo.applicationController.idle();const second=document.querySelector('[data-ems-ui="display"]').textContent;
+   const accepted=demo.editor.source;set('handler-source','fn update(');document.getElementById('apply-handler').click();const failureDeadline=Date.now()+5000;while(!document.getElementById('error').textContent){if(Date.now()>failureDeadline)throw new Error('Invalid handler did not fail');await new Promise(resolve=>setTimeout(resolve,10));}const preserved=demo.editor.source===accepted&&document.querySelector('[data-ems-ui="display"]').textContent==='2';
+
+   document.getElementById('undo-ui').click();await demo.startDemo();document.querySelector('[data-ems-ui="plus"]').click();await demo.applicationController.idle();const undone=document.querySelector('[data-ems-ui="display"]').textContent;
+   document.getElementById('redo-ui').click();await demo.startDemo();document.getElementById('save-ui').click();set('handler-select','increment');document.getElementById('load-handler').click();return {first,second,undone,preserved,source:document.getElementById('handler-source').value,schema:JSON.parse(demo.editor.source).schemaVersion,inspect:document.getElementById('handler-inspect').textContent.includes('ems-ir/2'),error:document.getElementById('error').textContent};
+  }
+  const updated='fn update(delta:Number)->Number {return state.count.write(state.count.read()+delta*2);}';assert.deepEqual(await page.evaluate('('+create.toString()+')()'),{first:'1',second:'2',undone:'1',preserved:true,source:updated,schema:'ems-ui-project/2',inspect:true,error:''});
+  await page.close();const reopened=await browser.page(server.origin+'/web/ui-demo.html');
+  async function restore(){const demo=await import('/web/ui-demo.mjs');document.getElementById('handler-select').value='increment';document.getElementById('load-handler').click();document.querySelector('[data-ems-ui="plus"]').click();await demo.applicationController.idle();return {source:document.getElementById('handler-source').value,value:document.querySelector('[data-ems-ui="display"]').textContent};}
+  assert.deepEqual(await reopened.evaluate('('+restore.toString()+')()'),{source:updated,value:'2'});
+ }finally{await browser?.close();await server.close();}
+});

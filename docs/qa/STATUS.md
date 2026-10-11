@@ -1,5 +1,17 @@
 # Current implementation status
 
+## Последняя проверка — EMS-050 UI forms + EMS source, AC-053
+
+`npm test` **625/625 PASS**, `npm run verify` **115/115 PASS**, `npm run browser:test` **13/13 PASS**. Node22 / actual Chromium156. Baseline e3e6b8a621/112. EMS-050 IN_PROGRESS; full control handler graph/UI contracts factory/worker preview/standalone UI/AC-014/full MVP/deploy/global goal открыты.
+
+Forms создают пустой UI project, primitive state, hierarchy/properties и typed event bindings через actual linked handler signature. EMS source uses original parser/checker/control lower; helpers remain in shared IR, runtime uses existing ReactorSession. Project v2 сохраняет source/entry witnesses для real handlers, повторно compile-ит и сравнивает canonical IR при parse/serialize. SOURCE_IR_MISMATCH, stale signatures и malformed source reject before accepted program/preview replacement. v1 transport backwards compatible. Aggregate Undo/Redo/Save/Open/download/import сохраняют source+IR. Widget click selects actual ID/event binding; handler open shows actual authored text/IR. No invented decompilation or JS business counter.
+
+4 новых Node tests: UI/state/source/event creation/execution/storage, helper control functions and changed result/undo/redo source, whole-candidate source/signature/IR negatives/atomic rollback, own prototype-named handler metadata. Actual new browser scenario creates count/display/plus/handler from empty forms without JSON editing: click1, source edit click2, invalid source retains program/preview, Undo1, Redo/Save/OpenHandler, reopen source and click2. Existing signed transport/download/import/corrupt records, core/P1/IDE/library/UI tests remain green. Target Node+UI browser8/8 before added invalid browser candidate assertion; final full gate includes assertion. Schemas19 parsed/local refs resolved; external schema engine not run. Logs /tmp/ems-ui-author-{tests,verify,browser}-final.log. git diff --check PASS. No new dependencies/VPS changes. Revision — commit containing report, parent e3e6b8a.
+
+Next: control handler graphical representation/text linking and proper event/state project integration, worker preview isolation, independent standalone state/UI compiler proof then full owner MVP gate/auth HTTPS isolation/rollback deploy. Current UI forms/source editor is real initial authoring, not full IDE/global completion. Verified slices commit/push origin/main git@github.com:Seriy615/EMS.git. No subagents/model fallback.
+
+## Предыдущая проверка — UI transport
+
 ## Последняя проверка — EMS-050 typed UI project, AC-052
 
 `npm test` **621/621 PASS**, `npm run verify` **112/112 PASS**, `npm run browser:test` **12/12 PASS**. Node22/actual Chromium156. Baseline4bdcb34:615/615 tests,109/109 verify. EMS-050 IN_PROGRESS; full AC-014, visual UI/source authoring, standalone UI/MVP/deploy/global goal остаются открытыми.

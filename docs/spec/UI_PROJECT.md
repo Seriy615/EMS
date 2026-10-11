@@ -26,7 +26,7 @@ UI workspace /web/ui-demo.html теперь имеет editable typed project te
 
 Save сохраняет программу/начальное состояние, не runtime snapshot. После reload счётчик начинает с сохранённого initial value; независимое execution state не смешивается с authoring. Ошибка corrupt saved record открывает shipped example без автоматической перезаписи. Runtime still requires explicit ui.render/state grants, all handler closure preflight и исходный ReactorSession.
 
-Это первый проверяемый authoring transport/workspace, пока редактирование UI происходит через typed JSON. Визуальное создание UI/slot/event bindings, text/graph handler editing with source persistence/inspect, объединённый project manager и standalone UI export остаются EMS-050/051/032 требованиями; наличие textarea не объявляется полноценным UI IDE.
+Initial UI/slot/event forms, widget selection и handler EMS source editing/persistence реализованы (UI_AUTHORING.md, project v2). Typed JSON остаётся доступным transport inspector. Control handler graph editing, unified project manager и standalone UI export остаются EMS-050/051/032 требованиями; полнота UI IDE этим срезом не объявляется.
 
 ## Evidence
 

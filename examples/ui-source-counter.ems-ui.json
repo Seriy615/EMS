@@ -1,0 +1,236 @@
+{
+  "schemaVersion": "ems-ui-project/2",
+  "application": {
+    "schemaVersion": "ems-ui-app/1",
+    "id": "demo.ui.counter",
+    "version": "1.0.0",
+    "reactor": {
+      "schemaVersion": "ems-reactor/1",
+      "id": "demo.ui.counter",
+      "version": "1.0.0",
+      "state": [
+        {
+          "id": "count",
+          "type": "Number",
+          "initial": {
+            "type": "Number",
+            "value": 0
+          }
+        }
+      ],
+      "handlers": [
+        {
+          "event": "change",
+          "program": {
+            "entry": "demo.Counter",
+            "functions": [
+              {
+                "body": [
+                  {
+                    "kind": "let",
+                    "mutable": false,
+                    "name": "next",
+                    "type": "Number",
+                    "value": {
+                      "kind": "binary",
+                      "left": {
+                        "arguments": [],
+                        "kind": "call",
+                        "target": {
+                          "id": "state.count.read",
+                          "kind": "contract",
+                          "version": "1.0.0"
+                        },
+                        "type": "Number"
+                      },
+                      "operator": "+",
+                      "right": {
+                        "kind": "local",
+                        "name": "delta",
+                        "type": "Number"
+                      },
+                      "type": "Number"
+                    }
+                  },
+                  {
+                    "kind": "return",
+                    "value": {
+                      "arguments": [
+                        {
+                          "kind": "local",
+                          "name": "next",
+                          "type": "Number"
+                        }
+                      ],
+                      "kind": "call",
+                      "target": {
+                        "id": "state.count.write",
+                        "kind": "contract",
+                        "version": "1.0.0"
+                      },
+                      "type": "Number"
+                    }
+                  }
+                ],
+                "id": "demo.Counter",
+                "inputs": [
+                  {
+                    "name": "delta",
+                    "type": "Number"
+                  }
+                ],
+                "output": {
+                  "type": "Number"
+                },
+                "policy": {
+                  "capabilities": [
+                    "state.read",
+                    "state.write"
+                  ],
+                  "effects": [
+                    "state.read",
+                    "state.write"
+                  ]
+                },
+                "requirements": {
+                  "capabilities": [],
+                  "effects": []
+                }
+              }
+            ],
+            "id": "demo.Counter",
+            "profile": "ems-control-finite/1",
+            "schemaVersion": "ems-ir/2",
+            "version": "0.1.0"
+          }
+        }
+      ]
+    },
+    "ui": {
+      "schemaVersion": "ems-ui/1",
+      "root": {
+        "id": "root",
+        "kind": "column",
+        "props": {
+          "label": {
+            "literal": {
+              "type": "String",
+              "value": "EMS counter"
+            }
+          }
+        },
+        "events": {},
+        "children": [
+          {
+            "id": "title",
+            "kind": "text",
+            "props": {
+              "text": {
+                "literal": {
+                  "type": "String",
+                  "value": "Счётчик EMS"
+                }
+              }
+            },
+            "events": {},
+            "children": []
+          },
+          {
+            "id": "count",
+            "kind": "text",
+            "props": {
+              "label": {
+                "literal": {
+                  "type": "String",
+                  "value": "Значение счётчика"
+                }
+              },
+              "text": {
+                "state": "count",
+                "format": "number"
+              }
+            },
+            "events": {},
+            "children": []
+          },
+          {
+            "id": "actions",
+            "kind": "row",
+            "props": {},
+            "events": {},
+            "children": [
+              {
+                "id": "increment",
+                "kind": "button",
+                "props": {
+                  "text": {
+                    "literal": {
+                      "type": "String",
+                      "value": "Увеличить"
+                    }
+                  }
+                },
+                "events": {
+                  "press": {
+                    "handler": "change",
+                    "inputs": {
+                      "delta": {
+                        "literal": {
+                          "type": "Number",
+                          "value": 1
+                        }
+                      }
+                    }
+                  }
+                },
+                "children": []
+              },
+              {
+                "id": "decrement",
+                "kind": "button",
+                "props": {
+                  "text": {
+                    "literal": {
+                      "type": "String",
+                      "value": "Уменьшить"
+                    }
+                  }
+                },
+                "events": {
+                  "press": {
+                    "handler": "change",
+                    "inputs": {
+                      "delta": {
+                        "literal": {
+                          "type": "Number",
+                          "value": -1
+                        }
+                      }
+                    }
+                  }
+                },
+                "children": []
+              }
+            ]
+          }
+        ]
+      }
+    }
+  },
+  "references": [
+    {
+      "id": "state.count.read",
+      "version": "1.0.0"
+    },
+    {
+      "id": "state.count.write",
+      "version": "1.0.0"
+    }
+  ],
+  "sources": {
+    "change": {
+      "source": "// Handler policy is inferred from the explicitly linked state contracts.\nexport fn demo.Counter(delta: Number) -> Number {\n  let next = state.count.read() + delta;\n  return state.count.write(next);\n}\n",
+      "entry": "demo.Counter"
+    }
+  }
+}

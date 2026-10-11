@@ -1,3 +1,4 @@
+import {validateUISources} from './source.mjs';
 import {fail} from '../reference/errors.mjs';
 import {typeOfValue,assertValueType,assertTypeName} from '../reference/types.mjs';
 import {createStateRegistry} from '../runtime/reactor.mjs';
@@ -45,21 +46,26 @@ function references(application,registry){
  for(const id of roots)visit(id);return [...pins.values()].sort(compare);
 }
 /** Canonical typed UI transport. Exact version pins are not byte provenance or a security signature. */
-export function serializeUIProject(application,baseRegistry){
+export function serializeUIProject(application,baseRegistry,{sources={}}={}){
  const linked=linkUIApplication(application,baseRegistry),encoded=transform(linked.application);
  encoded.reactor.handlers=linked.application.reactor.handlers.map(handler=>({event:handler.event,program:JSON.parse(serializeIR(handler.program,linked.registry))}));
- const source=JSON.stringify({schemaVersion:'ems-ui-project/1',application:encoded,references:references(linked.application,linked.registry)},null,2)+'\n';
+ const checkedSources=validateUISources(linked.application,baseRegistry,sources),hasSources=Object.keys(checkedSources).length>0;
+ const source=JSON.stringify({schemaVersion:hasSources?'ems-ui-project/2':'ems-ui-project/1',application:encoded,references:references(linked.application,linked.registry),...(hasSources?{sources:checkedSources}:{})},null,2)+'\n';
  if((source.length>limit||new TextEncoder().encode(source).length>limit))fail('UI_LIMIT','UI project exceeds 1 MiB UTF-8 bytes');return source;
 }
 /** Decode typed signed values, validate the whole linked application and exact transitive version closure. */
 export function parseUIProject(source,baseRegistry){
  if(typeof source!=='string'||(source.length>limit||new TextEncoder().encode(source).length>limit))fail('UI_LIMIT','UI project source must be bounded text');let data;try{data=JSON.parse(source);}catch{fail('INVALID_UI_PROJECT','Malformed UI project JSON');}
- fields(data,['schemaVersion','application','references']);if(data.schemaVersion!=='ems-ui-project/1')fail('UI_VERSION','Unsupported UI project version');
+ fields(data,['schemaVersion','application','references',...(data.schemaVersion==='ems-ui-project/2'?['sources']:[])]);if(!['ems-ui-project/1','ems-ui-project/2'].includes(data.schemaVersion))fail('UI_VERSION','Unsupported UI project version');
  const application=transform(data.application,true),registry=createStateRegistry(baseRegistry,application.reactor.state);
  application.reactor.handlers=application.reactor.handlers.map(handler=>{fields(handler,['event','program']);return {event:handler.event,program:parseIR(JSON.stringify(handler.program),registry)};});
  const linked=linkUIApplication(application,baseRegistry);
  if(!Array.isArray(data.references)||data.references.length>10000)fail('CONTRACT_VERSION','Invalid UI project references');
  const saved=data.references.map(pin=>{fields(pin,['id','version']);if(typeof pin.id!=='string'||typeof pin.version!=='string')fail('CONTRACT_VERSION','Invalid UI reference');return {id:pin.id,version:pin.version};}).sort(compare);
  if(JSON.stringify(saved)!==JSON.stringify(references(application,linked.registry)))fail('CONTRACT_VERSION','UI project references disagree with current contract closure');
+ if(data.schemaVersion==='ems-ui-project/2'){if(!Object.keys(data.sources??{}).length)fail('INVALID_UI_PROJECT','Empty v2 authoring sources');validateUISources(application,baseRegistry,data.sources);}
  return application;
 }
+
+/** Preserve validated authored source separately from the runtime application shape. */
+export function parseUIWorkspace(source,baseRegistry){const application=parseUIProject(source,baseRegistry),sources=JSON.parse(source).sources??{};return {application,sources};}

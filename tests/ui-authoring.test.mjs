@@ -1,0 +1,22 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {UIProjectEditor,UIProjectStorage} from '../src/studio/ui-project.mjs';
+import {UIRuntime} from '../src/ui/model.mjs';
+import {parseUIWorkspace} from '../src/ui/project.mjs';
+import {createCoreRegistry} from '../src/reference/registry.mjs';
+const policy={capabilities:['ui.render','state.read','state.write'],allowedEffects:['ui.render','state.read','state.write']};
+const empty=()=>({schemaVersion:'ems-ui-app/1',id:'test.ui',version:'1.0.0',reactor:{schemaVersion:'ems-reactor/1',id:'test.ui',version:'1.0.0',state:[],handlers:[]},ui:{schemaVersion:'ems-ui/1',root:{id:'root',kind:'column',props:{},events:{},children:[]}}});
+function author(){const editor=new UIProjectEditor(empty());editor.addState('count','Number',-0);editor.applyHandler('increment','fn update(delta:Number)->Number {return state.count.write(state.count.read()+delta);}','update');editor.addNode('root',{id:'display',kind:'text',props:{text:{literal:''}},events:{},children:[]});editor.property('display','text',{state:'count',format:'number'});editor.addNode('root',{id:'button',kind:'button',props:{text:{literal:'+'}},events:{},children:[]});editor.event('button','press','increment',{delta:{literal:1}});return editor;}
+test('author creates UI/state/source/event program through common frontend/IR, persisting editable source witness',async()=>{
+ const editor=author();assert.equal(JSON.parse(editor.source).schemaVersion,'ems-ui-project/2');const workspace=parseUIWorkspace(editor.source,editor.base);assert.match(workspace.sources.increment.source,/state.count.write/);const runtime=new UIRuntime(workspace.application,editor.base,{policy});assert.equal(await runtime.dispatch('button','press'),1);assert.equal(runtime.view().children[0].props.text,'1');assert.ok(Object.is(editor.application.reactor.state[0].initial,-0));await runtime.close();
+ const data=new Map(),storage=new UIProjectStorage({getItem:key=>data.get(key)??null,setItem:(key,value)=>data.set(key,value)},editor.base);storage.save(editor.application,{sources:editor.sources});assert.equal(storage.loadWorkspace().sources.increment.source,workspace.sources.increment.source);
+});
+test('handler edits change actual results, helpers remain control IR functions, undo/redo retain source and behavior',async()=>{
+ const editor=author(),source='fn twice(x:Number)->Number{return x*2;} fn update(delta:Number)->Number {return state.count.write(state.count.read()+twice(delta));}';editor.applyHandler('increment',source,'update');assert.equal(editor.application.reactor.handlers[0].program.schemaVersion,'ems-ir/2');let runtime=new UIRuntime(editor.application,editor.base,{policy});assert.equal(await runtime.dispatch('button','press'),2);await runtime.close();editor.undo();assert.notEqual(editor.sources.increment.source,source);runtime=new UIRuntime(editor.application,editor.base,{policy});assert.equal(await runtime.dispatch('button','press'),1);await runtime.close();editor.redo();assert.equal(editor.sources.increment.source,source);
+});
+test('source/IR mismatch, stale signatures and malformed source reject without mutating accepted project',()=>{
+ const editor=author(),before=editor.source;assert.throws(()=>editor.applyHandler('increment','fn update(delta:String)->Number{return 1;}','update'),{code:'TYPE_MISMATCH'});assert.equal(editor.source,before);assert.throws(()=>editor.applyHandler('increment','fn update(','update'));assert.equal(editor.source,before);const data=JSON.parse(before);data.sources.increment.source=data.sources.increment.source.replace('+delta','+2*delta');assert.throws(()=>editor.replace(JSON.stringify(data)),{code:'SOURCE_IR_MISMATCH'});assert.equal(editor.source,before);assert.throws(()=>editor.addState('count','String','bad'),{code:'INVALID_REACTOR'});assert.equal(editor.source,before);assert.throws(()=>editor.property('display','text',{state:'count'}),{code:'TYPE_MISMATCH'});assert.equal(editor.source,before);assert.throws(()=>editor.removeNode('root'),{code:'INVALID_UI'});
+});
+test('source witness supports safe prototype-named handler and rejects metadata for absent handlers',()=>{
+ const editor=author();editor.applyHandler('__proto__','fn safe()->Number {return 1;}','safe');assert.equal(Object.hasOwn(editor.sources,'__proto__'),true);const data=JSON.parse(editor.source);data.sources.unknown={source:'fn safe()->Number{return 1;}',entry:'safe'};assert.throws(()=>parseUIWorkspace(JSON.stringify(data),editor.base),{code:'INVALID_UI_PROJECT'});
+});
