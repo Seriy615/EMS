@@ -107,14 +107,39 @@ function render(){
  $('nodes').replaceChildren();const graph=editor.workspace.graph;
  syncBreakpoints();
  $('canvas-guide').hidden=graph.nodes.length>0||Object.keys(graph.inputs).length>0;
- for(const [name,input]of Object.entries(graph.inputs)){const node=card(`input:${name}`,name,'вход');node.append(port({input:name},null,name,input.type));$('nodes').append(node);}
- graph.nodes.forEach((definition,index)=>{const contract=editor.registry.resolve(definition.uses),node=card(definition.id,titles[contract.id]??contract.id,contract.kind==='composite'?'граф':contract.kind==='collection'?'коллекция':'атом',index);for(const [name,type]of Object.entries(contract.inputs))node.append(port(null,{id:definition.id,port:name},name,typeof type==='string'?type:type.type));node.append(port({node:definition.id},null,definition.id,contract.output));$('nodes').append(node);});
+ for(const [name,input]of Object.entries(graph.inputs)){const node=card(`input:${name}`,name,'Входные данные');node.append(el('div',json(editor.workspace.inputs[name]),'input-preview'));node.append(port({input:name},null,name,input.type));$('nodes').append(node);}
+ graph.nodes.forEach((definition,index)=>{const contract=editor.registry.resolve(definition.uses),node=card(definition.id,titles[contract.id]??contract.id,contract.kind==='composite'?'Составной':contract.kind==='collection'?'Коллекция':'Операция',index);for(const [name,type]of Object.entries(contract.inputs))node.append(port(null,{id:definition.id,port:name},name,typeof type==='string'?type:type.type));node.append(port({node:definition.id},null,definition.id,contract.output));$('nodes').append(node);});
  const output=card('output','Результат функции','выход');output.append(port(null,{id:'output',port:'return'},'return',graph.output.type));$('nodes').append(output);
- $('project-name').value=editor.project.name;$('undo').disabled=!editor.history.length;$('redo').disabled=!editor.future.length;$('connection-status').textContent=pending?'Выберите вход. Esc — отменить.':'';view();catalog();collectionChoices();inspector();$('scope').textContent=editor.selectedContract??'Основная программа';$('collapse').disabled=!editor.navigation.length;requestAnimationFrame(wires);
+ $('project-name').value=editor.project.name;$('undo').disabled=!editor.history.length;$('redo').disabled=!editor.future.length;$('connection-status').textContent=pending?'Выберите вход. Esc — отменить.':'';view();catalog();collectionChoices();runInputs();inspector();$('scope').textContent=editor.selectedContract??'Основная программа';$('collapse').disabled=!editor.navigation.length;requestAnimationFrame(wires);
 }
 function json(value){if(Object.is(value,-0))return '-0';if(Array.isArray(value))return '['+value.map(json).join(',')+']';if(value&&typeof value==='object')return '{'+Object.entries(value).map(([key,item])=>JSON.stringify(key)+':'+json(item)).join(',')+'}';return JSON.stringify(value);}
+function runInputs(){
+ const panel=$('run-inputs');panel.replaceChildren();
+ const entries=Object.entries(editor.workspace.graph.inputs);
+ if(!entries.length){panel.append(el('p','У этой программы нет входных параметров.','hint'));return;}
+ for(const [name,input] of entries){
+  const form=el('form',undefined,'run-input-row'),label=el('label',name),field=el(input.type==='NumberArray'?'textarea':input.type==='Boolean'?'select':'input');
+  const id='run-input-'+encodeURIComponent(name);field.id=id;label.htmlFor=id;field.dataset.runInput=name;
+  if(input.type==='Boolean')for(const [value,title] of [['true','Да (true)'],['false','Нет (false)']]){const option=el('option',title);option.value=value;field.append(option);}
+  field.value=input.type==='String'?editor.workspace.inputs[name]:json(editor.workspace.inputs[name]);field.setAttribute('aria-label','Вход '+name);field.spellcheck=false;
+  if(input.type==='Number')field.inputMode='decimal';
+  const apply=el('button','Применить');apply.type='submit';
+  form.append(label,el('small',input.type,'input-type'),field,apply);
+  if(input.type==='NumberArray')form.append(el('small','Список чисел: [1, 2, 3]','hint'));
+  form.onsubmit=event=>{event.preventDefault();change(()=>{editor.setInput(name,input.type==='String'?field.value:JSON.parse(field.value));$('output').textContent='Данные изменены. Нажмите «Запустить».';});};panel.append(form);
+ }
+}
+function fitGraph(){
+ const cards=[...$('nodes').children];if(!cards.length)return;
+ const left=Math.min(...cards.map(card=>parseFloat(card.style.left))),top=Math.min(...cards.map(card=>parseFloat(card.style.top)));
+ const right=Math.max(...cards.map(card=>parseFloat(card.style.left)+card.offsetWidth)),bottom=Math.max(...cards.map(card=>parseFloat(card.style.top)+card.offsetHeight));
+ const width=$('viewport').clientWidth,height=$('viewport').clientHeight,padding=28,headroom=10;
+ const scale=Math.max(.25,Math.min(1,(width-padding*2)/(right-left),(height-headroom-padding*2)/(bottom-top)));
+ change(()=>editor.viewport({scale,x:(width-(right-left)*scale)/2-left*scale,y:headroom+padding-top*scale}));
+}
+$('fit-graph').onclick=fitGraph;
 function inspector(){
- const panel=$('inspector');panel.replaceChildren();if(!selected){panel.append(el('p','Выберите блок или вход функции.','hint'));return;}
+ const panel=$('inspector');panel.replaceChildren();if(!selected){panel.append(el('p','Нажмите на блок на схеме, чтобы изменить его параметры. Входные данные можно задать выше.','hint'));return;}
  if(selected==='output'){panel.append(el('strong','Результат'),el('p',editor.workspace.graph.output.type),el('p',Object.hasOwn(editor.workspace.graph.returns,'literal')?'Значение: '+json(editor.workspace.graph.returns.literal):'Источник: '+(editor.workspace.graph.returns.node??editor.workspace.graph.returns.input)));const clear=el('button','Удалить соединение');clear.onclick=()=>change(()=>editor.disconnect('output','return'));panel.append(clear);return;}
  if(selected.startsWith('input:')){
   const name=selected.slice(6),input=editor.workspace.graph.inputs[name];if(!input){selected=null;return;}panel.append(el('strong',name),el('p',input.type));const field=el('textarea');field.value=json(editor.workspace.inputs[name]);field.dataset.inputValue=name;const apply=el('button','Применить значение');apply.onclick=()=>change(()=>editor.setInput(name,JSON.parse(field.value)));panel.append(el('label','Значение (JSON)'),field,apply);
@@ -186,7 +211,7 @@ $('examples').onchange=async()=>{
  if(choice==='avg'){const saved=parseProject(await fetch('/examples/studio-avg5.ems.json').then(response=>response.text()));saved.id=project.id;Object.assign(project,saved);}
  else if(choice==='library'){const saved=parseProject(await fetch('/examples/studio-library.ems.json').then(response=>response.text()));saved.id=project.id;saved.name='Массив → текст';Object.assign(project,saved);}
  else{project.graph.inputs={a:{type:'Number'},b:{type:'Number'}};project.inputs={a:2,b:3};project.graph.nodes=[{id:'sum',uses:'core.add',args:{a:{input:'a'},b:{input:'b'}}}];project.graph.returns={node:'sum'};}
- Object.keys(project.graph.inputs).forEach((name,index)=>{project.canvas.positions[`input:${name}`]={x:30,y:100+index*130};});project.graph.nodes.forEach((node,index)=>{project.canvas.positions[node.id]={x:300+(index%2)*270,y:60+Math.floor(index/2)*200};});project.canvas.positions.output={x:850,y:150};change(()=>{editor=new ProjectEditor(project);selected=null;});
+ Object.keys(project.graph.inputs).forEach((name,index)=>{project.canvas.positions[`input:${name}`]={x:30,y:100+index*130};});project.graph.nodes.forEach((node,index)=>{project.canvas.positions[node.id]={x:300+(index%2)*270,y:60+Math.floor(index/2)*200};});project.canvas.positions.output={x:850,y:150};change(()=>{editor=new ProjectEditor(project);selected=null;});fitGraph();
  }catch(error){report(error);}$('examples').value='';
 };
 window.addEventListener('resize',wires);projectList();render();

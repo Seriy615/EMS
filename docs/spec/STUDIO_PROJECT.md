@@ -35,3 +35,9 @@ tests/studio.test.mjs (7): real shared execution/transport, canvas IR independen
 AC-045 закрывает initial finite EMS-030 acceptance: interactive typed editor, undo и saved graph roundtrip. Full MVP/AC-012 остаётся открыт. EMS-031 теперь закрывает initial composite authoring/expand/edit/reuse (AC-046). Далее библиотека logic/text/array transformations, text editor на общем IR, events/state/UI counter, три actual demos и их browser tests. Deploy после полного утверждённого MVP acceptance; owner authorization сохранена. Нельзя считать readonly M0 или этот первый editor slice полным IDE/deployment.
 
 Текстовый bridge и pure explicit sequence описаны в [STUDIO_TEXT.md](STUDIO_TEXT.md). Studio теперь принимает pure core/effects call IR, сохраняя eager order, но не разрешает host effects. Run использует disposable module Worker с Stop/deadline.
+
+## Запуск и расположение панелей
+
+Библиотека операций находится слева, схема программы — в центре, входные данные и настройки выбранного блока — справа. Входы можно изменять без выбора блока: «Применить» проверяет тип и сохраняет значение; затем «Запустить» вычисляет новый результат. String вводится обычным текстом, Boolean выбирается из списка, NumberArray — списком JSON. Ошибочное значение не заменяет сохранённое. Значения входов также видны на самих блоках.
+
+«Весь граф» подбирает масштаб и положение для всех блоков текущего графа; сохраняется только canvas sidecar, семантика программы не меняется. Готовый пример сразу помещается в видимую область. Минимальный масштаб остаётся25%; для очень больших графов доступны панорамирование и масштаб. На узком экране панели расположены последовательно, а библиотека раскрывается по запросу. Результат выполнения отделён снизу; переменные, точки и журнал раскрываются отдельно.

@@ -9,7 +9,7 @@
 </head>
 <body>
 <header class="app-header">
-<a class="brand" href="/web/projects.html">EMS <span>Studio</span></a> <span class="header-divider"></span><span class="editor-label">Редактор программы</span>
+<a class="brand" href="/web/projects.html">EMS <span>Studio</span></a> <span class="header-divider"></span><span class="editor-label">Рабочее пространство</span>
 <input id="project-name" aria-label="Название проекта">
 <select id="projects" aria-label="Открыть проект"></select>
 <a class="ui-link" href="/web/ui-demo.html">Редактор интерфейса ↗</a>
@@ -29,8 +29,8 @@
 </div>
 <main>
 <aside>
-<details class="library-section" open><summary>＋ Библиотека блоков</summary><div class="panel-label">Библиотека</div><h2>Добавить блок</h2>
-<p class="hint">Выберите операцию ниже — блок появится на поле. Соединяйте круглые выходы со входами.</p>
+<details class="library-section" open><summary>Библиотека операций</summary><div class="panel-label">Инструменты</div><h2>Блоки программы</h2>
+<p class="hint">Нажмите на операцию, чтобы добавить её на схему.</p>
 <input id="catalog-search" type="search" aria-label="Поиск контрактов" placeholder="Найти операцию…">
 <select id="catalog-category" aria-label="Категория контрактов">
 <option value="">Все категории</option>
@@ -69,14 +69,15 @@
 <button id="create-collection">Создать коллекцию</button>
 <p class="hint">Select, And и Or вычисляют все входы. Ленивые if / && / || доступны в тексте.</p>
 </details></aside>
-<section class="workspace">
+<section class="workspace" aria-label="Редактор программы">
+<div class="workflow-bar"><span><b>1</b> Задайте данные</span><span><b>2</b> Соедините блоки</span><span><b>3</b> Запустите программу</span></div>
 <div class="scope-bar"><span class="panel-label">Граф программы</span>
 <button id="main-graph">Основная</button>
 <button id="collapse">← Назад</button>
 <strong id="scope">Основная программа</strong>
-<div class="canvas-tools"><button id="zoom-out" aria-label="Уменьшить масштаб">−</button><span id="zoom">100%</span><button id="zoom-in" aria-label="Увеличить масштаб">+</button><button id="compile" title="Скачать самостоятельную JavaScript программу">Скачать приложение</button></div>
+<div class="canvas-tools"><button id="fit-graph" title="Показать все блоки программы">Весь граф</button><button id="zoom-out" aria-label="Уменьшить масштаб">−</button><span id="zoom">100%</span><button id="zoom-in" aria-label="Увеличить масштаб">+</button><button id="compile" title="Скачать самостоятельную JavaScript программу">Скачать приложение</button></div>
 </div>
-<div class="canvas-help">Перемещение за заголовок · Фон — панорамирование · Колесо — масштаб</div>
+<div class="canvas-help">Соединение: нажмите выход → затем вход · Перемещение: тяните заголовок блока</div>
 <section id="text-panel" hidden>
 <div class="code-heading"><div><span class="panel-label">Исходный код</span><h2>Программа EMS</h2></div><button id="text-compile">Скачать приложение</button></div><div class="text-controls">
 <label>Функция <input id="text-entry" aria-label="Точка входа текста">
@@ -105,22 +106,23 @@
 </div>
 </div>
 </section>
-<aside class="inspector">
-<div class="panel-label">Выбранный блок</div><h2>Свойства</h2>
-<div id="inspector"></div>
+<aside class="inspector" aria-label="Данные и свойства">
+<section class="run-inputs"><div class="panel-label">Перед запуском</div><h2>Входные данные</h2><p class="hint">Измените значения и примените их.</p><div id="run-inputs"></div></section>
+<section class="selection-properties"><div class="panel-label">Выбранный блок</div><h2>Настройки блока</h2>
+<div id="inspector"></div></section>
 </aside>
 </main>
 <section class="execution">
 <div>
-<strong><span class="result-dot"></span> Результат</strong>
+<strong><span class="result-dot"></span> Результат выполнения</strong>
 <span id="duration"></span>
 <span id="connection-status"></span>
 </div>
 <pre id="output" aria-live="polite">Здесь появится результат. Откройте пример и нажмите «Запустить».</pre>
 <div id="error" role="alert"></div>
 <pre id="debug-location" aria-live="polite"></pre>
-<details class="inspection-settings"><summary>Просмотр переменных — по разрешению</summary><p class="hint">Выберите только переменные, которые можно показывать. Значения видны на паузе и не сохраняются в проектах. Изменение программы снимает разрешение.</p><fieldset id="inspection-options"><button id="inspection-choose">Выбрать значения программы</button><select id="inspection-function" aria-label="Функция для просмотра переменных"></select><div id="inspection-bindings"></div><label><input id="inspection-protected" type="checkbox"> Программа содержит защищённые данные — закрыть значения</label></fieldset><p id="inspection-status" role="status">Просмотр выключен. По умолчанию значения не передаются.</p><pre id="inspection-values" aria-live="polite"></pre></details>
-<details class="breakpoint-settings"><summary>Точки останова (<span id="breakpoint-count">0</span>)</summary><p class="hint">Выберите блок и поставьте точку в свойствах; в тексте используйте «Точка под курсором». Точки сохраняются локально. Изменённые операции или библиотека могут снять привязку; экспорт программы не включает точки.</p><label><input id="debug-run-to-breakpoint" type="checkbox"> При отладке сразу идти до точки</label><button id="debug-breakpoint" disabled>Точка на текущей операции</button><button id="clear-breakpoints">Убрать все точки проекта</button><pre id="breakpoint-list"></pre></details>
+<details class="inspection-settings"><summary>Переменные на паузе</summary><p class="hint">Выберите только переменные, которые можно показывать. Значения видны на паузе и не сохраняются в проектах. Изменение программы снимает разрешение.</p><fieldset id="inspection-options"><button id="inspection-choose">Выбрать значения программы</button><select id="inspection-function" aria-label="Функция для просмотра переменных"></select><div id="inspection-bindings"></div><label><input id="inspection-protected" type="checkbox"> Программа содержит защищённые данные — закрыть значения</label></fieldset><p id="inspection-status" role="status">Просмотр выключен. По умолчанию значения не передаются.</p><pre id="inspection-values" aria-live="polite"></pre></details>
+<details class="breakpoint-settings"><summary>Остановки в программе (<span id="breakpoint-count">0</span>)</summary><p class="hint">Выберите блок и поставьте точку в свойствах; в тексте используйте «Точка под курсором». Точки сохраняются локально. Изменённые операции или библиотека могут снять привязку; экспорт программы не включает точки.</p><label><input id="debug-run-to-breakpoint" type="checkbox"> При отладке сразу идти до точки</label><button id="debug-breakpoint" disabled>Точка на текущей операции</button><button id="clear-breakpoints">Убрать все точки проекта</button><pre id="breakpoint-list"></pre></details>
 
 <details>
 <summary>Журнал запуска</summary>
