@@ -1,3 +1,4 @@
+import {expandCollectionApplications} from './collections.mjs';
 import { fail } from '../reference/errors.mjs';
 import { normalizeType, resolveType, unifyTypes, typeName } from './types.mjs';
 import { checkModuleEffects } from './effects.mjs';
@@ -23,6 +24,7 @@ function expectType(expected, actual, node, substitutions = new Map()) {
 /** Check the located EMS AST; imports resolve only through explicitly supplied namespaces. */
 export function typecheckModule(ast, registry, { imports = new Map(), maxTypeNodes = 20_000, maxExpressions = 100_000 } = {}) {
   if (ast?.schemaVersion !== 'ems-ast/1') fail('AST_VERSION', 'Expected ems-ast/1');
+  const expansion=expandCollectionApplications(ast,registry,{imports});ast=expansion.ast;const collectionHelpers=new Map(expansion.applications.map(item=>[item.helper,item]));
   const aliases = new Map(), declarations = new Map(), signatures = new Map(), namespaces = new Map();
   const types = new Map(), calls = new Map(), catchTypes = new Map();
   let nextCall = 0, typeNodes = 0, expressions = 0;
@@ -68,9 +70,10 @@ export function typecheckModule(ast, registry, { imports = new Map(), maxTypeNod
       output: type(declaration.output, parameters), async: declaration.async, declaration });
   }
   function signature(name, at) {
-    if (signatures.has(name)) return signatures.get(name);
+    const forced=expansion.intrinsics.get(at);
+    if (!forced&&signatures.has(name)) return signatures.get(name);
     const [prefix, ...rest] = name.split('.');
-    const resolved = namespaces.has(prefix) ? `${namespaces.get(prefix)}.${rest.join('.')}` : name;
+    const resolved = forced??(namespaces.has(prefix) ? `${namespaces.get(prefix)}.${rest.join('.')}` : name);
     const id = ['add','sub','mul','div','sum','min','max'].includes(resolved) ? `core.${resolved}` : resolved;
     let contract;
     try { contract = registry.resolve(id); } catch { diagnostic('UNKNOWN_SYMBOL', `Unknown callable ${name}`, at); }
@@ -191,6 +194,7 @@ export function typecheckModule(ast, registry, { imports = new Map(), maxTypeNod
           break;
         }
         const target = signature(name, node);
+        const collection=collectionHelpers.get(name);if(collection&&scope.has(collection.callback))diagnostic('CONTRACT_REF_REQUIRED','Local values are not contract references',{location:collection.location});
         if (scope.has(name)) diagnostic('UNSUPPORTED_CALL', 'Local callable values are not supported', node.callee);
         if (node.arguments.length !== target.inputs.length) diagnostic('CALL_ARITY', `Wrong number of arguments for ${name}`, node);
         const fresh = new Map(target.parameters.map(parameter => [parameter, { kind: 'Variable', name: `__call${nextCall}.${parameter}` }]));
@@ -323,5 +327,7 @@ export function typecheckModule(ast, registry, { imports = new Map(), maxTypeNod
   }
   const checked = { ast, signatures, types, calls, catchTypes };
   checked.policies = checkModuleEffects(checked, registry);
+  checked.collectionApplications=expansion.applications;
+  for(const application of expansion.applications){const policy=checked.policies.get(application.helper);const localEffects=checked.localEffects.get(application.helper);if(policy.effects.length||policy.capabilities.length||localEffects.length)fail('COLLECTION_EFFECT','Collection callbacks must be pure and require no capabilities',{location:application.location,effects:policy.effects,capabilities:policy.capabilities,localEffects});}
   return checked;
 }

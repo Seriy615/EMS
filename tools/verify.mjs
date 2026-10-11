@@ -11,7 +11,7 @@ import { validateContractInterface, compareContractInterfaces, registerContractB
 import { runNodeConformance } from './conformance.mjs';
 import { ProjectEditor,parseProject } from '../src/studio/project.mjs';
 import {textFromWorkspace,projectFromText,runTextDraft} from '../src/studio/text.mjs';
-import {STANDARD_INTERFACES} from '../src/stdlib/finite.mjs';
+import {STANDARD_INTERFACES,standardCatalog} from '../src/stdlib/finite.mjs';
 const root=new URL('../',import.meta.url);
 const get=async p=>readFile(new URL(p,root),'utf8');
 const readJSON=async p=>JSON.parse(await get(p));
@@ -30,6 +30,9 @@ await check('Studio text bridge preserves eager unused-operation failures',async
 await stat(new URL('docs/spec/STANDARD_LIBRARY.md',root));await check('found docs/spec/STANDARD_LIBRARY.md',()=>true);
 await check('all standard library public interfaces validate independently',()=>STANDARD_INTERFACES.length===36&&STANDARD_INTERFACES.every(spec=>validateContractInterface(spec)));
 await check('standard library text and persisted graph example execute shared semantics',async()=>{const text={source:await get('examples/stdlib-report.ems'),entry:'analyze',lowering:'auto'};return await runTextDraft(text,new ProjectEditor(),{values:[3,-1,4]})==='sum=6'&&await new ProjectEditor(parseProject(await get('examples/studio-library.ems.json'))).run()==='sum=6';});
+await stat(new URL('docs/spec/COLLECTION_TEMPLATES.md',root));await check('found docs/spec/COLLECTION_TEMPLATES.md',()=>true);
+await check('typed collection templates execute through shared control IR',async()=>{const source=await get('examples/collection-pipeline.ems'),draft={source,entry:'analyze',lowering:'auto'};return JSON.stringify(await runTextDraft(draft,new ProjectEditor(),{values:[-3,0,2]}))==='[9,4]';});
+await check('catalog distinguishes installed contracts and typed collection templates',()=>standardCatalog().schemaVersion==='ems-stdlib-catalog/2'&&standardCatalog().contracts.length===36&&standardCatalog().templates.length===2);
 const policy=await readJSON('.agents/policy.json');
 await check('models exactly Sol 6.1 + Luna 6',()=>policy.agents.approvedDisplayNames.join(',')==='GPT-6.1 Sol,GPT-6 Luna');
 await check('fallback disabled',()=>policy.agents.allowImplicitModelFallback===false);

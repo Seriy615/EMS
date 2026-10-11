@@ -1,5 +1,17 @@
 # Current implementation status
 
+## Последняя проверка — EMS-034 typed source Map/Filter
+
+`npm test` **596/596 PASS**, `npm run verify` **103/103 PASS**, `npm run browser:test` **8/8 PASS**. Node22/actual Chromium156. Baseline8b946bd:578/578 tests,100/100 verify. AC-049 реализован для static pure NumberArray templates через обычный control IR. EMS-034 IN_PROGRESS до visual authoring/persistence; full MVP/AC-012/UI counter/deploy/global goal остаются открыты.
+
+Map/Filter принимают static source/generic/atomic/composite references, с actual signature/effect/local-effect gates до execution. Hygienic normalization генерирует checked functions/for/if/calls, shared control steps/depth/cancellation и existing runtime/compiler; новый evaluator/IR opcode не добавлен. Array argument once, order/empty/signed zero preserved, Filter возвращает original values, exceptions stop iteration. Alias/user-name/source-append shadow tests passed. Original AST unchanged; generated locations anchor source call. Catalog v2 различает36 installed primitive contracts и2 typed templates.
+
+18 новых model tests проверяют runtime/serialized IR/standalone, generic/atomic/composite refs и async entry, shape/local-value/arity/async-output/effects/hidden graph/local resources negatives, actual source locations/nonmutation, namespace hygiene, shared step/depth/cancel diagnostics, throws/catches, actual lock/version drift. Browser Studio text pipeline [-3,0,2]→[9,4] показывает actual IR/helper/mapper functions, rejects unsupported Apply, independent static module исполняется после shutdown runtime origin без source requests. Existing P1/core/IDE/library remain green. Логи /tmp/ems-collections-tests-final.log, /tmp/ems-collections-verify.log, /tmp/ems-collections-browser.log, target18/18 и browser1/1. git diff --check PASS, schemas unchanged/dependencies не добавлены/VPS untouched. Revision — commit содержащий отчёт, parent8b946bd.
+
+Limits: static Number→Number/Boolean refs, no dynamic callable values/closures/effectful or Future-output callback. Pure foreign metadata is trusted, не sandbox. Immutable append reference cost может быть quadratic; production builder optimization не заявлена. Text drafts остаются local и не project control persistence. Следующий шаг — real visual collection/control workspace model и persistence на тех же semantics/shared budgets; затем DOM counter/full MVP/auth HTTPS deploy. Checked slices push origin/main git@github.com:Seriy615/EMS.git; без субагентов.
+
+## Предыдущая проверка — finite standard library
+
 ## Последняя проверка — EMS-034 finite standard library
 
 `npm test` **578/578 PASS**, `npm run verify` **100/100 PASS**, `npm run browser:test` **7/7 PASS**. Node22/actual Chromium156. AC-048 реализован; EMS-034 **IN_PROGRESS** до typed Map/Filter acceptance. Baseline 3a9db53: 534/534 tests, 97/97 verify. Global goal/full MVP/AC-012/DOM counter/deploy остаются открытыми.

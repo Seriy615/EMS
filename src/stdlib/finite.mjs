@@ -1,3 +1,4 @@
+import {COLLECTION_TEMPLATES} from './collections.mjs';
 import {validateContractInterface} from '../contracts/idl.mjs';
 /** Trusted, pure standard contracts for the finite primitive profile. */
 const definitions=[];
@@ -33,7 +34,7 @@ define('std.array.contains','array',{values:'NumberArray',value:'Number'},'Boole
 export const STANDARD_CONTRACTS=Object.freeze(definitions);
 /** Public interfaces are data artifacts, separate from operational bodies and binding provenance. */
 export const STANDARD_INTERFACES=Object.freeze(STANDARD_CONTRACTS.map(item=>validateContractInterface({schemaVersion:'ems-contract-interface/1',id:item.id,version:item.version,inputs:Object.entries(item.inputs).map(([name,type])=>({name,type})),output:{type:item.output},errors:item.errors.map(code=>({code,payloadType:null})),semantics:{determinism:'deterministic',effects:[],capabilities:[]},conditions:{pre:[],post:[]}})));
-export function standardCatalog(){return {schemaVersion:'ems-stdlib-catalog/1',contracts:STANDARD_CONTRACTS.map((item,index)=>({interface:STANDARD_INTERFACES[index],category:item.category,summary:item.summary,implementation:{kind:'intrinsic',abi:'ems-stdlib-finite/1',id:item.id}}))};}
+export function standardCatalog(){return {schemaVersion:'ems-stdlib-catalog/2',templates:COLLECTION_TEMPLATES,contracts:STANDARD_CONTRACTS.map((item,index)=>({interface:STANDARD_INTERFACES[index],category:item.category,summary:item.summary,implementation:{kind:'intrinsic',abi:'ems-stdlib-finite/1',id:item.id}}))};}
 /** One trusted operational body is used by runtime and standalone emission. No source from users is evaluated. */
 export function installFiniteStandardLibrary(registry,fail){
  for(const {id,version,inputs,output,operation} of STANDARD_CONTRACTS){

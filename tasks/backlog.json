@@ -490,13 +490,13 @@
         "GPT-6.1 Sol",
         "GPT-6 Luna"
       ],
-      "progress": "AC-048 initial finite standard library implemented: 36 typed pure value/logic/comparison/eager-select/text/NumberArray atomic contracts with independent public IDL, shared runtime/standalone operational bodies, actual intrinsic lock witness, categorized searchable Studio signatures, source/persisted graph example. All36 independently checked in actual Chromium runtime and independent standalone after runtime shutdown. Typed Map/Filter contract parameters, effect and shared budget propagation remain required before DONE; no placeholder blocks or string-callback substitution. See docs/spec/STANDARD_LIBRARY.md.",
+      "progress": "AC-048 primitive finite library and AC-049 typed static NumberArray Map/Filter source templates implemented. Reference parameters are actual source/generic/atomic/composite callables, checked for signatures/transitive effects/local handles; hygienic normalization uses existing control loops/functions and shared budgets/runtime/compiler, aliases/throws/versions/lock tested. Catalog v2 separates36 installed contracts and2 typed templates. Actual Studio text pipeline and independent Chromium export pass. Visual collection authoring and control workspace persistence remain required before DONE; no fake blocks, String callback substitution or second executor. See docs/spec/COLLECTION_TEMPLATES.md.",
       "acceptanceEvidence": {
-        "scope": "Initial primitive finite standard library; full EMS-034 and global goal open.",
-        "docs": "docs/spec/STANDARD_LIBRARY.md",
-        "tests": "578/578 PASS",
-        "verify": "100/100 PASS",
-        "browserTests": "7/7 PASS",
+        "scope": "Primitive library + static typed source collections; visual/persistence and full EMS-034/global goal open.",
+        "docs": "docs/spec/COLLECTION_TEMPLATES.md",
+        "tests": "596/596 PASS",
+        "verify": "103/103 PASS",
+        "browserTests": "8/8 PASS",
         "commands": [
           "npm test",
           "npm run verify",

@@ -1,0 +1,6 @@
+package examples.collections @ "1.0.0";
+fn square(value:Number)->Number { return value*value; }
+fn keep(value:Number)->Boolean { return value>=4; }
+contract analyze(values:Number[])->Number[] {
+  return std.array.filter(std.array.map(values,square),keep);
+}
