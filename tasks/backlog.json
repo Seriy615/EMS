@@ -508,8 +508,8 @@
           "npm run verify",
           "npm run browser:test"
         ],
-        "deployedRevision": "55763fb591d227fab96645ecdf0400f93be94956",
-        "live": "Earlier breakpoint artifact55763fb remains live; new activation-aware Over/Out local711/135/33 PASS pending exact gated publication and public control7/UIcommit1 evidence."
+        "deployedRevision": "d2639e8d53ebb1c44b69bdaf992ada15f69f04ce",
+        "live": "Public trusted HTTPS/auth/access + actual Chromium control Over/Out7 and UI Over confirmed0/Out commit1 PASS, earlier graph/composite/reopen/AVG5/text/UI/counter/breakpoints retained. Exact gated711/135/33 PASS; unrelated vhost hashes and five observed active services unchanged. Full debugger and historical Worker startup cause remain open. See docs/qa/DEPLOYMENT.md."
       },
       "nextSlice": "Source-owned UI event breakpoints with fresh handler witness, per-event ID/token/FIFO/private draft/commit/rollback, precise source cursor and graph operation targets; preserve execution-local frames and Over/Out."
     },
