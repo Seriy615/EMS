@@ -46,6 +46,7 @@ test('Studio exposes distinct stable views, a real first-run button and compact 
   await click('#new');await page.viewport(390,844);
   await page.evaluate(`new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r)))`);
   assert.equal(await page.evaluate(`document.querySelector('.library-section').open`),false);
+  assert.equal(await page.evaluate(`['undo','redo'].every(id=>{const r=document.getElementById(id).getBoundingClientRect();return r.width>0&&r.height>0;})`),true);
   assert.equal(await page.evaluate(`document.documentElement.scrollWidth<=innerWidth`),true);
   await click('#start-example');await click('.library-section summary');
   assert.equal(await page.evaluate(`document.querySelector('.library-section').open&&document.querySelector('[data-contract="core.add"]').getBoundingClientRect().height>0`),true);
