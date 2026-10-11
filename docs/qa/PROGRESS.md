@@ -73,3 +73,13 @@ Lowering effectful SSA и expression statements формирует ordered seque
 AC-031: 10 frontend effect tests плюс расширенные IR/compiler negative checks; старый unsupported effect-annotation тест заменён проверкой реализованного пути. Baseline на 25c4004: 225/225 tests и 33/33 verify. Итог `npm test` **234/234 PASS**, `npm run verify` **36/36 PASS**; логи `/tmp/ems-ast-effects-tests.log` и `/tmp/ems-ast-effects-verify.log`, Node 22.21.0. EMS-014 DONE по AC-029..031 в описанном finite kernel; не объявлять runtime sandbox, IO backend или весь M1 завершёнными.
 
 Следующая готовая задача — EMS-015: control-flow/state/events/cancellation и deterministic replay, необходимые для рабочего UI/IDE. Глобальная цель, P1, WEB IDE MVP и deploy остаются открыты. Все проверенные изменения отправлять в git@github.com:Seriy615/EMS.git.
+
+## Продолжение — EMS-015 state/events и отмена
+
+Добавлены `src/runtime/reactor.mjs`, `cancellation.mjs`: descriptor ems-reactor/1 связывает event names с существующими IR handlers, typed state adapters живут в explicit registry, committed memory принадлежит session. Text → type/effect checker → IR → event runtime проходит для `examples/counter.ems`; `node examples/counter.mjs` даёт count=2 и такое же состояние при replay.
+
+FIFO сериализует события с bounded queue (QUEUE_FULL без drop). Каждый handler получает отдельный draft state, commit после успеха/проверки результата; отказ/abort откатывает только owned state, не внешний IO. Runtime передаёт signal/state context nested calls, прекращает ожидание отменённого host Promise, проверяет cancel boundaries. Поздние state calls после cancel/completion запрещены. close отменяет active/queued EMS outcomes и запрещает dispatch. External host work, игнорирующая signal, может продолжаться; это не sandbox или resource cleanup protocol.
+
+AC-032: 13 tests подтверждают deterministic replay (успех/ошибка/queued cancel), отсутствие aliasing state/input/result/snapshot/trace, queue limits, preflight permissions, invalid bindings, cancellation в composite и сохранность queue после host throw null. Trace opt-in, по умолчанию пуст; JSON numeric trace transport/канонический -0 ещё не реализован. Baseline на 2fccc77: npm test 234/234 PASS и npm run verify 36/36 PASS. Итог npm test **247/247 PASS**, verify **40/40 PASS**, Node 22.21.0; логи `/tmp/ems-reactor-tests.log`, `/tmp/ems-reactor-verify.log`.
+
+EMS-015 IN_PROGRESS; не закрывать её по одному state slice. Следующий срез — structured control-flow IR/lowering для if/loops/mutable locals, затем language Future/Stream и lifecycle. M1/P1/IDE/deploy/глобальная цель остаются открыты. Проверенные изменения коммитить и пушить в origin main.

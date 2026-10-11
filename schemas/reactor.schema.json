@@ -1,0 +1,36 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ems.local/schemas/reactor.schema.json",
+  "title": "EMS finite reactor execution descriptor v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "id", "version", "state", "handlers"],
+  "properties": {
+    "schemaVersion": { "const": "ems-reactor/1" },
+    "id": { "type": "string", "minLength": 1 },
+    "version": { "type": "string", "minLength": 1 },
+    "state": {
+      "type": "array",
+      "items": {
+        "type": "object", "additionalProperties": false,
+        "required": ["id", "type", "initial"],
+        "properties": {
+          "id": { "type": "string", "pattern": "^[A-Za-z_][A-Za-z0-9_]*$" },
+          "type": { "enum": ["Number", "NumberArray", "Boolean", "String"] },
+          "initial": { "oneOf": [{ "type": "number" }, { "type": "boolean" }, { "type": "string" }, { "type": "array", "items": { "type": "number" } }] }
+        }
+      }
+    },
+    "handlers": {
+      "type": "array",
+      "items": {
+        "type": "object", "additionalProperties": false,
+        "required": ["event", "program"],
+        "properties": {
+          "event": { "type": "string", "pattern": "^[A-Za-z_][A-Za-z0-9_]*$" },
+          "program": { "$ref": "ir.schema.json" }
+        }
+      }
+    }
+  }
+}

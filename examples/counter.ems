@@ -1,0 +1,5 @@
+// Handler policy is inferred from the explicitly linked state contracts.
+export fn demo.Counter(delta: Number) -> Number {
+  let next = state.count.read() + delta;
+  return state.count.write(next);
+}

@@ -268,8 +268,9 @@
       "objective": "Specify & implement state, cancellation, futures, events and deterministic ordering where possible",
       "deliverables": "Runtime reference conformance",
       "acceptance": "Replay tests show stable semantics",
-      "status": "TODO",
+      "status": "IN_PROGRESS",
       "priority": "P0",
+      "progress": "Finite reactor session (AC-032): typed state atoms, transactional FIFO handlers using existing IR, replay, bounded queue, abort propagation and late-write rejection. Textual counter runs through shared runtime. Structured control-flow, language Future/Stream, resources and standalone state export remain pending.",
       "ownerModelPolicy": [
         "GPT-6.1 Sol",
         "GPT-6 Luna"

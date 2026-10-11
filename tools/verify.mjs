@@ -6,12 +6,13 @@ import { lowerGraphToIR, serializeIR, parseIR, executeIR, compileIRToJS, graphPr
 import { parseEMSModule } from '../src/frontend/index.mjs';
 import { typecheckModule } from '../src/frontend/check.mjs';
 import { lowerCheckedModule } from '../src/frontend/lower.mjs';
+import { createStateRegistry, ReactorSession, replayEvents } from '../src/runtime/reactor.mjs';
 const root=new URL('../',import.meta.url);
 const get=async p=>readFile(new URL(p,root),'utf8');
 const readJSON=async p=>JSON.parse(await get(p));
 let checks=0;
 async function check(desc, fn) { const x=await fn(); assert.ok(x,desc); checks++; console.log('✓',desc); }
-const required=['AGENTS.md','.agents/policy.json','PROJECT_GOAL.md','docs/spec/LANGUAGE_SEMANTICS.md','docs/spec/IR.md','schemas/ir.schema.json','docs/qa/PROGRESS.md','docs/spec/EMS_FULL_SPEC.md','docs/plans/ROADMAP.md','docs/qa/ACCEPTANCE.md','tasks/backlog.json'];
+const required=['AGENTS.md','.agents/policy.json','PROJECT_GOAL.md','docs/spec/LANGUAGE_SEMANTICS.md','docs/spec/IR.md','schemas/ir.schema.json','docs/spec/STATE_EVENTS.md','schemas/reactor.schema.json','docs/qa/PROGRESS.md','docs/spec/EMS_FULL_SPEC.md','docs/plans/ROADMAP.md','docs/qa/ACCEPTANCE.md','tasks/backlog.json'];
 for(const f of required) { await stat(new URL(f,root)); await check(`found ${f}`,()=>true); }
 const policy=await readJSON('.agents/policy.json');
 await check('models exactly Sol 6.1 + Luna 6',()=>policy.agents.approvedDisplayNames.join(',')==='GPT-6.1 Sol,GPT-6 Luna');
@@ -85,5 +86,19 @@ await check('text effects retain order through IR and reject unsupported compila
   const restored=parseIR(serializeIR(effectBundle.ir,effectBundle.registry),effectBundle.registry);
   assert.equal(await executeIR(restored,{},effectBundle.registry,{capabilities:['stdout.write'],allowedEffects:['log.write']}),'second');
   assert.deepEqual(logCalls,['first','second']);assert.throws(()=>compileIRToJS(restored,effectBundle.registry),{code:'UNSUPPORTED_TARGET'});return true;
+});
+const stateDeclarations=[{id:'count',type:'Number',initial:0}];
+const stateRegistry=createStateRegistry(createCoreRegistry(),stateDeclarations);
+const counterBundle=lowerCheckedModule(typecheckModule(parseEMSModule(await get('examples/counter.ems')),stateRegistry),'demo.Counter',stateRegistry);
+const counterManifest={schemaVersion:'ems-reactor/1',id:'demo.counter',version:'1.0.0',state:stateDeclarations,handlers:[{event:'increment',program:counterBundle.ir}]};
+const counterOptions={policy:{capabilities:['state.read','state.write'],allowedEffects:['state.read','state.write']},recordTrace:true};
+const counterSession=new ReactorSession(counterManifest,counterBundle.registry,counterOptions);
+await check('textual state events execute in FIFO order',async()=>{
+  assert.deepEqual(await Promise.all([1,2,-1].map(delta=>counterSession.dispatch('increment',{delta}))),[1,3,2]);return counterSession.snapshot().count===2;
+});
+await check('state event replay reproduces committed trace',async()=>{
+  const replay=new ReactorSession(counterManifest,counterBundle.registry,counterOptions);
+  await replayEvents(replay,counterSession.trace());assert.deepEqual(replay.trace(),counterSession.trace());
+  await replay.close();await counterSession.close();return true;
 });
 console.log(`\nEMS foundation verification passed (${checks} checks). Not production readiness.`);
