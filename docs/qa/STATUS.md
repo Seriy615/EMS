@@ -1,8 +1,8 @@
 # Current implementation status
 
-## EMS-036 — AC-081 понятный запуск Studio (проверки продолжаются)
+## EMS-036 — AC-081 понятный запуск Studio
 
-По прямому запросу владельца: видимые типизированные входы и значения на блоках, кнопка «Весь граф», маршрут данные→блоки→запуск, отдельный результат и раскрываемая отладка. Baseline774/143 PASS; focused editor/design/inspection8/8 PASS до финальных typed-form дополнений. Текущая публикация ещё dc46728; exact committed gates/live smoke ожидаются. EMS-033/global goal active; незавершённые post-operation hooks отложены отдельно, в этот дизайн не включены.
+Входные данные доступны без выбора блока, типизированные формы и previews, целый граф через canvas fit, читаемая иерархия данных/редактора/результата и отдельная раскрываемая отладка. Final focused design4/4 и existing editor/inspection integration8/8 PASS. AC-081 опубликован: checked current `5bf3b12cbe91f4bf832f4c83068f42e0dc722511`, previous `dc46728d92c83edde5f9215545f60869c757c3c7`. Exact clean committed gate **774/774 Node,143/143 verify,53/53 Chromium PASS**, deploy/public HTTPS smoke terminal0. На live реальные вход8/result11 и complete graph fit, stable Graph/Code/mobile390px и все предыдущие runtime/inspection/UI/debugger proofs PASS. Six foreign nginx hashes/five services unchanged. Dedicated service active, MemoryCurrent17817600, MemoryMax134217728, TasksMax32, userems-language-dev, ProtectHomeyes/ProtectSystemstrict/NoNewPrivilegesyes, listener127.0.0.1:18877. Логи `/tmp/ems-redesign-deploy.log`, `/tmp/ems-redesign-live-smoke.log`, `/tmp/ems-redesign-vps-before.log`, `/tmp/ems-redesign-vps-after.log`. Evidence-only commit не меняет live artifact. Полный язык/IDE/global goal и EMS-033 active; intermittent Worker startup из прежних итераций не объявляется исправленным этим дизайном.
 
 ## EMS-033 — checked visual/call values, AC-080
 
@@ -346,4 +346,4 @@ EMS-010 завершена как нормативный начальный пр
 
 Node.js `v22.16.0`; `npm test` -> **16/16 PASS**; `npm run verify` -> **18/18 PASS**. Local static viewer GET routes tested: `/`, `/web/app.mjs`, `/src/reference/index.mjs`, `/examples/avg5.graph.json`, `/README.md` => HTTP 200; access to `/.agents/policy.json` => HTTP 403. Backlog dependency-order check: **44 tasks** valid. These are M0 proofs only, not a production launch.
 
-AC-081 precommit: `npm test`774/774 PASS, `npm run verify`143/143 PASS; final `node --test tests/browser/design.test.mjs`4/4 PASS, earlier integration8/8 PASS. Exact committed52? Chromium gate/count и public smoke не заявлены до завершения deploy.
+AC-081 precommit: `npm test`774/774 PASS, `npm run verify`143/143 PASS; final `node --test tests/browser/design.test.mjs`4/4 PASS, earlier integration8/8 PASS. Final exact gate774/143/53 и public smoke PASS (см. AC-081 выше).

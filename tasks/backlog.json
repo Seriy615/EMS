@@ -1120,26 +1120,26 @@
       "objective": "Make existing graph/text/UI project workflows readable and discoverable without altering semantic IR or stored projects",
       "deliverables": "Shared design tokens, graph onboarding and hierarchy, accessible file menu, UI preview and labelled authoring forms, responsive layouts",
       "acceptance": "AC-068; real mouse file disclosure, example result5, populated handler source, three workspaces fit390px; full existing Node/verify/browser suite and live deployment smoke pass; AC-081 visible typed run inputs, complete graph fit and output hierarchy",
-      "status": "IN_PROGRESS",
+      "status": "DONE",
       "priority": "P0",
       "ownerModelPolicy": [
         "GPT-6.1 Sol",
         "GPT-6 Luna"
       ],
-      "progress": "AC-068 accepted: shared graph/text/UI/project design, labelled forms/preview, advanced disclosures and onboarding. Baseline694/133; final and repeated exact gated release208c1773ec85b100099d937dcd2d053e8c8f222c:694/133/30 PASS. Public auth/TLS/access + actual graph/composite/reopen/AVG5/text/UI debugger smoke and published design/mobile390px/source checks PASS. Other vhost hashes/services preserved. Full language/native/touch/WCAG scope remains open. See docs/qa/STATUS.md and DEPLOYMENT.md. Owner requested a second usability pass: AC-075 explicit stable Graph/Code controls, direct first-example action, disclosed debug/text tools, coherent light stylesheet, compact mobile library; focused Chromium2/2 and existing editor/storage7/7 PASS. Responsive Undo/Redo correction retained all actions at390px. Exact checked release69c17ec052730f92f6d1a03b753b7d176efef2a9 gate740/139/41 PASS; deploy/public HTTPS real mouse example5/stable views/mobile disclosure and all prior smoke proofs PASS; foreign services preserved. AC-075 accepted. Inspection transport WIP preserved separately in Git stash; next core inspection slice remains open. Owner requested another design revision: AC-081 in progress, visible run inputs and node input previews, complete graph fit, simpler hierarchy and separate optional debugging. Prior accepted AC-068/075 retained; new release pending exact gates.",
+      "progress": "AC-068 accepted: shared graph/text/UI/project design, labelled forms/preview, advanced disclosures and onboarding. Baseline694/133; final and repeated exact gated release208c1773ec85b100099d937dcd2d053e8c8f222c:694/133/30 PASS. Public auth/TLS/access + actual graph/composite/reopen/AVG5/text/UI debugger smoke and published design/mobile390px/source checks PASS. Other vhost hashes/services preserved. Full language/native/touch/WCAG scope remains open. See docs/qa/STATUS.md and DEPLOYMENT.md. Owner requested a second usability pass: AC-075 explicit stable Graph/Code controls, direct first-example action, disclosed debug/text tools, coherent light stylesheet, compact mobile library; focused Chromium2/2 and existing editor/storage7/7 PASS. Responsive Undo/Redo correction retained all actions at390px. Exact checked release69c17ec052730f92f6d1a03b753b7d176efef2a9 gate740/139/41 PASS; deploy/public HTTPS real mouse example5/stable views/mobile disclosure and all prior smoke proofs PASS; foreign services preserved. AC-075 accepted. Inspection transport WIP preserved separately in Git stash; next core inspection slice remains open. Owner requested another design revision: AC-081 in progress, visible run inputs and node input previews, complete graph fit, simpler hierarchy and separate optional debugging. Prior accepted AC-068/075 retained; new release pending exact gates. AC-081 accepted on checked release 5bf3b12cbe91f4bf832f4c83068f42e0dc722511: 774/143/53 PASS; public visible input8/result11 and graph fit PASS, all prior smoke proofs preserved. Global language/full IDE remains open.",
       "evidence": {
-        "scope": "AC-075 Studio usability revision; finite existing editor, not full universal IDE",
+        "scope": "AC-068/075/081 Studio usability; visible typed inputs, complete fit and finite existing editor",
         "docs": "docs/qa/STATUS.md",
         "testFiles": [
           "tests/browser/design.test.mjs",
           "tests/browser/studio.test.mjs",
           "tests/browser/debugger-storage.test.mjs"
         ],
-        "tests": "740/740 PASS",
-        "verify": "139/139 PASS",
-        "browserTests": "41/41 PASS",
-        "liveRevision": "69c17ec052730f92f6d1a03b753b7d176efef2a9",
-        "publicSmoke": "PASS; real mouse example/result5, stable Graph/Code, compact390px library and all previous proofs",
+        "tests": "774/774 PASS",
+        "verify": "143/143 PASS",
+        "browserTests": "53/53 PASS",
+        "liveRevision": "5bf3b12cbe91f4bf832f4c83068f42e0dc722511",
+        "publicSmoke": "PASS; visible input8/result11 and complete graph fit, mobile390px, Graph/Code and all previous proofs",
         "commands": [
           "npm test",
           "npm run verify",

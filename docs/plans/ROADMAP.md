@@ -4,6 +4,8 @@
 
 Постоянная цель и измеримые G-01..18: [`PROJECT_GOAL.md`](../../PROJECT_GOAL.md). Факты проверок: `docs/qa/STATUS.md`; точка продолжения: `docs/qa/PROGRESS.md`. Каждая фаза ниже закрывает часть общей цели, а не заменяет её списком задач.
 
+Последний запрос владельца по удобству IDE выполнен в AC-081: видимые типизированные входы, полный граф и отдельный результат; checked Web release5bf3b12, gates774/143/53 и HTTPS smoke PASS. Следующий основной этап сохраняется: EMS-033 вложенные/повторные вызовы и семантическая отладка, затем оставшиеся профили по зависимостям. Полный M2 не объявляется завершённым.
+
 | Phase | Definition of done | Demo |
 |---|---|---|
 | M0 — Foundation | JS reference evaluator, type checker, tiny textual subset, composite -> atomic JS, trusted JS lib -> atomic blocks, tests, docs, policy | arithmetic Ao5; sealed atomic consumed by composite |
