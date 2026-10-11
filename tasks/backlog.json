@@ -509,9 +509,10 @@
           "npm run verify",
           "npm run browser:test"
         ],
-        "deployedRevision": "f1b478a4471490a61f8a1c928c45218fc5244c01",
-        "live": "Last accepted deployment is the earlier UI stepping artifact; new operation breakpoints passed local703/134/31 and are pending checked publication/live graph5 and text-loop3."
-      }
+        "deployedRevision": "55763fb591d227fab96645ecdf0400f93be94956",
+        "live": "Actual public authenticated Chromium graph run-to-breakpoint5/text cursor three loop stops3 PASS; previous graph15/composite15/reopen15/AVG5/text debugger6/counter1/UI event commit1/auth gates retained. Exact gated703/134/31 PASS; unrelated vhost hashes and observed active services unchanged. See docs/qa/DEPLOYMENT.md."
+      },
+      "nextSlice": "Step Over/Out requires original evaluator activation identities for nested/recursive/concurrent async frames, typed payload-free metadata and source witnesses, cancellation/resource/lazy/queue/compiled parity and actual Chromium acceptance; never infer identity solely from function name or depth."
     },
     {
       "id": "EMS-034",
