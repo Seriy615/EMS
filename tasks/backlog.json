@@ -1090,6 +1090,24 @@
         "GPT-6 Luna"
       ],
       "progress": "Owner P0 live dev publication accepted: gated dc7ced833cd3c021cf9388269e0d6effb3cf96df passed678/130/25; trusted HTTPS/auth/access boundaries, actual Chromium graph15/custom composite reuse-expand15/reopen15/AVG5/counter1, service recovery, actual rollback to f356ee3 and restore, unrelated config/service preservation PASS. See docs/qa/DEPLOYMENT.md and WEB_IDE_MVP.md. Full production/global language goal remains open."
+    },
+    {
+      "id": "EMS-036",
+      "title": "Understandable Studio workflow and shared visual design",
+      "phase": "M2/M3 owner P0",
+      "dependsOn": [
+        "EMS-035"
+      ],
+      "objective": "Make existing graph/text/UI project workflows readable and discoverable without altering semantic IR or stored projects",
+      "deliverables": "Shared design tokens, graph onboarding and hierarchy, accessible file menu, UI preview and labelled authoring forms, responsive layouts",
+      "acceptance": "AC-068; real mouse file disclosure, example result5, populated handler source, three workspaces fit390px; full existing Node/verify/browser suite and live deployment smoke pass",
+      "status": "IN_PROGRESS",
+      "priority": "P0",
+      "ownerModelPolicy": [
+        "GPT-6.1 Sol",
+        "GPT-6 Luna"
+      ],
+      "progress": "Owner requested understandable design. Baseline694/133 PASS; implementation and visual Chromium review complete; final browser and dev publication gate pending."
     }
   ]
 }

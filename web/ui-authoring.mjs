@@ -37,5 +37,5 @@ export function installUIAuthoring(getEditor,change,report){
  $('apply-handler').onclick=()=>action(editor=>editor.applyHandler($('handler-event').value,$('handler-source').value,$('handler-entry').value));
  $('load-handler').onclick=()=>{const editor=getEditor(),event=$('handler-select').value,draft=editor.sources[event];$('handler-event').value=event;if(draft){$('handler-source').value=draft.source;$('handler-entry').value=draft.entry;}else{$('handler-source').value='';$('handler-entry').value='';}$('handler-inspect').textContent=JSON.stringify(editor.application.reactor.handlers.find(handler=>handler.event===event)?.program,null,2);};
  $('application').addEventListener('click',event=>{const widget=event.target.closest('[data-ems-ui]');if(widget){selected=widget.dataset.emsUi;refresh();}});
- refresh();return {refresh};
+ refresh();$('load-handler').click();return {refresh};
 }

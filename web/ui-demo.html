@@ -1,1 +1,136 @@
-<!doctype html><html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>EMS — UI и события</title><link rel="stylesheet" href="/web/ui-demo.css"></head><body><main><a href="/web/projects.html">Проекты</a> · <a href="/">← EMS Studio</a><h1>UI и события EMS</h1><p>Кнопки вызывают обработчик EMS. Значение отображается из зафиксированного состояния.</p><section id="application" aria-label="Приложение EMS"></section><div id="error" role="alert"></div><p><button id="restart">Начать заново</button><button id="ui-debug-start">Отладка событий (новый запуск)</button><button id="ui-debug-step" disabled>Шаг</button><button id="ui-debug-continue" disabled>Продолжить событие</button><button id="ui-debug-stop">Остановить отладку</button><pre id="ui-debug-location" aria-live="polite"></pre><button id="close">Закрыть приложение</button></p><section aria-label="Создание интерфейса"><h2>Интерфейс и обработчики</h2><button id="new-ui">Новый UI-проект</button><fieldset><legend>Состояние</legend><input id="state-id" placeholder="count" aria-label="ID состояния"><select id="state-type"><option>Number</option><option>String</option><option>Boolean</option><option>NumberArray</option></select><input id="state-initial" value="0" aria-label="Начальное значение"><button id="add-state-ui">Добавить состояние</button><div id="state-list"></div></fieldset><fieldset><legend>Обработчик EMS</legend><select id="handler-select" aria-label="Существующий обработчик"></select><button id="load-handler">Открыть обработчик</button><input id="handler-event" placeholder="increment" aria-label="Событие обработчика"><input id="handler-entry" placeholder="update" aria-label="Функция обработчика"><textarea id="handler-source" spellcheck="false" aria-label="Исходник обработчика EMS"></textarea><button id="apply-handler">Применить EMS</button><button id="open-control-graph">Открыть граф</button><div id="control-graph"></div><p id="graph-node-detail"></p><textarea id="graph-node-source" aria-label="Код выбранного узла EMS" spellcheck="false"></textarea><button id="apply-graph-node">Применить узел</button><div id="graph-operations"><label>Операция <select id="graph-operation"><option value="literal">Значение литерала</option><option value="operator">Оператор</option><option value="call">Вызов</option><option value="insert">Вставить инструкцию в блок</option><option value="delete">Удалить инструкцию</option></select></label><input id="graph-operation-value" aria-label="Значение литерала, оператор или имя вызова"><textarea id="graph-call-arguments" aria-label="Аргументы EMS, по одному в строке" placeholder="Аргументы EMS, по одному в строке"></textarea><input id="graph-statement-index" type="number" min="0" value="0" aria-label="Позиция инструкции в блоке"><textarea id="graph-statement-source" aria-label="Новая инструкция EMS" placeholder="state.count.write(0);"></textarea><button id="apply-graph-operation">Выполнить операцию</button><label>Контракт или функция <select id="graph-contract-catalog"></select></label><button id="choose-graph-contract">Выбрать вызов</button><label>Источник значения <select id="graph-value-source"></select></label><label>Вход вызова <select id="graph-target-port"></select></label><button id="connect-graph-port">Соединить порт</button></div></fieldset><fieldset><legend>Элементы</legend><select id="widget-parent" aria-label="Контейнер"></select><input id="widget-id" placeholder="display" aria-label="ID элемента"><select id="widget-kind"><option>column</option><option>row</option><option>text</option><option>button</option><option>textInput</option><option>checkbox</option></select><button id="add-widget">Добавить элемент</button><select id="widget-select" aria-label="Выбранный элемент"></select><button id="remove-widget">Удалить элемент</button><select id="property-name" aria-label="Свойство"></select><select id="property-mode"><option value="literal">Значение</option><option value="state">Состояние</option><option value="number">Число → текст</option></select><input id="property-value" aria-label="Значение или ID состояния"><button id="set-property">Применить свойство</button></fieldset><fieldset><legend>Событие элемента</legend><select id="event-handler" aria-label="Обработчик элемента"></select><div id="event-inputs"></div><button id="set-event">Связать событие</button><pre id="handler-inspect" aria-label="Привязка и IR обработчика"></pre></fieldset></section><section aria-label="UI-проект"><h2>Описание приложения</h2><p>Типизированный проект: UI, состояние и EMS IR обработчиков. «Применить» проверяет весь проект и перезапускает preview. Сохранение хранит программу и начальное состояние.</p><p><button id="save-ui">Сохранить</button><button id="open-ui">Открыть сохранённое</button><button id="export-ui">Экспорт JSON</button><button id="export-app-ui">Скачать приложение (.tar)</button><button id="import-ui">Импорт JSON</button><input id="file-ui" type="file" accept=".json" hidden><button id="undo-ui">Undo</button><button id="redo-ui">Redo</button></p><textarea id="ui-source" aria-label="Типизированный UI-проект" spellcheck="false"></textarea><button id="apply-ui">Применить проект</button><p id="ui-status" role="status"></p></section><details><summary>Исходный код и пример приложения</summary><a href="/examples/counter.ems">Обработчик EMS</a> · <a href="/examples/ui-counter.json">UI-дерево и IR</a></details></main><script type="module" src="/web/ui-demo.mjs"></script></body></html>
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>EMS — UI и события</title>
+<link rel="stylesheet" href="/web/design.css">
+<link rel="stylesheet" href="/web/ui-demo.css">
+</head>
+<body>
+<main>
+<header class="ui-header"><a class="brand" href="/web/projects.html">EMS <span>Studio</span></a><nav><a href="/web/projects.html">Проекты</a><a href="/">Программа</a><a aria-current="page" href="/web/ui-demo.html">Интерфейс</a></nav></header>
+<div class="ui-title"><div><div class="eyebrow">Редактор приложения</div><h1>Интерфейс и события</h1><p>Добавьте элементы, свяжите события с EMS и проверьте приложение справа.</p></div><button id="new-ui">Новый UI-проект</button></div>
+<div class="ui-layout"><section class="preview-panel"><div class="eyebrow">Предпросмотр · нажмите кнопку приложения</div>
+<section id="application" aria-label="Приложение EMS">
+</section>
+<div id="error" role="alert"></div>
+<div class="preview-controls">
+<button id="restart">Начать заново</button>
+<button id="ui-debug-start" title="Перезапустить предпросмотр и выполнять события по шагам">Отладка событий (новый запуск)</button>
+<button id="ui-debug-step" disabled>Шаг</button>
+<button id="ui-debug-continue" disabled>Продолжить событие</button>
+<button id="ui-debug-stop">Остановить отладку</button>
+<pre id="ui-debug-location" aria-live="polite"></pre>
+<button id="close">Закрыть приложение</button>
+</div>
+</section><section class="author-panel" aria-label="Создание интерфейса">
+<h2>Настройки приложения</h2><p class="hint">Состояние хранит данные, элементы показывают их, обработчики изменяют их по событиям.</p>
+<fieldset>
+<legend>1. Данные приложения</legend>
+<label class="field-label">Имя данных<input id="state-id" placeholder="count" aria-label="ID состояния"></label>
+<label class="field-label">Тип<select id="state-type">
+<option>Number</option>
+<option>String</option>
+<option>Boolean</option>
+<option>NumberArray</option>
+</select></label>
+<label class="field-label">Начальное значение<input id="state-initial" value="0" aria-label="Начальное значение"></label>
+<button id="add-state-ui">Добавить состояние</button>
+<div id="state-list"></div>
+</fieldset>
+<fieldset>
+<legend>2. Логика события · EMS</legend>
+<label class="field-label">Обработчик<select id="handler-select" aria-label="Существующий обработчик"></select></label>
+<button id="load-handler">Открыть обработчик</button>
+<label class="field-label">Имя события<input id="handler-event" placeholder="increment" aria-label="Событие обработчика"></label>
+<label class="field-label">Функция EMS<input id="handler-entry" placeholder="update" aria-label="Функция обработчика"></label>
+<textarea id="handler-source" placeholder="Выберите обработчик и нажмите «Открыть обработчик», чтобы увидеть код EMS." spellcheck="false" aria-label="Исходник обработчика EMS"></textarea>
+<button id="apply-handler">Применить EMS</button>
+<button id="open-control-graph">Открыть граф</button>
+<div id="control-graph"></div>
+<p id="graph-node-detail"></p>
+<textarea id="graph-node-source" aria-label="Код выбранного узла EMS" spellcheck="false"></textarea>
+<button id="apply-graph-node">Применить узел</button>
+<details class="graph-details"><summary>Изменить операции графа</summary><div id="graph-operations">
+<label>Операция <select id="graph-operation">
+<option value="literal">Значение литерала</option>
+<option value="operator">Оператор</option>
+<option value="call">Вызов</option>
+<option value="insert">Вставить инструкцию в блок</option>
+<option value="delete">Удалить инструкцию</option>
+</select>
+</label>
+<input id="graph-operation-value" aria-label="Значение литерала, оператор или имя вызова">
+<textarea id="graph-call-arguments" aria-label="Аргументы EMS, по одному в строке" placeholder="Аргументы EMS, по одному в строке"></textarea>
+<input id="graph-statement-index" type="number" min="0" value="0" aria-label="Позиция инструкции в блоке">
+<textarea id="graph-statement-source" aria-label="Новая инструкция EMS" placeholder="state.count.write(0);"></textarea>
+<button id="apply-graph-operation">Выполнить операцию</button>
+<label>Контракт или функция <select id="graph-contract-catalog"></select>
+</label>
+<button id="choose-graph-contract">Выбрать вызов</button>
+<label>Источник значения <select id="graph-value-source"></select>
+</label>
+<label>Вход вызова <select id="graph-target-port"></select>
+</label>
+<button id="connect-graph-port">Соединить порт</button>
+</div></details>
+</fieldset>
+<fieldset>
+<legend>3. Элементы интерфейса</legend>
+<label class="field-label">Родительский контейнер<select id="widget-parent" aria-label="Контейнер"></select></label>
+<label class="field-label">Имя элемента<input id="widget-id" placeholder="display" aria-label="ID элемента"></label>
+<label class="field-label">Вид элемента<select id="widget-kind">
+<option>column</option>
+<option>row</option>
+<option>text</option>
+<option>button</option>
+<option>textInput</option>
+<option>checkbox</option>
+</select></label>
+<button id="add-widget">Добавить элемент</button>
+<label class="field-label">Выбранный элемент<select id="widget-select" aria-label="Выбранный элемент"></select></label>
+<button id="remove-widget">Удалить элемент</button>
+<label class="field-label">Свойство<select id="property-name" aria-label="Свойство"></select></label>
+<label class="field-label">Источник значения<select id="property-mode">
+<option value="literal">Значение</option>
+<option value="state">Состояние</option>
+<option value="number">Число → текст</option>
+</select></label>
+<label class="field-label">Значение / имя данных<input id="property-value" aria-label="Значение или ID состояния"></label>
+<button id="set-property">Применить свойство</button>
+</fieldset>
+<fieldset>
+<legend>4. Связь элемента с событием</legend>
+<label class="field-label">Обработчик события<select id="event-handler" aria-label="Обработчик элемента"></select></label>
+<div id="event-inputs"></div>
+<button id="set-event">Связать событие</button>
+<pre id="handler-inspect" aria-label="Привязка и IR обработчика"></pre>
+</fieldset>
+</section>
+</div><section class="project-panel" aria-label="UI-проект">
+<h2>Сохранение и экспорт</h2>
+<p>Типизированный проект: UI, состояние и EMS IR обработчиков. «Применить» проверяет весь проект и перезапускает preview. Сохранение хранит программу и начальное состояние.</p>
+<p>
+<button id="save-ui">Сохранить</button>
+<button id="open-ui">Открыть сохранённое</button>
+<button id="export-ui">Экспорт JSON</button>
+<button id="export-app-ui">Скачать приложение (.tar)</button>
+<button id="import-ui">Импорт JSON</button>
+<input id="file-ui" type="file" accept=".json" hidden>
+<button id="undo-ui">↶ Отменить</button>
+<button id="redo-ui">↷ Повторить</button>
+</p>
+<details class="source-details"><summary>Описание проекта · JSON</summary><textarea id="ui-source" aria-label="Типизированный UI-проект" spellcheck="false"></textarea>
+<button id="apply-ui">Применить проект</button></details>
+<p id="ui-status" role="status"></p>
+</section>
+<details>
+<summary>Исходный код и пример приложения</summary>
+<a href="/examples/counter.ems">Обработчик EMS</a> · <a href="/examples/ui-counter.json">UI-дерево и IR</a>
+</details>
+</main>
+<script type="module" src="/web/ui-demo.mjs">
+</script>
+</body>
+</html>

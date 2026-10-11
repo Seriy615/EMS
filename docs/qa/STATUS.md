@@ -1,5 +1,16 @@
 # Current implementation status
 
+## EMS-036 — понятный интерфейс Studio, AC-068
+
+По прямому запросу владельца переработаны три экрана: проекты, граф/текст и UI. Единые локальные design tokens и светлая контрастная тема; иерархия блоки → программа → свойства → результат, подсказка пустого графа, основные действия отдельно от меню файла и расширенных контрактов. UI: закреплённый предпросмотр, подписанные формы данных/обработчиков/элементов/событий, начальный source первого обработчика, JSON и graph operations в раскрываемых разделах. IR, runtime и форматы сохранённых проектов не менялись. Мобильный layout складывает панели; полноценная touch IDE и WCAG audit не заявлены.
+
+Baseline **694/694 Node,133/133 verify PASS**; после изменений **694/694 Node,133/133 verify,30/30 Chromium PASS**. Новый сценарий AC-068 проверяет реальную мышь меню файла, пустой граф→пример→5, открытый source UI и отсутствие горизонтального переполнения390px на трёх экранах. Скриншоты1440px и390px просмотрены вручную. Логи `/tmp/ems-design-tests.log`, `/tmp/ems-design-verify.log`, `/tmp/ems-design-browser-accepted.log`, изображения `/tmp/ems-design-{graph,projects,ui,mobile}.png`.
+
+Первый browser run28/29 выявил whitespace regression пустого error DOM после форматирования HTML — исправлено. Следующий29/30: один stdlib Worker run остановлен при параллельном CPU-heavy Node suite, точная причина не установлена; отдельно2/2 PASS и полный30/30 PASS. В stdlib QA теперь первый runtime failure сохраняет error+execution log для диагностики; утверждения и проверки не ослаблены. Это не доказательство устранения исторического intermittent Worker сбоя.
+
+Публикация этой ревизии проходит отдельный повторный gate в `tools/deploy.mjs`; удалённая приёмка пока не записана. Глобальная цель EMS остаётся активной; следующий инженерный этап — EMS-033 debugger и EMS-032 visual parity согласно зависимостям.
+
+
 ## EMS-033 — UI event transaction debugger, AC-067
 
 Baseline b9fb1cc:688/688 Node,132/132 verify PASS. Итог **694/694 Node,133/133 verify,29/29 Chromium PASS**. ReactorKernel forwards checked per-dispatch diagnostics to existing executor, retaining draft/commit/FIFO. Persistent UI Worker validates source witnesses, transports payload-free pauses bound to event IDs/tokens, supports Step/Continue, Stop/deadline keeps acknowledged snapshot. Actual Worker and Chromium verify paused write is private, Continue commits1, Stop preserves1 and ordinary restart recovers. Full debugger/breakpoints/Step Over/compiled/native/value policy remain open. Logs /tmp/ems-ui-debug-tests-final.log, /tmp/ems-ui-debug-verify.log, /tmp/ems-ui-debug-browser-final.log. Initial browser28/29 encountered legacy UI Worker startup failure; five targeted5/5 probes and final full29/29 passed with bounded QA startup diagnostics. Root cause remains unproven, no retry/ignored failure or weakened assertions. Published checked artifact f1b478a4471490a61f8a1c928c45218fc5244c01; repeated gated694/133/29 PASS and actual authenticated public Chromium UI pause0→Step→Continue commit1 PASS, graph/composite/AVG5/text/counter/auth gates retained. Six unrelated nginx hashes unchanged/five observed services active. Logs /tmp/ems-ui-debug-deploy.log, /tmp/ems-ui-debug-live-smoke.log, /tmp/ems-ui-debug-vps.log.
