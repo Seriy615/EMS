@@ -20,6 +20,7 @@ const finiteType=type=>['Number','Boolean','String','NumberArray','Option','Resu
 
 /** Bind host grants to the exact source/entry/profile, then reconstruct the typed program locally. */
 export function prepareStudioInspection(request,editor=null){
+ if(own(request,'graphInspection'))fail('UNSUPPORTED_INSPECTION_TRANSPORT','Graph value transport requires a checked adapter');
  if(!own(request,'inspection'))return null;
  if(request.action!=='text'||request.debug!==true)fail('UNSUPPORTED_INSPECTION_TRANSPORT','Value inspection requires control text debugging');
  const descriptor=Object.getOwnPropertyDescriptor(request,'inspection');if(!own(descriptor,'value'))error();const witness=descriptor.value;fields(witness,['schemaVersion','source','entry','lowering','policy']);

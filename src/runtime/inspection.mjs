@@ -24,7 +24,7 @@ export function normalizeInspectionPolicy(value){
   fields(record,['function','names','declarations'],['function']);
   const named=Object.hasOwn(record,'names'),addressed=Object.hasOwn(record,'declarations');if(named===addressed)fail('INVALID_INSPECTION_POLICY','Choose names or declarations');
   const key=named?'names':'declarations',entries=list(record[key],32);
-  const valid=named?identifier:entry=>typeof entry==='string'&&entry.length<=1024&&/^\/(?:inputs\/[0-9]+|body(?:\/[A-Za-z0-9_~/-]+)?)$/.test(entry);
+  const valid=named?identifier:entry=>typeof entry==='string'&&entry.length<=1024&&(/^\/(?:inputs\/[0-9]+|body(?:\/[A-Za-z0-9_~/-]+)?)$/.test(entry)||/^\/graph\/(?:inputs|nodes)\/[^\u0000]+$/.test(entry));
   if(!functionId(record.function)||functions.has(record.function)||!entries.length||entries.some(entry=>!valid(entry))||new Set(entries).size!==entries.length)fail('INVALID_INSPECTION_POLICY','Invalid inspection grant');
   functions.add(record.function);slots+=entries.length;if(slots>32)fail('INVALID_INSPECTION_POLICY','At most 32 inspection slots');
   return {function:record.function,[key]:entries};
@@ -33,7 +33,8 @@ export function normalizeInspectionPolicy(value){
 }
 
 const supported=type=>['Number','Boolean','String','NumberArray','Option','Result'].includes(type.name)&&type.arguments.every(supported);
-function copyFinite(value,type,policy,depth=0){
+/** Closed finite value copier shared by control and graph diagnostics; limits never return partial values. */
+export function copyFiniteInspectionValue(value,type,policy,depth=0){
  if(depth>32)throw 'limit';
  if(type.name==='Number'){if(typeof value!=='number'||!Number.isFinite(value))throw 'unavailable';return value;}
  if(type.name==='Boolean'){if(typeof value!=='boolean')throw 'unavailable';return value;}
@@ -41,14 +42,14 @@ function copyFinite(value,type,policy,depth=0){
  if(type.name==='NumberArray'){
   if(!Array.isArray(value))throw 'unavailable';const length=Object.getOwnPropertyDescriptor(value,'length')?.value;
   if(!Number.isSafeInteger(length)||length>policy.maxArrayItems)throw 'limit';const result=[];
-  for(let i=0;i<length;i++){const descriptor=Object.getOwnPropertyDescriptor(value,String(i));if(!descriptor||!Object.hasOwn(descriptor,'value'))throw 'unavailable';result.push(copyFinite(descriptor.value,{name:'Number',arguments:[]},policy,depth+1));}
+  for(let i=0;i<length;i++){const descriptor=Object.getOwnPropertyDescriptor(value,String(i));if(!descriptor||!Object.hasOwn(descriptor,'value'))throw 'unavailable';result.push(copyFiniteInspectionValue(descriptor.value,{name:'Number',arguments:[]},policy,depth+1));}
   return result;
  }
  if(!plain(value))throw 'unavailable';
  const tag=Object.getOwnPropertyDescriptor(value,'tag');if(!tag||!Object.hasOwn(tag,'value'))throw 'unavailable';
  const variant=controlVariants(type)?.get(tag.value);if(!variant)throw 'unavailable';
  if(!variant.length)return {tag:tag.value};
- const payload=Object.getOwnPropertyDescriptor(value,'value');if(!payload||!Object.hasOwn(payload,'value'))throw 'unavailable';return {tag:tag.value,value:copyFinite(payload.value,variant[0],policy,depth+1)};
+ const payload=Object.getOwnPropertyDescriptor(value,'value');if(!payload||!Object.hasOwn(payload,'value'))throw 'unavailable';return {tag:tag.value,value:copyFiniteInspectionValue(payload.value,variant[0],policy,depth+1)};
 }
 
 /** Initial confidentiality boundary: pure functions only; any marked protected function blocks the whole program.
@@ -64,7 +65,7 @@ export function createControlInspector(ir,value){
    let record={...identity,type:null,status:protectedProgram?'protected-program':impure?'protected-effects':'not-in-scope'};
    if(!protectedProgram&&!impure&&scope.has(name)&&(!binding.addressed||scope.get(name).declaration===declaration)){
     const cell=scope.get(name);record.type=cell.type??null;
-    try{const type=parseControlType(cell.type,true,true,true);if(!supported(type))record.status='excluded-type';else{record={...identity,type:cell.type,status:'value',value:copyFinite(cell.value,type,policy)};}}
+    try{const type=parseControlType(cell.type,true,true,true);if(!supported(type))record.status='excluded-type';else{record={...identity,type:cell.type,status:'value',value:copyFiniteInspectionValue(cell.value,type,policy)};}}
     catch(reason){record.status=['limit','unavailable'].includes(reason)?reason:'unavailable';}
    }
    const next={schemaVersion:version,variables:[...variables,record],truncated:false};

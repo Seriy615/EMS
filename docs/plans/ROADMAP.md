@@ -168,3 +168,7 @@ Durable checked graph/text Studio + source-owned UI поддерживают reo
 ## После AC-074 — core inspection policy
 
 Реализованы реальные typed runtime projection, finite copier, protection и budgets; это foundation core API, а не завершённый IDE inspector. Следующий EMS-033 срез: source-owned typed grants → strict bounded Worker DTO → explicit local opt-in panel для pure control profile с default absence of values и secret/protected refusal tests. Effectful UI state, formal secret taint/declassification и native/compiled inspection требуют дальнейшего определения и отдельной приёмки семантики. Глобальная цель сохраняет полный scope.
+
+## Текущий dependency checkpoint — 11 октября 2026
+
+M2 inspector progressed через AC-074..078: typed control policy, checked Worker transport, explicit ephemeral UI grants и declaration identities. AC-079 добавляет настоящий graph/call-IR memo inspection kernel, без extra evaluation; следующая зависимость — checked graph source/project witness + bounded DTO adapter, затем одинаковое opt-in UX в графе и тексте. Core kernel сам не завершает IDE gate. Addressed recursion/forAwait/using privacy/cleanup fixtures усиливают M1 evidence. Full lexical shadowing/taint, свободное control canvas wiring, native/compiled debugging, платформенные ABI и все G-01..18 остаются незавершёнными. Старые численные baseline разделы выше — исторические; актуальные результаты только в STATUS/PROGRESS.

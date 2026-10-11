@@ -1,3 +1,4 @@
+import {createGraphInspector,GRAPH_INSPECTOR} from '../runtime/graph-inspection.mjs';
 import {DIAGNOSTIC_FRAMES,diagnosticFrames,nextDiagnosticFrame,notifyDiagnosticExit} from '../runtime/diagnostic-frames.mjs';
 import { resolveCompositeBoundary, checkContractConditions, checkContractFailure } from '../contracts/conditions.mjs';
 import { fail } from './errors.mjs';
@@ -18,6 +19,11 @@ export async function executeGraph(graph, inputs, registry, options = {}) {
   validateRuntimeInputs(graph, inputs);
   checkGraphPolicy(graph, registry, options);
   validateEffectSequence(graph, registry);
+  const hasGraphInspection=Object.hasOwn(options,'graphInspection')&&options.graphInspection!==undefined;
+  if(hasGraphInspection&&typeof options.onNodeEnter!=='function')fail('INVALID_INSPECTION_POLICY','Graph inspection needs a node observer');
+  const shared=Object.getOwnPropertyDescriptor(options,GRAPH_INSPECTOR);
+  if(shared&&(!Object.hasOwn(shared,'value')||typeof shared.value!=='function'))fail('INVALID_INSPECTION_POLICY','Invalid graph inspector context');
+  const inspect=shared?.value??(hasGraphInspection?createGraphInspector(graph,registry,options.graphInspection):null);
   const boundary=resolveCompositeBoundary(graph,registry);
   if(boundary)checkContractConditions(boundary.conditions.pre,inputs,undefined,'pre',boundary.id);
   const diagnostics=diagnosticFrames(options),frames=nextDiagnosticFrame(diagnostics);
@@ -49,13 +55,13 @@ export async function executeGraph(graph, inputs, registry, options = {}) {
     const callPath=[...(options.callPath??[]),{graph:graph.id,node:id,contract:contract.id}];
     try {
     if(options.onNodeEnter){
-      const event=structuredClone({phase:'enter',callPath,frames,inputs:Object.fromEntries(Object.entries(contract.inputs).map(([name,type])=>[name,typeof type==='string'?type:type.type])),output:contract.output,effects:contract.effects,capabilities:contract.capabilities});
+      const event=structuredClone({phase:'enter',callPath,frames,inputs:Object.fromEntries(Object.entries(contract.inputs).map(([name,type])=>[name,typeof type==='string'?type:type.type])),output:contract.output,effects:contract.effects,capabilities:contract.capabilities,...(inspect?{inspection:inspect(graph,inputs,memo)}:{})});
       try { await awaitCancellable(options.onNodeEnter(event),options.signal); } catch { /* Diagnostics cannot replace semantic errors. */ }
       checkCancellation(options.signal);
     }
     const result = contract.kind === 'composite'
-      ? await executeGraph(contract.graph, params, registry, { capabilities: [...allowed], allowedEffects: options.allowedEffects ?? [], callStack: nextStack, signal: options.signal, state: options.state, callPath, onNodeFailure: options.onNodeFailure, onNodeEnter: options.onNodeEnter,onFrameExit:options.onFrameExit,[DIAGNOSTIC_FRAMES]:childDiagnostics })
-      : await awaitCancellable(contract.execute(params, Object.freeze({ signal: options.signal, state: options.state, callPath, onNodeFailure: options.onNodeFailure, onNodeEnter: options.onNodeEnter,onFrameExit:options.onFrameExit,[DIAGNOSTIC_FRAMES]:childDiagnostics })), options.signal);
+      ? await executeGraph(contract.graph, params, registry, { capabilities: [...allowed], allowedEffects: options.allowedEffects ?? [], callStack: nextStack, signal: options.signal, state: options.state, callPath, onNodeFailure: options.onNodeFailure, onNodeEnter: options.onNodeEnter,onFrameExit:options.onFrameExit,[DIAGNOSTIC_FRAMES]:childDiagnostics,...(inspect?{[GRAPH_INSPECTOR]:inspect}:{}) })
+      : await awaitCancellable(contract.execute(params, Object.freeze({ signal: options.signal, state: options.state, callPath, onNodeFailure: options.onNodeFailure, onNodeEnter: options.onNodeEnter,onFrameExit:options.onFrameExit,[DIAGNOSTIC_FRAMES]:childDiagnostics,...(inspect?{[GRAPH_INSPECTOR]:inspect}:{}) })), options.signal);
     checkCancellation(options.signal);
     assertValueType(result, contract.output, `result of ${contract.id}`);
     memo.set(id, result);
