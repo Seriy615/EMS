@@ -148,3 +148,8 @@ Actual runtime/Worker/IDE pause→Step→Continue/Stop implemented for call/data
 ## После AC-066 — text/control debugger на исходной семантике
 
 Control statement/expression stepping и fresh source sidecar работают на прежнем IR/runtime; lazy flow, queued futures и protected cleanup проверены. Textarea selection использует snapshot guard/UTF-16 source offsets, без превращения IR в layout artifact. Next: source-owned UI event handler debugging с сохранением transaction/FIFO/rollback/cancellation, затем breakpoints/nested canvas navigation/Step Over/full visual parity. EMS-032/033 IN_PROGRESS; global PROJECT_GOAL.md сохраняет весь language/platform/FFI/compiler/AI/ecosystem scope. Deployment — только gated checked commit + actual live evidence.
+
+
+## После AC-067 — source-owned UI event debugger
+
+Реальная pause/Step/Continue связана с existing ReactorKernel draft transaction, persistent Worker и checked source witness. Confirmed state не меняется до commit; Stop/deadline не публикует pending writes. Actual Node/Chromium proofs в STATUS. EMS-033 IN_PROGRESS для breakpoints/Step Over/nested visual/source linkage/value policy/native/compiled debugging; startup transport stability проверять с bounded QA diagnostics, не утверждать root cause fix по зелёному повтору. Глобальная цель языка/runtime/compiler/platform/ecosystem сохраняется. Deploy только после strict clean-commit gates и live HTTPS/browser proof.

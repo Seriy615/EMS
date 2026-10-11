@@ -490,26 +490,23 @@
         "GPT-6.1 Sol",
         "GPT-6 Luna"
       ],
-      "progress": "AC-063 failure locations/lifecycle, AC-065 actual call-graph stepping, AC-066 text/control statement-expression pauses and fresh source sidecar are implemented on the existing evaluators. Typed payload-free graph/control caller locations, queued local futures, exact Chromium source selection/stale snapshot guard, cancellation/limits/finally/resource cleanup verified. Graph and text stepping published with live browser evidence. Full UI event/state debugger, breakpoints/Step Over/nested canvas navigation/native/compiled debugging remain open.",
+      "progress": "AC-063 failure/lifecycle, AC-065 graph stepping, AC-066 text/control source stepping, AC-067 persistent UI event transaction stepping implemented on existing evaluators/Kernel. Checked source witness, payload-free typed locations, event ID/token gates, FIFO/commit/rollback, Stop/deadline and confirmed snapshots verified. Full breakpoints/Step Over/nested visual/source linkage/value policy/native/compiled debugging remain open; intermittent Worker startup root cause unproven, bounded QA diagnostics retained.",
       "evidence": {
-        "scope": "Actual call graph and text/control source stepping; full debugger remains open",
+        "scope": "Graph/text/control/UI event stepping on existing interpreted runtime, not full debugger",
         "docs": "docs/spec/IDE_RUNTIME_DIAGNOSTICS.md",
         "testFiles": [
-          "tests/graph-debugger.test.mjs",
-          "tests/control-debugger.test.mjs",
-          "tests/browser/graph-debugger.test.mjs",
-          "tests/browser/control-debugger.test.mjs"
+          "tests/ui-debugger.test.mjs",
+          "tests/browser/ui-debugger.test.mjs",
+          "tests/ui-worker.test.mjs"
         ],
-        "tests": "688/688 PASS",
-        "verify": "132/132 PASS",
-        "browserTests": "28/28 PASS",
+        "tests": "694/694 PASS",
+        "verify": "133/133 PASS",
+        "browserTests": "29/29 PASS",
         "commands": [
           "npm test",
           "npm run verify",
           "npm run browser:test"
-        ],
-        "deployedRevision": "03ac6590d00203c3b1adf2da8c4daf556ef1f74f",
-        "live": "Authenticated public Chromium graph/composite stepping and actual text control pause/source selection/Step/Continue6 PASS; graph/composite/reopen/AVG5/counter/auth gates retained. See docs/qa/DEPLOYMENT.md."
+        ]
       }
     },
     {

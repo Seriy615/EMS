@@ -17,7 +17,8 @@ export async function launchChromium() {
   const child = spawn(executable, ['--headless', '--disable-gpu', '--no-sandbox', '--remote-debugging-address=127.0.0.1',
     '--remote-debugging-port=0', `--user-data-dir=${directory}`, '--no-first-run', '--no-default-browser-check', 'about:blank'],
     { stdio: ['ignore', 'ignore', 'pipe'] });
-  let socket;
+  let socket,browserDiagnostics='';
+  child.stderr.on('data',chunk=>{const lines=String(chunk).split('\n').filter(line=>/pthread|Cannot allocate|Out of memory|Failed to fetch|ERR_[A-Z_]+|crash/i.test(line));if(lines.length)browserDiagnostics=(browserDiagnostics+lines.join('\n')+'\n').slice(-16384);});
   async function close() {
     socket?.close();
     if (child.exitCode === null && child.signalCode === null) {
@@ -65,6 +66,9 @@ export async function launchChromium() {
       const { targetId } = await send('Target.createTarget', { url: 'about:blank' });
       const { sessionId } = await send('Target.attachToTarget', { targetId, flatten: true });
       await send('Page.enable', {}, sessionId);
+      // Trusted QA only: retain bounded startup errors without changing application error redaction.
+      await send('Page.addScriptToEvaluateOnNewDocument',{source:`globalThis.__emsQAWorkerErrors=[];const EMSNativeWorker=globalThis.Worker;globalThis.Worker=class extends EMSNativeWorker{constructor(...args){super(...args);this.addEventListener('error',event=>{if(globalThis.__emsQAWorkerErrors.length<10)globalThis.__emsQAWorkerErrors.push({message:String(event.message??'').slice(0,512),filename:String(event.filename??'').slice(0,512),line:event.lineno??null});});}};`},sessionId);
+
       let authenticationListener;
       if(credentials){
         const origin=new URL(url).origin;
@@ -96,7 +100,7 @@ export async function launchChromium() {
         downloads: directory => send('Browser.setDownloadBehavior',{behavior:'allow',downloadPath:directory}),
         async evaluate(expression) {
           const result = await send('Runtime.evaluate', { expression, awaitPromise: true, returnByValue: true }, sessionId);
-          if (result.exceptionDetails) throw new Error(JSON.stringify(result.exceptionDetails));
+          if (result.exceptionDetails){const diagnostics=await send('Runtime.evaluate',{expression:'JSON.stringify(globalThis.__emsQAWorkerErrors??[])',returnByValue:true},sessionId);throw new Error(JSON.stringify(result.exceptionDetails)+' Worker startup diagnostics: '+diagnostics.result.value+' Browser diagnostics: '+browserDiagnostics);}
           return result.result.value;
         },
         close: () => {if(authenticationListener)listeners.delete(authenticationListener);return send('Target.closeTarget', { targetId });}

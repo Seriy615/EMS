@@ -118,3 +118,6 @@ Development IDE is available at [dev-ems.d-mash.ru](https://dev-ems.d-mash.ru), 
 
 
 В Studio доступна настоящая отладка графов вызовов: «Отладка» останавливает существующий runtime перед операцией, «Шаг» переходит к следующей, «Продолжить» завершает запуск, «Остановить» прекращает Worker. Панель показывает полный путь вложенных контрактов и типы без значений аргументов. В текстовом EMS control runtime выделяет actual instruction/expression, включая вложенные функции, циклы и локальные futures. Visual Map/Filter, UI state/events и native debugger ещё впереди; границы и протокол — [IDE_RUNTIME_DIAGNOSTICS.md](docs/spec/IDE_RUNTIME_DIAGNOSTICS.md).
+
+
+UI preview поддерживает «Отладка событий (новый запуск)»: нажмите реальный элемент приложения, затем Step/Continue. Подтверждённое состояние сохраняется до завершения транзакции; Stop прекращает Worker preview и оставляет последнее подтверждённое отображение. Источники обработчиков проверяются как witness executable IR, значения draft/аргументов в pause metadata не передаются. См. AC-067 и документацию отладки.

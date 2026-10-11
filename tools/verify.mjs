@@ -335,4 +335,8 @@ await check('control text debugger maps actual lazy execution to fresh source lo
  const value=await runTextDraft(draft,new ProjectEditor(),{x:3},{onControlEnter:event=>gate.enter(event)});
  return value===6&&events[0].kind==='if'&&events.every(event=>event.location)&&!events.some(event=>draft.source.slice(event.location.start.offset,event.location.end.offset)==='core.div(1,0)');
 });
+await check('UI event diagnostics leave draft state private until the existing transaction commits',async()=>{
+ const runtime=new UIRuntime(standaloneUIApplication,standaloneUIBase,{policy:{capabilities:['ui.render','state.read','state.write'],allowedEffects:['ui.render','state.read','state.write']}}),events=[];
+ try{const value=await runtime.dispatch('increment','press',undefined,{onControlEnter:event=>{events.push(event);assert.equal(runtime.snapshot().count,0);}});return value===1&&runtime.snapshot().count===1&&events.length>0&&events.every(event=>!Object.hasOwn(event,'state'));}finally{await runtime.close();}
+});
 console.log(`\nEMS foundation verification passed (${checks} checks). Not production readiness.`);

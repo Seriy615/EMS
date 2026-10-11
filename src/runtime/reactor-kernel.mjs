@@ -46,8 +46,9 @@ export class ReactorKernel {
   }
   snapshot() { return Object.fromEntries([...this.#values].map(([id, value]) => [id, copy(value)])); }
   trace() { return copy(this.#trace); }
-  async dispatch(event, inputs = {}, { signal } = {}) {
+  async dispatch(event, inputs = {}, { signal,onControlEnter,onNodeEnter } = {}) {
     if (this.#closed) fail('SESSION_CLOSED', 'Reactor session is closed');
+    for(const hook of [onControlEnter,onNodeEnter])if(hook!==undefined&&typeof hook!=='function')fail('INVALID_OPTION','Expected diagnostic observer');
     assertSignal(signal);
     const handler = this.#handlers.get(event);
     if (!handler) fail('UNKNOWN_EVENT', `Unknown reactor event ${event}`);
@@ -56,7 +57,7 @@ export class ReactorKernel {
     if (this.#queue.length >= this.#maxQueue) fail('QUEUE_FULL', 'Reactor event queue is full');
     const payload = copy(inputs);
     return new Promise((resolve, reject) => {
-      this.#queue.push({ sequence: this.#next++, event, inputs: payload, handler, signal, resolve, reject });
+      this.#queue.push({ sequence: this.#next++, event, inputs: payload, handler, signal,onControlEnter,onNodeEnter, resolve, reject });
       if (!this.#running) { this.#running = true; queueMicrotask(() => this.#pump()); }
     });
   }
@@ -86,7 +87,7 @@ export class ReactorKernel {
       });
       try {
         const result = await job.handler.execute(job.inputs, {
-          ...this.#policy, signal: controller.signal, state
+          ...this.#policy, signal: controller.signal, state,onControlEnter:job.onControlEnter,onNodeEnter:job.onNodeEnter
         });
         checkCancellation(controller.signal);
         const detachedResult = copy(result);
