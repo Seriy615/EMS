@@ -321,4 +321,11 @@ await check('unified project catalog preserves source-owned UI and imports a sep
 await check('AVG5 Studio example has a real reusable six-operation composite',async()=>{
  const project=parseProject(await get('examples/studio-avg5.ems.json')),editor=new ProjectEditor(project);editor.setInput('times',[1,2,3,4,5]);return project.contracts.length===1&&project.contracts[0].graph.nodes.length===6&&await editor.run()===3;
 });
+await check('graph debugger steps the original evaluator with payload-free exact node locations',async()=>{
+ const {GraphStepper}=await import('../src/studio/debugger.mjs');
+ const editor=new ProjectEditor(parseProject(await get('examples/studio-avg5.ems.json'))),locations=[];
+ let gate;gate=new GraphStepper(pause=>{locations.push(pause);gate.resume(pause.token,'step');});
+ const value=await editor.run({onNodeEnter:event=>gate.enter(event)});
+ return Math.abs(value-12.566666666666663)<1e-12&&locations.length===7&&locations[0].callPath[0].node==='avg5'&&locations[1].callPath.at(-1).node==='total'&&Object.keys(locations[1].inputs).join(',')==='values'&&locations[1].inputs.values==='NumberArray';
+});
 console.log(`\nEMS foundation verification passed (${checks} checks). Not production readiness.`);

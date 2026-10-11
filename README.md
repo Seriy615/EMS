@@ -115,3 +115,6 @@ Unified local project catalog: open `/web/projects.html` to create, copy, rename
 The AVG5 Studio example now opens a reusable six-operation arithmetic composite (not WCA), with nested editing/persistence. Graph Run logs actual Worker lifecycle and marks runtime failures at their real node/caller. Owner MVP evidence and checked deployment procedure: [WEB_IDE_MVP.md](docs/qa/WEB_IDE_MVP.md), [DEPLOYMENT.md](docs/qa/DEPLOYMENT.md).
 
 Development IDE is available at [dev-ems.d-mash.ru](https://dev-ems.d-mash.ru), protected by owner authentication. Live Chromium graph execution, project reopen, expandable AVG5 and interactive counter are verified. Access credentials are stored outside Git; operational evidence and rollback status are recorded in [DEPLOYMENT.md](docs/qa/DEPLOYMENT.md).
+
+
+В Studio доступна настоящая отладка графов вызовов: «Отладка» останавливает существующий runtime перед операцией, «Шаг» переходит к следующей, «Продолжить» завершает запуск, «Остановить» прекращает Worker. Панель показывает полный путь вложенных контрактов и типы без значений аргументов. Text/control/Map/Filter/state debugger ещё впереди; границы и протокол — [IDE_RUNTIME_DIAGNOSTICS.md](docs/spec/IDE_RUNTIME_DIAGNOSTICS.md).

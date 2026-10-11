@@ -1,5 +1,9 @@
 # Current implementation status
 
+## EMS-033 — actual call-graph stepping, AC-065
+
+Baseline 1a65d25:678/678 Node,130/130 verify PASS. Итог **683/683 Node,131/131 verify,27/27 Chromium PASS**. Runtime onNodeEnter pauses before actual operations with detached payload-free types/caller paths; original evaluator keeps dependency memoization, explicit sequence and semantic errors. Worker/IDE Step/Continue/Stop and bounded deadline verified in real Chromium, including nested AVG5 and recovery; unsupported text/collection debug rejected explicitly. Full step/control/source/state debugger remains open, EMS-033 IN_PROGRESS. Docs: docs/spec/IDE_RUNTIME_DIAGNOSTICS.md; logs /tmp/ems-debugger-{tests,verify,browser}.log. Dev deployment update follows checked commit; live revision remains dc7ced8 until actual publication evidence.
+
 ## EMS-035 DONE — owner P0 Web IDE опубликована
 
 **678/678 Node, 130/130 verify, 25/25 Chromium PASS** внутри gated deploy release `dc7ced833cd3c021cf9388269e0d6effb3cf96df`. https://dev-ems.d-mash.ru: проверенный TLS, HTTPS401 без доступа, authenticated create/connect/run15, создание/reuse/expand собственного composite15, reopen15, AVG5 и DOM counter1 PASS. Service recovery и реальный rollback на f356ee3 с повторной браузерной проверкой прошли; затем восстановлен dc7ced8 и live smoke повторён. Другие nginx configs сохранены, observed staging services active. Evidence: docs/qa/DEPLOYMENT.md и WEB_IDE_MVP.md.

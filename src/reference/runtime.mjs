@@ -8,6 +8,7 @@ import { assertSignal, checkCancellation, awaitCancellable } from '../runtime/ca
 /** Reference-only sequential async dataflow evaluator. Not a security sandbox, production scheduler or real-time engine. */
 export async function executeGraph(graph, inputs, registry, options = {}) {
   if(options.onNodeFailure!==undefined&&typeof options.onNodeFailure!=='function')fail('INVALID_OPTION','Expected node failure observer');
+  if(options.onNodeEnter!==undefined&&typeof options.onNodeEnter!=='function')fail('INVALID_OPTION','Expected node entry observer');
   assertSignal(options.signal);
   checkCancellation(options.signal);
   const { nodes } = validateGraph(graph, registry);
@@ -42,9 +43,14 @@ export async function executeGraph(graph, inputs, registry, options = {}) {
     checkCancellation(options.signal);
     const callPath=[...(options.callPath??[]),{graph:graph.id,node:id,contract:contract.id}];
     try {
+    if(options.onNodeEnter){
+      const event=structuredClone({phase:'enter',callPath,inputs:Object.fromEntries(Object.entries(contract.inputs).map(([name,type])=>[name,typeof type==='string'?type:type.type])),output:contract.output,effects:contract.effects,capabilities:contract.capabilities});
+      try { await awaitCancellable(options.onNodeEnter(event),options.signal); } catch { /* Diagnostics cannot replace semantic errors. */ }
+      checkCancellation(options.signal);
+    }
     const result = contract.kind === 'composite'
-      ? await executeGraph(contract.graph, params, registry, { capabilities: [...allowed], allowedEffects: options.allowedEffects ?? [], callStack: nextStack, signal: options.signal, state: options.state, callPath, onNodeFailure: options.onNodeFailure })
-      : await awaitCancellable(contract.execute(params, Object.freeze({ signal: options.signal, state: options.state, callPath, onNodeFailure: options.onNodeFailure })), options.signal);
+      ? await executeGraph(contract.graph, params, registry, { capabilities: [...allowed], allowedEffects: options.allowedEffects ?? [], callStack: nextStack, signal: options.signal, state: options.state, callPath, onNodeFailure: options.onNodeFailure, onNodeEnter: options.onNodeEnter })
+      : await awaitCancellable(contract.execute(params, Object.freeze({ signal: options.signal, state: options.state, callPath, onNodeFailure: options.onNodeFailure, onNodeEnter: options.onNodeEnter })), options.signal);
     checkCancellation(options.signal);
     assertValueType(result, contract.output, `result of ${contract.id}`);
     memo.set(id, result);

@@ -138,3 +138,8 @@ Unified local project catalog now creates/opens/copies/renames/imports/exports g
 ## Owner P0 dev publication принята — EMS-035 DONE
 
 Release dc7ced8 опубликован на https://dev-ems.d-mash.ru после 678/130/25 PASS. Live Chromium подтвердил собственный reusable expandable composite15/reopen15, AVG5 и counter1; TLS/auth/access boundaries, recovery, реальный rollback/restore и сохранность других сервисов проверены (docs/qa/DEPLOYMENT.md). Следующий этап — EMS-033 полноценный graph/control/source debugger и дальнейшее общее visual/text authoring по существующему IR. Полная глобальная цель PROJECT_GOAL.md остаётся активной; первая dev публикация не закрывает production/native/FFI/distribution/AI/platform ecosystem.
+
+
+## После AC-065 — EMS-033 call-graph debugger
+
+Actual runtime/Worker/IDE pause→Step→Continue/Stop implemented for call/dataflow graphs and nested composites, using the existing evaluator and payload-free metadata; Node/compiler/browser evidence in STATUS. Full EMS-033 stays IN_PROGRESS: next shared control runtime/source correspondence/state handler debugger and nested navigation/breakpoints. New dev publication must pass the existing gated deploy and live smoke; full language/platform/ecosystem goal unchanged.

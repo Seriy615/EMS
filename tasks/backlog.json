@@ -490,7 +490,23 @@
         "GPT-6.1 Sol",
         "GPT-6 Luna"
       ],
-      "progress": "Initial graph failure observer locates exact atomic leaf/caller without changing semantic errors; Worker lifecycle logs and actual browser DIV_BY_ZERO highlight implemented. Full step/source/control/state debugger remains open."
+      "progress": "AC-063 failure locations/lifecycle and AC-065 actual call-graph stepping: payload-free onNodeEnter observer pauses existing evaluator, dependency memoization/sequence/nested types/caller paths preserved. Tokenized Worker Step/Continue/Stop/deadline and real Chromium AVG5/recovery verified. Unsupported text/control/collection debug refused explicitly. Full control/source/state debugger, nested navigation/breakpoints/value policy and compiler debug hooks remain open.",
+      "evidence": {
+        "scope": "Actual call-graph debugger, not full control/source/state debugging",
+        "docs": "docs/spec/IDE_RUNTIME_DIAGNOSTICS.md",
+        "testFiles": [
+          "tests/graph-debugger.test.mjs",
+          "tests/browser/graph-debugger.test.mjs"
+        ],
+        "tests": "683/683 PASS",
+        "verify": "131/131 PASS",
+        "browserTests": "27/27 PASS",
+        "commands": [
+          "npm test",
+          "npm run verify",
+          "npm run browser:test"
+        ]
+      }
     },
     {
       "id": "EMS-034",
