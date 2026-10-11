@@ -492,7 +492,7 @@
       ],
       "progress": "AC-063..073 original graph/control/UI stepping, checked source anchors and durable project-owned Studio graph/text contexts implemented. Fresh restore, mode/entry/lowering/library identity, inactive drift/Undo, atomic storage/quota and export/import/copy isolation verified. Value-secret policy/native-compiled transports/full parity/cross-tab sync remain open; historical Worker cause unproven.",
       "evidence": {
-        "scope": "Original interpreted graph/text/control/UI stepping, Over/Out and source-owned breakpoints; not full debugger",
+        "scope": "Original interpreted graph/text/control/UI stepping, source anchors and durable project-owned local debugger contexts; not full value/native/compiled debugger",
         "docs": "docs/spec/IDE_RUNTIME_DIAGNOSTICS.md",
         "testFiles": [
           "tests/debugger-storage.test.mjs",
@@ -512,8 +512,8 @@
           "npm run verify",
           "npm run browser:test"
         ],
-        "deployedRevision": "17a7dfef861797ffbf4e84d1c95221d33574e9b6",
-        "live": "Prior17a7dfe live; durable Studio local729/138/39 PASS, pending exact gated publication/public reopen/pause."
+        "deployedRevision": "a36a331f50ffc4bca996dedb36e8dad158d997e5",
+        "live": "Exact committed729/138/39 PASS; trusted public HTTPS/auth/access and actual Chromium Studio reopen/mode graph1-text1/exact source pause/result1/graph1 PASS. Existing graph/composite/reopen15/AVG5/text6/points5-loop3/OverOut7/UI1/live-clear1-2-3/safe anchor private0→commit1 preserved; six foreign hashes/five active services unchanged."
       },
       "nextSlice": "Typed opt-in bounded runtime inspection policy: payload-free default, explicit allowlist and secret/resource/future/stream exclusions, real frame-scoped values with detached snapshots and Worker/IDE non-leakage proofs. Keep original runtime and IR semantics."
     },
