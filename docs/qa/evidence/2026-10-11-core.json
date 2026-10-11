@@ -1,0 +1,72 @@
+{
+  "date": "2026-10-11",
+  "node": "22.21.0",
+  "gitRevision": null,
+  "reason": "Workspace has no Git metadata",
+  "contentSnapshotSha256": "2495e5f62507e4819ee55a7b8a7c4b73638d096b13b88fae991f98ccb7d78602",
+  "baseline": {
+    "npm test": {
+      "pass": 16,
+      "fail": 0
+    },
+    "npm run verify": {
+      "pass": 18,
+      "fail": 0
+    }
+  },
+  "current": {
+    "npm test": {
+      "pass": 211,
+      "fail": 0
+    },
+    "npm run verify": {
+      "pass": 33,
+      "fail": 0
+    }
+  },
+  "accepted": [
+    "AC-025",
+    "AC-026",
+    "AC-027",
+    "AC-028"
+  ],
+  "limits": [
+    "M1 incomplete",
+    "Second-target/browser conformance not yet run",
+    "WEB IDE MVP not yet implemented",
+    "Deploy not performed; initial TLS SAN check failed"
+  ],
+  "sourceSha256": {
+    "PROJECT_GOAL.md": "5b5bb4cea81f3db37178020498f81286e7f2fd08686903be7c609b3d55ee9117",
+    "schemas/contract.schema.json": "2c28a87a6b6d7ec1c5520de1e19dd41835592e90e8bad3274ac93e496eec875c",
+    "schemas/graph.schema.json": "537c1169980e6dbc64596a18fb9c8a81dffbdee6bde8f5cda18be3a592f45286",
+    "schemas/ir.schema.json": "a49c9d623b4be5adb10829f95ad2ed7d009278d58964a98e426cc807c1ffd715",
+    "src/frontend/check.mjs": "23b6ad7eee4b2bb581a1063c004bb37c446202f601cbb56530042d21cf03f61e",
+    "src/frontend/index.mjs": "4cafbd1c56b7c2eed93dcadc373dff5b9e207e522bd1e8ef71c2435209023357",
+    "src/frontend/lower.mjs": "9c828edfc0b75f909b32e0082670237db59104a38b5a315b6c44ff3c0ca74f9a",
+    "src/frontend/types.mjs": "5a2a81a20c9bd79d48c6bf8b2b2c0e9268289a4bedf902f4089decbb8f3287da",
+    "src/ir/index.mjs": "e48b027dec753923a86f66d47a02e73fa14229d2829d55dcb0edd83dc65ad00b",
+    "src/reference/compiler.mjs": "be2222864d02549fe77d50102efa0736edf4831d81d1ac0f452b9165cd16c210",
+    "src/reference/errors.mjs": "583e4334f49200ef8dbf31af8b51ba5a853e88fc3f9fbfb384873bf59dbaed8d",
+    "src/reference/foreign.mjs": "0e02721781c6446545c216ebe6f70f31112e2b2a3f73fcb3b3715a33dcb809cf",
+    "src/reference/index.mjs": "e9f5daccb96586503a4dcec9126d14b7a7a886c9d077a0802c3d9b240f5a90d1",
+    "src/reference/registry.mjs": "f24e51bd563e16863277cf06fd2c4094a115dc9145b48ac53f0d154326eb98c7",
+    "src/reference/runtime.mjs": "6d9464c04e76a1b21a3cc11b62f8e359ebacc9db0315fef955a3a4736180133f",
+    "src/reference/textlang.mjs": "039ae55a495ea8131b99f1c6f58472dedab2c18182d5639d8072799f9c3ab548",
+    "src/reference/types.mjs": "df6014ff11f6098ebb02ff8fdb0a0925d4f728bece105d194a8e2b3ee9aae9fb",
+    "src/reference/validate.mjs": "13224beb173357993abeca080b0e5d22ff31cfb257626407c872ea715a0c035d",
+    "src/semantics/effects.mjs": "483940d3e31fd24222ced1c60bbac10554c0405cc8ce33ac545f1520e3a99f8a",
+    "tasks/backlog.json": "00eeda4c721333775d402f1306377fda09557315d5f8321f48e6a5bc1b0bc1eb",
+    "tests/check.test.mjs": "1f3d8bec93f88484a8bd71903199306eabf7604906f144d89b59d948bf4bc40e",
+    "tests/effects.test.mjs": "aa54ff53d65b05732d76451b969ea838f2b2a56f1921437ab89d79c7af9887ad",
+    "tests/fixtures/semantics.json": "c7902bed8c8050d8bc5030dd22c81e16d14dbaf300d3e2c587c556208423b0af",
+    "tests/frontend.test.mjs": "6e974ce43afeee0cfde5f7f1589a321b07897cfdf5c5028b5bb3181d7848ad02",
+    "tests/ir.test.mjs": "2b63b5b0df28ba84d324d9f9cd910837d294e0d8bccbb36bd7c594b3ea58207e",
+    "tests/lower.test.mjs": "fdc9c6bbce5ff2a280fb16b355ce6cdf528ead4067eae1e66c5ad1d4b6ec2133",
+    "tests/reference.test.mjs": "7be158fe91f328777415e768fa840f0c4cd452adb471b9af32b85fb9a38edb9d",
+    "tests/semantics.test.mjs": "1f3046d1bca8da2570a6c509e77072a7b7ee3a29f5e45934e1dc2fcbfda1866d",
+    "tests/types.test.mjs": "b49b61adb7d69203a22c6e38092bce98f6d04ff2c58782ac5406585dfc9b37a9",
+    "tools/ems.mjs": "be4cf7485325ad5a24b85603c13fba8b7b93382e9901e4e836b90b9a5b1b23a2",
+    "tools/verify.mjs": "0b4966b0ff12a50d785edc32f5ba9879b305e382aca790fa7e551eb4e8d6987e"
+  }
+}

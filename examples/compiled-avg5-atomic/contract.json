@@ -1,0 +1,20 @@
+{
+  "schemaVersion": "0.1",
+  "id": "demo.AverageOfFiveArithmetic",
+  "version": "0.1.0",
+  "kind": "atomic",
+  "sourceVisibility": "opaque",
+  "inputs": {
+    "times": "NumberArray"
+  },
+  "output": "Number",
+  "effects": [],
+  "capabilities": [],
+  "implementationBinding": {
+    "kind": "esm",
+    "entry": "./module.mjs",
+    "symbol": "execute",
+    "trustedOnly": true
+  },
+  "notes": "Opaque to EMS visual editor. Executable bytecode/JS remains reverse engineerable."
+}

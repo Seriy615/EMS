@@ -1,0 +1,12 @@
+{
+  "schemaVersion": "0.1",
+  "id": "example.double_average",
+  "version": "0.1.0",
+  "inputs": { "times": { "type": "NumberArray" } },
+  "output": { "type": "Number" },
+  "nodes": [
+    { "id": "avg", "uses": "demo.AverageOfFiveArithmetic", "args": { "times": { "input": "times" } } },
+    { "id": "twice", "uses": "core.mul", "args": { "a": { "node": "avg" }, "b": { "literal": 2 } } }
+  ],
+  "returns": { "node": "twice" }
+}

@@ -1,0 +1,10 @@
+// M0 textual EMS prototype; intentionally limited SSA/function-call grammar.
+contract demo.AverageOfFiveArithmetic(times: Number[]) -> Number {
+  let total = sum(times)
+  let lowest = min(times)
+  let highest = max(times)
+  let remove_low = sub(total, lowest)
+  let remove_high = sub(remove_low, highest)
+  let average = div(remove_high, 3)
+  return average
+}

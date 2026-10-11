@@ -1,0 +1,17 @@
+{
+  "schemaVersion": "0.1",
+  "package": "example.speedcube-timer",
+  "status": "design-example-not-executable",
+  "contracts": [{
+    "id": "device.timer.read",
+    "kind": "atomic",
+    "inputs": { "connection": "DeviceHandle" },
+    "output": "Stream<TimerEvent>",
+    "effects": ["device_read"],
+    "capabilities": ["device.timer.read"],
+    "implementations": [
+      { "platform": "linux", "binding": "serial_port_adapter", "requires": ["serial_access"] },
+      { "platform": "browser", "binding": "web_serial_adapter", "requires": ["browser_user_permission", "web_serial_support"] }
+    ]
+  }]
+}

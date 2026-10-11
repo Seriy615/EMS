@@ -1,0 +1,11 @@
+{
+  "schemaVersion": "0.1",
+  "binding": "trusted-js-esm",
+  "library": "external-math.mjs",
+  "trust": "trusted-local-only-not-sandboxed",
+  "contracts": [
+    { "id": "demo.math.square", "export": "square", "inputs": { "value": "Number" }, "output": "Number", "effects": [], "capabilities": [] },
+    { "id": "demo.math.clamp", "export": "clamp", "inputs": { "value": "Number", "minimum": "Number", "maximum": "Number" }, "output": "Number", "effects": [], "capabilities": [] },
+    { "id": "demo.math.hypotenuse", "export": "hypotenuse", "inputs": { "a": "Number", "b": "Number" }, "output": "Number", "effects": [], "capabilities": [] }
+  ]
+}

@@ -1,0 +1,24 @@
+{
+  "schemaVersion": "0.1",
+  "package": "example.crypto-bridge",
+  "status": "design-example-not-executable",
+  "source": { "language": "Rust", "artifact": "libvendorcrypto", "binding": "C_ABI_or_WASM_component", "requires_audit": true },
+  "contracts": [
+    {
+      "id": "crypto.aes256gcm.encrypt",
+      "kind": "atomic",
+      "inputs": { "key": "Secret<Bytes32>", "nonce": "Bytes12", "plaintext": "Bytes", "aad": "Bytes" },
+      "output": "Result<AuthenticatedCiphertext,CryptoError>",
+      "effects": ["cryptographic_operation"],
+      "constraints": ["never reuse nonce with the same key", "secret must never be logged", "pass approved test vectors"],
+      "description": "An adapter wrapping an independently audited library; no custom cipher implementation."
+    },
+    {
+      "id": "crypto.aes256gcm.decrypt",
+      "kind": "atomic",
+      "inputs": { "key": "Secret<Bytes32>", "nonce": "Bytes12", "ciphertext": "AuthenticatedCiphertext", "aad": "Bytes" },
+      "output": "Result<Bytes,CryptoError>",
+      "effects": ["cryptographic_operation"]
+    }
+  ]
+}

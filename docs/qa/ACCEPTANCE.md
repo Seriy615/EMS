@@ -1,0 +1,40 @@
+# Acceptance tests and proof requirements
+
+Each AC ID must link to executable test output / exact command / revision. The M0 tests are reference-only; future targets have separate gates.
+
+| AC | Scenario | Expected result | Phase |
+|---|---|---|---|
+| AC-001 | Arithmetic Ao5 graph runs | arithmetic result 12.566666... for fixture | M0 |
+| AC-002 | Same algorithm expressed in textual subset | identical result / graph | M0 |
+| AC-003 | Reject number ↔ incompatible type | `TYPE_MISMATCH` | M0 |
+| AC-004 | Reject cycle / missing contract | deterministic error | M0 |
+| AC-005 | Recursive composite referencing atomic | normal execution | M0 |
+| AC-006 | Compile pure graph to standalone ESM | module has no EMS imports, same result | M0 |
+| AC-007 | Seal composite to atomic package | manifest + module, no original graph | M0 |
+| AC-008 | Load sealed artifact as atomic into second graph | same result through public signature | M0 |
+| AC-009 | Trusted ESM library exports map to multiple atomic blocks | typed contracts execute with adapters | M0 |
+| AC-010 | Capability checks reject ungranted action | `PERMISSION_DENIED` before effect | M0 |
+| AC-011 | Compiler rejects effectful operations | explicit unsupported-target error | M0 |
+| AC-012 | Text and visual full language round-trip | same semantic AST/IR, source-map trace | M1/M2 |
+| AC-013 | Composite double-click Expand/Collapse | nested graph inspectable | M2 |
+| AC-014 | Browser UI binds to state and events | button updates scoreboard state | M3 |
+| AC-015 | Standalone Web build independent from IDE | host without EMS IDE can execute | M4 |
+| AC-016 | Real WASM/C ABI lib import | library functions -> atomic blocks, ABI conformance | M5 |
+| AC-017 | Real crypto via vetted library | known vectors, invalid tag rejected; no secrets logged | M5 |
+| AC-018 | Same graph executes on two true targets | differential results/semantics tested | M6 |
+| AC-019 | Device adapter | device discovery, permission, real event | M8 |
+| AC-020 | Distributed graph | roles/events with retries and partitions | M7 |
+| AC-021 | AI creates validated graph from available registry | nonexistent contracts rejected | M9 |
+| AC-022 | Compiled commercial atom | no graph shipped; license respected; no secrecy claim | M10 |
+| AC-023 | Package trust | signature validation / dependency hashes / revoke | M10 |
+| AC-024 | Correct WCA Ao5 | penalties, DNF, ties, rounding, fixtures | M8 |
+| AC-025 | Finite core semantic conformance | runtime and standalone agree on values, signed zero, intermediate checks, error codes/details, shared nodes and port order | M1 core |
+| AC-026 | Typed versioned core IR | canonical text/graph roundtrip, signed-zero literals, contract version/type/ref checks, canvas sidecar, independent CLI export | M1 core |
+| AC-027 | Own EMS grammar and located AST | modules, contracts, generic functions, expressions, control/error/resource/async syntax; negative cases and frontend limits; parsing executes no host code | M1 frontend |
+| AC-028 | Located AST type checker and pure lowering | rigid generic bodies, independent inference, aliases, collections/unions/resources, pattern exhaustiveness, scope/control checks; AST → shared IR → runtime/standalone; unsupported semantics rejected | M1 type pass |
+
+`AC-001` is NOT official WCA Average of Five. Real WCA rules are a separate contract acceptance test.
+
+## Proof storage
+
+Record command outputs, test counts, environment and revision in `docs/qa/STATUS.md` (or release-specific evidence files). Do not mark AC-X PASS from static markdown or screenshot alone if it requires executable behavior.

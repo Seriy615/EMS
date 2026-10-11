@@ -1,0 +1,13 @@
+{
+  "schemaVersion": "1.0",
+  "purpose": "Repository policy declaration; enforcement requires Codex orchestrator integration",
+  "agents": {
+    "approvedDisplayNames": ["GPT-6.1 Sol", "GPT-6 Luna"],
+    "forbiddenDisplayNames": ["GPT-5.6 Sol", "Astra"],
+    "allowImplicitModelFallback": false,
+    "allowUnknownModelForDelegation": false,
+    "requireExplicitModelSelectionForDelegation": true,
+    "whenApprovedModelsUnavailable": "Do not spawn agents. Ask owner to configure an approved model."
+  },
+  "note": "Names are user's model labels, not verified API identifiers. This JSON does not itself override a Codex deployment's model defaults."
+}

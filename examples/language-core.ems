@@ -1,0 +1,37 @@
+// EMS syntax fixture. Parsing is implemented; execution of this module is future M1 work.
+package demo.language @ "0.1.0";
+import "std.collections" as collections;
+
+type Samples<T> = Array<T>;
+
+extern contract system.load(path: String) -> Future<Result<String, IOError>>
+  requires capability("file.read"), effect("file.read");
+
+fn factorial(value: Number) -> Number requires pure {
+  if value <= 1 { return 1; }
+  return value * factorial(value - 1);
+}
+
+export contract demo.SumPositive(samples: Number[]) -> Number requires pure {
+  let mut total: Number = 0;
+  for sample in samples {
+    if sample < 0 { continue; }
+    total = total + sample;
+  }
+  while total > 100 { total = total - 100; }
+  return total;
+}
+
+async fn display(path: String) -> String {
+  try {
+    let result = await system.load(path);
+    match result {
+      Ok(text) => { return text; },
+      Err(error) => { throw error; }
+    }
+  } catch (error: IOError) {
+    return "unavailable";
+  } finally {
+    collections.notify("finished");
+  }
+}

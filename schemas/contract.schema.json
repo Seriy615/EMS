@@ -1,0 +1,27 @@
+{
+  "$schema":"https://json-schema.org/draft/2020-12/schema",
+  "$id":"https://ems.local/schemas/contract.schema.json",
+  "title":"EMS Contract Manifest Draft 0.1",
+  "type":"object",
+  "additionalProperties":true,
+  "required":["schemaVersion","id","version","kind","inputs","output"],
+  "properties":{
+    "schemaVersion":{"const":"0.1"},
+    "id":{"type":"string","minLength":1},
+    "version":{"type":"string","minLength":1},
+    "kind":{"enum":["atomic","composite"]},
+    "inputs":{"type":"object","additionalProperties":{"type":"string"}},
+    "output":{"type":"string"},
+    "effects":{"type":"array","items":{"type":"string"},"uniqueItems":true},
+    "capabilities":{"type":"array","items":{"type":"string"},"uniqueItems":true},
+    "sourceVisibility":{"enum":["source","inspectable","opaque"]},
+    "implementationBinding":{"type":"object"},
+    "graph":{"type":"object"},
+    "documentation":{"type":"string"},
+    "testVectors":{"type":"array","items":{"type":"object"}}
+  },
+  "allOf":[
+    {"if":{"properties":{"kind":{"const":"atomic"}},"required":["kind"]},"then":{"required":["implementationBinding"]}},
+    {"if":{"properties":{"kind":{"const":"composite"}},"required":["kind"]},"then":{"required":["graph"]}}
+  ]
+}

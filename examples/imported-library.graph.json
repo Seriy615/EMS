@@ -1,0 +1,12 @@
+{
+  "schemaVersion": "0.1",
+  "id": "demo.importedLibraryGraph",
+  "version": "0.1.0",
+  "inputs": { "x": { "type": "Number" } },
+  "output": { "type": "Number" },
+  "nodes": [
+    { "id": "square", "uses": "demo.math.square", "args": { "value": { "input": "x" } } },
+    { "id": "bounded", "uses": "demo.math.clamp", "args": { "value": { "node": "square" }, "minimum": { "literal": 0 }, "maximum": { "literal": 100 } } }
+  ],
+  "returns": { "node": "bounded" }
+}

@@ -1,0 +1,1081 @@
+{
+  "profile": "ems-core-finite/1",
+  "vectors": [
+    {
+      "id": "add",
+      "graph": {
+        "schemaVersion": "0.1",
+        "id": "conformance.add",
+        "version": "0.1.0",
+        "inputs": {
+          "a": {
+            "type": "Number"
+          },
+          "b": {
+            "type": "Number"
+          }
+        },
+        "output": {
+          "type": "Number"
+        },
+        "nodes": [
+          {
+            "id": "value",
+            "uses": "core.add",
+            "args": {
+              "a": {
+                "input": "a"
+              },
+              "b": {
+                "input": "b"
+              }
+            }
+          }
+        ],
+        "returns": {
+          "node": "value"
+        }
+      },
+      "inputs": {
+        "a": 2,
+        "b": 3
+      },
+      "expected": {
+        "value": 5
+      }
+    },
+    {
+      "id": "sub",
+      "graph": {
+        "schemaVersion": "0.1",
+        "id": "conformance.sub",
+        "version": "0.1.0",
+        "inputs": {
+          "a": {
+            "type": "Number"
+          },
+          "b": {
+            "type": "Number"
+          }
+        },
+        "output": {
+          "type": "Number"
+        },
+        "nodes": [
+          {
+            "id": "value",
+            "uses": "core.sub",
+            "args": {
+              "a": {
+                "input": "a"
+              },
+              "b": {
+                "input": "b"
+              }
+            }
+          }
+        ],
+        "returns": {
+          "node": "value"
+        }
+      },
+      "inputs": {
+        "a": 2,
+        "b": 3
+      },
+      "expected": {
+        "value": -1
+      }
+    },
+    {
+      "id": "mul",
+      "graph": {
+        "schemaVersion": "0.1",
+        "id": "conformance.mul",
+        "version": "0.1.0",
+        "inputs": {
+          "a": {
+            "type": "Number"
+          },
+          "b": {
+            "type": "Number"
+          }
+        },
+        "output": {
+          "type": "Number"
+        },
+        "nodes": [
+          {
+            "id": "value",
+            "uses": "core.mul",
+            "args": {
+              "a": {
+                "input": "a"
+              },
+              "b": {
+                "input": "b"
+              }
+            }
+          }
+        ],
+        "returns": {
+          "node": "value"
+        }
+      },
+      "inputs": {
+        "a": -2,
+        "b": 3
+      },
+      "expected": {
+        "value": -6
+      }
+    },
+    {
+      "id": "div",
+      "graph": {
+        "schemaVersion": "0.1",
+        "id": "conformance.div",
+        "version": "0.1.0",
+        "inputs": {
+          "a": {
+            "type": "Number"
+          },
+          "b": {
+            "type": "Number"
+          }
+        },
+        "output": {
+          "type": "Number"
+        },
+        "nodes": [
+          {
+            "id": "value",
+            "uses": "core.div",
+            "args": {
+              "a": {
+                "input": "a"
+              },
+              "b": {
+                "input": "b"
+              }
+            }
+          }
+        ],
+        "returns": {
+          "node": "value"
+        }
+      },
+      "inputs": {
+        "a": 7,
+        "b": 2
+      },
+      "expected": {
+        "value": 3.5
+      }
+    },
+    {
+      "id": "binary64-rounding",
+      "graph": {
+        "schemaVersion": "0.1",
+        "id": "conformance.binary64-rounding",
+        "version": "0.1.0",
+        "inputs": {
+          "a": {
+            "type": "Number"
+          },
+          "b": {
+            "type": "Number"
+          }
+        },
+        "output": {
+          "type": "Number"
+        },
+        "nodes": [
+          {
+            "id": "value",
+            "uses": "core.add",
+            "args": {
+              "a": {
+                "input": "a"
+              },
+              "b": {
+                "input": "b"
+              }
+            }
+          }
+        ],
+        "returns": {
+          "node": "value"
+        }
+      },
+      "inputs": {
+        "a": 0.1,
+        "b": 0.2
+      },
+      "expected": {
+        "value": 0.30000000000000004
+      }
+    },
+    {
+      "id": "positive-zero-divisor",
+      "graph": {
+        "schemaVersion": "0.1",
+        "id": "conformance.positive-zero-divisor",
+        "version": "0.1.0",
+        "inputs": {
+          "a": {
+            "type": "Number"
+          },
+          "b": {
+            "type": "Number"
+          }
+        },
+        "output": {
+          "type": "Number"
+        },
+        "nodes": [
+          {
+            "id": "value",
+            "uses": "core.div",
+            "args": {
+              "a": {
+                "input": "a"
+              },
+              "b": {
+                "input": "b"
+              }
+            }
+          }
+        ],
+        "returns": {
+          "node": "value"
+        }
+      },
+      "inputs": {
+        "a": 1,
+        "b": 0
+      },
+      "expected": {
+        "error": "DIV_BY_ZERO"
+      }
+    },
+    {
+      "id": "negative-zero-divisor",
+      "graph": {
+        "schemaVersion": "0.1",
+        "id": "conformance.negative-zero-divisor",
+        "version": "0.1.0",
+        "inputs": {
+          "a": {
+            "type": "Number"
+          },
+          "b": {
+            "type": "Number"
+          }
+        },
+        "output": {
+          "type": "Number"
+        },
+        "nodes": [
+          {
+            "id": "value",
+            "uses": "core.div",
+            "args": {
+              "a": {
+                "input": "a"
+              },
+              "b": {
+                "input": "b"
+              }
+            }
+          }
+        ],
+        "returns": {
+          "node": "value"
+        }
+      },
+      "inputs": {
+        "a": 1,
+        "b": -0.0
+      },
+      "expected": {
+        "error": "DIV_BY_ZERO"
+      }
+    },
+    {
+      "id": "negative-zero-product",
+      "graph": {
+        "schemaVersion": "0.1",
+        "id": "conformance.negative-zero-product",
+        "version": "0.1.0",
+        "inputs": {
+          "a": {
+            "type": "Number"
+          },
+          "b": {
+            "type": "Number"
+          }
+        },
+        "output": {
+          "type": "Number"
+        },
+        "nodes": [
+          {
+            "id": "value",
+            "uses": "core.mul",
+            "args": {
+              "a": {
+                "input": "a"
+              },
+              "b": {
+                "input": "b"
+              }
+            }
+          }
+        ],
+        "returns": {
+          "node": "value"
+        }
+      },
+      "inputs": {
+        "a": -0.0,
+        "b": 2
+      },
+      "expected": {
+        "value": -0.0,
+        "negativeZero": true
+      }
+    },
+    {
+      "id": "underflow",
+      "graph": {
+        "schemaVersion": "0.1",
+        "id": "conformance.underflow",
+        "version": "0.1.0",
+        "inputs": {
+          "a": {
+            "type": "Number"
+          },
+          "b": {
+            "type": "Number"
+          }
+        },
+        "output": {
+          "type": "Number"
+        },
+        "nodes": [
+          {
+            "id": "value",
+            "uses": "core.div",
+            "args": {
+              "a": {
+                "input": "a"
+              },
+              "b": {
+                "input": "b"
+              }
+            }
+          }
+        ],
+        "returns": {
+          "node": "value"
+        }
+      },
+      "inputs": {
+        "a": 5e-324,
+        "b": 2
+      },
+      "expected": {
+        "value": 0
+      }
+    },
+    {
+      "id": "negative-underflow",
+      "graph": {
+        "schemaVersion": "0.1",
+        "id": "conformance.negative-underflow",
+        "version": "0.1.0",
+        "inputs": {
+          "a": {
+            "type": "Number"
+          },
+          "b": {
+            "type": "Number"
+          }
+        },
+        "output": {
+          "type": "Number"
+        },
+        "nodes": [
+          {
+            "id": "value",
+            "uses": "core.div",
+            "args": {
+              "a": {
+                "input": "a"
+              },
+              "b": {
+                "input": "b"
+              }
+            }
+          }
+        ],
+        "returns": {
+          "node": "value"
+        }
+      },
+      "inputs": {
+        "a": -5e-324,
+        "b": 2
+      },
+      "expected": {
+        "value": -0.0,
+        "negativeZero": true
+      }
+    },
+    {
+      "id": "addition-overflow",
+      "graph": {
+        "schemaVersion": "0.1",
+        "id": "conformance.addition-overflow",
+        "version": "0.1.0",
+        "inputs": {
+          "a": {
+            "type": "Number"
+          },
+          "b": {
+            "type": "Number"
+          }
+        },
+        "output": {
+          "type": "Number"
+        },
+        "nodes": [
+          {
+            "id": "value",
+            "uses": "core.add",
+            "args": {
+              "a": {
+                "input": "a"
+              },
+              "b": {
+                "input": "b"
+              }
+            }
+          }
+        ],
+        "returns": {
+          "node": "value"
+        }
+      },
+      "inputs": {
+        "a": 1.7976931348623157e+308,
+        "b": 1.7976931348623157e+308
+      },
+      "expected": {
+        "error": "TYPE_MISMATCH"
+      }
+    },
+    {
+      "id": "multiplication-overflow",
+      "graph": {
+        "schemaVersion": "0.1",
+        "id": "conformance.multiplication-overflow",
+        "version": "0.1.0",
+        "inputs": {
+          "a": {
+            "type": "Number"
+          },
+          "b": {
+            "type": "Number"
+          }
+        },
+        "output": {
+          "type": "Number"
+        },
+        "nodes": [
+          {
+            "id": "value",
+            "uses": "core.mul",
+            "args": {
+              "a": {
+                "input": "a"
+              },
+              "b": {
+                "input": "b"
+              }
+            }
+          }
+        ],
+        "returns": {
+          "node": "value"
+        }
+      },
+      "inputs": {
+        "a": 1.7976931348623157e+308,
+        "b": 2
+      },
+      "expected": {
+        "error": "TYPE_MISMATCH"
+      }
+    },
+    {
+      "id": "empty-sum",
+      "graph": {
+        "schemaVersion": "0.1",
+        "id": "conformance.empty-sum",
+        "version": "0.1.0",
+        "inputs": {
+          "values": {
+            "type": "NumberArray"
+          }
+        },
+        "output": {
+          "type": "Number"
+        },
+        "nodes": [
+          {
+            "id": "value",
+            "uses": "core.sum",
+            "args": {
+              "values": {
+                "input": "values"
+              }
+            }
+          }
+        ],
+        "returns": {
+          "node": "value"
+        }
+      },
+      "inputs": {
+        "values": []
+      },
+      "expected": {
+        "value": 0
+      }
+    },
+    {
+      "id": "empty-min",
+      "graph": {
+        "schemaVersion": "0.1",
+        "id": "conformance.empty-min",
+        "version": "0.1.0",
+        "inputs": {
+          "values": {
+            "type": "NumberArray"
+          }
+        },
+        "output": {
+          "type": "Number"
+        },
+        "nodes": [
+          {
+            "id": "value",
+            "uses": "core.min",
+            "args": {
+              "values": {
+                "input": "values"
+              }
+            }
+          }
+        ],
+        "returns": {
+          "node": "value"
+        }
+      },
+      "inputs": {
+        "values": []
+      },
+      "expected": {
+        "error": "EMPTY_ARRAY"
+      }
+    },
+    {
+      "id": "empty-max",
+      "graph": {
+        "schemaVersion": "0.1",
+        "id": "conformance.empty-max",
+        "version": "0.1.0",
+        "inputs": {
+          "values": {
+            "type": "NumberArray"
+          }
+        },
+        "output": {
+          "type": "Number"
+        },
+        "nodes": [
+          {
+            "id": "value",
+            "uses": "core.max",
+            "args": {
+              "values": {
+                "input": "values"
+              }
+            }
+          }
+        ],
+        "returns": {
+          "node": "value"
+        }
+      },
+      "inputs": {
+        "values": []
+      },
+      "expected": {
+        "error": "EMPTY_ARRAY"
+      }
+    },
+    {
+      "id": "left-fold-sum",
+      "graph": {
+        "schemaVersion": "0.1",
+        "id": "conformance.left-fold-sum",
+        "version": "0.1.0",
+        "inputs": {
+          "values": {
+            "type": "NumberArray"
+          }
+        },
+        "output": {
+          "type": "Number"
+        },
+        "nodes": [
+          {
+            "id": "value",
+            "uses": "core.sum",
+            "args": {
+              "values": {
+                "input": "values"
+              }
+            }
+          }
+        ],
+        "returns": {
+          "node": "value"
+        }
+      },
+      "inputs": {
+        "values": [
+          1e+16,
+          1,
+          -1e+16
+        ]
+      },
+      "expected": {
+        "value": 0
+      }
+    },
+    {
+      "id": "sum-overflow",
+      "graph": {
+        "schemaVersion": "0.1",
+        "id": "conformance.sum-overflow",
+        "version": "0.1.0",
+        "inputs": {
+          "values": {
+            "type": "NumberArray"
+          }
+        },
+        "output": {
+          "type": "Number"
+        },
+        "nodes": [
+          {
+            "id": "value",
+            "uses": "core.sum",
+            "args": {
+              "values": {
+                "input": "values"
+              }
+            }
+          }
+        ],
+        "returns": {
+          "node": "value"
+        }
+      },
+      "inputs": {
+        "values": [
+          1.7976931348623157e+308,
+          1.7976931348623157e+308
+        ]
+      },
+      "expected": {
+        "error": "TYPE_MISMATCH"
+      }
+    },
+    {
+      "id": "min",
+      "graph": {
+        "schemaVersion": "0.1",
+        "id": "conformance.min",
+        "version": "0.1.0",
+        "inputs": {
+          "values": {
+            "type": "NumberArray"
+          }
+        },
+        "output": {
+          "type": "Number"
+        },
+        "nodes": [
+          {
+            "id": "value",
+            "uses": "core.min",
+            "args": {
+              "values": {
+                "input": "values"
+              }
+            }
+          }
+        ],
+        "returns": {
+          "node": "value"
+        }
+      },
+      "inputs": {
+        "values": [
+          5,
+          1,
+          9
+        ]
+      },
+      "expected": {
+        "value": 1
+      }
+    },
+    {
+      "id": "max",
+      "graph": {
+        "schemaVersion": "0.1",
+        "id": "conformance.max",
+        "version": "0.1.0",
+        "inputs": {
+          "values": {
+            "type": "NumberArray"
+          }
+        },
+        "output": {
+          "type": "Number"
+        },
+        "nodes": [
+          {
+            "id": "value",
+            "uses": "core.max",
+            "args": {
+              "values": {
+                "input": "values"
+              }
+            }
+          }
+        ],
+        "returns": {
+          "node": "value"
+        }
+      },
+      "inputs": {
+        "values": [
+          5,
+          1,
+          9
+        ]
+      },
+      "expected": {
+        "value": 9
+      }
+    },
+    {
+      "id": "min-negative-zero",
+      "graph": {
+        "schemaVersion": "0.1",
+        "id": "conformance.min-negative-zero",
+        "version": "0.1.0",
+        "inputs": {
+          "values": {
+            "type": "NumberArray"
+          }
+        },
+        "output": {
+          "type": "Number"
+        },
+        "nodes": [
+          {
+            "id": "value",
+            "uses": "core.min",
+            "args": {
+              "values": {
+                "input": "values"
+              }
+            }
+          }
+        ],
+        "returns": {
+          "node": "value"
+        }
+      },
+      "inputs": {
+        "values": [
+          0,
+          -0.0
+        ]
+      },
+      "expected": {
+        "value": -0.0,
+        "negativeZero": true
+      }
+    },
+    {
+      "id": "max-positive-zero",
+      "graph": {
+        "schemaVersion": "0.1",
+        "id": "conformance.max-positive-zero",
+        "version": "0.1.0",
+        "inputs": {
+          "values": {
+            "type": "NumberArray"
+          }
+        },
+        "output": {
+          "type": "Number"
+        },
+        "nodes": [
+          {
+            "id": "value",
+            "uses": "core.max",
+            "args": {
+              "values": {
+                "input": "values"
+              }
+            }
+          }
+        ],
+        "returns": {
+          "node": "value"
+        }
+      },
+      "inputs": {
+        "values": [
+          -0.0,
+          0
+        ]
+      },
+      "expected": {
+        "value": 0
+      }
+    },
+    {
+      "id": "overflow-before-finite-return",
+      "graph": {
+        "schemaVersion": "0.1",
+        "id": "conformance.overflow-before-finite-return",
+        "version": "0.1.0",
+        "inputs": {
+          "a": {
+            "type": "Number"
+          },
+          "b": {
+            "type": "Number"
+          }
+        },
+        "output": {
+          "type": "Number"
+        },
+        "nodes": [
+          {
+            "id": "value",
+            "uses": "core.mul",
+            "args": {
+              "a": {
+                "input": "a"
+              },
+              "b": {
+                "input": "b"
+              }
+            }
+          },
+          {
+            "id": "finite",
+            "uses": "core.div",
+            "args": {
+              "a": {
+                "literal": 1
+              },
+              "b": {
+                "node": "value"
+              }
+            }
+          }
+        ],
+        "returns": {
+          "node": "finite"
+        }
+      },
+      "inputs": {
+        "a": 1.7976931348623157e+308,
+        "b": 2
+      },
+      "expected": {
+        "error": "TYPE_MISMATCH"
+      }
+    },
+    {
+      "id": "number-identity",
+      "graph": {
+        "schemaVersion": "0.1",
+        "id": "conformance.number-identity",
+        "version": "0.1.0",
+        "inputs": {
+          "x": {
+            "type": "Number"
+          }
+        },
+        "output": {
+          "type": "Number"
+        },
+        "nodes": [],
+        "returns": {
+          "input": "x"
+        }
+      },
+      "inputs": {
+        "x": 12
+      },
+      "expected": {
+        "value": 12
+      }
+    },
+    {
+      "id": "boolean-identity",
+      "graph": {
+        "schemaVersion": "0.1",
+        "id": "conformance.boolean-identity",
+        "version": "0.1.0",
+        "inputs": {
+          "x": {
+            "type": "Boolean"
+          }
+        },
+        "output": {
+          "type": "Boolean"
+        },
+        "nodes": [],
+        "returns": {
+          "input": "x"
+        }
+      },
+      "inputs": {
+        "x": false
+      },
+      "expected": {
+        "value": false
+      }
+    },
+    {
+      "id": "string-identity",
+      "graph": {
+        "schemaVersion": "0.1",
+        "id": "conformance.string-identity",
+        "version": "0.1.0",
+        "inputs": {
+          "x": {
+            "type": "String"
+          }
+        },
+        "output": {
+          "type": "String"
+        },
+        "nodes": [],
+        "returns": {
+          "input": "x"
+        }
+      },
+      "inputs": {
+        "x": "EMS"
+      },
+      "expected": {
+        "value": "EMS"
+      }
+    },
+    {
+      "id": "array-identity",
+      "graph": {
+        "schemaVersion": "0.1",
+        "id": "conformance.array-identity",
+        "version": "0.1.0",
+        "inputs": {
+          "x": {
+            "type": "NumberArray"
+          }
+        },
+        "output": {
+          "type": "NumberArray"
+        },
+        "nodes": [],
+        "returns": {
+          "input": "x"
+        }
+      },
+      "inputs": {
+        "x": [
+          1,
+          2
+        ]
+      },
+      "expected": {
+        "value": [
+          1,
+          2
+        ]
+      }
+    },
+    {
+      "id": "literal-negative-zero",
+      "graph": {
+        "schemaVersion": "0.1",
+        "id": "conformance.literal-negative-zero",
+        "version": "0.1.0",
+        "inputs": {},
+        "output": {
+          "type": "Number"
+        },
+        "nodes": [],
+        "returns": {
+          "literal": -0.0
+        }
+      },
+      "inputs": {},
+      "expected": {
+        "value": -0.0,
+        "negativeZero": true
+      }
+    },
+    {
+      "id": "literal-array-negative-zero",
+      "graph": {
+        "schemaVersion": "0.1",
+        "id": "conformance.literal-array-negative-zero",
+        "version": "0.1.0",
+        "inputs": {},
+        "output": {
+          "type": "NumberArray"
+        },
+        "nodes": [],
+        "returns": {
+          "literal": [
+            -0.0,
+            1
+          ]
+        }
+      },
+      "inputs": {},
+      "expected": {
+        "value": [
+          -0.0,
+          1
+        ]
+      }
+    }
+  ]
+}

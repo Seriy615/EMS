@@ -1,0 +1,848 @@
+{
+  "schemaVersion": "1.0",
+  "project": "EMS",
+  "description": "Dependency-sorted work items; acceptance evidence is recorded in docs/qa/STATUS.md.",
+  "agentPolicy": {
+    "approved": [
+      "GPT-6.1 Sol",
+      "GPT-6 Luna"
+    ],
+    "forbidden": [
+      "GPT-5.6 Sol",
+      "Astra"
+    ],
+    "fallback": "forbidden"
+  },
+  "tasks": [
+    {
+      "id": "EMS-001",
+      "title": "Reference typed graph validator and evaluator",
+      "phase": "M0",
+      "dependsOn": [],
+      "objective": "Implement minimal schema + typed pure dataflow evaluation",
+      "deliverables": "node evaluator & negative type tests",
+      "acceptance": "Pass AC-001/003/004",
+      "status": "DONE",
+      "priority": "P0",
+      "ownerModelPolicy": [
+        "GPT-6.1 Sol",
+        "GPT-6 Luna"
+      ]
+    },
+    {
+      "id": "EMS-002",
+      "title": "Reference textual EMS subset",
+      "phase": "M0",
+      "dependsOn": [
+        "EMS-001"
+      ],
+      "objective": "Parse a safe tiny textual contract subset into graph",
+      "deliverables": "Parser, avg5.ems",
+      "acceptance": "Pass AC-002; no arbitrary JS eval",
+      "status": "DONE",
+      "priority": "P0",
+      "ownerModelPolicy": [
+        "GPT-6.1 Sol",
+        "GPT-6 Luna"
+      ]
+    },
+    {
+      "id": "EMS-003",
+      "title": "Pure standalone JS backend",
+      "phase": "M0",
+      "dependsOn": [
+        "EMS-001"
+      ],
+      "objective": "Export a pure graph to dependency-free JS",
+      "deliverables": "Compiler, CLI build",
+      "acceptance": "Pass AC-006 and rejection of effectful blocks",
+      "status": "DONE",
+      "priority": "P0",
+      "ownerModelPolicy": [
+        "GPT-6.1 Sol",
+        "GPT-6 Luna"
+      ]
+    },
+    {
+      "id": "EMS-004",
+      "title": "Composite-to-atomic packaging",
+      "phase": "M0",
+      "dependsOn": [
+        "EMS-003"
+      ],
+      "objective": "Compile composite and expose public manifest without graph",
+      "deliverables": "CLI seal, atomic registration",
+      "acceptance": "Pass AC-007/008",
+      "status": "DONE",
+      "priority": "P0",
+      "ownerModelPolicy": [
+        "GPT-6.1 Sol",
+        "GPT-6 Luna"
+      ]
+    },
+    {
+      "id": "EMS-005",
+      "title": "Trusted ESM functions -> atoms",
+      "phase": "M0",
+      "dependsOn": [
+        "EMS-001"
+      ],
+      "objective": "Explicitly bind selected ESM exports to multiple atomic contracts",
+      "deliverables": "Binding manifest and sample package",
+      "acceptance": "Pass AC-009; warn not sandboxed",
+      "status": "DONE",
+      "priority": "P0",
+      "ownerModelPolicy": [
+        "GPT-6.1 Sol",
+        "GPT-6 Luna"
+      ]
+    },
+    {
+      "id": "EMS-006",
+      "title": "Reference QA and Codex bootstrap",
+      "phase": "M0",
+      "dependsOn": [
+        "EMS-001",
+        "EMS-005"
+      ],
+      "objective": "Ship docs, model policy, tests, verify script",
+      "deliverables": "README AGENTS.md baseline QA",
+      "acceptance": "npm test and npm run verify, documented limits",
+      "status": "DONE",
+      "priority": "P0",
+      "ownerModelPolicy": [
+        "GPT-6.1 Sol",
+        "GPT-6 Luna"
+      ]
+    },
+    {
+      "id": "EMS-010",
+      "title": "Normative language semantic draft",
+      "phase": "M1",
+      "dependsOn": [
+        "EMS-006"
+      ],
+      "objective": "Specify value/call/graph/effect/error semantics including numeric edge cases",
+      "deliverables": "docs/spec/LANGUAGE_SEMANTICS.md",
+      "acceptance": "Conformance vectors unambiguous",
+      "status": "DONE",
+      "priority": "P0",
+      "ownerModelPolicy": [
+        "GPT-6.1 Sol",
+        "GPT-6 Luna"
+      ],
+      "evidence": {
+        "acceptance": "AC-025",
+        "commands": [
+          "npm test (59/59 PASS)",
+          "npm run verify (18/18 PASS)"
+        ],
+        "files": [
+          "docs/spec/LANGUAGE_SEMANTICS.md",
+          "tests/fixtures/semantics.json",
+          "tests/semantics.test.mjs"
+        ]
+      }
+    },
+    {
+      "id": "EMS-011",
+      "title": "Typed HIR and canonical IR schema",
+      "phase": "M1",
+      "dependsOn": [
+        "EMS-010"
+      ],
+      "objective": "Define IR versioning, types and source maps independent of canvas",
+      "deliverables": "IR schema and test fixtures",
+      "acceptance": "Serialization roundtrip and version check",
+      "status": "DONE",
+      "priority": "P0",
+      "ownerModelPolicy": [
+        "GPT-6.1 Sol",
+        "GPT-6 Luna"
+      ],
+      "evidence": {
+        "acceptance": "AC-026",
+        "commands": [
+          "npm test (110/110 PASS)",
+          "npm run verify (29/29 PASS)"
+        ],
+        "files": [
+          "src/ir/index.mjs",
+          "schemas/ir.schema.json",
+          "docs/spec/IR.md",
+          "tests/ir.test.mjs"
+        ]
+      }
+    },
+    {
+      "id": "EMS-012",
+      "title": "Full textual grammar and parser",
+      "phase": "M1",
+      "dependsOn": [
+        "EMS-010"
+      ],
+      "objective": "Implement functions, literals, conditions, loops, modules and errors",
+      "deliverables": "Parser + AST fixtures",
+      "acceptance": "Positive and negative syntax tests",
+      "status": "DONE",
+      "priority": "P0",
+      "ownerModelPolicy": [
+        "GPT-6.1 Sol",
+        "GPT-6 Luna"
+      ],
+      "evidence": {
+        "acceptance": "AC-027",
+        "commands": [
+          "npm test (153/153 PASS)",
+          "npm run verify (31/31 PASS)"
+        ],
+        "files": [
+          "src/frontend/index.mjs",
+          "docs/spec/TEXT_GRAMMAR.md",
+          "tests/frontend.test.mjs",
+          "examples/language-core.ems"
+        ]
+      }
+    },
+    {
+      "id": "EMS-013",
+      "title": "Type checker and generics",
+      "phase": "M1",
+      "dependsOn": [
+        "EMS-011",
+        "EMS-012"
+      ],
+      "objective": "Add composites, generics, unions, collections and resources",
+      "deliverables": "Typed compiler pass",
+      "acceptance": "Reject invalid programs with location",
+      "status": "DONE",
+      "priority": "P0",
+      "ownerModelPolicy": [
+        "GPT-6.1 Sol",
+        "GPT-6 Luna"
+      ],
+      "evidence": {
+        "acceptance": "AC-028",
+        "commands": [
+          "npm test (211/211 PASS)",
+          "npm run verify (33/33 PASS)"
+        ],
+        "files": [
+          "src/frontend/types.mjs",
+          "src/frontend/check.mjs",
+          "src/frontend/lower.mjs",
+          "docs/spec/TYPE_CHECKING.md",
+          "tests/types.test.mjs",
+          "tests/check.test.mjs",
+          "tests/lower.test.mjs"
+        ],
+        "limits": "Type pass is implemented for documented initial profile; full control/state/async execution, FFI ownership and IR lowering of algebraic values remain later gates."
+      }
+    },
+    {
+      "id": "EMS-014",
+      "title": "Explicit effect/capability system",
+      "phase": "M1",
+      "dependsOn": [
+        "EMS-011"
+      ],
+      "objective": "Model file/net/device/etc effects in IR and verifier",
+      "deliverables": "Effect checker and capability schema",
+      "acceptance": "No unauthorized effect silently compiled",
+      "status": "IN_PROGRESS",
+      "priority": "P0",
+      "ownerModelPolicy": [
+        "GPT-6.1 Sol",
+        "GPT-6 Luna"
+      ],
+      "progress": "Transitive graph effect/capability metadata analysis and distinct authorization gates tested. AST/IR effect fields, execution integration and sequencing remain pending."
+    },
+    {
+      "id": "EMS-015",
+      "title": "Control-flow async and state semantics",
+      "phase": "M1",
+      "dependsOn": [
+        "EMS-011",
+        "EMS-013"
+      ],
+      "objective": "Specify & implement state, cancellation, futures, events and deterministic ordering where possible",
+      "deliverables": "Runtime reference conformance",
+      "acceptance": "Replay tests show stable semantics",
+      "status": "TODO",
+      "priority": "P0",
+      "ownerModelPolicy": [
+        "GPT-6.1 Sol",
+        "GPT-6 Luna"
+      ]
+    },
+    {
+      "id": "EMS-016",
+      "title": "Contract IDL + compatibility rules",
+      "phase": "M1",
+      "dependsOn": [
+        "EMS-013"
+      ],
+      "objective": "Formalize contract interface, versions, errors, pre/post and implementation refs",
+      "deliverables": "IDL schema and examples",
+      "acceptance": "Incompatible version/binding rejected",
+      "status": "TODO",
+      "priority": "P0",
+      "ownerModelPolicy": [
+        "GPT-6.1 Sol",
+        "GPT-6 Luna"
+      ]
+    },
+    {
+      "id": "EMS-017",
+      "title": "Differential conformance harness",
+      "phase": "M1",
+      "dependsOn": [
+        "EMS-015",
+        "EMS-016"
+      ],
+      "objective": "Run same semantic fixtures through reference and compiled target",
+      "deliverables": "Cross executor compare tool",
+      "acceptance": "Pass deterministic suite and error trace",
+      "status": "TODO",
+      "priority": "P0",
+      "ownerModelPolicy": [
+        "GPT-6.1 Sol",
+        "GPT-6 Luna"
+      ]
+    },
+    {
+      "id": "EMS-030",
+      "title": "Visual node editor",
+      "phase": "M2",
+      "dependsOn": [
+        "EMS-011",
+        "EMS-016"
+      ],
+      "objective": "Create interactive typed editor, undo and save/load",
+      "deliverables": "UI editor",
+      "acceptance": "Round-trip graph execution",
+      "status": "TODO",
+      "priority": "P1",
+      "ownerModelPolicy": [
+        "GPT-6.1 Sol",
+        "GPT-6 Luna"
+      ]
+    },
+    {
+      "id": "EMS-031",
+      "title": "Nested composite expand/collapse",
+      "phase": "M2",
+      "dependsOn": [
+        "EMS-030"
+      ],
+      "objective": "Inspect nested composite graphs; atoms remain leaves",
+      "deliverables": "Graph navigator",
+      "acceptance": "Pass AC-013 demo with nested graph",
+      "status": "TODO",
+      "priority": "P0",
+      "ownerModelPolicy": [
+        "GPT-6.1 Sol",
+        "GPT-6 Luna"
+      ]
+    },
+    {
+      "id": "EMS-032",
+      "title": "Text & visual unified source maps",
+      "phase": "M2",
+      "dependsOn": [
+        "EMS-012",
+        "EMS-030"
+      ],
+      "objective": "Map text AST and visual nodes to same IR, no semantic divergence",
+      "deliverables": "Bidirectional editor linking",
+      "acceptance": "Pass AC-012 and location-aware errors",
+      "status": "TODO",
+      "priority": "P0",
+      "ownerModelPolicy": [
+        "GPT-6.1 Sol",
+        "GPT-6 Luna"
+      ]
+    },
+    {
+      "id": "EMS-033",
+      "title": "Debugger and contract inspector",
+      "phase": "M2",
+      "dependsOn": [
+        "EMS-031",
+        "EMS-015"
+      ],
+      "objective": "Step through executions, view types/effects/state safely",
+      "deliverables": "Debugger panels",
+      "acceptance": "Pinpoint node and hide secrets",
+      "status": "TODO",
+      "priority": "P1",
+      "ownerModelPolicy": [
+        "GPT-6.1 Sol",
+        "GPT-6 Luna"
+      ]
+    },
+    {
+      "id": "EMS-050",
+      "title": "Browser DOM/UI backend",
+      "phase": "M3",
+      "dependsOn": [
+        "EMS-015",
+        "EMS-030"
+      ],
+      "objective": "Build universal semantic UI tree with DOM adapter",
+      "deliverables": "Web renderer + UI contracts",
+      "acceptance": "Pass state/UI event demo AC-014",
+      "status": "TODO",
+      "priority": "P0",
+      "ownerModelPolicy": [
+        "GPT-6.1 Sol",
+        "GPT-6 Luna"
+      ]
+    },
+    {
+      "id": "EMS-051",
+      "title": "Reactive state & lifecycle",
+      "phase": "M3",
+      "dependsOn": [
+        "EMS-050"
+      ],
+      "objective": "Provide lifecycle, reactive binding, event dispatch, accessible components",
+      "deliverables": "UI state runtime",
+      "acceptance": "No stale event/listener leaks",
+      "status": "TODO",
+      "priority": "P0",
+      "ownerModelPolicy": [
+        "GPT-6.1 Sol",
+        "GPT-6 Luna"
+      ]
+    },
+    {
+      "id": "EMS-060",
+      "title": "Production IR lowering & JS backend",
+      "phase": "M4",
+      "dependsOn": [
+        "EMS-011",
+        "EMS-017"
+      ],
+      "objective": "Implement IR to standalone JS, with source maps and explicit host calls",
+      "deliverables": "JS backend/linker",
+      "acceptance": "Conformance suite, no runtime IDE",
+      "status": "TODO",
+      "priority": "P0",
+      "ownerModelPolicy": [
+        "GPT-6.1 Sol",
+        "GPT-6 Luna"
+      ]
+    },
+    {
+      "id": "EMS-061",
+      "title": "Web app packaging & PWA export",
+      "phase": "M4",
+      "dependsOn": [
+        "EMS-050",
+        "EMS-060"
+      ],
+      "objective": "Export complete web app without EMS IDE",
+      "deliverables": "web package generator",
+      "acceptance": "Run on independent static host",
+      "status": "TODO",
+      "priority": "P0",
+      "ownerModelPolicy": [
+        "GPT-6.1 Sol",
+        "GPT-6 Luna"
+      ]
+    },
+    {
+      "id": "EMS-062",
+      "title": "Composite sealing to module bundle",
+      "phase": "M4",
+      "dependsOn": [
+        "EMS-016",
+        "EMS-060"
+      ],
+      "objective": "Versioned atomic package from composite IR, omit source graph",
+      "deliverables": "Seal tool with ABI manifest",
+      "acceptance": "Re-import into another graph and run",
+      "status": "TODO",
+      "priority": "P0",
+      "ownerModelPolicy": [
+        "GPT-6.1 Sol",
+        "GPT-6 Luna"
+      ]
+    },
+    {
+      "id": "EMS-120",
+      "title": "FFI package and binding manifest",
+      "phase": "M5",
+      "dependsOn": [
+        "EMS-016",
+        "EMS-062"
+      ],
+      "objective": "Define library -> set of typed atomic contracts with explicit metadata",
+      "deliverables": "Binding IDL and source map",
+      "acceptance": "Mapped functions have explicit errors and effects",
+      "status": "TODO",
+      "priority": "P0",
+      "ownerModelPolicy": [
+        "GPT-6.1 Sol",
+        "GPT-6 Luna"
+      ]
+    },
+    {
+      "id": "EMS-121",
+      "title": "Foreign type mapping & ownership",
+      "phase": "M5",
+      "dependsOn": [
+        "EMS-120"
+      ],
+      "objective": "Define endian, encoding, pointers, ownership, lifetimes and callbacks",
+      "deliverables": "FFI type mapper",
+      "acceptance": "ABI and lifetime negative cases",
+      "status": "TODO",
+      "priority": "P0",
+      "ownerModelPolicy": [
+        "GPT-6.1 Sol",
+        "GPT-6 Luna"
+      ]
+    },
+    {
+      "id": "EMS-122",
+      "title": "WASM component and C ABI loader",
+      "phase": "M5",
+      "dependsOn": [
+        "EMS-121"
+      ],
+      "objective": "Support real safe wasm component and vetted native ABI module",
+      "deliverables": "Portable/target-specific loader",
+      "acceptance": "Real library integration tests",
+      "status": "TODO",
+      "priority": "P0",
+      "ownerModelPolicy": [
+        "GPT-6.1 Sol",
+        "GPT-6 Luna"
+      ]
+    },
+    {
+      "id": "EMS-123",
+      "title": "Import package auto-block generator",
+      "phase": "M5",
+      "dependsOn": [
+        "EMS-122"
+      ],
+      "objective": "Convert externally declared functions into separate visual blocks",
+      "deliverables": "Importer IDE workflow",
+      "acceptance": "Imported package yields multiple atoms",
+      "status": "TODO",
+      "priority": "P0",
+      "ownerModelPolicy": [
+        "GPT-6.1 Sol",
+        "GPT-6 Luna"
+      ]
+    },
+    {
+      "id": "EMS-124",
+      "title": "Audited crypto library demonstration",
+      "phase": "M5",
+      "dependsOn": [
+        "EMS-122"
+      ],
+      "objective": "Bind AES-256-GCM from existing verified library with nonce/secret constraints",
+      "deliverables": "Crypto atomic package and vectors",
+      "acceptance": "Standard test vectors and rejection of invalid tag",
+      "status": "TODO",
+      "priority": "P0",
+      "ownerModelPolicy": [
+        "GPT-6.1 Sol",
+        "GPT-6 Luna"
+      ]
+    },
+    {
+      "id": "EMS-125",
+      "title": "Plugin isolation & safe host",
+      "phase": "M5",
+      "dependsOn": [
+        "EMS-122",
+        "EMS-014"
+      ],
+      "objective": "Stop untrusted code from executing unrestricted in process",
+      "deliverables": "Sandbox and permission broker",
+      "acceptance": "Host access negative tests and secret redaction",
+      "status": "TODO",
+      "priority": "P0",
+      "ownerModelPolicy": [
+        "GPT-6.1 Sol",
+        "GPT-6 Luna"
+      ]
+    },
+    {
+      "id": "EMS-140",
+      "title": "Second OS/backend proof",
+      "phase": "M6",
+      "dependsOn": [
+        "EMS-061",
+        "EMS-122"
+      ],
+      "objective": "Choose real second target, implement contract adapters",
+      "deliverables": "Native/desktop target build",
+      "acceptance": "Exact same source logic graph passes AC-018",
+      "status": "TODO",
+      "priority": "P0",
+      "ownerModelPolicy": [
+        "GPT-6.1 Sol",
+        "GPT-6 Luna"
+      ]
+    },
+    {
+      "id": "EMS-141",
+      "title": "Universal UI native implementation",
+      "phase": "M6",
+      "dependsOn": [
+        "EMS-051",
+        "EMS-140"
+      ],
+      "objective": "Map portable UI semantics to second target",
+      "deliverables": "UI adapter and conformance suite",
+      "acceptance": "Logical UI tests on 2 targets",
+      "status": "TODO",
+      "priority": "P1",
+      "ownerModelPolicy": [
+        "GPT-6.1 Sol",
+        "GPT-6 Luna"
+      ]
+    },
+    {
+      "id": "EMS-142",
+      "title": "Platform capabilities and binding discovery",
+      "phase": "M6",
+      "dependsOn": [
+        "EMS-140"
+      ],
+      "objective": "Select implementations by target+permission+capabilities, fail explicitly",
+      "deliverables": "Resolver and error model",
+      "acceptance": "Unsupported functions never silently shimmed",
+      "status": "TODO",
+      "priority": "P0",
+      "ownerModelPolicy": [
+        "GPT-6.1 Sol",
+        "GPT-6 Luna"
+      ]
+    },
+    {
+      "id": "EMS-160",
+      "title": "Distributed graph execution",
+      "phase": "M7",
+      "dependsOn": [
+        "EMS-015",
+        "EMS-051",
+        "EMS-142"
+      ],
+      "objective": "Partition logical app with explicit RPC and placement",
+      "deliverables": "Client/server/edge runtime",
+      "acceptance": "Inter-node typechecked graph and auth",
+      "status": "TODO",
+      "priority": "P0",
+      "ownerModelPolicy": [
+        "GPT-6.1 Sol",
+        "GPT-6 Luna"
+      ]
+    },
+    {
+      "id": "EMS-161",
+      "title": "Offline mode and reconciliation",
+      "phase": "M7",
+      "dependsOn": [
+        "EMS-160"
+      ],
+      "objective": "Define event persistence and conflict strategies",
+      "deliverables": "Offline transport/storage",
+      "acceptance": "Partition/reconnect tests",
+      "status": "TODO",
+      "priority": "P1",
+      "ownerModelPolicy": [
+        "GPT-6.1 Sol",
+        "GPT-6 Luna"
+      ]
+    },
+    {
+      "id": "EMS-162",
+      "title": "Musical Bingo E2E demo",
+      "phase": "M7",
+      "dependsOn": [
+        "EMS-160",
+        "EMS-061"
+      ],
+      "objective": "Build real role-based bingo with cards, players, host and projector",
+      "deliverables": "Running deployed product",
+      "acceptance": "2 clients + host synchronously finish round",
+      "status": "TODO",
+      "priority": "P0",
+      "ownerModelPolicy": [
+        "GPT-6.1 Sol",
+        "GPT-6 Luna"
+      ]
+    },
+    {
+      "id": "EMS-180",
+      "title": "Device adapters and SDK",
+      "phase": "M8",
+      "dependsOn": [
+        "EMS-125",
+        "EMS-142"
+      ],
+      "objective": "Expose USB/Serial/HID/BT drivers as capability checked atomics",
+      "deliverables": "Driver SDK and discovery",
+      "acceptance": "2 device implementations of 1 contract",
+      "status": "TODO",
+      "priority": "P0",
+      "ownerModelPolicy": [
+        "GPT-6.1 Sol",
+        "GPT-6 Luna"
+      ]
+    },
+    {
+      "id": "EMS-181",
+      "title": "Realtime media/render adapters",
+      "phase": "M8",
+      "dependsOn": [
+        "EMS-180",
+        "EMS-051"
+      ],
+      "objective": "Support native low latency media/render engines under EMS contracts",
+      "deliverables": "Media bindings and performance report",
+      "acceptance": "No naive per-frame remote JS interpreter",
+      "status": "TODO",
+      "priority": "P1",
+      "ownerModelPolicy": [
+        "GPT-6.1 Sol",
+        "GPT-6 Luna"
+      ]
+    },
+    {
+      "id": "EMS-182",
+      "title": "Speedcubing competition demo",
+      "phase": "M8",
+      "dependsOn": [
+        "EMS-180",
+        "EMS-160"
+      ],
+      "objective": "Official WCA rules, timer adapter, scoreboards and overlay",
+      "deliverables": "Real scenario demo + compliance tests",
+      "acceptance": "Pass AC-024 incl DNF and penalties",
+      "status": "TODO",
+      "priority": "P0",
+      "ownerModelPolicy": [
+        "GPT-6.1 Sol",
+        "GPT-6 Luna"
+      ]
+    },
+    {
+      "id": "EMS-200",
+      "title": "AI contract discovery and graph plan",
+      "phase": "M9",
+      "dependsOn": [
+        "EMS-016",
+        "EMS-030",
+        "EMS-017"
+      ],
+      "objective": "Agent lists real contracts and produces typed graph candidate",
+      "deliverables": "Model-agnostic planner",
+      "acceptance": "Unknown contracts rejected; human accepts diff",
+      "status": "TODO",
+      "priority": "P0",
+      "ownerModelPolicy": [
+        "GPT-6.1 Sol",
+        "GPT-6 Luna"
+      ]
+    },
+    {
+      "id": "EMS-201",
+      "title": "AI test generation and safe changes",
+      "phase": "M9",
+      "dependsOn": [
+        "EMS-200",
+        "EMS-125"
+      ],
+      "objective": "Generate acceptance examples; validate every edit and effect",
+      "deliverables": "AI QA flow and approvals",
+      "acceptance": "Behavioral tests and capability enforcement",
+      "status": "TODO",
+      "priority": "P0",
+      "ownerModelPolicy": [
+        "GPT-6.1 Sol",
+        "GPT-6 Luna"
+      ]
+    },
+    {
+      "id": "EMS-220",
+      "title": "Package registry and signature verification",
+      "phase": "M10",
+      "dependsOn": [
+        "EMS-120",
+        "EMS-125"
+      ],
+      "objective": "Distribute signed packages, lockfile, revocation and trust",
+      "deliverables": "Registry and package client",
+      "acceptance": "Tampering prevented, version resolved",
+      "status": "TODO",
+      "priority": "P0",
+      "ownerModelPolicy": [
+        "GPT-6.1 Sol",
+        "GPT-6 Luna"
+      ]
+    },
+    {
+      "id": "EMS-221",
+      "title": "Commercial license variants",
+      "phase": "M10",
+      "dependsOn": [
+        "EMS-220",
+        "EMS-062"
+      ],
+      "objective": "Support commercial and open packages independently of atomicity",
+      "deliverables": "License and rights broker",
+      "acceptance": "Compositions respect permissions and licenses",
+      "status": "TODO",
+      "priority": "P1",
+      "ownerModelPolicy": [
+        "GPT-6.1 Sol",
+        "GPT-6 Luna"
+      ]
+    },
+    {
+      "id": "EMS-222",
+      "title": "Enterprise review and hardening",
+      "phase": "M10",
+      "dependsOn": [
+        "EMS-201",
+        "EMS-220"
+      ],
+      "objective": "Threat model, fuzzing, load testing, deployment reliability",
+      "deliverables": "Audit + hardening report",
+      "acceptance": "No critical unmitigated security issues",
+      "status": "TODO",
+      "priority": "P0",
+      "ownerModelPolicy": [
+        "GPT-6.1 Sol",
+        "GPT-6 Luna"
+      ]
+    },
+    {
+      "id": "EMS-240",
+      "title": "Extended targets and SDKs",
+      "phase": "M11+",
+      "dependsOn": [
+        "EMS-140",
+        "EMS-222"
+      ],
+      "objective": "Add supported platform target one-by-one via adapters",
+      "deliverables": "New target builds and tests",
+      "acceptance": "Per-target real execution evidence",
+      "status": "TODO",
+      "priority": "P2",
+      "ownerModelPolicy": [
+        "GPT-6.1 Sol",
+        "GPT-6 Luna"
+      ]
+    }
+  ]
+}
