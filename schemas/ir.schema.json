@@ -8,7 +8,10 @@
       "const": "ems-ir/1"
     },
     "profile": {
-      "const": "ems-core-finite/1"
+      "enum": [
+        "ems-core-finite/1",
+        "ems-effects-finite/1"
+      ]
     },
     "id": {
       "type": "string",
@@ -114,6 +117,32 @@
               "Boolean",
               "String"
             ]
+          },
+          "policy": {
+            "type": "object",
+            "properties": {
+              "effects": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "pattern": "^[-a-zA-Z0-9_.]+$"
+                },
+                "uniqueItems": true
+              },
+              "capabilities": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "pattern": "^[-a-zA-Z0-9_.]+$"
+                },
+                "uniqueItems": true
+              }
+            },
+            "required": [
+              "effects",
+              "capabilities"
+            ],
+            "additionalProperties": false
           }
         },
         "required": [
@@ -127,6 +156,40 @@
     },
     "result": {
       "$ref": "#/$defs/reference"
+    },
+    "policy": {
+      "type": "object",
+      "properties": {
+        "effects": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^[-a-zA-Z0-9_.]+$"
+          },
+          "uniqueItems": true
+        },
+        "capabilities": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^[-a-zA-Z0-9_.]+$"
+          },
+          "uniqueItems": true
+        }
+      },
+      "required": [
+        "effects",
+        "capabilities"
+      ],
+      "additionalProperties": false
+    },
+    "sequence": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^[A-Za-z_][A-Za-z0-9_]*$"
+      },
+      "uniqueItems": true
     }
   },
   "required": [
@@ -276,5 +339,58 @@
         }
       ]
     }
-  }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "profile": {
+            "const": "ems-effects-finite/1"
+          }
+        }
+      },
+      "then": {
+        "required": [
+          "policy",
+          "sequence"
+        ],
+        "properties": {
+          "operations": {
+            "items": {
+              "required": [
+                "policy"
+              ]
+            }
+          }
+        }
+      },
+      "else": {
+        "not": {
+          "anyOf": [
+            {
+              "required": [
+                "policy"
+              ]
+            },
+            {
+              "required": [
+                "sequence"
+              ]
+            }
+          ]
+        },
+        "properties": {
+          "operations": {
+            "items": {
+              "not": {
+                "required": [
+                  "policy"
+                ]
+              }
+            }
+          }
+        }
+      }
+    }
+  ]
 }

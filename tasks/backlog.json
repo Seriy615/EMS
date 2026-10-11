@@ -255,7 +255,7 @@
         "GPT-6.1 Sol",
         "GPT-6 Luna"
       ],
-      "progress": "Transitive policy analysis integrated into executeGraph before any host call (AC-029), including nested/unused nodes; capability/effect gates and declaration/grant validation tested. AST/IR effect fields and explicit sequencing remain pending; trusted-host execution is not a sandbox."
+      "progress": "Transitive policy analysis integrated into executeGraph before any host call (AC-029), including nested/unused nodes; capability/effect gates and declaration/grant validation tested. Effect IR profile and explicit nested sequencing implemented (AC-030); forged metadata and reversed dependencies rejected; pure compiler rejects hidden unused composite effects. AST effect checking/lowering remains pending; trusted-host execution is not a sandbox."
     },
     {
       "id": "EMS-015",

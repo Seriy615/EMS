@@ -51,3 +51,44 @@ export function checkGraphPolicy(graph, registry, { capabilities = [], allowedEf
   }
   return summary;
 }
+
+/** An explicit sequence must cover every observable call and respect data dependencies. */
+export function validateEffectSequence(graph, registry, { required = false } = {}) {
+  return validateSequence(graph, registry, required, new Map());
+}
+function validateSequence(graph, registry, required, inspected) {
+  if (inspected.has(graph)) return inspected.get(graph);
+  const summary = analyzeGraphEffects(graph, registry);
+  inspected.set(graph, summary);
+  for (const id of new Set(graph.nodes.map(node => node.uses))) {
+    const contract = registry.resolve(id);
+    if (contract.kind === 'composite') validateSequence(contract.graph, registry, required, inspected);
+  }
+  const observable = new Set(Object.entries(summary.nodes)
+    .filter(([, policy]) => policy.effects.length || policy.capabilities.length).map(([id]) => id));
+  if (!Object.hasOwn(graph, 'sequence')) {
+    if (required && observable.size) fail('EFFECT_SEQUENCE', 'Observable calls require an explicit sequence');
+    return summary;
+  }
+  const sequence = graph.sequence;
+  const nodes = new Map(graph.nodes.map(node => [node.id, node]));
+  if (!Array.isArray(sequence) || Object.keys(sequence).length !== sequence.length ||
+      sequence.some(id => typeof id !== 'string' || !nodes.has(id)) || new Set(sequence).size !== sequence.length)
+    fail('EFFECT_SEQUENCE', 'Sequence must contain unique existing node IDs');
+  const positions = new Map(sequence.map((id, index) => [id, index]));
+  for (const id of observable) if (!positions.has(id)) fail('EFFECT_SEQUENCE', `Sequence omits observable node ${id}`);
+  for (const [id, index] of positions) {
+    const seen = new Set();
+    function dependency(node) {
+      if (seen.has(node.id)) return;
+      seen.add(node.id);
+      for (const ref of Object.values(node.args)) if (Object.hasOwn(ref, 'node')) {
+        if (positions.has(ref.node) && positions.get(ref.node) >= index)
+          fail('EFFECT_SEQUENCE', `${id} depends on later sequenced node ${ref.node}`);
+        dependency(nodes.get(ref.node));
+      }
+    }
+    dependency(nodes.get(id));
+  }
+  return summary;
+}

@@ -1,13 +1,14 @@
 import { fail } from './errors.mjs';
 import { assertValueType } from './types.mjs';
 import { validateGraph, validateRuntimeInputs } from './validate.mjs';
-import { checkGraphPolicy } from '../semantics/effects.mjs';
+import { checkGraphPolicy, validateEffectSequence } from '../semantics/effects.mjs';
 
 /** Reference-only synchronous dataflow evaluator. Not a security sandbox, production scheduler or real-time engine. */
 export async function executeGraph(graph, inputs, registry, options = {}) {
   const { nodes } = validateGraph(graph, registry);
   validateRuntimeInputs(graph, inputs);
   checkGraphPolicy(graph, registry, options);
+  validateEffectSequence(graph, registry);
   const allowed = new Set(options.capabilities ?? []);
   const callStack = options.callStack ?? [];
   if (callStack.includes(graph.id) || callStack.length >= 32) fail('RECURSIVE_COMPOSITE', `Recursive or too-deep composite ${graph.id}`);
@@ -34,6 +35,7 @@ export async function executeGraph(graph, inputs, registry, options = {}) {
     memo.set(id, result);
     return result;
   }
+  for (const id of graph.sequence ?? []) await compute(id);
   const result = await refValue(graph.returns);
   assertValueType(result, graph.output.type, 'graph result');
   return result;

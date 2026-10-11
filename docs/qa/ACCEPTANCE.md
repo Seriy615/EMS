@@ -32,8 +32,8 @@ Each AC ID must link to executable test output / exact command / revision. The M
 | AC-026 | Typed versioned core IR | canonical text/graph roundtrip, signed-zero literals, contract version/type/ref checks, canvas sidecar, independent CLI export | M1 core |
 | AC-027 | Own EMS grammar and located AST | modules, contracts, generic functions, expressions, control/error/resource/async syntax; negative cases and frontend limits; parsing executes no host code | M1 frontend |
 | AC-028 | Located AST type checker and pure lowering | rigid generic bodies, independent inference, aliases, collections/unions/resources, pattern exhaustiveness, scope/control checks; AST → shared IR → runtime/standalone; unsupported semantics rejected | M1 type pass |
-
 | AC-029 | Runtime transitive policy preflight | reject nested/unused unauthorized declarations before any host call; independent effect/capability grants; reject malformed policy; authorized nested execution preserves grants | M1 effects slice |
+| AC-030 | Explicit effect IR sequence | canonical policy and order roundtrip; reject forged declarations, omissions and reversed dependencies; nested preflight, once-only calls, failure stops later actions; pure compiler rejects hidden effects | M1 effects IR |
 
 `AC-001` is NOT official WCA Average of Five. Real WCA rules are a separate contract acceptance test.
 

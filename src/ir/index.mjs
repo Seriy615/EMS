@@ -3,9 +3,11 @@ import { assertTypeName, assertValueType, typeOfValue } from '../reference/types
 import { validateGraph } from '../reference/validate.mjs';
 import { executeGraph } from '../reference/runtime.mjs';
 import { compileStandaloneJS } from '../reference/compiler.mjs';
+import { validateEffectSequence } from '../semantics/effects.mjs';
 
 export const IR_VERSION = 'ems-ir/1';
 export const CORE_PROFILE = 'ems-core-finite/1';
+export const EFFECT_PROFILE = 'ems-effects-finite/1';
 const namePattern = /^[A-Za-z_][A-Za-z0-9_]*$/;
 
 function object(value, fields, at) {
@@ -36,6 +38,7 @@ function requirePure(contract, registry, stack = []) {
   if (contract.effects.length || contract.capabilities.length)
     fail('UNSUPPORTED_PROFILE', `${contract.id}: ${CORE_PROFILE} accepts pure contracts only`);
   if (contract.kind !== 'composite') return;
+  if (Object.hasOwn(contract.graph, 'sequence') && (!Array.isArray(contract.graph.sequence) || contract.graph.sequence.length)) fail('UNSUPPORTED_PROFILE', 'Core IR cannot erase nested call sequences');
   if (stack.includes(contract.id) || stack.length >= 32)
     fail('RECURSIVE_COMPOSITE', `Recursive composite in IR: ${contract.id}`);
   validateGraph(contract.graph, registry);
@@ -70,21 +73,26 @@ function toReference(ref) {
 }
 
 /** Lower the checked initial graph/HIR profile into a typed, versioned semantic artifact. */
-export function lowerGraphToIR(graph, registry) {
+export function lowerGraphToIR(graph, registry, { profile = CORE_PROFILE } = {}) {
   validateGraph(graph, registry);
+  if (![CORE_PROFILE, EFFECT_PROFILE].includes(profile)) fail('UNSUPPORTED_PROFILE', `Unknown profile ${profile}`);
+  if (profile === CORE_PROFILE && Object.hasOwn(graph, 'sequence') && (!Array.isArray(graph.sequence) || graph.sequence.length)) fail('UNSUPPORTED_PROFILE', 'Core IR cannot erase an explicit sequence');
+  const policy = profile === EFFECT_PROFILE ? validateEffectSequence(graph, registry, { required: true }) : null;
   const operations = [...graph.nodes].sort((a, b) => a.id < b.id ? -1 : a.id > b.id ? 1 : 0).map(node => {
     const contract = registry.resolve(node.uses);
-    requirePure(contract, registry);
+    if (profile === CORE_PROFILE) requirePure(contract, registry);
     return {
       id: node.id, contract: { id: contract.id, version: contract.version },
       arguments: Object.keys(contract.inputs).map(port => ({ port, value: fromReference(node.args[port]) })),
-      type: contract.output
+      type: contract.output,
+      ...(policy ? { policy: policy.nodes[node.id] } : {})
     };
   });
   const ir = {
-    schemaVersion: IR_VERSION, profile: CORE_PROFILE, id: graph.id, version: graph.version,
+    schemaVersion: IR_VERSION, profile, id: graph.id, version: graph.version,
     inputs: Object.entries(graph.inputs).map(([name, spec]) => ({ name, type: spec.type })),
-    output: { type: graph.output.type }, operations, result: fromReference(graph.returns)
+    output: { type: graph.output.type }, operations, result: fromReference(graph.returns),
+    ...(policy ? { policy: { effects: policy.effects, capabilities: policy.capabilities }, sequence: graph.sequence ?? [] } : {})
   };
   // Keep lowering and deserialization on the same structural and type gate.
   graphFromIR(ir, registry);
@@ -94,8 +102,9 @@ export function lowerGraphToIR(graph, registry) {
 /** Validate a semantic artifact against the exact declared contract versions. */
 export function graphFromIR(ir, registry) {
   if (!ir || ir.schemaVersion !== IR_VERSION) fail('IR_VERSION', `Expected ${IR_VERSION}`);
-  if (ir.profile !== CORE_PROFILE) fail('UNSUPPORTED_PROFILE', `Expected ${CORE_PROFILE}`);
-  object(ir, ['schemaVersion', 'profile', 'id', 'version', 'inputs', 'output', 'operations', 'result'], 'IR');
+  if (![CORE_PROFILE, EFFECT_PROFILE].includes(ir.profile)) fail('UNSUPPORTED_PROFILE', 'Unknown IR profile');
+  const effectful = ir.profile === EFFECT_PROFILE;
+  object(ir, ['schemaVersion', 'profile', 'id', 'version', 'inputs', 'output', 'operations', 'result', ...(effectful ? ['policy', 'sequence'] : [])], 'IR');
   text(ir.id, 'IR.id'); text(ir.version, 'IR.version');
   if (!Array.isArray(ir.inputs) || !Array.isArray(ir.operations)) fail('INVALID_IR', 'Expected input/operation arrays');
   object(ir.output, ['type'], 'IR.output'); assertTypeName(ir.output.type, 'IR.output');
@@ -107,13 +116,13 @@ export function graphFromIR(ir, registry) {
     return [input.name, { type: input.type }];
   }));
   const nodes = Array.from(ir.operations, operation => {
-    object(operation, ['id', 'contract', 'arguments', 'type'], 'IR.operation'); name(operation.id, 'IR.operation.id');
+    object(operation, ['id', 'contract', 'arguments', 'type', ...(effectful ? ['policy'] : [])], 'IR.operation'); name(operation.id, 'IR.operation.id');
     object(operation.contract, ['id', 'version'], 'IR.contract');
     text(operation.contract.id, 'IR.contract.id'); text(operation.contract.version, 'IR.contract.version');
     const contract = registry.resolve(operation.contract.id);
     if (contract.version !== operation.contract.version)
       fail('CONTRACT_VERSION', `${contract.id}: expected ${operation.contract.version}, registered ${contract.version}`);
-    requirePure(contract, registry);
+    if (!effectful) requirePure(contract, registry);
     if (operation.type !== contract.output) fail('TYPE_MISMATCH', `${operation.id}: declared output disagrees with contract`);
     const ports = Object.keys(contract.inputs);
     if (!Array.isArray(operation.arguments) || operation.arguments.length !== ports.length)
@@ -127,25 +136,39 @@ export function graphFromIR(ir, registry) {
     return { id: operation.id, uses: contract.id, args };
   });
   const graph = { schemaVersion: '0.1', id: ir.id, version: ir.version, inputs,
-    output: { type: ir.output.type }, nodes, returns: toReference(ir.result) };
+    output: { type: ir.output.type }, nodes, returns: toReference(ir.result),
+    ...(effectful ? { sequence: ir.sequence } : {}) };
   validateGraph(graph, registry);
+  if (effectful) {
+    const summary = validateEffectSequence(graph, registry, { required: true });
+    function samePolicy(actual, expected) {
+      object(actual, ['effects', 'capabilities'], 'IR.policy');
+      if (!Array.isArray(actual.effects) || !Array.isArray(actual.capabilities) ||
+          JSON.stringify(actual.effects) !== JSON.stringify(expected.effects) ||
+          JSON.stringify(actual.capabilities) !== JSON.stringify(expected.capabilities))
+        fail('EFFECT_MISMATCH', 'IR policy disagrees with linked transitive declarations');
+    }
+    samePolicy(ir.policy, summary);
+    for (const operation of ir.operations) samePolicy(operation.policy, summary.nodes[operation.id]);
+  }
   return graph;
 }
 
 /** Deterministic semantic serialization; canvas and provenance are separate artifacts. */
 export function serializeIR(ir, registry) {
-  return JSON.stringify(lowerGraphToIR(graphFromIR(ir, registry), registry), null, 2) + '\n';
+  return JSON.stringify(lowerGraphToIR(graphFromIR(ir, registry), registry, { profile: ir.profile }), null, 2) + '\n';
 }
 export function parseIR(source, registry) {
   let ir;
   try { ir = JSON.parse(source); } catch { fail('INVALID_IR', 'Malformed IR JSON'); }
   graphFromIR(ir, registry);
-  return lowerGraphToIR(graphFromIR(ir, registry), registry);
+  return lowerGraphToIR(graphFromIR(ir, registry), registry, { profile: ir.profile });
 }
-export function executeIR(ir, inputs, registry) {
-  return executeGraph(graphFromIR(ir, registry), inputs, registry);
+export function executeIR(ir, inputs, registry, options = {}) {
+  return executeGraph(graphFromIR(ir, registry), inputs, registry, options);
 }
 export function compileIRToJS(ir, registry) {
+  if (ir.profile === EFFECT_PROFILE) { graphFromIR(ir, registry); fail('UNSUPPORTED_TARGET', 'Effect IR requires a target with explicit effect bindings'); }
   return compileStandaloneJS(graphFromIR(ir, registry), registry);
 }
 
