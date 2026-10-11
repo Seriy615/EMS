@@ -7,12 +7,13 @@ import { parseEMSModule } from '../src/frontend/index.mjs';
 import { typecheckModule } from '../src/frontend/check.mjs';
 import { lowerCheckedModule } from '../src/frontend/lower.mjs';
 import { createStateRegistry, ReactorSession, replayEvents } from '../src/runtime/reactor.mjs';
+import { validateContractInterface, compareContractInterfaces, registerContractBinding } from '../src/contracts/index.mjs';
 const root=new URL('../',import.meta.url);
 const get=async p=>readFile(new URL(p,root),'utf8');
 const readJSON=async p=>JSON.parse(await get(p));
 let checks=0;
 async function check(desc, fn) { const x=await fn(); assert.ok(x,desc); checks++; console.log('✓',desc); }
-const required=['AGENTS.md','.agents/policy.json','PROJECT_GOAL.md','docs/spec/LANGUAGE_SEMANTICS.md','docs/spec/IR.md','schemas/ir.schema.json','docs/spec/STATE_EVENTS.md','schemas/reactor.schema.json','docs/spec/CONTROL_IR.md','schemas/control-ir.schema.json','schemas/control-finite-ir.schema.json','schemas/control-algebraic-ir.schema.json','docs/spec/CONTROL_ALGEBRAIC.md','docs/spec/CONTROL_FUTURES.md','schemas/control-futures-ir.schema.json','docs/spec/CONTROL_STREAMS.md','schemas/control-streams-ir.schema.json','docs/spec/CONTROL_RESOURCES.md','schemas/control-resources-ir.schema.json','docs/qa/PROGRESS.md','docs/spec/EMS_FULL_SPEC.md','docs/plans/ROADMAP.md','docs/qa/ACCEPTANCE.md','tasks/backlog.json'];
+const required=['AGENTS.md','.agents/policy.json','PROJECT_GOAL.md','docs/spec/LANGUAGE_SEMANTICS.md','docs/spec/IR.md','schemas/ir.schema.json','docs/spec/STATE_EVENTS.md','schemas/reactor.schema.json','docs/spec/CONTROL_IR.md','schemas/control-ir.schema.json','schemas/control-finite-ir.schema.json','schemas/control-algebraic-ir.schema.json','docs/spec/CONTROL_ALGEBRAIC.md','docs/spec/CONTROL_FUTURES.md','schemas/control-futures-ir.schema.json','docs/spec/CONTROL_STREAMS.md','schemas/control-streams-ir.schema.json','docs/spec/CONTRACT_IDL.md','schemas/contract-interface.schema.json','schemas/contract-binding.schema.json','docs/spec/CONTROL_RESOURCES.md','schemas/control-resources-ir.schema.json','docs/qa/PROGRESS.md','docs/spec/EMS_FULL_SPEC.md','docs/plans/ROADMAP.md','docs/qa/ACCEPTANCE.md','tasks/backlog.json'];
 for(const f of required) { await stat(new URL(f,root)); await check(`found ${f}`,()=>true); }
 const policy=await readJSON('.agents/policy.json');
 await check('models exactly Sol 6.1 + Luna 6',()=>policy.agents.approvedDisplayNames.join(',')==='GPT-6.1 Sol,GPT-6 Luna');
@@ -166,5 +167,18 @@ await check('resource cleanup survives program step exhaustion in runtime and st
     const events=[];await assert.rejects(run({maxSteps:20,onResourceCleanup:event=>events.push(event)}),{code:'STEP_LIMIT'});
     assert.equal(events.length,1);assert.equal(events[0].phase,'released');
   }return true;
+});
+const publicInterface=validateContractInterface(await readJSON('examples/contract-interface.json'));
+const publicBinding=await readJSON('examples/contract-binding.json');
+const idlRegistry=createCoreRegistry();registerContractBinding(idlRegistry,publicInterface,publicBinding,{target:'node'});
+const idlBundle=lowerCheckedModule(typecheckModule(parseEMSModule('fn division(a:Number,b:Number)->Number { return std.math.divide(a,b); }'),idlRegistry),'division',idlRegistry);
+await check('separate IDL binding executes public contract through shared IR',async()=>await executeIR(idlBundle.ir,{a:6,b:2},idlRegistry)===3);
+const idlOutput=await import(`data:text/javascript,${encodeURIComponent(compileIRToJS(idlBundle.ir,idlRegistry))}`);
+await check('IDL standalone preserves preconditions before implementation',async()=>{
+  assert.equal(idlOutput.execute({a:6,b:2}),3);assert.throws(()=>idlOutput.execute({a:1,b:0}),{code:'PRECONDITION_FAILED'});
+  await assert.rejects(executeIR(idlBundle.ir,{a:1,b:0},idlRegistry),{code:'PRECONDITION_FAILED'});return true;
+});
+await check('IDL minor change cannot add undeclared capabilities',()=>{
+  const next=structuredClone(publicInterface);next.version='1.1.0';next.semantics.capabilities=['network'];return !compareContractInterfaces(publicInterface,next).compatible;
 });
 console.log(`\nEMS foundation verification passed (${checks} checks). Not production readiness.`);

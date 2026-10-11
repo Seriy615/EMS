@@ -1,0 +1,14 @@
+import { readFile, writeFile } from 'node:fs/promises';
+import { createCoreRegistry } from '../src/reference/index.mjs';
+import { registerContractBinding } from '../src/contracts/index.mjs';
+import { parseEMSModule } from '../src/frontend/index.mjs';
+import { typecheckModule } from '../src/frontend/check.mjs';
+import { lowerCheckedModule } from '../src/frontend/lower.mjs';
+import { executeIR, compileIRToJS } from '../src/ir/index.mjs';
+const readJSON = async name => JSON.parse(await readFile(new URL(name, import.meta.url), 'utf8'));
+const registry = createCoreRegistry();
+registerContractBinding(registry, await readJSON('contract-interface.json'), await readJSON('contract-binding.json'), { target: 'node' });
+const source = 'fn divide(a:Number,b:Number)->Number { return std.math.divide(a,b); }';
+const program = lowerCheckedModule(typecheckModule(parseEMSModule(source), registry), 'divide', registry);
+console.log(await executeIR(program.ir, { a: 6, b: 2 }, registry));
+if (process.argv[2]) await writeFile(process.argv[2], compileIRToJS(program.ir, registry));

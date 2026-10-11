@@ -8,9 +8,13 @@ import { parseEMSModule } from '../src/frontend/index.mjs';
 import { typecheckModule } from '../src/frontend/check.mjs';
 import { lowerCheckedModule } from '../src/frontend/lower.mjs';
 import { executeIR, compileIRToJS } from '../src/ir/index.mjs';
+import { validateContractInterface, compareContractInterfaces, checkContractBinding } from '../src/contracts/idl.mjs';
 const [command, file, ...args] = process.argv.slice(2);
 function usage() {
   console.log(`EMS reference CLI (M0, NOT production)
+  node tools/ems.mjs interface-check <interface.json>
+  node tools/ems.mjs interface-compare <old.json> <new.json>
+  node tools/ems.mjs binding-check <binding.json> --interface <interface.json> --target <target>
   node tools/ems.mjs validate <graph.json>
   node tools/ems.mjs run <graph.json> '<inputs-json>'
   node tools/ems.mjs build <graph.json> --out <output.mjs>
@@ -29,8 +33,19 @@ function usage() {
   node tools/ems.mjs module-build <source.ems> --entry <name> --out <output.mjs>`);
 }
 async function main() {
-  if (!file || !['validate', 'run', 'build', 'seal', 'text-parse', 'text-run', 'text-build', 'ir', 'text-ir', 'ir-run', 'ir-build', 'parse', 'check', 'module-run', 'module-build', 'module-ir'].includes(command)) { usage(); process.exitCode = 2; return; }
+  if (!file || !['interface-check', 'interface-compare', 'binding-check', 'validate', 'run', 'build', 'seal', 'text-parse', 'text-run', 'text-build', 'ir', 'text-ir', 'ir-run', 'ir-build', 'parse', 'check', 'module-run', 'module-build', 'module-ir'].includes(command)) { usage(); process.exitCode = 2; return; }
   const content = await readFile(file, 'utf8');
+  if(command==='interface-check') { console.log(JSON.stringify(validateContractInterface(JSON.parse(content)),null,2));return; }
+  if(command==='interface-compare') {
+    if(args.length!==1)throw new Error('Use interface-compare <old.json> <new.json>');
+    const result=compareContractInterfaces(JSON.parse(content),JSON.parse(await readFile(args[0],'utf8')));
+    console.log(JSON.stringify(result,null,2));if(!result.compatible)process.exitCode=1;return;
+  }
+  if(command==='binding-check') {
+    if(args.length!==4||args[0]!=='--interface'||args[2]!=='--target')throw new Error('Use binding-check <binding.json> --interface <interface.json> --target <target>');
+    const result=checkContractBinding(JSON.parse(await readFile(args[1],'utf8')),JSON.parse(content),createCoreRegistry(),args[3]);
+    console.log(JSON.stringify({interface:result.contract.id,binding:result.binding.id,implementation:result.implementation.id,target:args[3]},null,2));return;
+  }
   if (command === 'parse') { console.log(JSON.stringify(parseEMSModule(content), null, 2)); return; }
   if (command === 'check' || command.startsWith('module-')) {
     const base = createCoreRegistry();

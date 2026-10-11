@@ -286,12 +286,13 @@
       "objective": "Formalize contract interface, versions, errors, pre/post and implementation refs",
       "deliverables": "IDL schema and examples",
       "acceptance": "Incompatible version/binding rejected",
-      "status": "TODO",
+      "status": "IN_PROGRESS",
       "priority": "P0",
       "ownerModelPolicy": [
         "GPT-6.1 Sol",
         "GPT-6 Luna"
-      ]
+      ],
+      "progress": "Initial public interface/binding IDL implemented (AC-039): strict versioned descriptors using existing canonical type grammar, deep-frozen canonical snapshots, exact interface/implementation pins, target/signature/determinism/policy checks without callback execution, transitive hidden composite effects, conservative backward compatibility rules. Finite atomic interface adapters enforce typed input/output, executable pre/postconditions and declared user/host errors in runtime and standalone; CLI comparison/checking and independent export verified. Composite/resource compatibility is inspectable but adapter installation explicitly unsupported; preserved composite conditions, full lifecycle/error ABI and dependency lock remain pending."
     },
     {
       "id": "EMS-017",

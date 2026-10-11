@@ -1,5 +1,7 @@
 # EMS Contract IDL — proposed public fields
 
+Executable initial public interface/binding IDL is specified in [CONTRACT_IDL.md](CONTRACT_IDL.md). The rich camera example below remains design-only.
+
 The `schemas/contract.schema.json` file is a deliberately small M0 validation draft. The following richer IDL is an architectural example, not accepted executable schema yet:
 
 ```json

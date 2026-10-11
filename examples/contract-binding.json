@@ -1,0 +1,9 @@
+{
+  "schemaVersion": "ems-contract-binding/1",
+  "id": "ems.reference.divide",
+  "version": "1.0.0",
+  "interface": {"id":"std.math.divide","version":"1.0.0"},
+  "implementation": {"id":"core.div","version":"1.0.0"},
+  "targets": ["node","web"],
+  "determinism": "deterministic"
+}

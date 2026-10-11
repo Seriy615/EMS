@@ -4,7 +4,8 @@ import { validateGraph } from '../reference/validate.mjs';
 /** Validate explicit declaration/grant lists; a string is never an implicit list. */
 export function assertPolicyNames(names, label) {
   if (!Array.isArray(names) || names.some(name => typeof name !== 'string' || !/^[-a-zA-Z0-9_.]+$/.test(name)) ||
-      Object.keys(names).length !== names.length || new Set(names).size !== names.length)
+      Object.keys(names).length !== names.length || Object.keys(names).some((key,index)=>key!==String(index)) ||
+      new Set(names).size !== names.length)
     fail('INVALID_POLICY', `${label} must be a dense array of unique nonempty policy names`, { field: label });
 }
 

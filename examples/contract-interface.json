@@ -1,0 +1,10 @@
+{
+  "schemaVersion": "ems-contract-interface/1",
+  "id": "std.math.divide",
+  "version": "1.0.0",
+  "inputs": [{"name":"a","type":"Number"},{"name":"b","type":"Number"}],
+  "output": {"type":"Number"},
+  "errors": [],
+  "semantics": {"determinism":"deterministic","effects":[],"capabilities":[]},
+  "conditions": {"pre":[{"kind":"nonzero","subject":{"input":"b"}}],"post":[]}
+}

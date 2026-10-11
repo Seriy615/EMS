@@ -2,13 +2,13 @@
 
 ## Последняя проверка — ядро перед IDE
 
-`npm test` **431/431 PASS**, `npm run verify` **67/67 PASS**, Node 22.21.0. EMS-010..014 DONE для начальных профилей AC-025..031. EMS-015 IN_PROGRESS: state/events/cancellation AC-032, control-flow AC-033, typed errors AC-034, algebraic values/match AC-035, async/Future AC-036, Stream AC-037 и ResourceHandle/using AC-038 реализованы через общий IR/runtime; supported standalone paths проверены отдельно.
+`npm test` **454/454 PASS**, `npm run verify` **73/73 PASS**, Node 22.21.0. EMS-010..014 DONE для начальных профилей AC-025..031. EMS-015 IN_PROGRESS: state/events/control/errors/algebraic/Future/Stream/resource lifecycle AC-032..038 реализованы. EMS-016 IN_PROGRESS: отдельные versioned interface/binding descriptors и finite atomic adapters AC-039 реально исполняются и экспортируются через existing shared IR.
 
-AC-038: 30 новых resource tests, typed owned cells и independent standalone, lexical ownership/escape и LIFO cleanup на всех exits, отдельные cleanup signal/deadline вне maxSteps. Trusted native lifecycle binding реально закрывает OS file descriptor (EBADF); preflight и pinned versions проверены. Cancelled acquisition и active read получают bounded wait/late exact-once release attempt, не фиктивный physical cleanup. Native binding export явно UNSUPPORTED_TARGET. Reactor commit ждёт cleanup; отказ освобождения откатывает owned state. Подробности: docs/spec/CONTROL_RESOURCES.md.
+AC-039: 23 новых IDL tests. Строгие canonical snapshots, точные pins/targets/ordered signatures и policy checks до callbacks, recursive hidden composite effects, backward compatibility. Исполняемые typed pre/postconditions и declared host/user errors сохраняются в standalone; malformed user payload отвергается, undeclared errors без private payload. Добавлены CLI interface-check/interface-compare/binding-check и new-process export вне EMS. Общая проверка policy lists закрыла sparse-array + extra-property обход; negative regression включён.
 
-Baseline AC-038: `0fbee2a`, 401/401 tests, 62/62 verify. Логи `/tmp/ems-resource-tests.log`, `/tmp/ems-resource-verify.log`; schemas JSON parsed и local refs resolved (11 schemas), внешний schema engine не запускался. `node examples/resource-file.mjs examples/resources.ems` реально прочитал файл. Внешние зависимости не устанавливались.
+Baseline `51e860f`: 431/431 tests, 67/67 verify. Итог логи /tmp/ems-idl-tests.log, /tmp/ems-idl-verify.log. Schemas JSON parsed и local references resolved (13); внешний schema engine не запускался. `node examples/contract-division.mjs` вернул 3; git diff --check PASS. Внешние зависимости не устанавливались. Interface metadata/target declarations не заменяют behavior conformance/реальный platform test.
 
-Следующий срез: завершить описания full error/resource IDL и stable conformance (EMS-016/017); standalone state export остаётся открыт. Глобальная цель активна; M1/P1/browser/WEB IDE MVP/deploy не завершены. Владелец разрешил WEB IDE и deploy, уточнил core-first и origin `git@github.com:Seriy615/EMS.git`. TLS SAN mismatch ранее обнаружен; VPS services в этом срезе не изменялись. Проверенные изменения commit/push в main, без force.
+Далее EMS-016: preserved composite condition/interface bindings, resource lifecycle/error ABI и dependency lock. Advanced descriptors типизируются, но adapter installation для composite/resource явно UNSUPPORTED_BINDING; editor kind не подменяется atomic ради обхода. Standalone state export и EMS-017 conformance остаются открыты. Глобальная цель активна; M1/P1/browser/WEB IDE MVP/deploy не завершены. Deploy разрешён владельцем, порядок core-first; VPS не изменялся. Проверенные slices commit/push в git@github.com:Seriy615/EMS.git, main без force.
 
 ## Текущее состояние после EMS-012
 
@@ -40,7 +40,7 @@ EMS-010 завершена как нормативный начальный пр
 
 **Model restriction:** only GPT-6.1 Sol / GPT-6 Luna for any agent work; no GPT-5.6 Sol / Astra.
 
-**Next action:** continue full error/resource IDL and conformance after EMS-015 resource slice, from `docs/qa/PROGRESS.md`. Bootstrap sections below describe the original scaffold, not completed M1.
+**Next action:** continue EMS-016 preserved composite/resource bindings and error ABI, then conformance, from `docs/qa/PROGRESS.md`. Bootstrap sections below describe the original scaffold, not completed M1.
 
 Точная ревизия без Git: `docs/qa/evidence/2026-10-11-core.json` содержит SHA-256 implementation/test/spec-format файлов и aggregate snapshot `2495e5f62507e4819ee55a7b8a7c4b73638d096b13b88fae991f98ccb7d78602`. Metadata состояния QA обновляется отдельно от этого semantic/source snapshot.
 
