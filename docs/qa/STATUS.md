@@ -1,5 +1,19 @@
 # Current implementation status
 
+## Последняя проверка — EMS-050 worker preview, AC-054
+
+`npm test` **630/630 PASS**, `npm run verify` **118/118 PASS**, `npm run browser:test` **14/14 PASS**. Node22 / actual Chromium156. Baseline b2f038e625/115. EMS-050 IN_PROGRESS; full handler graphical representation/unified manager/standalone state/UI/AC-014/full MVP/deploy/global goal открыты.
+
+Persistent worker endpoint использует существующий UIRuntime/ReactorSession с actual installed core/state registry. Typed project/source witnesses/refs и policy повторно проверяются до ready. Monotonic IDs/exact fields, detached result/error/committed snapshot/view/optional trace. Same DOM adapter supports local and ready worker runtime; main UI rendering remains original safe properties/listeners. New preview worker initializes before old session closes.
+
+Deadline/default5s(init separate), Stop/active abort terminate whole worker, reject all pending, clear timers/listeners, ignore late messages и keep last-confirmed data; unknown unacknowledged internal outcome не объявляется rolled back/success. Already-aborted event does not dispatch; pending maxQueue+1<=65, overflow rejects before send. Core runtime step budget preserved. Worker custom foreign JS registry/sandbox не реализован.
+
+5 новых Node tests use actual worker_threads/common endpoint: local runtime FIFO/output/snapshot/trace parity, typed failures/state rollback, invalid/permission init, close/late state rejection, actual EMS loop deadline, abort/queue overflow. All existing UI browser scenarios now execute preview in actual module Worker; new browser test modifies editor field while loop pending, verifies timeout/terminal session/confirmed snapshot, fresh healthy worker=1 and Stop cancels pending without late update. Target10/10 passed, final full630/118/14 includes factory guard. Logs /tmp/ems-ui-worker-{tests,verify,browser}-final.log. Schemas unchanged19; no external schema engine. git diff --check PASS. No new dependencies/VPS changes. Revision — commit containing report, parent b2f038e.
+
+Limits/next: session Stop is coarse termination, not individual queued-event cancellation; no external IO rollback or plugin isolation. Compiler/validation/rendering remain local. Need standalone state/UI compiler/shared transaction conformance and independent browser application after runtime shutdown; graphical control handler/source maps/unified project integration/full owner MVP gate remain. Then authorized isolated auth/HTTPS/rollback deploy. Verified slices commit/push origin/main git@github.com:Seriy615/EMS.git. No subagents/model fallback.
+
+## Предыдущая проверка — UI authoring
+
 ## Последняя проверка — EMS-050 UI forms + EMS source, AC-053
 
 `npm test` **625/625 PASS**, `npm run verify` **115/115 PASS**, `npm run browser:test` **13/13 PASS**. Node22 / actual Chromium156. Baseline e3e6b8a621/112. EMS-050 IN_PROGRESS; full control handler graph/UI contracts factory/worker preview/standalone UI/AC-014/full MVP/deploy/global goal открыты.

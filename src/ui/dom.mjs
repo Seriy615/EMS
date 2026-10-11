@@ -6,7 +6,14 @@ const mounted=new WeakMap();
 export function mountDOMApplication(host,application,registry,{onError=()=>{},...options}={}){
  if(!host?.ownerDocument||typeof host.replaceChildren!=='function'||typeof onError!=='function')fail('INVALID_UI','DOM host and error callback required');
  if(mounted.has(host))fail('UI_HOST_BUSY','DOM host already owns a mounted EMS application');
- const runtime=new UIRuntime(application,registry,options),document=host.ownerDocument,nodes=new Map(),listeners=[],pending=new Set();let closed=false,closing;
+ return mountDOMRuntime(host,application,new UIRuntime(application,registry,options),{onError});
+}
+
+/** Render an already checked local or worker runtime with the same semantic DOM/event mapping. */
+export function mountDOMRuntime(host,application,runtime,{onError=()=>{}}={}){
+ if(!host?.ownerDocument||typeof host.replaceChildren!=='function'||typeof onError!=='function')fail('INVALID_UI','DOM host and error callback required');
+ if(mounted.has(host))fail('UI_HOST_BUSY','DOM host already owns a mounted EMS application');
+ const document=host.ownerDocument,nodes=new Map(),listeners=[],pending=new Set();let closed=false,closing;
  const tags={column:'div',row:'div',text:'span',button:'button',textInput:'input',checkbox:'input'};
  function make(view){const element=document.createElement(tags[view.kind]);element.dataset.emsUi=view.id;element.dataset.emsKind=view.kind;nodes.set(view.id,element);if(view.kind==='button')element.type='button';if(view.kind==='textInput')element.type='text';if(view.kind==='checkbox')element.type='checkbox';if(view.kind==='column'||view.kind==='row'){element.style.display='flex';element.style.flexDirection=view.kind==='column'?'column':'row';}for(const child of view.children)element.append(make(child));return element;}
  function update(view){const element=nodes.get(view.id),props=view.props;if(Object.hasOwn(props,'text'))element.textContent=props.text;if(Object.hasOwn(props,'value')&&element.value!==props.value)element.value=props.value;if(Object.hasOwn(props,'checked'))element.checked=props.checked;if(Object.hasOwn(props,'disabled'))element.disabled=props.disabled;if(Object.hasOwn(props,'label'))element.setAttribute('aria-label',props.label);for(const child of view.children)update(child);}

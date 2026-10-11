@@ -530,18 +530,19 @@
         "GPT-6.1 Sol",
         "GPT-6 Luna"
       ],
-      "progress": "AC-051/052/053: actual semantic DOM backend, typed v1/v2 transport and UI authoring forms for elements/state/properties/events, widget→binding selection, EMS handler editing through existing frontend/control IR and persisted reproducible source witnesses. Actual forms create empty-project counter, edit result1→2, reject invalid source without replacing preview, Undo/Save/reopen source. Full control handler graph/source maps, unified project manager, worker preview and independent standalone state/UI compiler/native parity remain open.",
+      "progress": "AC-051..054: semantic DOM/UI forms and source-owned typed persistence now execute preview through real persistent Worker. Same UIRuntime/ReactorSession semantics, Node/local parity, FIFO/rollback/trace, bounded pending queue, confirmed snapshots and independent init/event deadlines. Browser proves editor responsiveness during EMS loop, terminal timeout/Stop and fresh-session recovery. Full control handler graph/unified project manager and independent standalone state/UI compiler/MVP/native parity remain open.",
       "acceptanceEvidence": {
-        "scope": "Initial UI/state/event forms + source-owned handler editing/inspect and transport; full handler graph/worker/standalone/full AC-014 not completed.",
-        "docs": "docs/spec/UI_AUTHORING.md",
+        "scope": "Initial UI/source authoring plus actual worker preview; full handler graph/standalone/full AC-014 not completed.",
+        "docs": "docs/spec/UI_WORKER.md",
         "example": "examples/ui-source-counter.ems-ui.json",
-        "tests": "625/625 PASS",
-        "verify": "115/115 PASS",
-        "browserTests": "13/13 PASS",
+        "tests": "630/630 PASS",
+        "verify": "118/118 PASS",
+        "browserTests": "14/14 PASS",
         "testFiles": [
           "tests/ui.test.mjs",
           "tests/ui-project.test.mjs",
           "tests/ui-authoring.test.mjs",
+          "tests/ui-worker.test.mjs",
           "tests/browser/ui.test.mjs"
         ],
         "commands": [

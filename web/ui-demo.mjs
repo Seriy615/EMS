@@ -1,5 +1,6 @@
 import {createCoreRegistry} from '../src/reference/registry.mjs';
-import {mountDOMApplication} from '../src/ui/dom.mjs';
+import {createUIWorkerRuntime} from '../src/ui/worker-client.mjs';
+import {mountDOMRuntime} from '../src/ui/dom.mjs';
 import {UIRuntime} from '../src/ui/model.mjs';
 import {installUIAuthoring} from './ui-authoring.mjs';
 import {compileUIHandler} from '../src/ui/source.mjs';
@@ -11,7 +12,7 @@ const base=createCoreRegistry(),storage=new UIProjectStorage(localStorage,base);
 let restarting=Promise.resolve(),authoringQueue=Promise.resolve(),authoring;export let applicationController,editor;
 function report(failure){error.textContent=failure.code??'HOST_ERROR';const location=failure.details?.location;if(location?.start?.offset!==undefined){const field=document.querySelector('#handler-source');field.focus();field.setSelectionRange(location.start.offset,location.end?.offset??location.start.offset);error.textContent+=' — '+location.start.line+':'+location.start.column;}}
 function render(){authoring?.refresh();source.value=editor.source;document.querySelector('#undo-ui').disabled=!editor.history.length;document.querySelector('#redo-ui').disabled=!editor.future.length;}
-export function startDemo(){const task=restarting.then(async()=>{const application=editor.application;const checked=new UIRuntime(application,base,{policy});await checked.close();await applicationController?.close();error.textContent='';applicationController=mountDOMApplication(host,application,base,{policy,onError:report});render();});restarting=task.catch(()=>{});return task;}
+export function startDemo(){const task=restarting.then(async()=>{const application=editor.application;const checked=new UIRuntime(application,base,{policy});await checked.close();const runtime=await createUIWorkerRuntime(editor.source,{policy});await applicationController?.close();error.textContent='';try{applicationController=mountDOMRuntime(host,application,runtime,{onError:report});}catch(failure){await runtime.close();throw failure;}render();});restarting=task.catch(()=>{});return task;}
 async function apply(candidate){const application=parseUIProject(candidate,base),checked=new UIRuntime(application,base,{policy});await checked.close();editor.replace(candidate);await startDemo();status.textContent='Проект проверен и применён.';}
 const response=await fetch('/examples/ui-counter.json');if(!response.ok)throw new Error('Cannot load EMS UI application');const example=await response.json(),counterSource=await (await fetch('/examples/counter.ems')).text();example.reactor.handlers[0].program=compileUIHandler(counterSource,'demo.Counter',example,base).ir;let authoredSources={change:{source:counterSource,entry:'demo.Counter'}},application=example;
 try{const saved=storage.loadWorkspace();if(saved){const checked=new UIRuntime(saved.application,base,{policy});await checked.close();application=saved.application;authoredSources=saved.sources;}}catch(failure){report(failure);status.textContent='Сохранённая запись повреждена; пример открыт без перезаписи.';}

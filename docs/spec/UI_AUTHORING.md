@@ -28,7 +28,7 @@ Save/Open/download/import/reopen сохраняют sources вместе с sema
 
 Клик по widget выбирает его ID в authoring inspector; показана actual event binding. Open handler показывает сохранённый EMS source и actual IR. Preview click остаётся событием приложения — выбор не подменяет его исполнение. UI/state/handler params видны через формы; запуск по кнопке идёт через typed event routing.
 
-Пока нет editor canvas для control handler graph, rich source map/runtime stepping, полноценной UI contract factory/IDL или unified multi-project storage. Worker preview и standalone state/UI compiler остаются обязательными до full MVP/deployment gate. Native semantic parity и динамическая hierarchy — отдельные задачи. Существующие pure graph/control text editor/collections не переписывались.
+Пока нет editor canvas для control handler graph, rich source map/runtime stepping, полноценной UI contract factory/IDL или unified multi-project storage. Worker preview реализован (UI_WORKER.md); standalone state/UI compiler остаётся обязательным до full MVP/deployment gate. Native semantic parity и динамическая hierarchy — отдельные задачи. Существующие pure graph/control text editor/collections не переписывались.
 
 ## Evidence
 
