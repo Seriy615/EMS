@@ -1,6 +1,7 @@
-import {captureSourceBreakpoint,resolveSourceBreakpoint} from '/src/studio/source-anchors.mjs';
+import {captureSourceBreakpoint} from '/src/studio/source-anchors.mjs';
+import {StudioDebuggerStorage,studioDebuggerContext,resolveStudioDebugger} from '/src/studio/debugger-storage.mjs';
 import {breakpointForEvent} from '/src/studio/debugger.mjs';
-import {breakpointAtTextOffset,graphBreakpointIdentity} from '/src/studio/breakpoints.mjs';
+import {breakpointAtTextOffset} from '/src/studio/breakpoints.mjs';
 import {ProjectManager} from '/src/studio/manager.mjs';
 import {STANDARD_CONTRACTS} from '/src/stdlib/finite.mjs';
 import {ProjectEditor,newProject,parseProject} from '/src/studio/project.mjs';
@@ -17,28 +18,31 @@ const identity=()=> 'p'+crypto.randomUUID().replaceAll('-','');
 let store,editor,selected=null,pending=null,failedNode=null,textMode=false,textProjectId=null,textStorage;
 const managedId=new URLSearchParams(location.search).get('project'),manager=managedId?new ProjectManager(localStorage):null;
 let activeExecution=null,pausedOperation=null,executionBreakpointIdentity=null;
-let breakpointIdentity=null,breakpoints=[],sourceAnchors=[],anchorOwner=null;
-function currentBreakpointIdentity(){const program=textMode?JSON.stringify({profile:'text',source:$('text-source').value,entry:$('text-entry').value.trim(),lowering:$('text-lowering').value,library:graphBreakpointIdentity(editor.project)}):'graph:'+graphBreakpointIdentity(editor.project);return editor.project.id+':'+program;}
+let breakpointIdentity=null,breakpoints=[],debuggerOwner=null,debuggerStorage=null,debuggerRecords=[],debuggerPoints=[];
+function currentBreakpointIdentity(){const library=studioDebuggerContext(editor).library,program=textMode?JSON.stringify({profile:'text',source:$('text-source').value,entry:$('text-entry').value.trim(),lowering:$('text-lowering').value,library}):'graph:'+library;return editor.project.id+':'+program;}
 function syncBreakpoints(){
- const identity=currentBreakpointIdentity();if(identity!==breakpointIdentity){
-  breakpointIdentity=identity;breakpoints=[];
-  const owner=textMode?editor.project.id+':'+$('text-entry').value.trim()+':'+$('text-lowering').value+':'+graphBreakpointIdentity(editor.project):null;
-  if(owner!==anchorOwner){anchorOwner=owner;sourceAnchors=[];}
-  if(textMode&&sourceAnchors.length){try{const bundle=textAPI.compileTextDraft(draft(),editor);for(const item of sourceAnchors)Object.assign(item,resolveSourceBreakpoint(bundle,item.anchor));}catch(error){for(const item of sourceAnchors){item.point=null;item.reason=error.code??'invalid-draft';}}breakpoints=sourceAnchors.filter(item=>item.point).map(item=>item.point);}
+ const identity=currentBreakpointIdentity();
+ if(debuggerOwner!==editor.project.id){debuggerOwner=editor.project.id;debuggerStorage=new StudioDebuggerStorage(localStorage,debuggerOwner);try{debuggerRecords=debuggerStorage.load();}catch(error){debuggerRecords=[];report(error);}breakpointIdentity=null;}
+ if(identity!==breakpointIdentity){
+  breakpointIdentity=identity;const context=studioDebuggerContext(editor,textMode?draft():null);let bundle=null;
+  try{if(textMode&&debuggerRecords.some(record=>record.context.mode==='text'&&record.context.entry===context.entry&&record.context.lowering===context.lowering&&record.context.library===context.library))bundle=textAPI.compileTextDraft(draft(),editor);}catch{}
+  try{debuggerPoints=resolveStudioDebugger(debuggerRecords,context,{bundle,project:editor.project});}catch(error){debuggerPoints=debuggerRecords.filter(record=>record.context.mode===context.mode&&(context.mode==='graph'||record.context.entry===context.entry&&record.context.lowering===context.lowering)).map(record=>({record,point:null,reason:error.code??'invalid-draft'}));}
+  breakpoints=debuggerPoints.filter(item=>item.point).map(item=>item.point);
  }
- $('breakpoint-count').textContent=String(textMode?sourceAnchors.length:breakpoints.length);
- $('breakpoint-list').textContent=(textMode?sourceAnchors.map(item=>(item.anchor.point.graph??item.anchor.point.function)+' / '+(item.point?.node??('не привязана: '+item.reason))):breakpoints.map(point=>(point.graph??point.function)+' / '+point.node)).join('\n')||'Выберите блок в графе или операцию в тексте.';
+ $('breakpoint-count').textContent=String(debuggerPoints.length);
+ $('breakpoint-list').textContent=debuggerPoints.map(item=>(item.record.point.graph??item.record.point.function)+' / '+(item.point?.node??('не привязана: '+item.reason))).join('\n')||'Выберите блок в графе или операцию в тексте.';
  $('debug-breakpoint').disabled=!pausedOperation||executionBreakpointIdentity!==identity;
 }
 function toggleBreakpoint(point){
- syncBreakpoints();const key=JSON.stringify(point),index=breakpoints.findIndex(item=>JSON.stringify(item)===key);
- if(index>=0){breakpoints.splice(index,1);if(textMode)sourceAnchors=sourceAnchors.filter(item=>JSON.stringify(item.point)!==key);}
- else{if((textMode?sourceAnchors.length:breakpoints.length)>=64)throw Object.assign(new Error('Не более 64 точек'),{code:'INVALID_DEBUG_BREAKPOINT'});if(textMode)sourceAnchors.push({anchor:captureSourceBreakpoint(textAPI.compileTextDraft(draft(),editor),point),point,reason:null});breakpoints.push(point);}
+ syncBreakpoints();const key=JSON.stringify(point),active=debuggerPoints.find(item=>JSON.stringify(item.point)===key);let next;
+ if(active)next=debuggerRecords.filter(record=>JSON.stringify(record)!==JSON.stringify(active.record));
+ else{if(debuggerRecords.length>=64)throw Object.assign(new Error('Не более 64 точек на проект'),{code:'INVALID_DEBUG_BREAKPOINT'});const anchor=textMode?captureSourceBreakpoint(textAPI.compileTextDraft(draft(),editor),point):null;next=[...debuggerRecords,{context:studioDebuggerContext(editor,textMode?draft():null),point:anchor?.point??point,anchor}];}
+ debuggerStorage.save(next);debuggerRecords=next;breakpointIdentity=null;syncBreakpoints();
  if(activeExecution&&executionBreakpointIdentity===breakpointIdentity)activeExecution.setBreakpoints(breakpoints);
- syncBreakpoints();render();
+ render();
 }
 $('debug-breakpoint').onclick=()=>{try{if(pausedOperation&&executionBreakpointIdentity===currentBreakpointIdentity())toggleBreakpoint(breakpointForEvent(pausedOperation));}catch(error){report(error);}};
-$('clear-breakpoints').onclick=()=>{syncBreakpoints();breakpoints=[];sourceAnchors=[];if(activeExecution&&executionBreakpointIdentity===breakpointIdentity)activeExecution.setBreakpoints([]);syncBreakpoints();render();};
+$('clear-breakpoints').onclick=()=>{try{syncBreakpoints();debuggerStorage.save([]);debuggerRecords=[];breakpointIdentity=null;syncBreakpoints();if(activeExecution&&executionBreakpointIdentity===breakpointIdentity)activeExecution.setBreakpoints([]);render();}catch(error){report(error);}};
 $('text-breakpoint').onclick=()=>{try{toggleBreakpoint(breakpointAtTextOffset(textAPI.compileTextDraft(draft(),editor),$('text-source').selectionStart));}catch(error){sourceError(error);}};
 
 async function executeStudio(action,draft,inputs,debug=false){
@@ -94,13 +98,14 @@ function wires(){
  }
 }
 function render(){
+ if(textMode&&textProjectId!==editor.project.id)syncTextProject();
  $('nodes').replaceChildren();const graph=editor.workspace.graph;
  syncBreakpoints();
  $('canvas-guide').hidden=graph.nodes.length>0||Object.keys(graph.inputs).length>0;
  for(const [name,input]of Object.entries(graph.inputs)){const node=card(`input:${name}`,name,'вход');node.append(port({input:name},null,name,input.type));$('nodes').append(node);}
  graph.nodes.forEach((definition,index)=>{const contract=editor.registry.resolve(definition.uses),node=card(definition.id,titles[contract.id]??contract.id,contract.kind==='composite'?'граф':contract.kind==='collection'?'коллекция':'атом',index);for(const [name,type]of Object.entries(contract.inputs))node.append(port(null,{id:definition.id,port:name},name,typeof type==='string'?type:type.type));node.append(port({node:definition.id},null,definition.id,contract.output));$('nodes').append(node);});
  const output=card('output','Результат функции','выход');output.append(port(null,{id:'output',port:'return'},'return',graph.output.type));$('nodes').append(output);
- $('project-name').value=editor.project.name;$('undo').disabled=!editor.history.length;$('redo').disabled=!editor.future.length;$('connection-status').textContent=pending?'Выберите вход. Esc — отменить.':'';view();catalog();collectionChoices();inspector();if(textMode&&textProjectId!==editor.project.id)syncTextProject();$('scope').textContent=editor.selectedContract??'Основная программа';$('collapse').disabled=!editor.navigation.length;requestAnimationFrame(wires);
+ $('project-name').value=editor.project.name;$('undo').disabled=!editor.history.length;$('redo').disabled=!editor.future.length;$('connection-status').textContent=pending?'Выберите вход. Esc — отменить.':'';view();catalog();collectionChoices();inspector();$('scope').textContent=editor.selectedContract??'Основная программа';$('collapse').disabled=!editor.navigation.length;requestAnimationFrame(wires);
 }
 function json(value){if(Object.is(value,-0))return '-0';if(Array.isArray(value))return '['+value.map(json).join(',')+']';if(value&&typeof value==='object')return '{'+Object.entries(value).map(([key,item])=>JSON.stringify(key)+':'+json(item)).join(',')+'}';return JSON.stringify(value);}
 function inspector(){
@@ -170,7 +175,7 @@ $('viewport').onpointerdown=event=>{
 };
 document.addEventListener('keydown',event=>{if(event.key==='Escape'){pending=null;render();}if((event.ctrlKey||event.metaKey)&&event.key.toLowerCase()==='s'){event.preventDefault();save();}});
 $('export').onclick=()=>{try{const url=URL.createObjectURL(new Blob([editor.serialize()],{type:'application/json'})),anchor=el('a');anchor.href=url;anchor.download=editor.project.id+'.ems.json';anchor.click();setTimeout(()=>URL.revokeObjectURL(url),1000);}catch(error){report(error);}};
-$('import').onclick=()=> $('file').click();$('file').onchange=async()=>{const file=$('file').files[0];if(!file)return;try{if(file.size>4*1024*1024)throw new Error('Файл слишком большой');const source=await file.text();change(()=>{const project=parseProject(source);if(store?.list().some(saved=>saved.id===project.id)){project.id=identity();project.name=project.name.slice(0,180)+' (импорт)';}editor=new ProjectEditor(project);selected=null;});}catch(error){report(error);}$('file').value='';};
+$('import').onclick=()=> $('file').click();$('file').onchange=async()=>{const file=$('file').files[0];if(!file)return;try{if(file.size>4*1024*1024)throw new Error('Файл слишком большой');const source=await file.text();change(()=>{const project=parseProject(source);project.id=identity();project.name=project.name.slice(0,180)+' (импорт)';editor=new ProjectEditor(project);selected=null;});}catch(error){report(error);}$('file').value='';};
 $('examples').onchange=async()=>{
  const choice=$('examples').value;if(!choice)return;try{const project=newProject(identity(),choice==='avg'?'Среднее пяти — арифметика':'Сумма двух чисел');
  if(choice==='avg'){const saved=parseProject(await fetch('/examples/studio-avg5.ems.json').then(response=>response.text()));saved.id=project.id;Object.assign(project,saved);}

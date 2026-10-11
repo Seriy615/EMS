@@ -1,5 +1,15 @@
 # Current implementation status
 
+## EMS-033 — durable Studio debugger contexts, AC-073
+
+Предыдущая goal-итерация — progress: checked source anchors release17a7dfe/evidence6683a87 опубликованы и отправлены origin/main. Baseline **723/723 Node,137/137 verify PASS**. Реализован отдельно versioned/owned/bounded `ems-studio-debugger/1` sidecar: graph/text/entry/lowering contexts, exact semantic project + typed registry binding metadata identity, fresh checked source resolve, inactive library drift/Undo, no host callback invocation. Mode/reopen/project changes сохраняют соответствующие points. Quota/validation failure не меняют active paused policy; clear all contexts explicit. IR/runtime/compiler/UI transaction semantics сохранены.
+
+Local **729/729 Node,138/138 verify,39/39 Chromium PASS**. Новые6 Node cases: fresh storage/shifted real runtime pause, mode/entry/profile/invalid draft isolation, binding version/library drift vs layout/name/inputs, owner/schema/corrupt/duplicate/budget/quota/no-callback preservation, point-anchor mismatch/absent graph rejection, export/copy/import isolation. Actual Chromium3: reload graph1/text1/checked pause/result1, failed live clear keeps point/repeated stop/successful global clear, library drift inactive/Undo restore, real File import new owner even with orphan sidecar/old records preserved. Initial full38/39 выявил только invalid fixture: internal project object вместо portable exported document; исправлен через ordinary serializeProject, focused3/3 и full39/39 PASS без ослабления assertions.
+
+Legacy file import теперь всегда создаёт новый project ID/copy и не наследует debugger metadata, даже если ID из файла отсутствует в catalog. Program/standalone/catalog exports не содержат sidecar. При project switch source draft восстанавливается до points. Local cross-tab sync/conflicts, runtime value/secret inspection, native/compiled transports и full debugger parity открыты; EMS-033 IN_PROGRESS/global goal active.
+
+Логи `/tmp/ems-studio-points-baseline-{tests,verify}.log`, `/tmp/ems-studio-points-focused-final.log`, `/tmp/ems-studio-points-tests.log`, `/tmp/ems-studio-points-verify.log`, `/tmp/ems-studio-points-browser-focused-final.log`, `/tmp/ems-studio-points-browser-final.log`. Publication pending exact gate/live Studio reopen proof. Next: typed bounded opt-in runtime inspection policy, default payload-free pauses, explicit secret/resource/future/stream exclusion and Worker/IDE non-leakage evidence.
+
 ## EMS-033 — checked source anchors, AC-072
 
 Предыдущая goal-итерация — progress: UI breakpoint release50f40dd/evidence402953a опубликованы и отправлены origin/main. Baseline716/716 Node,136/136 verify PASS. Реализованы typed operation/context anchors для control/call IR и fresh-provenance resolve без nearest-path fallback; changed/missing/ambiguous отказ. Original evaluator/IR/compiler/FIFO/source witness сохранены. UI durable sidecar отдельно в bounded localStorage; invalid/changed точки видимы и исключены из Worker; quota сохраняет прежний набор. Studio safe/invalid draft recovery работает в workspace; durable Studio storage открыт.

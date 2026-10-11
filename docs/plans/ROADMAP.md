@@ -158,3 +158,8 @@ Control statement/expression stepping и fresh source sidecar работают �
 ## После AC-072 — checked operation anchors
 
 Следующий срез EMS-033: durable Studio debugger sidecar по project/library identity, fresh checked восстановление при reopening/mode changes и явный import/export scope. UI sidecar проверен отдельно; полный debugger остаётся IN_PROGRESS. Затем typed value/secret inspection и guarded transports. IR и интерпретированная/standalone семантика сохраняются.
+
+
+## После AC-073 — сохранение local debugger contexts
+
+Durable checked graph/text Studio + source-owned UI поддерживают reopening/mode/source/library changes отдельно от semantic IR. EMS-033 IN_PROGRESS: следующий срез — typed runtime inspection с явной opt-in bounded allowlist policy, default payload-free behavior, исключением secret/resource/future/stream values и доказательством absence of leakage через Worker/IDE. Native/compiled transports и full debugger parity следуют после определения этой границы. Общая цель языка/компилятора/платформ/экосистемы сохраняется.
