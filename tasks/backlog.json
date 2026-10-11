@@ -505,7 +505,9 @@
           "npm test",
           "npm run verify",
           "npm run browser:test"
-        ]
+        ],
+        "deployedRevision": "af30dcb0bf4c905a7dce814492b863ed5ccffc90",
+        "live": "Authenticated public Chromium composite pause/Step to leaf/Continue original AVG5 result PASS; other graph/composite/reopen/counter/auth gates retained. See docs/qa/DEPLOYMENT.md."
       }
     },
     {
