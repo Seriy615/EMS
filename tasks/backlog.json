@@ -506,7 +506,7 @@
           "tests/step-frames.test.mjs",
           "tests/breakpoints.test.mjs"
         ],
-        "tests": "739/739 PASS",
+        "tests": "739 last full PASS; own-fields/prototype correction focused11 PASS, final740 gate pending",
         "verify": "139/139 PASS",
         "browserTests": "40/40 PASS",
         "commands": [
@@ -515,7 +515,7 @@
           "npm run browser:test"
         ],
         "deployedRevision": "a36a331f50ffc4bca996dedb36e8dad158d997e5",
-        "live": "Priora36a331 live; core inspection local739/139/40 PASS/final focused10, pending exact gate/public core proof."
+        "live": "Intermediate723e4c4 gated739/139/40; own-fields final gate/public proof pending."
       },
       "nextSlice": "Source-owned checked pure control inspection grants, strict bounded Worker DTO validation and explicit owner opt-in IDE panel; default no values, protected/effect/handle refusal, exact source/frame identity, detached snapshots and real non-leakage cases. Formal secret taint/effectful UI/native/compiled inspection remain separate."
     },

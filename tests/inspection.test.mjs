@@ -78,3 +78,16 @@ test('snapshot projection does not invoke data getters',()=>{
  const bundle=compile('fn main(a:Number[])->Number {return 0;}'),inspect=createControlInspector(bundle.ir,grant(['a']));let reads=0;const array=[1];Object.defineProperty(array,'0',{get(){reads++;throw Error('PRIVATE_GETTER');}});
  const snapshot=inspect('main',new Map([['a',{type:'NumberArray',value:array}]]));assert.equal(reads,0);assert.equal(snapshot.variables[0].status,'unavailable');assert.equal(JSON.stringify(snapshot).includes('PRIVATE_GETTER'),false);
 });
+
+
+test('inherited inspection grants never activate and accessor policy fields/array entries are rejected without invocation',async()=>{
+ const bundle=compile('fn main(secret:String)->Number {return 1;}'),events=[];const inspectionBefore=Object.getOwnPropertyDescriptor(Object.prototype,'inspection'),allowBefore=Object.getOwnPropertyDescriptor(Object.prototype,'allow');
+ try{
+  Object.defineProperty(Object.prototype,'inspection',{value:grant(['secret']),configurable:true});Object.defineProperty(Object.prototype,'allow',{value:[{function:'main',names:['secret']}],configurable:true});
+  assert.equal(await executeIR(bundle.ir,{secret:'PROTOTYPE_PRIVATE_SENTINEL'},bundle.registry,{onControlEnter:e=>events.push(e)}),1);assert.ok(events.every(e=>!Object.hasOwn(e,'inspection')));
+  const explicit=[];await executeIR(bundle.ir,{secret:'PROTOTYPE_PRIVATE_SENTINEL'},bundle.registry,{inspection:{},onControlEnter:e=>explicit.push(e)});assert.ok(explicit.every(e=>e.inspection.variables.length===0));
+  assert.deepEqual(normalizeInspectionPolicy({}).allow,[]);
+ }finally{if(inspectionBefore)Object.defineProperty(Object.prototype,'inspection',inspectionBefore);else delete Object.prototype.inspection;if(allowBefore)Object.defineProperty(Object.prototype,'allow',allowBefore);else delete Object.prototype.allow;}
+ let reads=0;const object={};Object.defineProperty(object,'allow',{get(){reads++;throw Error('PRIVATE_POLICY');},enumerable:true});assert.throws(()=>normalizeInspectionPolicy(object),{code:'INVALID_INSPECTION_POLICY'});
+ const names=['secret'];Object.defineProperty(names,'0',{get(){reads++;throw Error('PRIVATE_POLICY');}});assert.throws(()=>normalizeInspectionPolicy(grant(names)),{code:'INVALID_INSPECTION_POLICY'});assert.equal(reads,0);
+});

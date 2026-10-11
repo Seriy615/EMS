@@ -10,7 +10,7 @@ import { assertSignal, checkCancellation, awaitCancellable } from '../runtime/ca
 export async function executeGraph(graph, inputs, registry, options = {}) {
   if(options.onFrameExit!==undefined&&typeof options.onFrameExit!=='function')fail('INVALID_OPTION','Expected frame exit observer');
   if(options.onNodeFailure!==undefined&&typeof options.onNodeFailure!=='function')fail('INVALID_OPTION','Expected node failure observer');
-  if(options.inspection!==undefined)fail('UNSUPPORTED_INSPECTION_PROFILE','Graph value inspection requires a separate checked adapter');
+  if(Object.hasOwn(options,'inspection')&&options.inspection!==undefined)fail('UNSUPPORTED_INSPECTION_PROFILE','Graph value inspection requires a separate checked adapter');
   if(options.onNodeEnter!==undefined&&typeof options.onNodeEnter!=='function')fail('INVALID_OPTION','Expected node entry observer');
   assertSignal(options.signal);
   checkCancellation(options.signal);

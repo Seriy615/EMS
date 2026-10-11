@@ -610,3 +610,8 @@ Local **739/739 Node,139/139 verify,40/40 Chromium PASS**. Новые10 Node cas
 Initial fixtures имели await в non-async main, shadow declaration запрещённую существующим frontend и live handle в input boundary; исправлены на actual supported programs/borrowed helper handles. Assertions не ослаблены. Runtime/IR/standalone/FIFO/private commit/rollback/debugger semantics сохранены; direct graph value adapter unsupported явно, mixed control→graph исполняется normally с payload-free graph portion.
 
 Логи `/tmp/ems-inspect-baseline-{tests,verify}.log`, `/tmp/ems-inspect-focused-final-review.log`, `/tmp/ems-inspect-tests.log`, `/tmp/ems-inspect-verify.log`, `/tmp/ems-inspect-browser-focused.log`, `/tmp/ems-inspect-browser.log`. Publication pending exact gate/public core snapshot proof. ADR0014 фиксирует trust boundary/limits. EMS-033 IN_PROGRESS/global goal active. Next: source-owned checked inspection grants → strict bounded Worker DTO → explicit owner opt-in pure control IDE panel/default-empty/protected refusal; effectful UI state, formal taint и native/compiled profiles открыты.
+
+
+### AC-074 — own-fields review
+
+Дополнительное review: inspection option/optional grants читаются только из own data fields; prototype-inherited flags не активируют capture. Policy object/array accessors и sparse/extra array metadata отвергаются без getter invocation. Новый реальный prototype pollution regression и accessor cases прошли focused11/11. Промежуточный checked artifact723e4c4 опубликован после739/139/40 gate; итоговая приёмка требует нового exact gate с own-fields correction.

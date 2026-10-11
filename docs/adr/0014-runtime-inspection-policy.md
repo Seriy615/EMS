@@ -8,7 +8,7 @@ Existing pre-operation diagnostics payload-free. Передавать весь s
 
 ## Решение
 
-Явный execution option `inspection` разрешает только выбранные function/binding names. Snapshot берётся из реального lexical scope того же activation frame до statement/expression, metadata типизируется из validated IR. Source grants с неизвестной/неоднозначной declaration отклоняются до исполнения. Default отсутствия option не добавляет значений к событиям.
+Явный execution option `inspection` разрешает только выбранные function/binding names. Snapshot берётся из реального lexical scope того же activation frame до statement/expression, metadata типизируется из validated IR. Source grants с неизвестной/неоднозначной declaration отклоняются до исполнения. Default отсутствия own option не добавляет значений к событиям. Inherited options/grants не являются разрешением. Policy содержит только own data properties; accessors/sparse или extra array entries отклоняются без вызова getter.
 
 Первая confidentiality boundary консервативна: fn с effects/capabilities/localEffects не раскрывает значения; любой host-marked `protectedFunctions` закрывает всю текущую программу, включая derived values и callers. Никаких heuristics по имени переменной, inferred taint или declassification не заявлено. Без host classification явно разрешённая String может содержать секрет; allowlist — реальное разрешение на её данные. Дальнейшая поддержка secret flow требует отдельной формальной semantics/policy, а не обхода этой границы.
 

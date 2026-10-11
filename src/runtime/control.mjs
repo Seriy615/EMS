@@ -30,8 +30,9 @@ export async function executeControlIR(ir, inputs, registry, options = {}) {
   assertSignal(options.signal); checkCancellation(options.signal);
   const checked = validateControlIR(ir, registry); checkControlPolicy(checked.policy, options);
   validateControlInputs(checked.entry, inputs);
-  if(options.inspection!==undefined&&typeof options.onControlEnter!=='function')fail('INVALID_INSPECTION_POLICY','Inspection requires a control diagnostic observer');
-  const inspect=options.inspection===undefined?null:createControlInspector(ir,options.inspection);
+  const hasInspection=Object.hasOwn(options,'inspection')&&options.inspection!==undefined;
+  if(hasInspection&&typeof options.onControlEnter!=='function')fail('INVALID_INSPECTION_POLICY','Inspection requires a control diagnostic observer');
+  const inspect=hasInspection?createControlInspector(ir,options.inspection):null;
   const budget = controlBudgetOptions(options); let steps = 0;
   const diagnostics=diagnosticFrames(options);
   const addresses=new WeakMap();

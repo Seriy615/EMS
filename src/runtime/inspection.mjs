@@ -3,22 +3,29 @@ import {controlNodeEntries} from '../ir/control-addresses.mjs';
 import {parseControlType,controlVariants,controlTypeName} from '../semantics/control-algebraic.mjs';
 
 const plain=value=>value&&typeof value==='object'&&!Array.isArray(value)&&[Object.prototype,null].includes(Object.getPrototypeOf(value));
-function fields(value,allowed,required=[]){if(!plain(value)||Reflect.ownKeys(value).some(key=>!allowed.includes(key))||required.some(key=>!Object.hasOwn(value,key)))fail('INVALID_INSPECTION_POLICY','Invalid inspection fields');}
+function fields(value,allowed,required=[]){if(!plain(value)||Reflect.ownKeys(value).some(key=>!allowed.includes(key))||required.some(key=>!Object.hasOwn(value,key))||Reflect.ownKeys(value).some(key=>!Object.hasOwn(Object.getOwnPropertyDescriptor(value,key),'value')))fail('INVALID_INSPECTION_POLICY','Invalid inspection fields');}
 const identifier=value=>typeof value==='string'&&value.length<=128&&/^[_A-Za-z][_A-Za-z0-9]*$/.test(value);
+function list(value,max){
+ if(!Array.isArray(value))fail('INVALID_INSPECTION_POLICY','Expected bounded data array');const length=Object.getOwnPropertyDescriptor(value,'length')?.value;
+ if(!Number.isSafeInteger(length)||length<0||length>max||Reflect.ownKeys(value).length!==length+1)fail('INVALID_INSPECTION_POLICY','Invalid data array');
+ return Array.from({length},(_,index)=>{const descriptor=Object.getOwnPropertyDescriptor(value,String(index));if(!descriptor||!Object.hasOwn(descriptor,'value'))fail('INVALID_INSPECTION_POLICY','Inspection arrays require own data entries');return descriptor.value;});
+}
 const functionId=value=>typeof value==='string'&&value.length<=1024&&/^[-A-Za-z0-9_.]+$/.test(value);
 
 /** Explicit host grant, copied before execution. No policy means no value-bearing diagnostics. */
 export function normalizeInspectionPolicy(value){
  fields(value,['allow','protectedFunctions','maxBytes','maxStringBytes','maxArrayItems']);
- const {allow=[],protectedFunctions=[],maxBytes=8192,maxStringBytes=4096,maxArrayItems=128}=value;
+ const own=(key,fallback)=>Object.hasOwn(value,key)?Object.getOwnPropertyDescriptor(value,key).value:fallback;
+ const allow=list(own('allow',[]),32),protectedFunctions=list(own('protectedFunctions',[]),64),maxBytes=own('maxBytes',8192),maxStringBytes=own('maxStringBytes',4096),maxArrayItems=own('maxArrayItems',128);
  if(!Array.isArray(allow)||allow.length>32||!Array.isArray(protectedFunctions)||protectedFunctions.length>64||protectedFunctions.some(id=>!functionId(id))||new Set(protectedFunctions).size!==protectedFunctions.length)fail('INVALID_INSPECTION_POLICY','Invalid inspection grants/protection');
  for(const [key,actual,min,max]of [['maxBytes',maxBytes,256,65536],['maxStringBytes',maxStringBytes,0,16384],['maxArrayItems',maxArrayItems,0,1024]])if(!Number.isSafeInteger(actual)||actual<min||actual>max)fail('INVALID_INSPECTION_POLICY','Invalid inspection budget',{field:key});
  const functions=new Set();let slots=0;
  const grants=allow.map(record=>{
   fields(record,['function','names'],['function','names']);
-  if(!functionId(record.function)||functions.has(record.function)||!Array.isArray(record.names)||!record.names.length||record.names.some(name=>!identifier(name))||new Set(record.names).size!==record.names.length)fail('INVALID_INSPECTION_POLICY','Invalid named inspection grant');
-  functions.add(record.function);slots+=record.names.length;if(slots>32)fail('INVALID_INSPECTION_POLICY','At most 32 named inspection slots');
-  return {function:record.function,names:[...record.names]};
+  const names=list(record.names,32);
+  if(!functionId(record.function)||functions.has(record.function)||!names.length||names.some(name=>!identifier(name))||new Set(names).size!==names.length)fail('INVALID_INSPECTION_POLICY','Invalid named inspection grant');
+  functions.add(record.function);slots+=names.length;if(slots>32)fail('INVALID_INSPECTION_POLICY','At most 32 named inspection slots');
+  return {function:record.function,names};
  });
  return {allow:grants,protectedFunctions:[...protectedFunctions],maxBytes,maxStringBytes,maxArrayItems};
 }
