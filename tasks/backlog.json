@@ -453,7 +453,23 @@
         "GPT-6.1 Sol",
         "GPT-6 Luna"
       ],
-      "progress": "Initial Studio text integration AC-047: existing frontend/IR/runtime/compiler, canonical supported graph roundtrip, explicit eager/dataflow profile preservation, source diagnostics/provenance, atomic apply/undo, local draft persistence, cancellable worker execution/deadline. Control text executes/exports but rejects dataflow conversion. Full AC-012, richer visual control mapping, runtime source trace and portable full source persistence remain open. See docs/spec/STUDIO_TEXT.md."
+      "progress": "AC-047 existing text integration plus AC-059 initial checked control source graph: AST/typechecker projection with source ranges, typed operand/control/sequence/local helper edges, atomic public interfaces, SVG selection and transactional source-fragment edits through original frontend/IR. Actual runtime/standalone changes, witness/storage/undo/stale/type rollback and browser save/reopen pass. Full AC-012/free port wiring/graphical node creation/layout/control CFG/runtime source trace and unified projects remain open. See docs/spec/CONTROL_GRAPH.md.",
+      "evidence": {
+        "scope": "Initial source-region control graph +node fragment editing, not full control canvas/AC-012.",
+        "docs": "docs/spec/CONTROL_GRAPH.md",
+        "testFiles": [
+          "tests/control-graph.test.mjs",
+          "tests/browser/control-graph.test.mjs"
+        ],
+        "tests": "660/660 PASS",
+        "verify": "126/126 PASS",
+        "browserTests": "18/18 PASS",
+        "commands": [
+          "npm test",
+          "npm run verify",
+          "npm run browser:test"
+        ]
+      }
     },
     {
       "id": "EMS-033",
@@ -530,7 +546,7 @@
         "GPT-6.1 Sol",
         "GPT-6 Luna"
       ],
-      "progress": "AC-051..054: semantic DOM/UI forms and source-owned typed persistence now execute preview through real persistent Worker. Same UIRuntime/ReactorSession semantics, Node/local parity, FIFO/rollback/trace, bounded pending queue, confirmed snapshots and independent init/event deadlines. Browser proves editor responsiveness during EMS loop, terminal timeout/Stop and fresh-session recovery. Full control handler graph/unified project manager and independent standalone state/UI compiler/MVP/native parity remain open.",
+      "progress": "AC-051..054 semantic DOM/UI/source/forms/worker preview remain verified; AC-055..058 independent state/UI and IDE package download implemented under EMS-060/061. AC-059 initial typed control source graph/SVG selection/node-fragment edits now available in UI workspace. Full free control canvas/unified manager/AC-014/MVP/native parity remain open.",
       "acceptanceEvidence": {
         "scope": "Initial UI/source authoring plus actual worker preview; full handler graph/standalone/full AC-014 not completed.",
         "docs": "docs/spec/UI_WORKER.md",

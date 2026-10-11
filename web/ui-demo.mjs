@@ -1,3 +1,4 @@
+import {installControlGraph} from './control-graph.mjs';
 import {buildUIProjectPackage} from '../src/compiler/ui-package.mjs';
 import {packageTAR} from '../src/compiler/archive.mjs';
 import {createCoreRegistry} from '../src/reference/registry.mjs';
@@ -41,3 +42,5 @@ document.querySelector('#file-ui').onchange=async event=>{const file=event.targe
 function change(operation){const task=authoringQueue.then(async()=>{const candidate=new UIProjectEditor(editor.application,base,{sources:editor.sources});operation(candidate);const checked=new UIRuntime(candidate.application,base,{policy});await checked.close();editor.replace(candidate.source);await startDemo();status.textContent='Изменение проверено и применено.';});authoringQueue=task.catch(()=>{});return task;}
 authoring=installUIAuthoring(()=>editor,change,report);
 document.querySelector('#new-ui').onclick=()=>{const empty={schemaVersion:'ems-ui-app/1',id:'project.ui',version:'1.0.0',reactor:{schemaVersion:'ems-reactor/1',id:'project.ui',version:'1.0.0',state:[],handlers:[]},ui:{schemaVersion:'ems-ui/1',root:{id:'root',kind:'column',props:{},events:{},children:[]}}};apply(new UIProjectEditor(empty,base).source).catch(report);};
+
+installControlGraph(()=>editor,change,report);

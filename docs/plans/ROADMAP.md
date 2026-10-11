@@ -113,3 +113,7 @@ EMS-060 initial state session export теперь реализован: compiled
 ## Точка продолжения после AC-058
 
 IDE скачивает actual edited application archive через общий Node/Web packager; скачанный artifact проверен independent Chromium после origin shutdown. Initial UI export/download gate закрыт, EMS-061 IN_PROGRESS для remaining PWA/production scope. Следующий M2/M3 шаг — control handler graph inspection/editing на общей IR семантике, source witnesses и unified project manager; затем полный owner MVP audit/deploy. Глобальная цель языка/экосистемы сохраняется полностью.
+
+## Точка продолжения после AC-059
+
+Source-owned control handlers имеют typed structural graph/SVG selection/node-fragment edits, original frontend/IR/witness/Undo/persistence и actual execution parity. Это начальная интеграция, не full AC-012: дальше graphical node operations/ports/source linking, unified project manager и runtime graph debugger, owner MVP audit/deploy. Initial state/UI/IDE export proofs остаются проверенными; global language/platform/ecosystem goal активна.

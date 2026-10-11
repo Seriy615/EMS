@@ -1,5 +1,12 @@
 # Current implementation status
 
+## Последняя проверка — EMS-032/050 control source graph, AC-059
+
+`npm test` **660/660 PASS**, `npm run verify` **126/126 PASS**, `npm run browser:test` **18/18 PASS**. Baseline75e5e65:656/125/17. Node22 / actual Chromium156. Full AC-012/free control canvas/unified manager/MVP/deploy/global goal открыты.
+
+Checked source AST→ephemeral typed graph с source ranges/data/control/sequence/helper edges, public atomic interfaces и SVG selection. Node fragments применяются через тот же frontend/IR/UIProjectEditor; type/stale/source/ID negatives не меняют source/history/preview. Helper constant edit runtime+standalone3; browser expression edit preview2/type rollback/Undo1/Save/reopen2. Source witnesses и storage прежние. Synthetic collection projection/missing witnesses explicitly rejected. Initial first full test run659/660 exposed outdated data-edge direction assertion; fixed assertion verifies zero arguments and actual value-consumer edge, final660/660 PASS. Логи `/tmp/ems-control-graph-{tests-final,verify,browser}.log`; scope — docs/spec/CONTROL_GRAPH.md.
+
+
 ## Последняя проверка — EMS-061 IDE application download, AC-058
 
 `npm test` **656/656 PASS**, `npm run verify` **125/125 PASS**, `npm run browser:test` **17/17 PASS**, `npm run export:ui` PASS. Baseline e740aad:653/124/16. Node22 / actual Chromium156. EMS-061 IN_PROGRESS: IDE package download завершён в initial finite scope; full control canvas/unified manager/PWA/native/maps/state locks/MVP/deploy/global goal открыты.

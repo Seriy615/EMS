@@ -34,3 +34,5 @@ Save/Open/download/import/reopen сохраняют sources вместе с sema
 
 tests/ui-authoring.test.mjs: создание state/UI/source/typed event и actual result, portable source witness/storage, helpers in control IR, changed result/Undo/Redo, malformed source/stale signature/source-IR mismatch rejection, atomic candidate rollback и safe prototype handler.
 tests/browser/ui.test.mjs: реальные формы создают счётчик с пустого проекта, Number slot/EMS handler/text-state binding/button-event input; click=1, handler edit=2, invalid source preserves current program/value, Undo=1, Redo/Save/LoadHandler и page reopen retains source and click=2. Existing transport/download/import/corrupt record/UI lifecycle сценарии остаются проверяемыми.
+
+AC-059: source-owned handler может открываться как typed structural graph с SVG selection и транзакционной правкой EMS node fragments. Type/source/IR/witness/Undo/storage checks прежние; actual runtime/standalone behavior verified. Scope/limits — CONTROL_GRAPH.md. Free port wiring/complete control canvas/unified manager остаются открытыми.
