@@ -530,16 +530,17 @@
         "GPT-6.1 Sol",
         "GPT-6 Luna"
       ],
-      "progress": "AC-051 first executable semantic UI/DOM profile: typed primitive property/state/event bindings, actual EMS IR handlers through existing ReactorSession, full handler policy preflight/ui.render grants, FIFO/rollback/cancellation/cleanup and safe DOM controls. Working browser counter /web/ui-demo.html and actual input/checkbox/XSS/lifecycle evidence. UI authoring/inspection in Studio, signed JSON project codec, UI contracts/IDL factory, hierarchy updates and independent standalone state/UI export remain required; full AC-014/MVP/native parity open.",
+      "progress": "AC-051 semantic backend + AC-052 typed ems-ui-project/1 transport/workspace implemented: signed state/binding values, canonical handler IR and exact transitive references, actual Apply/Undo/Redo/Save/Open/download/import/reopen with policy preflight and corrupt/quota preservation. No extra executor/JS business logic. Full visual UI/slot/event authoring, handler text/graph editing/source persistence/inspect, unified project manager, independent standalone state/UI and full AC-014/MVP/native parity remain open.",
       "acceptanceEvidence": {
-        "scope": "Initial backend profile, not completed AC-014 or full WEB IDE MVP.",
-        "docs": "docs/spec/UI_TREE.md",
-        "example": "examples/ui-counter.json",
-        "tests": "615/615 PASS",
-        "verify": "109/109 PASS",
-        "browserTests": "11/11 PASS",
+        "scope": "Semantic DOM backend plus typed transport and JSON authoring workspace; full visual/source UI IDE and standalone not completed.",
+        "docs": "docs/spec/UI_PROJECT.md",
+        "example": "examples/ui-counter.ems-ui.json",
+        "tests": "621/621 PASS",
+        "verify": "112/112 PASS",
+        "browserTests": "12/12 PASS",
         "testFiles": [
           "tests/ui.test.mjs",
+          "tests/ui-project.test.mjs",
           "tests/browser/ui.test.mjs"
         ],
         "commands": [

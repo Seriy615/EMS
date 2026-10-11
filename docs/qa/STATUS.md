@@ -1,5 +1,19 @@
 # Current implementation status
 
+## Последняя проверка — EMS-050 typed UI project, AC-052
+
+`npm test` **621/621 PASS**, `npm run verify` **112/112 PASS**, `npm run browser:test` **12/12 PASS**. Node22/actual Chromium156. Baseline4bdcb34:615/615 tests,109/109 verify. EMS-050 IN_PROGRESS; full AC-014, visual UI/source authoring, standalone UI/MVP/deploy/global goal остаются открытыми.
+
+ems-ui-project/1 отделяет runtime application от transport: explicit typed state initial/literal bindings сохраняют Number/NumberArray -0 и String marker distinction. Handler IR использует существующий codec. Whole application validation и exact transitive references включают unused nested composite dependencies/interface implementations/resource chains; missing/duplicate/extra/drift pins reject before any invocation. Pins не byte provenance или подпись. Limits1MiB/100slots+handlers/1000nodes/depth32/10000refs/depth256. Strict source parsing и canonical write не исполняют handlers/imported code.
+
+UIProjectEditor transactional replace/Undo/Redo с revalidation при dependency drift; single atomic local storage record preserves previous on quota/corrupt validation failures. UI browser workspace имеет typed JSON Apply/Undo/Redo/Save/Open/download/import, preflight policy до закрытия прежнего preview и recover-to-example without overwriting corrupt record. Save содержит program/initial values, не текущее runtime state.
+
+6 новых Node tests: signed scalar/array/String marker and executable restored state, call/control rollback, transitive unused version drift/no host call, malformed data/limits/record order, undo/quota/corrupt storage preservation и undo dependency-drift preflight. Actual new browser scenario edits initial=-0/delta2, Apply/Undo/Redo, invalid source preserves accepted model, Save, real downloaded file/import initial10, reload saved initial=-0, corrupt load fallback preserves invalid record. Existing12 browser tests/core/P1/IDE/library/UI regressions pass. Target combined9/9 and browser3/3. Schemas19 parse/local refs resolve; separate schema engine not run. Logs /tmp/ems-ui-codec-{tests,verify,browser}-final.log. git diff --check PASS; dependencies/VPS unchanged. Revision — commit containing report, parent4bdcb34.
+
+Next: full UI authoring on shared state/IR, handler text+graph edits with portable source persistence and widget→handler inspector, unified project storage; then actual standalone state/UI compiler/browser output, third owner scenario/full MVP/auth HTTPS isolation/rollback deploy. Typed JSON textarea/workspace is not full visual UI editor. Verified slices commit/push origin/main git@github.com:Seriy615/EMS.git. No subagents/model fallback.
+
+## Предыдущая проверка — UI/DOM backend
+
 ## Последняя проверка — EMS-050 первый semantic UI/DOM backend
 
 `npm test` **615/615 PASS**, `npm run verify` **109/109 PASS**, `npm run browser:test` **11/11 PASS**. Node22 / actual Chromium156. Baseline2c4a422:608/608 tests,106/106 verify. AC-051 реализован для initial semantic backend; EMS-050 IN_PROGRESS. Full AC-014/control UI-authoring/WEB IDE MVP/standalone state-UI/deploy/global goal открыты.

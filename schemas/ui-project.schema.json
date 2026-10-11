@@ -1,0 +1,440 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ems.local/schemas/ui-project.schema.json",
+  "title": "EMS typed UI transport project v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "application",
+    "references"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "const": "ems-ui-project/1"
+    },
+    "application": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schemaVersion",
+        "id",
+        "version",
+        "reactor",
+        "ui"
+      ],
+      "properties": {
+        "schemaVersion": {
+          "const": "ems-ui-app/1"
+        },
+        "id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "version": {
+          "type": "string",
+          "minLength": 1
+        },
+        "reactor": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "schemaVersion",
+            "id",
+            "version",
+            "state",
+            "handlers"
+          ],
+          "properties": {
+            "schemaVersion": {
+              "const": "ems-reactor/1"
+            },
+            "id": {
+              "type": "string",
+              "minLength": 1
+            },
+            "version": {
+              "type": "string",
+              "minLength": 1
+            },
+            "state": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "id",
+                  "type",
+                  "initial"
+                ],
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "pattern": "^[A-Za-z_][A-Za-z0-9_]*$"
+                  },
+                  "type": {
+                    "enum": [
+                      "Number",
+                      "NumberArray",
+                      "Boolean",
+                      "String"
+                    ]
+                  },
+                  "initial": {
+                    "$ref": "#/$defs/typedValue"
+                  }
+                }
+              },
+              "maxItems": 100
+            },
+            "handlers": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "event",
+                  "program"
+                ],
+                "properties": {
+                  "event": {
+                    "type": "string",
+                    "pattern": "^[A-Za-z_][A-Za-z0-9_]*$"
+                  },
+                  "program": {
+                    "oneOf": [
+                      {
+                        "$ref": "ir.schema.json"
+                      },
+                      {
+                        "$ref": "control-ir.schema.json"
+                      }
+                    ]
+                  }
+                }
+              },
+              "maxItems": 100
+            }
+          }
+        },
+        "ui": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "schemaVersion",
+            "root"
+          ],
+          "properties": {
+            "schemaVersion": {
+              "const": "ems-ui/1"
+            },
+            "root": {
+              "$ref": "#/$defs/node"
+            }
+          }
+        }
+      }
+    },
+    "references": {
+      "type": "array",
+      "maxItems": 10000,
+      "uniqueItems": true,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "version"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "version": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "binding": {
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "literal"
+          ],
+          "properties": {
+            "literal": {
+              "$ref": "#/$defs/typedValue"
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "state"
+          ],
+          "properties": {
+            "state": {
+              "type": "string",
+              "minLength": 1
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "state",
+            "format"
+          ],
+          "properties": {
+            "state": {
+              "type": "string",
+              "minLength": 1
+            },
+            "format": {
+              "const": "number"
+            }
+          }
+        }
+      ]
+    },
+    "eventRef": {
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "literal"
+          ],
+          "properties": {
+            "literal": {
+              "$ref": "#/$defs/typedValue"
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "state"
+          ],
+          "properties": {
+            "state": {
+              "type": "string",
+              "minLength": 1
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "state",
+            "format"
+          ],
+          "properties": {
+            "state": {
+              "type": "string",
+              "minLength": 1
+            },
+            "format": {
+              "const": "number"
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "value"
+          ],
+          "properties": {
+            "value": {
+              "const": true
+            }
+          }
+        }
+      ]
+    },
+    "event": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "handler",
+        "inputs"
+      ],
+      "properties": {
+        "handler": {
+          "type": "string",
+          "minLength": 1
+        },
+        "inputs": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/$defs/eventRef"
+          }
+        }
+      }
+    },
+    "node": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "kind",
+        "props",
+        "events",
+        "children"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[-A-Za-z0-9_.]+$"
+        },
+        "kind": {
+          "enum": [
+            "column",
+            "row",
+            "text",
+            "button",
+            "textInput",
+            "checkbox"
+          ]
+        },
+        "props": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "text": {
+              "$ref": "#/$defs/binding"
+            },
+            "label": {
+              "$ref": "#/$defs/binding"
+            },
+            "value": {
+              "$ref": "#/$defs/binding"
+            },
+            "checked": {
+              "$ref": "#/$defs/binding"
+            },
+            "disabled": {
+              "$ref": "#/$defs/binding"
+            }
+          }
+        },
+        "events": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "press": {
+              "$ref": "#/$defs/event"
+            },
+            "change": {
+              "$ref": "#/$defs/event"
+            }
+          }
+        },
+        "children": {
+          "type": "array",
+          "maxItems": 1000,
+          "items": {
+            "$ref": "#/$defs/node"
+          }
+        }
+      }
+    },
+    "typedValue": {
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "type",
+            "value"
+          ],
+          "properties": {
+            "type": {
+              "const": "Number"
+            },
+            "value": {
+              "oneOf": [
+                {
+                  "type": "number"
+                },
+                {
+                  "const": "-0"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "type",
+            "value"
+          ],
+          "properties": {
+            "type": {
+              "const": "NumberArray"
+            },
+            "value": {
+              "type": "array",
+              "items": {
+                "oneOf": [
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "const": "-0"
+                  }
+                ]
+              }
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "type",
+            "value"
+          ],
+          "properties": {
+            "type": {
+              "const": "String"
+            },
+            "value": {
+              "type": "string"
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "type",
+            "value"
+          ],
+          "properties": {
+            "type": {
+              "const": "Boolean"
+            },
+            "value": {
+              "type": "boolean"
+            }
+          }
+        }
+      ]
+    }
+  }
+}

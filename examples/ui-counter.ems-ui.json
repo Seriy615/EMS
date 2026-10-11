@@ -1,0 +1,268 @@
+{
+  "schemaVersion": "ems-ui-project/1",
+  "application": {
+    "schemaVersion": "ems-ui-app/1",
+    "id": "demo.ui.counter",
+    "version": "1.0.0",
+    "reactor": {
+      "schemaVersion": "ems-reactor/1",
+      "id": "demo.ui.counter",
+      "version": "1.0.0",
+      "state": [
+        {
+          "id": "count",
+          "type": "Number",
+          "initial": {
+            "type": "Number",
+            "value": 0
+          }
+        }
+      ],
+      "handlers": [
+        {
+          "event": "change",
+          "program": {
+            "schemaVersion": "ems-ir/1",
+            "profile": "ems-effects-finite/1",
+            "id": "demo.Counter",
+            "version": "0.1.0",
+            "inputs": [
+              {
+                "name": "delta",
+                "type": "Number"
+              }
+            ],
+            "output": {
+              "type": "Number"
+            },
+            "operations": [
+              {
+                "id": "value_0",
+                "contract": {
+                  "id": "state.count.read",
+                  "version": "1.0.0"
+                },
+                "arguments": [],
+                "type": "Number",
+                "policy": {
+                  "effects": [
+                    "state.read"
+                  ],
+                  "capabilities": [
+                    "state.read"
+                  ]
+                }
+              },
+              {
+                "id": "value_1",
+                "contract": {
+                  "id": "core.add",
+                  "version": "1.0.0"
+                },
+                "arguments": [
+                  {
+                    "port": "a",
+                    "value": {
+                      "kind": "node",
+                      "id": "value_0"
+                    }
+                  },
+                  {
+                    "port": "b",
+                    "value": {
+                      "kind": "input",
+                      "name": "delta"
+                    }
+                  }
+                ],
+                "type": "Number",
+                "policy": {
+                  "effects": [],
+                  "capabilities": []
+                }
+              },
+              {
+                "id": "value_2",
+                "contract": {
+                  "id": "state.count.write",
+                  "version": "1.0.0"
+                },
+                "arguments": [
+                  {
+                    "port": "value",
+                    "value": {
+                      "kind": "node",
+                      "id": "value_1"
+                    }
+                  }
+                ],
+                "type": "Number",
+                "policy": {
+                  "effects": [
+                    "state.write"
+                  ],
+                  "capabilities": [
+                    "state.write"
+                  ]
+                }
+              }
+            ],
+            "result": {
+              "kind": "node",
+              "id": "value_2"
+            },
+            "policy": {
+              "effects": [
+                "state.read",
+                "state.write"
+              ],
+              "capabilities": [
+                "state.read",
+                "state.write"
+              ]
+            },
+            "sequence": [
+              "value_0",
+              "value_1",
+              "value_2"
+            ],
+            "requirements": {
+              "effects": [
+                "state.read",
+                "state.write"
+              ],
+              "capabilities": [
+                "state.read",
+                "state.write"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    "ui": {
+      "schemaVersion": "ems-ui/1",
+      "root": {
+        "id": "root",
+        "kind": "column",
+        "props": {
+          "label": {
+            "literal": {
+              "type": "String",
+              "value": "EMS counter"
+            }
+          }
+        },
+        "events": {},
+        "children": [
+          {
+            "id": "title",
+            "kind": "text",
+            "props": {
+              "text": {
+                "literal": {
+                  "type": "String",
+                  "value": "Счётчик EMS"
+                }
+              }
+            },
+            "events": {},
+            "children": []
+          },
+          {
+            "id": "count",
+            "kind": "text",
+            "props": {
+              "label": {
+                "literal": {
+                  "type": "String",
+                  "value": "Значение счётчика"
+                }
+              },
+              "text": {
+                "state": "count",
+                "format": "number"
+              }
+            },
+            "events": {},
+            "children": []
+          },
+          {
+            "id": "actions",
+            "kind": "row",
+            "props": {},
+            "events": {},
+            "children": [
+              {
+                "id": "increment",
+                "kind": "button",
+                "props": {
+                  "text": {
+                    "literal": {
+                      "type": "String",
+                      "value": "Увеличить"
+                    }
+                  }
+                },
+                "events": {
+                  "press": {
+                    "handler": "change",
+                    "inputs": {
+                      "delta": {
+                        "literal": {
+                          "type": "Number",
+                          "value": 1
+                        }
+                      }
+                    }
+                  }
+                },
+                "children": []
+              },
+              {
+                "id": "decrement",
+                "kind": "button",
+                "props": {
+                  "text": {
+                    "literal": {
+                      "type": "String",
+                      "value": "Уменьшить"
+                    }
+                  }
+                },
+                "events": {
+                  "press": {
+                    "handler": "change",
+                    "inputs": {
+                      "delta": {
+                        "literal": {
+                          "type": "Number",
+                          "value": -1
+                        }
+                      }
+                    }
+                  }
+                },
+                "children": []
+              }
+            ]
+          }
+        ]
+      }
+    }
+  },
+  "references": [
+    {
+      "id": "core.add",
+      "version": "1.0.0"
+    },
+    {
+      "id": "state.count.read",
+      "version": "1.0.0"
+    },
+    {
+      "id": "state.count.write",
+      "version": "1.0.0"
+    }
+  ]
+}
