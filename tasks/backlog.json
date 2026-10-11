@@ -623,18 +623,19 @@
         "GPT-6.1 Sol",
         "GPT-6 Luna"
       ],
-      "progress": "AC-057 initial finite independent DOM package implemented: shared UIKernel/ReactorKernel/existing DOM adapter, exact typed state/events/render/permission/lifecycle semantics, compileUIJS, explicit-policy source-owned project packager and npm export:ui. Node fresh execution and actual Chromium controls after EMS origin shutdown under nested static URL pass. Initial dependency gates AC-051..056 available; full EMS-050/060 remain IN_PROGRESS. IDE package download/control canvas/unified manager, PWA/native/maps/state lock and complete MVP remain open.",
+      "progress": "AC-057/058 initial independent DOM application and IDE package download implemented. Common Web/Node builder validates source/IR/pins/explicit policy, CLI writes same files, UI workspace exports deterministic bounded TAR after applied authoring settles. Actual Chromium edits handler, preview=3, downloads/extracts exact artifact, runs independently after origin shutdown: initial=0/first press=3. Unsupported build preserves source/preview and creates no new archive. Full control canvas/unified manager, PWA/native/maps/state lock and complete MVP remain open; initial gates available while EMS-050/060/061 remain IN_PROGRESS.",
       "evidence": {
-        "scope": "Initial finite standalone DOM package only; full IDE/PWA/native/production not complete.",
+        "scope": "Initial finite standalone DOM package plus IDE download only; full IDE/PWA/native/production not complete.",
         "docs": "docs/spec/UI_EXPORT.md",
         "example": "examples/ui-source-counter.ems-ui.json",
         "testFiles": [
           "tests/ui-compiler.test.mjs",
+          "tests/ui-package.test.mjs",
           "tests/browser/ui-compiler.test.mjs"
         ],
-        "tests": "653/653 PASS",
-        "verify": "124/124 PASS",
-        "browserTests": "16/16 PASS",
+        "tests": "656/656 PASS",
+        "verify": "125/125 PASS",
+        "browserTests": "17/17 PASS",
         "commands": [
           "npm test",
           "npm run verify",

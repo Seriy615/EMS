@@ -1,5 +1,12 @@
 # Current implementation status
 
+## Последняя проверка — EMS-061 IDE application download, AC-058
+
+`npm test` **656/656 PASS**, `npm run verify` **125/125 PASS**, `npm run browser:test` **17/17 PASS**, `npm run export:ui` PASS. Baseline e740aad:653/124/16. Node22 / actual Chromium156. EMS-061 IN_PROGRESS: IDE package download завершён в initial finite scope; full control canvas/unified manager/PWA/native/maps/state locks/MVP/deploy/global goal открыты.
+
+Общий buildUIProjectPackage работает Node/Web, CLI и IDE создают identical four files. UI button ждёт queued applied edits, проверяет actual source/IR/ref/policy и скачивает deterministic bounded regular-file TAR. Системный tar подтверждает exact UTF-8/empty/block bytes; paths/non-text/oversize отвергаются. Actual Chromium edited handler даёт preview3; скачанный/распакованный пакет после остановки EMS origin имеет initial0/first click3. Unsupported export сохраняет source/preview1 без нового archive. Логи `/tmp/ems-ui-download-{tests,verify,browser}.log`; scope/API — docs/spec/UI_EXPORT.md.
+
+
 ## Последняя проверка — EMS-061 independent DOM package, AC-057
 
 `npm test` **653/653 PASS**, `npm run verify` **124/124 PASS**, `npm run browser:test` **16/16 PASS**; `npm run export:ui` PASS. Baseline ac01032:646/122/15. Node22 / actual Chromium156. EMS-061 IN_PROGRESS для initial finite profile; full IDE package export/control handler canvas/unified manager/PWA/native/maps/state locks/MVP/deploy/global goal открыты.

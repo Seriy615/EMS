@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import {compileStateControlJS} from '../src/compiler/control.mjs';
 import {compileReactorJS} from '../src/compiler/reactor.mjs';
 import {compileUIJS} from '../src/compiler/ui.mjs';
+import {buildUIProjectPackage} from '../src/compiler/ui-package.mjs';
 import { readFile, stat, open } from 'node:fs/promises';
 import { createCoreRegistry, parseTextEMS, validateGraph, executeGraph, compileStandaloneJS, compiledAtomicManifest, registerCompiledAtomic, registerTrustedJSBindings } from '../src/reference/index.mjs';
 import { lowerGraphToIR, serializeIR, parseIR, executeIR, compileIRToJS, graphProvenance } from '../src/ir/index.mjs';
@@ -282,5 +283,11 @@ await check('independent semantic UI dispatches actual state events without EMS 
 });
 await check('independent UI preflight denies missing state grants before preview',()=>{
  assert.throws(()=>standaloneUIModule.createRuntime({policy:{capabilities:['ui.render'],allowedEffects:['ui.render']}}),{code:'PERMISSION_DENIED'});return true;
+});
+await check('shared UI package contains an actual independent executable application',async()=>{
+ const policy={capabilities:['ui.render','state.read','state.write'],allowedEffects:['ui.render','state.read','state.write']};
+ const files=await buildUIProjectPackage(await get('examples/ui-source-counter.ems-ui.json'),{policy});
+ const output=await import(`data:text/javascript,${encodeURIComponent(files['application.mjs'])}`),runtime=output.createRuntime({policy});
+ try{return await runtime.dispatch('increment','press')===1&&runtime.snapshot().count===1;}finally{await runtime.close();}
 });
 console.log(`\nEMS foundation verification passed (${checks} checks). Not production readiness.`);

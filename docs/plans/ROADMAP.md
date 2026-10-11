@@ -109,3 +109,7 @@ EMS-060 initial state session export теперь реализован: compiled
 ## Точка продолжения после AC-057
 
 Одна semantic UI/state программа теперь исполняется в EMS и экспортируется CLI в independent DOM package; Node semantic runtime и actual Chromium controls после остановки EMS origin проверены. EMS-061 IN_PROGRESS для initial dependency scope, не полный PWA/production. Следующий IDE шаг — package download/export, затем control handler canvas и unified project manager, полный owner MVP audit. Native/platform breadth, source maps/state provenance и ecosystem global goal открыты. Deploy после MVP gate.
+
+## Точка продолжения после AC-058
+
+IDE скачивает actual edited application archive через общий Node/Web packager; скачанный artifact проверен independent Chromium после origin shutdown. Initial UI export/download gate закрыт, EMS-061 IN_PROGRESS для remaining PWA/production scope. Следующий M2/M3 шаг — control handler graph inspection/editing на общей IR семантике, source witnesses и unified project manager; затем полный owner MVP audit/deploy. Глобальная цель языка/экосистемы сохраняется полностью.

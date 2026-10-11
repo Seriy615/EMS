@@ -108,4 +108,4 @@ UI preview handlers now run in a persistent Worker with the same reactor semanti
 
 ## Standalone DOM application (initial finite profile)
 
-`npm run export:ui` builds `dist/counter-ui` from the saved source-owned project with explicit grants in `examples/ui-policy.json`. Serve that directory on a static host: it runs without EMS IDE or service, including nested URLs. Node semantic execution and actual Chromium controls after EMS origin shutdown are verified. IDE package download, PWA/native UI and full MVP remain open. See [UI_EXPORT.md](docs/spec/UI_EXPORT.md).
+`npm run export:ui` builds `dist/counter-ui` from the saved source-owned project with explicit grants in `examples/ui-policy.json`. Serve that directory on a static host: it runs without EMS IDE or service, including nested URLs. Node semantic execution and actual Chromium controls after EMS origin shutdown are verified. The UI workspace can download the same package as a TAR archive. PWA/native UI and full MVP remain open. See [UI_EXPORT.md](docs/spec/UI_EXPORT.md).

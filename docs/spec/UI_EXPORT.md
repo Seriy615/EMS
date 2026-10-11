@@ -24,7 +24,7 @@ CLI проверяет typed project schema/version/ref closure и воспро�
 
 Результат: `application.mjs`, `bootstrap.mjs`, `index.html`, `style.css`. Пакет можно размещать на обычном static host, включая вложенный URL. Imports bootstrap относительные; compiled application не импортирует EMS. При pagehide controller закрывается. Стандартные JavaScript APIs и Browser DOM остаются declared environment dependencies. Сохранённые initial values включаются в artifact; runtime state preview не экспортируется. UI runtime errors показываются кодом в локальном alert, telemetry отсутствует.
 
-`exportUIProject(projectSource,directory,{policy})` из tools/export-ui.mjs — Node packaging API. Сам compiler доступен Node и Web, packaging CLI использует Node filesystem. IDE download/export control пока отдельная интеграция; CLI не выдаётся за готовую кнопку IDE.
+`exportUIProject(projectSource,directory,{policy})` из tools/export-ui.mjs — Node packaging API. Сам compiler доступен Node и Web, packaging CLI использует Node filesystem. IDE package download теперь реализован по AC-058 ниже; CLI и IDE используют общий builder.
 
 ## Приёмка и ограничения
 
@@ -33,3 +33,15 @@ CLI проверяет typed project schema/version/ref closure и воспро�
 `tests/browser/ui-compiler.test.mjs`: actual Chromium DOM exercise в EMS runtime, остановка origin, затем тот же пакет на independent static host под nested path. Реальные clicks/inputs/checkbox, error rollback, disabled control, focus/accessibility, inert malicious-looking text, listener/session close и отсутствие запросов к `/src/`/`/web/`. Это рабочий Node semantic UI + Web/DOM export proof; поддержки Windows/macOS native/mobile UI он не доказывает.
 
 Поддержаны control IR v2 kernel-state handlers и pure graph IR v1. State graph IR v1/effectful composite host graphs/native resources/IO backend пока UNSUPPORTED_TARGET. Скомпилированный DOM runtime работает в main thread под existing step budget; Worker hard deadline/sandbox не включён в пакет. State program lock/provenance, source maps, PWA/service worker/installability, full graphical control handler authoring/unified manager и MVP/deploy остаются открытыми. Global language/ecosystem goal сохраняется полностью.
+
+## Экспорт из IDE — AC-058
+
+На `/web/ui-demo.html` кнопка **«Скачать приложение (.tar)»** собирает текущую применённую программу. Она ждёт завершения queued authoring/preview изменений, повторно проверяет source/IR/ref closure и explicit existing UI/state policy, затем скачивает `ems-ui-app.tar`. Unapplied drafts не заменяют программу; preview runtime state не копируется в initial values. Экспорт не изменяет editor history, source или текущую preview-сессию.
+
+`buildUIProjectPackage(projectSource,{policy})` в `src/compiler/ui-package.mjs` — общий Web/Node builder. CLI экспорт теперь только записывает его файлы. Browser и CLI output byte-identical для одного source/policy. Никакой Node-only module, локальный filesystem или hosted build service браузеру не нужны. Package содержит те же четыре static files AC-057; после распаковки они размещаются на static host.
+
+`packageTAR(files)` создаёт стандартный uncompressed POSIX ustar archive regular files с deterministic zero timestamps и UTF-8 содержимым. Только flat ASCII имена; нет директорий, links или произвольного extraction API. Ограничения: не более16 файлов и16MiB всего archive. Unsafe names/non-text/oversize дают INVALID_PACKAGE/PACKAGE_LIMIT. Новых зависимостей нет. Browser packaging/compilation выполняются в main thread; hard Worker deadline этим API не обещается.
+
+`tests/ui-package.test.mjs` использует системный tar как независимый oracle: exact UTF-8/empty/block-boundary bytes, names, deterministic output, limits/path negatives и CLI/Web parity. `tests/browser/ui-compiler.test.mjs` меняет реальный EMS handler в IDE, проверяет preview=3, скачивает/распаковывает архив, сравнивает файлы с builder, останавливает EMS origin и запускает **скачанный** пакет: initial=0, first press=3. Unsupported legacy state graph export показывает UNSUPPORTED_TARGET, не скачивает новый archive и сохраняет source/preview count=1.
+
+Control handler graph editing/unified manager, PWA/native/platform expansion/source locks и полный MVP/deploy остаются открытыми. Initial IDE download реализован; он не закрывает все требования visual/text parity.

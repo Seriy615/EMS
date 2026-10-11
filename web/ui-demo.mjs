@@ -1,3 +1,5 @@
+import {buildUIProjectPackage} from '../src/compiler/ui-package.mjs';
+import {packageTAR} from '../src/compiler/archive.mjs';
 import {createCoreRegistry} from '../src/reference/registry.mjs';
 import {createUIWorkerRuntime} from '../src/ui/worker-client.mjs';
 import {mountDOMRuntime} from '../src/ui/dom.mjs';
@@ -23,6 +25,16 @@ document.querySelector('#save-ui').onclick=()=>{try{storage.save(editor.applicat
 document.querySelector('#open-ui').onclick=()=>{try{const saved=storage.loadWorkspace();if(!saved){status.textContent='Сохранённого UI-проекта нет.';return;}apply(new UIProjectEditor(saved.application,base,{sources:saved.sources}).source).catch(report);}catch(failure){report(failure);}};
 document.querySelector('#undo-ui').onclick=()=>{try{editor.undo();startDemo().catch(report);}catch(failure){report(failure);}};document.querySelector('#redo-ui').onclick=()=>{try{editor.redo();startDemo().catch(report);}catch(failure){report(failure);}};
 document.querySelector('#export-ui').onclick=()=>{const url=URL.createObjectURL(new Blob([editor.source],{type:'application/json'})),link=document.createElement('a');link.href=url;link.download='ems-ui-project.json';link.click();setTimeout(()=>URL.revokeObjectURL(url),1000);};
+document.querySelector('#export-app-ui').onclick=async()=>{
+ const button=document.querySelector('#export-app-ui');button.disabled=true;
+ try{
+  await authoringQueue;await restarting;
+  const files=await buildUIProjectPackage(editor.source,{policy});
+  const url=URL.createObjectURL(new Blob([packageTAR(files)],{type:'application/x-tar'})),link=document.createElement('a');
+  link.href=url;link.download='ems-ui-app.tar';link.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
+  status.textContent='Приложение скачано. Распакуйте архив и разместите файлы на статическом сервере.';
+ }catch(failure){report(failure);}finally{button.disabled=false;}
+};
 document.querySelector('#import-ui').onclick=()=>document.querySelector('#file-ui').click();
 document.querySelector('#file-ui').onchange=async event=>{const file=event.target.files[0];try{if(file){if(file.size>1048576)throw Object.assign(new Error('UI file exceeds 1 MiB'),{code:'UI_LIMIT'});await apply(await file.text());}}catch(failure){report(failure);}finally{event.target.value='';}};
 
