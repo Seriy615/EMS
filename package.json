@@ -10,7 +10,7 @@
     "verify": "node tools/verify.mjs",
     "conformance": "node tools/conformance.mjs",
     "browser:verify": "node tools/browser-conformance.mjs",
-    "browser:test": "node --test tests/browser/*.test.mjs",
+    "browser:test": "node --test --test-concurrency=1 tests/browser/*.test.mjs",
     "export:portable": "node tools/export-portable.mjs",
     "export:reactor": "node tools/export-reactor.mjs examples/ui-source-counter.ems-ui.json --out dist/counter-session.mjs",
     "export:ui": "node tools/export-ui.mjs examples/ui-source-counter.ems-ui.json --policy examples/ui-policy.json --out dist/counter-ui",
