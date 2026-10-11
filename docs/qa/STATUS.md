@@ -1,5 +1,19 @@
 # Current implementation status
 
+## Последняя проверка — EMS-032 начальный text mode
+
+`npm test` **534/534 PASS**, `npm run verify` **97/97 PASS**, `npm run browser:test` **5/5 PASS**. Node22 / actual Chromium156. AC-047 реализован в начальном документированном профиле; EMS-032 **IN_PROGRESS**, full AC-012/WEB IDE MVP/deploy/global goal открыты. Baseline 28c3e91: 524/524 tests, 94/94 verify.
+
+Source использует существующие frontend/IR/runtime/compiler. Supported graph → text → graph сохраняет canonical IR, binding identifiers, signed literals/zero и separate canvas/inputs. Обычный text сохраняет eager sequence и unused failures; generated lazy SSA profile явно call. Helpers сохраняются editable definitions. Source Apply проверяет whole project/callers и входит в Undo/Redo; control text исполняется/экспортируется, но dataflow conversion явно запрещена. Source errors показывают location/selection и IR viewer реальный provenance. Полная control visualization/runtime trace/portable source пока не реализованы.
+
+Run графа/текста использует disposable Worker, существующий executor, Stop/CANCELLED и deadline 5s; control steps10000/depth32. Strict local bounded draft record сохраняет invalid source и предыдущую запись при quota failure. Draft не входит в project export. Source fanout отвергается до execution/export; arbitrary JS import/sandbox не добавлен.
+
+Evidence: 10 новых Node tests (canonical/signed literals, eager/order/helpers/provenance/standalone, async/control rejection, locations/collisions, selected composite edits, quota/corrupt records, partial sequences и fanout), actual Chromium text UI (Run/IR/Apply/Undo/Redo/roundtrip/control/location/Stop/deadline/reopen/signed input). Existing P1/editor/composites остаются зелёными. Логи /tmp/ems-text-studio-tests-final.log, /tmp/ems-text-studio-verify-final.log, /tmp/ems-text-studio-browser-final.log, targeted model10/10. git diff --check PASS; dependencies не добавлялись, VPS unchanged. Revision — commit содержащий этот отчёт, parent 28c3e91.
+
+Следующий ready task EMS-034 actual typed logic/text/array contracts; затем UI/events counter и full MVP acceptance, после него authorized HTTPS/auth/rollback deployment. Verified slices commit/push origin main git@github.com:Seriy615/EMS.git без force. Субагенты не запускались.
+
+## Предыдущая проверка — composite editor
+
 ## Последняя проверка — ядро перед IDE
 
 `npm test` **524/524 PASS**, `npm run verify` **94/94 PASS**, `npm run browser:test` **4/4 PASS**. Node22 / actual Chromium156. EMS-031 DONE для initial pure dataflow composite authoring/navigation. Full WEB IDE MVP/AC-012/deploy и глобальная цель открыты.

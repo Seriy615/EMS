@@ -1,10 +1,17 @@
 import {ProjectEditor,newProject,parseProject} from '/src/studio/project.mjs';
+import {startStudioExecution} from '/src/studio/execution-client.mjs';
 import {ProjectStorage} from '/src/studio/storage.mjs';
 const $=id=>document.getElementById(id);
 const titles={'core.add':'Сложение','core.sub':'Вычитание','core.mul':'Умножение','core.div':'Деление','core.sum':'Сумма массива','core.min':'Минимум','core.max':'Максимум'};
 const el=(tag,text,style)=>{const node=document.createElement(tag);if(text!==undefined)node.textContent=text;if(style)node.className=style;return node;};
 const identity=()=> 'p'+crypto.randomUUID().replaceAll('-','');
-let store,editor,selected=null,pending=null,failedNode=null;
+let store,editor,selected=null,pending=null,failedNode=null,textMode=false,textProjectId=null,textStorage;
+let activeExecution=null;
+async function executeStudio(action,draft,inputs){
+ const job=startStudioExecution({action,project:editor.serialize(),selected:editor.selectedContract,draft,inputs});activeExecution=job;$('stop').disabled=false;
+ try{return await job.promise;}finally{if(activeExecution===job)activeExecution=null;$('stop').disabled=true;}
+}
+$('stop').onclick=()=>activeExecution?.cancel();
 function report(error){$('error').textContent=`${error.code??'ERROR'}: ${error.message}`;}
 try{store=new ProjectStorage(localStorage);editor=new ProjectEditor(store.load()??newProject(identity()));}catch(error){editor=new ProjectEditor(newProject(identity()));report(error);}
 function projectList(){
@@ -48,9 +55,9 @@ function render(){
  for(const [name,input]of Object.entries(graph.inputs)){const node=card(`input:${name}`,name,'вход');node.append(port({input:name},null,name,input.type));$('nodes').append(node);}
  graph.nodes.forEach((definition,index)=>{const contract=editor.registry.resolve(definition.uses),node=card(definition.id,titles[contract.id]??contract.id,contract.kind==='composite'?'граф':'атом',index);for(const [name,type]of Object.entries(contract.inputs))node.append(port(null,{id:definition.id,port:name},name,typeof type==='string'?type:type.type));node.append(port({node:definition.id},null,definition.id,contract.output));$('nodes').append(node);});
  const output=card('output','Результат функции','выход');output.append(port(null,{id:'output',port:'return'},'return',graph.output.type));$('nodes').append(output);
- $('project-name').value=editor.project.name;$('undo').disabled=!editor.history.length;$('redo').disabled=!editor.future.length;$('connection-status').textContent=pending?'Выберите вход. Esc — отменить.':'';view();catalog();inspector();$('scope').textContent=editor.selectedContract??'Основная программа';$('collapse').disabled=!editor.navigation.length;requestAnimationFrame(wires);
+ $('project-name').value=editor.project.name;$('undo').disabled=!editor.history.length;$('redo').disabled=!editor.future.length;$('connection-status').textContent=pending?'Выберите вход. Esc — отменить.':'';view();catalog();inspector();if(textMode&&textProjectId!==editor.project.id)syncTextProject();$('scope').textContent=editor.selectedContract??'Основная программа';$('collapse').disabled=!editor.navigation.length;requestAnimationFrame(wires);
 }
-function json(value){if(Object.is(value,-0))return '-0';if(Array.isArray(value))return '['+value.map(json).join(',')+']';return JSON.stringify(value);}
+function json(value){if(Object.is(value,-0))return '-0';if(Array.isArray(value))return '['+value.map(json).join(',')+']';if(value&&typeof value==='object')return '{'+Object.entries(value).map(([key,item])=>JSON.stringify(key)+':'+json(item)).join(',')+'}';return JSON.stringify(value);}
 function inspector(){
  const panel=$('inspector');panel.replaceChildren();if(!selected){panel.append(el('p','Выберите блок или вход функции.','hint'));return;}
  if(selected==='output'){panel.append(el('strong','Результат'),el('p',editor.workspace.graph.output.type),el('p',Object.hasOwn(editor.workspace.graph.returns,'literal')?'Значение: '+json(editor.workspace.graph.returns.literal):'Источник: '+(editor.workspace.graph.returns.node??editor.workspace.graph.returns.input)));const clear=el('button','Удалить соединение');clear.onclick=()=>change(()=>editor.disconnect('output','return'));panel.append(clear);return;}
@@ -80,7 +87,7 @@ $('project-name').onchange=()=>change(()=>editor.edit(project=>{project.name=$('
 $('new').onclick=()=>change(()=>{editor=new ProjectEditor(newProject(identity()));selected=null;$('output').textContent='Новый проект';});
 $('projects').onchange=()=>change(()=>{const project=store.load($('projects').value);if(!project)throw new Error('Проект не найден');editor=new ProjectEditor(project);selected=null;});
 $('undo').onclick=()=>change(()=>editor.undo());$('redo').onclick=()=>change(()=>editor.redo());
-$('run').onclick=async()=>{ $('run').disabled=true;$('error').textContent='';const started=performance.now();try{$('output').textContent=json(await editor.run());}catch(error){$('output').textContent='Выполнение остановлено';report(error);}finally{$('duration').textContent=(performance.now()-started).toFixed(1)+' мс';$('run').disabled=false;} };
+$('run').onclick=async()=>{ $('run').disabled=true;$('error').textContent='';const started=performance.now();try{$('output').textContent=json(await executeStudio('graph'));}catch(error){$('output').textContent='Выполнение остановлено';report(error);}finally{$('duration').textContent=(performance.now()-started).toFixed(1)+' мс';$('run').disabled=false;} };
 function zoom(factor){change(()=>{const view=editor.workspace.canvas.view;editor.viewport({...view,scale:Math.min(2,Math.max(.25,view.scale*factor))});});}
 $('zoom-in').onclick=()=>zoom(1.2);$('zoom-out').onclick=()=>zoom(1/1.2);$('viewport').onwheel=event=>{event.preventDefault();zoom(event.deltaY<0?1.1:1/1.1);};
 $('viewport').onpointerdown=event=>{
@@ -104,3 +111,31 @@ $('create-composite').onclick=()=>change(()=>{const id=$('composite-id').value.t
 $('collapse').onclick=()=>change(()=>{editor.collapse();selected=null;});
 $('main-graph').onclick=()=>change(()=>{editor.main();selected=null;});
 $('compile').onclick=()=>{try{const url=URL.createObjectURL(new Blob([editor.compile()],{type:'text/javascript'})),anchor=el('a');anchor.href=url;anchor.download=(editor.selectedContract??'program')+'.mjs';anchor.click();setTimeout(()=>URL.revokeObjectURL(url),1000);}catch(error){report(error);}};
+
+// Text candidates compile through the ordinary EMS frontend and the same IR/runtime.
+const textAPI=await import('/src/studio/text.mjs');
+
+try{textStorage=new textAPI.TextDraftStorage(localStorage);}catch(error){report(error);}
+function draft(){return {source:$('text-source').value,entry:$('text-entry').value.trim(),lowering:$('text-lowering').value,inputs:$('text-inputs').value};}
+function setDraft(value){$('text-source').value=value.source;$('text-entry').value=value.entry;$('text-lowering').value=value.lowering;$('text-inputs').value=value.inputs;}
+function saveDraft(){try{if(!textStorage)throw new Error('Хранилище черновика недоступно');textStorage.save(editor.project.id,draft());$('text-status').textContent='Черновик сохранён локально. Граф изменяется только после «Применить».';}catch(error){$('text-status').textContent='Черновик не сохранён';report(error);}}
+function sourceError(error){report(error);const location=error.details?.location;if(location){$('error').textContent+='\nСтрока '+location.start.line+', столбец '+location.start.column;$('text-source').focus();$('text-source').setSelectionRange(location.start.offset,location.end.offset);}}
+function syncTextProject(){const stored=textStorage?.load(editor.project.id);if(stored)setDraft(stored);else generateDraft();textProjectId=editor.project.id;}
+function generateDraft(){const value=textAPI.textFromWorkspace(editor);setDraft({...value,inputs:json(editor.workspace.inputs)});textProjectId=editor.project.id;saveDraft();}
+$('text-mode').onclick=()=>{
+ try{if(!textMode&&textProjectId!==editor.project.id)syncTextProject();
+ textMode=!textMode;document.body.classList.toggle('text-mode',textMode);$('text-panel').hidden=!textMode;$('text-mode').textContent=textMode?'Граф':'Текст';if(!textMode)render();}catch(error){sourceError(error);}
+};
+$('text-from-graph').onclick=()=>{try{generateDraft();$('error').textContent='';}catch(error){sourceError(error);}};
+for(const id of ['text-source','text-entry','text-lowering','text-inputs'])$(id).addEventListener('input',saveDraft);
+const graphRun=$('run').onclick;
+$('run').onclick=async()=>{
+ if(!textMode)return graphRun();$('run').disabled=true;$('error').textContent='';const started=performance.now();
+ try{$('output').textContent=json(await executeStudio('text',draft(),JSON.parse($('text-inputs').value)));saveDraft();}catch(error){$('output').textContent='Выполнение остановлено';sourceError(error);}finally{$('duration').textContent=(performance.now()-started).toFixed(1)+' мс';$('run').disabled=false;}
+};
+$('text-ir').onclick=()=>{try{const bundle=textAPI.compileTextDraft(draft(),editor);$('output').textContent=JSON.stringify({ir:bundle.ir,provenance:bundle.provenance},null,2);$('error').textContent='';}catch(error){sourceError(error);}};
+$('text-to-graph').onclick=()=>{try{const value=textAPI.projectFromText(draft(),editor,JSON.parse($('text-inputs').value));editor.edit(project=>Object.assign(project,value.project));selected=null;textMode=false;document.body.classList.remove('text-mode');$('text-panel').hidden=true;$('text-mode').textContent='Текст';save();render();$('error').textContent='';}catch(error){sourceError(error);}};
+const graphCompile=$('compile').onclick;
+$('compile').onclick=()=>{if(!textMode)return graphCompile();try{const url=URL.createObjectURL(new Blob([textAPI.compileTextJS(draft(),editor)],{type:'text/javascript'})),anchor=el('a');anchor.href=url;anchor.download='text-program.mjs';anchor.click();setTimeout(()=>URL.revokeObjectURL(url),1000);}catch(error){sourceError(error);}};
+
+$('text-compile').onclick=()=>$('compile').click();

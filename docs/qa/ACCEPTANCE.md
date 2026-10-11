@@ -54,6 +54,8 @@ Each AC ID must link to executable test output / exact command / revision. The M
 
 | AC-046 | Studio creates, edits, reuses and persists nested composite graphs | actual nested expansion/edit/caller result, undo, signature/cycle/pin/deletion negatives, v1/v2 closure transport, fanout budget, independent compilation and browser reopen=12; `tests/studio-composites.test.mjs`, `tests/browser/studio.test.mjs` | M2 initial pure composites |
 
+| AC-047 | Initial Studio text mode with shared semantics and bounded execution | supported canonical graph/text roundtrip, eager sequence/unused errors, typed source locations/provenance, atomic apply/undo, local invalid draft persistence, control execution with explicit unsupported conversion, actual browser Stop/deadline; `tests/studio-text.test.mjs`, `tests/browser/studio.test.mjs` | M2 initial integration; full AC-012 open |
+
 `AC-001` is NOT official WCA Average of Five. Real WCA rules are a separate contract acceptance test.
 
 ## Proof storage

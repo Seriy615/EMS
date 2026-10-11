@@ -62,6 +62,10 @@ Gate ядра: формально описанные значения/вызов
 
 ## Уточнение владельца: ядро и WEB IDE MVP
 
-WEB IDE MVP и деплой на `ems-vps` / `https://dev-ems.d-mash.ru` явно утверждены. Последующее уточнение: **сначала ядро, затем IDE**, обе части обязательны. Сейчас EMS-010..014 приняты в документированных начальных профилях, EMS-015 IN_PROGRESS с evidence AC-032..038. До IDE завершить необходимые effect/state/event semantics; поддержка всех будущих API не является условием первого MVP.
+WEB IDE MVP и деплой на `ems-vps` / `https://dev-ems.d-mash.ru` явно утверждены. Последующее уточнение: **сначала ядро, затем IDE**, обе части обязательны. Сейчас EMS-010..018 приняты в документированных начальных профилях; audit и P1 evidence не закрывают полную целевую архитектуру. До IDE завершить необходимые effect/state/event semantics; поддержка всех будущих API не является условием первого MVP.
 
 Пользовательский gate MVP: калькулятор, раскрываемый arithmetic AVG5, интерактивный DOM-счётчик, создание/соединение/исполнение/сохранение графов, text mode через общий IR, browser E2E и защищённый HTTPS deployment с проверкой и rollback. Пока не пройдены все сценарии, MVP не завершён. TLS домена при первичной проверке не соответствует SAN сертификата; чужие VPS-сервисы не изменялись.
+
+## Текущий срез EMS-032 — общий text mode
+
+Начальная интеграция AC-047 реализована: source → existing frontend/IR/runtime/compiler, supported graph roundtrip, explicit eager/dataflow semantics и source diagnostics/provenance, apply/undo/draft persistence и worker Stop/deadline. EMS-032 IN_PROGRESS: full AC-012, control visual mapping и source trace/portable source остаются открытыми. 534/534 tests, 97/97 verify, 5/5 actual browser tests. Следующий ready ограниченный срез EMS-034 — real logic/text/array library, необходимый calculator/text demos; затем UI/event integration и interactive counter через существующий reactor, third demo и whole WEB IDE MVP acceptance, далее разрешённый deploy с auth/HTTPS/rollback.

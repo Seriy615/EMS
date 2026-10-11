@@ -18,7 +18,7 @@ createComposite(id) копирует текущий workspace, включая in
 
 Раскрытие не инлайнит копию внутрь caller: два вызова одного contract id продолжают ссылаться на одну editable definition. Undo/redo сохраняют aggregate project и заново собирают actual registry; изменения внутренних bodies действительно отражаются в caller execution. Navigation не расходует history. Если Undo/remove удаляет активный workspace, выбор безопасно возвращается к root. Run внутри раскрытого workspace использует его сохранённые test inputs; Run в root исполняет application entry. Root display name не меняется при навигации.
 
-Whole-project validation разрешает только finite pure graph profile и primitive reference values. Все bodies, включая unused nodes/definitions, проходят ordinary graph/IR checks. Dependency DFS с memoized cost ограничивает depth 32 и conservative expanded operations 10000; даже маленький исходный fanout graph может быть отвергнут PROJECT_LIMIT до recursive lowering. До 50 definitions и 1000 nodes суммарно. Это explicit reference resource budget, не arbitrary-code sandbox.
+Whole-project validation разрешает только finite pure call graph profiles (core и explicit sequence effects, без host effects/capabilities) и primitive reference values. Все bodies, включая unused nodes/definitions, проходят ordinary graph/IR checks. Dependency DFS с memoized cost ограничивает depth 32 и conservative expanded operations 10000; даже маленький исходный fanout graph может быть отвергнут PROJECT_LIMIT до recursive lowering. До 50 definitions и 1000 nodes суммарно. Это explicit reference resource budget, не arbitrary-code sandbox.
 
 ## Persistence v2 и export
 
@@ -37,3 +37,5 @@ LocalStorage envelope остаётся прежним atomic record, его snap
 Actual Chromium test создаёт user.Sum из editable graph, вызывает его, раскрывает body и меняет literal, создаёт user.Outer, раскрывает оба уровня и возвращается назад, получает 12 и после close/reopen page снова 12 с обеими definitions. Другой browser test продолжает проверять mouse drag/undo/redo/zoom, actual download/import copy и root saved graph.
 
 Следующий этап — реальная библиотека logic/text/arrays и text editing через общий frontend/IR; затем UI/events/state counter и third demo. Full text/control visual parity, typed public IDL authoring, sealed package import и runtime source tracing остаются отдельными gates. Owner-approved WEB IDE MVP и VPS deployment не объявлены выполненными.
+
+Editable text source integration и sequence transport — [STUDIO_TEXT.md](STUDIO_TEXT.md); full control visual mapping остаётся открытым.

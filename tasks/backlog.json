@@ -447,12 +447,13 @@
       "objective": "Map text AST and visual nodes to same IR, no semantic divergence",
       "deliverables": "Bidirectional editor linking",
       "acceptance": "Pass AC-012 and location-aware errors",
-      "status": "TODO",
+      "status": "IN_PROGRESS",
       "priority": "P0",
       "ownerModelPolicy": [
         "GPT-6.1 Sol",
         "GPT-6 Luna"
-      ]
+      ],
+      "progress": "Initial Studio text integration AC-047: existing frontend/IR/runtime/compiler, canonical supported graph roundtrip, explicit eager/dataflow profile preservation, source diagnostics/provenance, atomic apply/undo, local draft persistence, cancellable worker execution/deadline. Control text executes/exports but rejects dataflow conversion. Full AC-012, richer visual control mapping, runtime source trace and portable full source persistence remain open. See docs/spec/STUDIO_TEXT.md."
     },
     {
       "id": "EMS-033",

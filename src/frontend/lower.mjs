@@ -13,6 +13,11 @@ function flexible(type) {
   if (type.kind === 'Variable') return { kind: 'Variable', name: type.name };
   return { ...type, arguments: type.arguments.map(flexible) };
 }
+function numericLiteral(node) {
+  if(node.kind==='LiteralExpression')return typeof node.value==='number';
+  if(node.kind==='GroupExpression'||node.kind==='UnaryExpression'&&['+','-'].includes(node.operator))return numericLiteral(node.value);
+  return false;
+}
 function constant(node) {
   if (node.kind === 'LiteralExpression') return node.value;
   if (node.kind === 'GroupExpression') return constant(node.value);
@@ -24,7 +29,7 @@ function constant(node) {
 }
 
 /** Link typed SSA functions (including inferred generic instances) into the shared call-IR. */
-function lowerCallModule(checked, entry, baseRegistry, eager = false) {
+function lowerCallModule(checked, entry, baseRegistry, eager = false, preserveGraphIdentity = false) {
   const registry = new Registry();
   for (const item of baseRegistry.items.values()) {
     if (item.kind === 'atomic') registry.registerAtomic(item);
@@ -64,32 +69,35 @@ function lowerCallModule(checked, entry, baseRegistry, eager = false) {
     if (sequential) Object.assign(graph, { effects: policy.effects, capabilities: policy.capabilities, sequence: [] });
     const environment = new Map(target.inputs.map(input => [input.name, { input: input.name }]));
     const sourceMap = {};
-    function operation(uses, args, node) {
+    function operation(uses, args, node, hint) {
       const implementation = registry.resolve(uses);
       if (!sequential && implementation.kind === 'composite' && Object.hasOwn(implementation.graph, 'sequence')) {
         sequential = true;
         Object.assign(graph, { effects: policy.effects, capabilities: policy.capabilities, sequence: graph.nodes.map(node => node.id) });
       }
-      const name = `value_${graph.nodes.length}`;
+      let index=graph.nodes.length;
+      let name = preserveGraphIdentity && hint && !Object.hasOwn(graph.inputs,hint) && !graph.nodes.some(node=>node.id===hint) ? hint : `value_${index}`;
+      while(Object.hasOwn(graph.inputs,name)||graph.nodes.some(node=>node.id===name))name=`value_${++index}`;
       graph.nodes.push({ id: name, uses, args });
       if (sequential) graph.sequence.push(name);
       sourceMap[name] = node.location;
       return { node: name };
     }
-    function expression(node) {
+    function expression(node, hint) {
       referenceType(resolveType(checked.types.get(node), substitutions), node);
       switch (node.kind) {
-        case 'GroupExpression': return expression(node.value);
+        case 'GroupExpression': return expression(node.value,hint);
         case 'LiteralExpression': return { literal: node.value };
         case 'ArrayExpression': return { literal: constant(node) };
         case 'NameExpression': return environment.get(node.name);
         case 'UnaryExpression':
-          if (node.operator === '+') return expression(node.value);
-          if (node.operator === '-') return operation('core.mul', { a: expression(node.value), b: { literal: -1 } }, node);
+          if(preserveGraphIdentity&&numericLiteral(node))return {literal:constant(node)};
+          if (node.operator === '+') return expression(node.value,hint);
+          if (node.operator === '-') return operation('core.mul', { a: expression(node.value), b: { literal: -1 } }, node,hint);
           break;
         case 'BinaryExpression': {
           const op = { '+': 'add', '-': 'sub', '*': 'mul', '/': 'div' }[node.operator];
-          if (op) return operation(`core.${op}`, { a: expression(node.left), b: expression(node.right) }, node);
+          if (op) return operation(`core.${op}`, { a: expression(node.left), b: expression(node.right) }, node,hint);
           break;
         }
         case 'CallExpression': {
@@ -98,13 +106,13 @@ function lowerCallModule(checked, entry, baseRegistry, eager = false) {
           const types = call.inputs.map(input => resolveType(input, substitutions));
           const uses = specialize(call.target, types);
           const args = Object.fromEntries(call.target.inputs.map((input, index) => [input.name, expression(node.arguments[index])]));
-          return operation(uses, args, node);
+          return operation(uses, args, node,hint);
         }
       }
       fail('UNSUPPORTED_PROFILE', `${node.kind} requires a richer IR`, { location: node.location });
     }
     for (const statement of target.declaration.body.statements) {
-      if (statement.kind === 'LetDeclaration' && !statement.mutable) environment.set(statement.name, expression(statement.value));
+      if (statement.kind === 'LetDeclaration' && !statement.mutable) environment.set(statement.name, expression(statement.value,statement.name));
       else if (statement.kind === 'ReturnStatement') graph.returns = expression(statement.value);
       else if (statement.kind === 'ExpressionStatement') expression(statement.value);
       else fail('UNSUPPORTED_PROFILE', `${statement.kind} requires control/state/effect IR`, { location: statement.location });
@@ -121,7 +129,7 @@ function lowerCallModule(checked, entry, baseRegistry, eager = false) {
 }
 
 /** Select one semantic profile from the checked module; preserve the working call-IR backend. */
-export function lowerCheckedModule(checked, entry, registry, { profile = 'auto' } = {}) {
+export function lowerCheckedModule(checked, entry, registry, { profile = 'auto', preserveGraphIdentity = false } = {}) {
   if (!['auto', 'call', 'control'].includes(profile)) fail('UNSUPPORTED_PROFILE', 'Unknown frontend lowering profile');
   let control = profile === 'auto' && checked.signatures.get(entry)?.async || profile === 'control' || profile === 'auto' && checked.signatures.get(entry)?.inputs.some(input => ['Option','Result','Future','Stream','ResourceHandle'].includes(input.type.name));
   const entryTarget = checked.signatures.get(entry);
@@ -146,6 +154,6 @@ export function lowerCheckedModule(checked, entry, registry, { profile = 'auto' 
     }
   }
   if (control) return lowerControlModule(checked, entry, registry);
-  try { return lowerCallModule(checked, entry, registry, profile === 'auto'); }
+  try { return lowerCallModule(checked, entry, registry, profile === 'auto',preserveGraphIdentity); }
   catch (error) { if (profile === 'auto' && error.code === 'RECURSIVE_COMPOSITE') return lowerControlModule(checked, entry, registry); throw error; }
 }

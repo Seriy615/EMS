@@ -10,6 +10,7 @@ import { createStateRegistry, ReactorSession, replayEvents } from '../src/runtim
 import { validateContractInterface, compareContractInterfaces, registerContractBinding, createProgramLock, executeLockedIR, compileLockedIRToJS } from '../src/contracts/index.mjs';
 import { runNodeConformance } from './conformance.mjs';
 import { ProjectEditor,parseProject } from '../src/studio/project.mjs';
+import {textFromWorkspace,projectFromText,runTextDraft} from '../src/studio/text.mjs';
 const root=new URL('../',import.meta.url);
 const get=async p=>readFile(new URL(p,root),'utf8');
 const readJSON=async p=>JSON.parse(await get(p));
@@ -22,6 +23,9 @@ for(const f of ['docs/spec/STUDIO_PROJECT.md','schemas/studio-project.schema.jso
 await stat(new URL('docs/spec/STUDIO_COMPOSITES.md',root));await check('found docs/spec/STUDIO_COMPOSITES.md',()=>true);
 await check('saved Studio example executes through existing semantic IR',async()=>await new ProjectEditor(parseProject(await get('examples/studio-sum.ems.json'))).run()===5);
 await check('saved nested Studio composite dependencies execute actual edited body',async()=>await new ProjectEditor(parseProject(await get('examples/studio-composite.ems.json'))).run()===12);
+await stat(new URL('docs/spec/STUDIO_TEXT.md',root));await check('found docs/spec/STUDIO_TEXT.md',()=>true);
+await check('Studio graph/text roundtrip preserves serialized program and result',async()=>{const editor=new ProjectEditor(parseProject(await get('examples/studio-sum.ems.json'))),text=textFromWorkspace(editor),converted=new ProjectEditor(projectFromText(text,editor,editor.workspace.inputs).project);return converted.serialize()===editor.serialize()&&await runTextDraft(text,editor,editor.workspace.inputs)===5;});
+await check('Studio text bridge preserves eager unused-operation failures',async()=>{const editor=new ProjectEditor(),draft={source:'fn test()->Number {let unused=core.div(1,0);return 5;}',entry:'test',lowering:'auto'},converted=new ProjectEditor(projectFromText(draft,editor,{}).project);try{await converted.run();return false;}catch(error){return error.code==='DIV_BY_ZERO';}});
 const policy=await readJSON('.agents/policy.json');
 await check('models exactly Sol 6.1 + Luna 6',()=>policy.agents.approvedDisplayNames.join(',')==='GPT-6.1 Sol,GPT-6 Luna');
 await check('fallback disabled',()=>policy.agents.allowImplicitModelFallback===false);

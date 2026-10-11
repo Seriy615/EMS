@@ -1,8 +1,9 @@
 import { Registry, createCoreRegistry } from '../reference/registry.mjs';
 import { validateGraph, validateRuntimeInputs } from '../reference/validate.mjs';
 import { assertValueType } from '../reference/types.mjs';
+import { analyzeGraphEffects } from '../semantics/effects.mjs';
 import { fail } from '../reference/errors.mjs';
-import { lowerGraphToIR, serializeIR, parseIR, graphFromIR, executeIR, compileIRToJS } from '../ir/index.mjs';
+import { lowerGraphToIR, serializeIR, parseIR, graphFromIR, executeIR, compileIRToJS, CORE_PROFILE, EFFECT_PROFILE } from '../ir/index.mjs';
 
 export const defaultValue = type => ({ Number: 0, String: '', Boolean: false, NumberArray: [] })[type];
 const namePattern = /^[A-Za-z_][A-Za-z0-9_]*$/;
@@ -48,12 +49,18 @@ export function projectRegistry(project, base = createCoreRegistry()) {
   let entryCost=1;for(const node of project.graph?.nodes??[]){entryCost+=visit(node.uses);if(entryCost>10000)fail('PROJECT_LIMIT','Entry expansion exceeds 10000 operations');}
   return registry;
 }
+export function workspaceProfile(graph,registry) {
+ const policy=analyzeGraphEffects(graph,registry);
+ if(policy.effects.length||policy.capabilities.length)fail('UNSUPPORTED_PROFILE','Studio graph requires pure contracts');
+ const seen=new Set();function sequenced(current){if(Object.hasOwn(current,'sequence'))return true;for(const node of current.nodes){const item=registry.resolve(node.uses);if(item.kind==='composite'&&!seen.has(item.id)){seen.add(item.id);if(sequenced(item.graph))return true;}}return false;}
+ return sequenced(graph)?EFFECT_PROFILE:CORE_PROFILE;
+}
 function validateWorkspace(workspace, registry) {
   validateGraph(workspace.graph,registry);
   if(workspace.graph.nodes.length>1000||Object.keys(workspace.graph.inputs).length>100)fail('PROJECT_LIMIT','Workspace too large');
   if(workspace.graph.nodes.some(node=>node.id==='output'||!namePattern.test(node.id))||Object.keys(workspace.graph.inputs).some(name=>!namePattern.test(name)))fail('INVALID_NAME','Invalid or reserved graph name');
   validateRuntimeInputs(workspace.graph,workspace.inputs);validateCanvas(workspace.canvas,workspace.graph);
-  lowerGraphToIR(workspace.graph,registry);
+  lowerGraphToIR(workspace.graph,registry,{profile:workspaceProfile(workspace.graph,registry)});
 }
 export function validateProject(project, base = createCoreRegistry()) {
   fields(project,Object.hasOwn(project,'contracts')?['id','name','graph','inputs','canvas','contracts']:['id','name','graph','inputs','canvas']);
@@ -69,7 +76,7 @@ function encodeInputs(project) {
     project.graph.inputs[name].type === 'Number' ? encodeNumber(value) : project.graph.inputs[name].type === 'NumberArray' ? value.map(encodeNumber) : value]));
 }
 function serializeWorkspace(workspace,registry) {
-  return {ir:JSON.parse(serializeIR(lowerGraphToIR(workspace.graph,registry),registry)),inputs:encodeInputs(workspace),canvas:workspace.canvas};
+  return {ir:JSON.parse(serializeIR(lowerGraphToIR(workspace.graph,registry,{profile:workspaceProfile(workspace.graph,registry)}),registry)),inputs:encodeInputs(workspace),canvas:workspace.canvas};
 }
 export function serializeProject(project, base = createCoreRegistry()) {
   validateProject(project,base);const registry=projectRegistry(project,base),contracts=project.contracts??[];
@@ -93,7 +100,7 @@ export function parseProject(source, base = createCoreRegistry()) {
     if(!Array.isArray(data.contracts)||data.contracts.length>50||Object.keys(data.contracts).length!==data.contracts.length)fail('PROJECT_LIMIT','Invalid composite collection');
     const placeholders=data.contracts.map(descriptor=>{
       fields(descriptor,['ir','inputs','canvas']);const ir=descriptor.ir;
-      if(!ir||ir.schemaVersion!=='ems-ir/1'||ir.profile!=='ems-core-finite/1'||!Array.isArray(ir.inputs))fail('UNSUPPORTED_PROFILE','Composite project requires finite core IR');
+      if(!ir||ir.schemaVersion!=='ems-ir/1'||!['ems-core-finite/1','ems-effects-finite/1'].includes(ir.profile)||!Array.isArray(ir.inputs))fail('UNSUPPORTED_PROFILE','Composite project requires finite core IR');
       return {graph:{schemaVersion:'0.1',id:ir.id,version:ir.version,inputs:Object.fromEntries(ir.inputs.map(input=>[input.name,{type:input.type}])),output:ir.output,nodes:[],returns:{literal:defaultValue(ir.output?.type)}},inputs:descriptor.inputs,canvas:descriptor.canvas};
     });
     registry=projectRegistry({graph:{id:data.ir?.id},contracts:placeholders},base);
@@ -131,13 +138,14 @@ export class ProjectEditor {
   removeComposite(id) {
     this.edit(project=>{if(!project.contracts.some(item=>item.graph.id===id))fail('MISSING_CONTRACT','Unknown composite');project.contracts=project.contracts.filter(item=>item.graph.id!==id);});
   }
-  compile() {return compileIRToJS(lowerGraphToIR(this.workspace.graph,this.registry),this.registry);}
+  compile() {return compileIRToJS(lowerGraphToIR(this.workspace.graph,this.registry,{profile:workspaceProfile(this.workspace.graph,this.registry)}),this.registry);}
   addNode(contractId) {
     const contract = this.registry.resolve(contractId); let index = 1;
     while (this.workspace.graph.nodes.some(node => node.id === `n${index}`) || Object.hasOwn(this.workspace.graph.inputs, `n${index}`)) index++;
     const id = `n${index}`;
     this.editWorkspace(project => {
       project.graph.nodes.push({ id, uses: contractId, args: Object.fromEntries(Object.entries(contract.inputs).map(([name, type]) => [name, { literal: defaultValue(typeof type === 'string' ? type : type.type) }])) });
+      if(Object.hasOwn(project.graph,'sequence'))project.graph.sequence.push(id);
       project.canvas.positions[id] = { x: 280 + ((index-1) % 2) * 250, y: 70 + Math.floor((index-1)/2) * 160 };
     }); return id;
   }
@@ -180,6 +188,7 @@ export class ProjectEditor {
       const matches = ref => input !== null ? ref.input === input : ref.node === id;
       if (input !== null) { delete project.graph.inputs[input]; delete project.inputs[input]; }
       else project.graph.nodes = project.graph.nodes.filter(node => node.id !== id);
+      if(project.graph.sequence)project.graph.sequence=project.graph.sequence.filter(node=>node!==id);
       delete project.canvas.positions[id];
       for (const node of project.graph.nodes) for (const [port, ref] of Object.entries(node.args)) if (matches(ref)) {
         const type = this.registry.resolve(node.uses).inputs[port]; node.args[port] = { literal: defaultValue(typeof type === 'string' ? type : type.type) };
@@ -192,7 +201,7 @@ export class ProjectEditor {
   viewport(view) { this.editWorkspace(project => { project.canvas.view = view; }); }
   serialize() { return serializeProject(this.project, this.baseRegistry); }
   async run() {
-    const project = clone(this.workspace), ir = parseIR(serializeIR(lowerGraphToIR(project.graph, this.registry), this.registry), this.registry);
+    const project = clone(this.workspace), ir = parseIR(serializeIR(lowerGraphToIR(project.graph, this.registry,{profile:workspaceProfile(project.graph,this.registry)}), this.registry), this.registry);
     return executeIR(ir, project.inputs, this.registry);
   }
 }
