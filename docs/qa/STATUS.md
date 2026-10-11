@@ -1,5 +1,17 @@
 # Current implementation status
 
+## Последняя проверка — EMS-034 finite standard library
+
+`npm test` **578/578 PASS**, `npm run verify` **100/100 PASS**, `npm run browser:test` **7/7 PASS**. Node22/actual Chromium156. AC-048 реализован; EMS-034 **IN_PROGRESS** до typed Map/Filter acceptance. Baseline 3a9db53: 534/534 tests, 97/97 verify. Global goal/full MVP/AC-012/DOM counter/deploy остаются открытыми.
+
+36 typed pure atomic operations: values, logic, numeric comparison/rounding, eager selection, Unicode-aware text length/slice/strict decimal conversion, copying NumberArray operations. Separate public IDL data, declared errors/pure deterministic policy и trusted operational bodies; existing compiler emits actual standalone без EMS imports. New stdlib intrinsic ABI witness/lock drift gate не является binary attestation. Каталог имеет categories/search-by-id-name-type и visible ordered signatures. Source/Studio example «Массив → текст» реально возвращает sum=6.
+
+44 новых Node tests: все36 независимых value oracles, runtime/serialized IR/standalone и direct copy checks; index/format/type negatives; isolated new-process output; loops/source, eager Select vs lazy if, intrinsic drift, public IDL binding/error parity и shipped examples. 2 новых browser tests: all36 actual Chromium runtime плюс independent modules после shutdown runtime origin, без /src requests; UI filter/text/comparison/select/array graphs/example/signed zeros/reopen. Existing P1/core/IDE continue green. Логи /tmp/ems-library-tests.log, /tmp/ems-library-verify.log, /tmp/ems-library-browser.log; targeted model44/44, browser2/2. git diff --check PASS; dependencies не добавлялись, VPS untouched; revision — commit содержащий отчёт, parent3a9db53.
+
+Далее: завершить EMS-034 typed higher-order Map/Filter с contract signature/effect checks и shared execution budgets; затем UI/DOM event counter и whole MVP acceptance, authorized deploy с auth/HTTPS/rollback. Map/Filter не показаны как фиктивные contracts или String callback port. Checked slices commit/push origin/main git@github.com:Seriy615/EMS.git. Субагенты не запускались.
+
+## Предыдущая проверка — EMS-032 text integration
+
 ## Последняя проверка — EMS-032 начальный text mode
 
 `npm test` **534/534 PASS**, `npm run verify` **97/97 PASS**, `npm run browser:test` **5/5 PASS**. Node22 / actual Chromium156. AC-047 реализован в начальном документированном профиле; EMS-032 **IN_PROGRESS**, full AC-012/WEB IDE MVP/deploy/global goal открыты. Baseline 28c3e91: 524/524 tests, 94/94 verify.

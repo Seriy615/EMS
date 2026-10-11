@@ -1,0 +1,243 @@
+{
+  "schemaVersion": "ems-studio-project/1",
+  "id": "libraryExample",
+  "name": "Массив → текст",
+  "ir": {
+    "schemaVersion": "ems-ir/1",
+    "profile": "ems-effects-finite/1",
+    "id": "analyze",
+    "version": "1.0.0",
+    "inputs": [
+      {
+        "name": "values",
+        "type": "NumberArray"
+      }
+    ],
+    "output": {
+      "type": "String"
+    },
+    "operations": [
+      {
+        "id": "label",
+        "contract": {
+          "id": "std.select.String",
+          "version": "1.0.0"
+        },
+        "arguments": [
+          {
+            "port": "condition",
+            "value": {
+              "kind": "node",
+              "id": "value_2"
+            }
+          },
+          {
+            "port": "whenTrue",
+            "value": {
+              "kind": "literal",
+              "type": "String",
+              "value": "sum="
+            }
+          },
+          {
+            "port": "whenFalse",
+            "value": {
+              "kind": "literal",
+              "type": "String",
+              "value": "negative sum="
+            }
+          }
+        ],
+        "type": "String",
+        "policy": {
+          "effects": [],
+          "capabilities": []
+        }
+      },
+      {
+        "id": "sorted",
+        "contract": {
+          "id": "std.array.sort",
+          "version": "1.0.0"
+        },
+        "arguments": [
+          {
+            "port": "values",
+            "value": {
+              "kind": "input",
+              "name": "values"
+            }
+          }
+        ],
+        "type": "NumberArray",
+        "policy": {
+          "effects": [],
+          "capabilities": []
+        }
+      },
+      {
+        "id": "sum",
+        "contract": {
+          "id": "core.sum",
+          "version": "1.0.0"
+        },
+        "arguments": [
+          {
+            "port": "values",
+            "value": {
+              "kind": "node",
+              "id": "sorted"
+            }
+          }
+        ],
+        "type": "Number",
+        "policy": {
+          "effects": [],
+          "capabilities": []
+        }
+      },
+      {
+        "id": "value_2",
+        "contract": {
+          "id": "std.number.greaterEqual",
+          "version": "1.0.0"
+        },
+        "arguments": [
+          {
+            "port": "a",
+            "value": {
+              "kind": "node",
+              "id": "sum"
+            }
+          },
+          {
+            "port": "b",
+            "value": {
+              "kind": "literal",
+              "type": "Number",
+              "value": 0
+            }
+          }
+        ],
+        "type": "Boolean",
+        "policy": {
+          "effects": [],
+          "capabilities": []
+        }
+      },
+      {
+        "id": "value_4",
+        "contract": {
+          "id": "std.text.fromNumber",
+          "version": "1.0.0"
+        },
+        "arguments": [
+          {
+            "port": "value",
+            "value": {
+              "kind": "node",
+              "id": "sum"
+            }
+          }
+        ],
+        "type": "String",
+        "policy": {
+          "effects": [],
+          "capabilities": []
+        }
+      },
+      {
+        "id": "value_5",
+        "contract": {
+          "id": "std.text.concat",
+          "version": "1.0.0"
+        },
+        "arguments": [
+          {
+            "port": "a",
+            "value": {
+              "kind": "node",
+              "id": "label"
+            }
+          },
+          {
+            "port": "b",
+            "value": {
+              "kind": "node",
+              "id": "value_4"
+            }
+          }
+        ],
+        "type": "String",
+        "policy": {
+          "effects": [],
+          "capabilities": []
+        }
+      }
+    ],
+    "result": {
+      "kind": "node",
+      "id": "value_5"
+    },
+    "policy": {
+      "effects": [],
+      "capabilities": []
+    },
+    "sequence": [
+      "sorted",
+      "sum",
+      "value_2",
+      "label",
+      "value_4",
+      "value_5"
+    ],
+    "requirements": {
+      "effects": [],
+      "capabilities": []
+    }
+  },
+  "inputs": {
+    "values": [
+      3,
+      -1,
+      4
+    ]
+  },
+  "canvas": {
+    "positions": {
+      "input:values": {
+        "x": 30,
+        "y": 100
+      },
+      "label": {
+        "x": 280,
+        "y": 70
+      },
+      "sorted": {
+        "x": 530,
+        "y": 70
+      },
+      "sum": {
+        "x": 280,
+        "y": 230
+      },
+      "value_2": {
+        "x": 530,
+        "y": 230
+      },
+      "value_4": {
+        "x": 280,
+        "y": 390
+      },
+      "value_5": {
+        "x": 530,
+        "y": 390
+      }
+    },
+    "view": {
+      "x": 0,
+      "y": 0,
+      "scale": 1
+    }
+  }
+}

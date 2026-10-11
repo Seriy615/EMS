@@ -11,6 +11,7 @@ import { validateContractInterface, compareContractInterfaces, registerContractB
 import { runNodeConformance } from './conformance.mjs';
 import { ProjectEditor,parseProject } from '../src/studio/project.mjs';
 import {textFromWorkspace,projectFromText,runTextDraft} from '../src/studio/text.mjs';
+import {STANDARD_INTERFACES} from '../src/stdlib/finite.mjs';
 const root=new URL('../',import.meta.url);
 const get=async p=>readFile(new URL(p,root),'utf8');
 const readJSON=async p=>JSON.parse(await get(p));
@@ -26,6 +27,9 @@ await check('saved nested Studio composite dependencies execute actual edited bo
 await stat(new URL('docs/spec/STUDIO_TEXT.md',root));await check('found docs/spec/STUDIO_TEXT.md',()=>true);
 await check('Studio graph/text roundtrip preserves serialized program and result',async()=>{const editor=new ProjectEditor(parseProject(await get('examples/studio-sum.ems.json'))),text=textFromWorkspace(editor),converted=new ProjectEditor(projectFromText(text,editor,editor.workspace.inputs).project);return converted.serialize()===editor.serialize()&&await runTextDraft(text,editor,editor.workspace.inputs)===5;});
 await check('Studio text bridge preserves eager unused-operation failures',async()=>{const editor=new ProjectEditor(),draft={source:'fn test()->Number {let unused=core.div(1,0);return 5;}',entry:'test',lowering:'auto'},converted=new ProjectEditor(projectFromText(draft,editor,{}).project);try{await converted.run();return false;}catch(error){return error.code==='DIV_BY_ZERO';}});
+await stat(new URL('docs/spec/STANDARD_LIBRARY.md',root));await check('found docs/spec/STANDARD_LIBRARY.md',()=>true);
+await check('all standard library public interfaces validate independently',()=>STANDARD_INTERFACES.length===36&&STANDARD_INTERFACES.every(spec=>validateContractInterface(spec)));
+await check('standard library text and persisted graph example execute shared semantics',async()=>{const text={source:await get('examples/stdlib-report.ems'),entry:'analyze',lowering:'auto'};return await runTextDraft(text,new ProjectEditor(),{values:[3,-1,4]})==='sum=6'&&await new ProjectEditor(parseProject(await get('examples/studio-library.ems.json'))).run()==='sum=6';});
 const policy=await readJSON('.agents/policy.json');
 await check('models exactly Sol 6.1 + Luna 6',()=>policy.agents.approvedDisplayNames.join(',')==='GPT-6.1 Sol,GPT-6 Luna');
 await check('fallback disabled',()=>policy.agents.allowImplicitModelFallback===false);

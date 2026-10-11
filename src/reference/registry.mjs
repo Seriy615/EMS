@@ -1,3 +1,4 @@
+import {installFiniteStandardLibrary} from '../stdlib/finite.mjs';
 import { fail } from './errors.mjs';
 import { assertTypeName } from './types.mjs';
 import { validateContractInterface, validateContractBinding } from '../contracts/idl.mjs';
@@ -7,7 +8,7 @@ const coreImplementations=new WeakMap();
 export function coreIntrinsic(item) {
   const expected=coreImplementations.get(item.execute);
   if(item.kind!=='atomic'||!expected||item.emitJS!==expected.emitJS||JSON.stringify(Object.entries(item.inputs))!==expected.inputs||item.output!==expected.output||item.version!=='1.0.0'||item.effects.length||item.capabilities.length||item.id!==expected.id)return null;
-  return {abi:'ems-core-finite/1',operation:expected.id};
+  return {abi:expected.abi,operation:expected.id};
 }
 
 /** Trust boundary: registerAtomic accepts host-trusted implementations only. No plugin sandbox in M0. */
@@ -81,6 +82,7 @@ export function createCoreRegistry() {
       if (!values.length) fail('EMPTY_ARRAY', 'core.max: empty list');
       return values.reduce((a, b) => Math.max(a, b), -Infinity);
     }, emitJS: ({values}) => `__max(${values})` });
-  for(const item of registry.items.values())coreImplementations.set(item.execute,{id:item.id,emitJS:item.emitJS,inputs:JSON.stringify(Object.entries(item.inputs)),output:item.output});
+  installFiniteStandardLibrary(registry,fail);
+  for(const item of registry.items.values())coreImplementations.set(item.execute,{id:item.id,abi:item.id.startsWith('std.')?'ems-stdlib-finite/1':'ems-core-finite/1',emitJS:item.emitJS,inputs:JSON.stringify(Object.entries(item.inputs)),output:item.output});
   return registry;
 }

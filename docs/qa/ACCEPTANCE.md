@@ -56,6 +56,8 @@ Each AC ID must link to executable test output / exact command / revision. The M
 
 | AC-047 | Initial Studio text mode with shared semantics and bounded execution | supported canonical graph/text roundtrip, eager sequence/unused errors, typed source locations/provenance, atomic apply/undo, local invalid draft persistence, control execution with explicit unsupported conversion, actual browser Stop/deadline; `tests/studio-text.test.mjs`, `tests/browser/studio.test.mjs` | M2 initial integration; full AC-012 open |
 
+| AC-048 | Real finite standard library and searchable typed Studio catalog | all36 value/logic/comparison/select/text/array operations through runtime/serialized IR/standalone with independent oracles; negative ports/format/index, copy/eager semantics, public IDL/binding and lock drift; actual Chromium all36 runtime and independent standalone plus UI graph/search/example/reopen; `tests/stdlib.test.mjs`, `tests/browser/stdlib.test.mjs` | M2 initial library; typed Map/Filter remain open |
+
 `AC-001` is NOT official WCA Average of Five. Real WCA rules are a separate contract acceptance test.
 
 ## Proof storage

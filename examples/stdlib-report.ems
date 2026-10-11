@@ -1,0 +1,7 @@
+package examples.library @ "1.0.0";
+contract analyze(values:Number[])->String {
+  let sorted=std.array.sort(values);
+  let sum=core.sum(sorted);
+  let label=std.select.String(std.number.greaterEqual(sum,0),"sum=","negative sum=");
+  return std.text.concat(label,std.text.fromNumber(sum));
+}

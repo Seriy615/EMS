@@ -1,8 +1,13 @@
+import {STANDARD_CONTRACTS} from '/src/stdlib/finite.mjs';
 import {ProjectEditor,newProject,parseProject} from '/src/studio/project.mjs';
 import {startStudioExecution} from '/src/studio/execution-client.mjs';
 import {ProjectStorage} from '/src/studio/storage.mjs';
 const $=id=>document.getElementById(id);
 const titles={'core.add':'Сложение','core.sub':'Вычитание','core.mul':'Умножение','core.div':'Деление','core.sum':'Сумма массива','core.min':'Минимум','core.max':'Максимум'};
+Object.assign(titles,{'std.logic.and':'И','std.logic.or':'Или','std.logic.not':'Не','std.number.equal':'Равно','std.number.notEqual':'Не равно','std.number.less':'Меньше','std.number.lessEqual':'Меньше или равно','std.number.greater':'Больше','std.number.greaterEqual':'Больше или равно','std.number.abs':'Модуль числа','std.number.floor':'Округлить вниз','std.number.ceil':'Округлить вверх','std.number.round':'Округлить','std.text.concat':'Соединить текст','std.text.equal':'Текст равен','std.text.length':'Длина текста','std.text.contains':'Текст содержит','std.text.slice':'Фрагмент текста','std.text.toNumber':'Текст → число','std.text.fromNumber':'Число → текст','std.array.length':'Длина массива','std.array.at':'Элемент массива','std.array.append':'Добавить элемент','std.array.concat':'Соединить массивы','std.array.reverse':'Обратить массив','std.array.sort':'Сортировать числа','std.array.slice':'Фрагмент массива','std.array.contains':'Массив содержит'});
+for(const [type,title] of Object.entries({Number:'Число',Boolean:'Логическое значение',String:'Текст',NumberArray:'Числовой массив'})){titles['std.value.'+type]=title;titles['std.select.'+type]='Выбор: '+title.toLowerCase();}
+const standardMetadata=new Map(STANDARD_CONTRACTS.map(item=>[item.id,item]));
+const categories={number:'Числа',value:'Значения',logic:'Логика',comparison:'Сравнения',selection:'Выбор значения (входы вычислены)',text:'Текст',array:'Числовые массивы',custom:'Составные контракты'};
 const el=(tag,text,style)=>{const node=document.createElement(tag);if(text!==undefined)node.textContent=text;if(style)node.className=style;return node;};
 const identity=()=> 'p'+crypto.randomUUID().replaceAll('-','');
 let store,editor,selected=null,pending=null,failedNode=null,textMode=false,textProjectId=null,textStorage;
@@ -74,14 +79,25 @@ function inspector(){
  const remove=el('button','Удалить блок','danger');remove.onclick=()=>change(()=>{editor.remove(selected);selected=null;});panel.append(remove);
 }
 function catalog(){
- $('catalog').replaceChildren();for(const contract of editor.registry.items.values()){
-  const row=el('div',undefined,'catalog-item'),button=el('button',(titles[contract.id]??contract.id)+(contract.kind==='composite'?' ▧':''));button.dataset.contract=contract.id;button.onclick=()=>change(()=>{selected=editor.addNode(contract.id);});row.append(button);
-  if(contract.kind==='composite'){
-   const open=el('button','Открыть');open.dataset.openContract=contract.id;open.onclick=()=>change(()=>{editor.openContract(contract.id);selected=null;});
-   const remove=el('button','Удалить');remove.dataset.deleteContract=contract.id;remove.onclick=()=>change(()=>{editor.removeComposite(contract.id);selected=null;});row.append(open,remove);
-  }$('catalog').append(row);
+ $('catalog').replaceChildren();const query=$('catalog-search').value.trim().toLowerCase(),category=$('catalog-category').value;let count=0;
+ for(const [key,title] of Object.entries(categories)){
+  if(category&&category!==key)continue;let heading=false;
+  for(const contract of editor.registry.items.values()){
+   const metadata=standardMetadata.get(contract.id),group=contract.kind==='composite'?'custom':metadata?.category??(['core.sum','core.min','core.max'].includes(contract.id)?'array':'number');
+   const signature=Object.entries(contract.inputs).map(([name,type])=>name+':'+(typeof type==='string'?type:type.type)).join(', ')+' → '+contract.output;
+   if(group!==key||query&&!(contract.id+' '+(titles[contract.id]??'')+' '+signature).toLowerCase().includes(query))continue;
+   if(!heading){$('catalog').append(el('h3',title));heading=true;}
+   const row=el('div',undefined,'catalog-item'),button=el('button',(titles[contract.id]??contract.id)+(contract.kind==='composite'?' ▧':''));button.dataset.contract=contract.id;button.title=contract.id+' · '+signature+(metadata?' · '+metadata.summary:'');button.onclick=()=>change(()=>{selected=editor.addNode(contract.id);});row.append(button);
+   if(contract.kind==='composite'){
+    const open=el('button','Открыть');open.dataset.openContract=contract.id;open.onclick=()=>change(()=>{editor.openContract(contract.id);selected=null;});
+    const remove=el('button','Удалить');remove.dataset.deleteContract=contract.id;remove.onclick=()=>change(()=>{editor.removeComposite(contract.id);selected=null;});row.append(open,remove);
+   }
+   row.append(el('small',signature,'signature'));$('catalog').append(row);count++;
+  }
  }
+ if(!count)$('catalog').append(el('p','Контракты не найдены.','hint'));
 }
+$('catalog-search').addEventListener('input',catalog);$('catalog-category').addEventListener('change',catalog);
 $('add-input').onsubmit=event=>{event.preventDefault();change(()=>{const name=$('input-name').value.trim();editor.addInput(name,$('input-type').value);selected=`input:${name}`;$('input-name').value='';});};
 $('project-name').onchange=()=>change(()=>editor.edit(project=>{project.name=$('project-name').value;}));$('save').onclick=save;
 $('new').onclick=()=>change(()=>{editor=new ProjectEditor(newProject(identity()));selected=null;$('output').textContent='Новый проект';});
@@ -101,6 +117,7 @@ $('import').onclick=()=> $('file').click();$('file').onchange=async()=>{const fi
 $('examples').onchange=async()=>{
  const choice=$('examples').value;if(!choice)return;try{const project=newProject(identity(),choice==='avg'?'Среднее пяти — арифметика':'Сумма двух чисел');
  if(choice==='avg'){project.graph=await fetch('/examples/avg5.graph.json').then(response=>response.json());project.inputs={times:[12.4,11.85,13.2,12.1,14]};}
+ else if(choice==='library'){const saved=parseProject(await fetch('/examples/studio-library.ems.json').then(response=>response.text()));saved.id=project.id;saved.name='Массив → текст';Object.assign(project,saved);}
  else{project.graph.inputs={a:{type:'Number'},b:{type:'Number'}};project.inputs={a:2,b:3};project.graph.nodes=[{id:'sum',uses:'core.add',args:{a:{input:'a'},b:{input:'b'}}}];project.graph.returns={node:'sum'};}
  Object.keys(project.graph.inputs).forEach((name,index)=>{project.canvas.positions[`input:${name}`]={x:30,y:100+index*130};});project.graph.nodes.forEach((node,index)=>{project.canvas.positions[node.id]={x:300+(index%2)*270,y:60+Math.floor(index/2)*200};});project.canvas.positions.output={x:850,y:150};change(()=>{editor=new ProjectEditor(project);selected=null;});
  }catch(error){report(error);}$('examples').value='';

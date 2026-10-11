@@ -17,7 +17,8 @@
     "build:demo": "node tools/ems.mjs build examples/avg5.graph.json --out dist/avg5.mjs",
     "seal:demo": "node tools/ems.mjs seal examples/avg5.graph.json --out dist/avg5-atomic",
     "text:demo": "node tools/ems.mjs text-run examples/avg5.ems '{\"times\":[12.4,11.85,13.2,12.1,14]}'",
-    "studio": "node tools/serve.mjs"
+    "studio": "node tools/serve.mjs",
+    "stdlib:catalog": "node tools/stdlib-catalog.mjs"
   },
   "license": "UNLICENSED"
 }

@@ -484,12 +484,25 @@
       "objective": "Provide real typed blocks needed by the owner-approved WEB IDE MVP through the shared kernel",
       "deliverables": "Value/logic/comparison/conditional/text/array contracts and catalog with executable implementations, compiler support and negative tests",
       "acceptance": "Programs built from the expanded catalog run through shared IR/runtime; deterministic contracts match standalone. Map/Filter contract parameters and effects are explicitly typed/validated; no dummy unsupported blocks or second executor. Document lazy control vs eager value selection semantics.",
-      "status": "TODO",
+      "status": "IN_PROGRESS",
       "priority": "P0",
       "ownerModelPolicy": [
         "GPT-6.1 Sol",
         "GPT-6 Luna"
-      ]
+      ],
+      "progress": "AC-048 initial finite standard library implemented: 36 typed pure value/logic/comparison/eager-select/text/NumberArray atomic contracts with independent public IDL, shared runtime/standalone operational bodies, actual intrinsic lock witness, categorized searchable Studio signatures, source/persisted graph example. All36 independently checked in actual Chromium runtime and independent standalone after runtime shutdown. Typed Map/Filter contract parameters, effect and shared budget propagation remain required before DONE; no placeholder blocks or string-callback substitution. See docs/spec/STANDARD_LIBRARY.md.",
+      "acceptanceEvidence": {
+        "scope": "Initial primitive finite standard library; full EMS-034 and global goal open.",
+        "docs": "docs/spec/STANDARD_LIBRARY.md",
+        "tests": "578/578 PASS",
+        "verify": "100/100 PASS",
+        "browserTests": "7/7 PASS",
+        "commands": [
+          "npm test",
+          "npm run verify",
+          "npm run browser:test"
+        ]
+      }
     },
     {
       "id": "EMS-050",
