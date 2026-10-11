@@ -1,7 +1,7 @@
 import {workerProbeSource,createModuleDiagnostics} from './worker-diagnostics.mjs';
 import { spawn } from 'node:child_process';
 import { constants } from 'node:fs';
-import { mkdtemp, rm, access } from 'node:fs/promises';
+import { mkdtemp, rm, access,writeFile } from 'node:fs/promises';
 import { tmpdir, homedir } from 'node:os';
 import { join } from 'node:path';
 
@@ -13,7 +13,7 @@ export async function chromiumExecutable() {
 }
 
 /** Local trusted QA only. CDP is loopback, with an isolated disposable browser profile. */
-export async function launchChromium() {
+export async function launchChromium({observeWorkerTargets=false}={}) {
   const executable = await chromiumExecutable(), directory = await mkdtemp(join(tmpdir(), 'ems-chromium-'));
   const child = spawn(executable, ['--headless', '--disable-gpu', '--no-sandbox', '--remote-debugging-address=127.0.0.1',
     '--remote-debugging-port=0', `--user-data-dir=${directory}`, '--no-first-run', '--no-default-browser-check', 'about:blank'],
@@ -80,7 +80,7 @@ export async function launchChromium() {
       };
       listeners.add(diagnosticListener);
       await send('Network.enable',{},sessionId);
-      await send('Target.setAutoAttach',{autoAttach:true,waitForDebuggerOnStart:false,flatten:true},sessionId);
+      if(observeWorkerTargets)await send('Target.setAutoAttach',{autoAttach:true,waitForDebuggerOnStart:false,flatten:true},sessionId);
       await send('Page.addScriptToEvaluateOnNewDocument',{source:workerProbeSource()},sessionId);
 
       let authenticationListener;
@@ -115,7 +115,14 @@ export async function launchChromium() {
         async diagnostics(){const result=await send('Runtime.evaluate',{expression:'JSON.stringify({workers:globalThis.__emsQAWorkers??[],errors:globalThis.__emsQAWorkerErrors??[]})',returnByValue:true},sessionId);return {...JSON.parse(result.result.value),modules:moduleDiagnostics.snapshot(),http:httpDiagnostics()};},
         async evaluate(expression) {
           const result = await send('Runtime.evaluate', { expression, awaitPromise: true, returnByValue: true }, sessionId);
-          if (result.exceptionDetails){const diagnostics=await send('Runtime.evaluate',{expression:'JSON.stringify({workers:globalThis.__emsQAWorkers??[],errors:globalThis.__emsQAWorkerErrors??[]})',returnByValue:true},sessionId);throw new Error(JSON.stringify(result.exceptionDetails)+' Worker startup diagnostics: '+diagnostics.result.value+' Module diagnostics: '+JSON.stringify(moduleDiagnostics.snapshot())+' HTTP module diagnostics: '+JSON.stringify(httpDiagnostics())+' Browser diagnostics: '+browserDiagnostics);}
+          if (result.exceptionDetails){
+            const captured=await send('Runtime.evaluate',{expression:'JSON.stringify({workers:globalThis.__emsQAWorkers??[],errors:globalThis.__emsQAWorkerErrors??[]})',returnByValue:true},sessionId);
+            const diagnostics={schemaVersion:'ems-worker-diagnostics/1',...JSON.parse(captured.result.value),modules:moduleDiagnostics.snapshot(),http:httpDiagnostics()};
+            let artifact='unavailable';
+            try{const dir=await mkdtemp(join(tmpdir(),'ems-worker-diagnostics-'));artifact=join(dir,'evidence.json');await writeFile(artifact,JSON.stringify(diagnostics,null,2)+'\n',{flag:'wx',mode:0o600});}catch{artifact='unavailable';}
+            const summary={workers:diagnostics.workers.slice(-8),errors:diagnostics.errors.slice(-4),moduleFailures:diagnostics.modules.filter(item=>item.event==='loading-failed'||item.status>=400).slice(-8),httpFailures:diagnostics.http?.failures?.slice(-8)??[],recentHTTP:diagnostics.http?.recent?.slice(-4)??[]};
+            throw new Error('Worker diagnostics artifact: '+artifact+'\n'+JSON.stringify(result.exceptionDetails)+' Worker summary: '+JSON.stringify(summary)+' Browser diagnostics: '+browserDiagnostics);
+          }
           return result.result.value;
         },
         close: () => {listeners.delete(diagnosticListener);if(authenticationListener)listeners.delete(authenticationListener);return send('Target.closeTarget', { targetId });}

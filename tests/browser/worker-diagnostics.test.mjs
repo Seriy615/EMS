@@ -33,3 +33,18 @@ test('real UI restart churn preserves semantics and leaves only the current Work
  })()`);assert.deepEqual(result.values,Array(12).fill(1));assert.equal(result.active,1);assert.equal(result.errors,0);await page.close();
  }finally{await browser?.close();await server.close();}
 });
+
+test('failed evaluation retains complete private metadata evidence before the reporter can truncate it',async()=>{
+ const {readFile,stat,rm}=await import('node:fs/promises'),{dirname}=await import('node:path');const server=await startStudioServer({port:0,recordModules:true});let browser,artifact;
+ try{browser=await launchChromium();const page=await browser.page(server.origin,{httpDiagnostics:()=>server.moduleDiagnostics()});try{await page.evaluate(`(async()=>{await import('/web/studio.mjs');throw Error('diagnostic fixture failure');})()`);assert.fail('Expected failure');}catch(error){artifact=error.message.match(/Worker diagnostics artifact: ([^\n]+)/)?.[1];assert.ok(artifact&&artifact!=='unavailable');assert.match(error.message,/diagnostic fixture failure/);}
+ const data=JSON.parse(await readFile(artifact,'utf8'));assert.equal(data.schemaVersion,'ems-worker-diagnostics/1');assert.ok(data.http.recent.length>30);assert.equal((await stat(artifact)).mode&0o777,0o600);assert.ok(!JSON.stringify(data).includes('diagnostic fixture failure'));await page.close();
+ }finally{await browser?.close();await server.close();if(artifact&&artifact!=='unavailable')await rm(dirname(artifact),{recursive:true,force:true});}
+});
+
+test('real UI deadline termination immediately followed by fresh startup preserves rollback and recovery without target interception',async()=>{
+ const server=await startStudioServer({port:0,recordModules:true});let browser;
+ try{browser=await launchChromium();const page=await browser.page(server.origin+'/web/ui-demo.html',{httpDiagnostics:()=>server.moduleDiagnostics()});await page.evaluate(`(async()=>{const demo=await import('/web/ui-demo.mjs'),{UIProjectEditor}=await import('/src/studio/ui-project.mjs'),{createCoreRegistry}=await import('/src/reference/registry.mjs'),editor=new UIProjectEditor(demo.editor.application,createCoreRegistry(),{sources:demo.editor.sources});editor.applyHandler('change','fn bounded(delta:Number)->Number {state.count.write(99);while true {}return delta;}','bounded');globalThis.__qaRecovery={broken:editor.source,healthy:demo.editor.source};})()`);
+ for(let batch=0;batch<3;batch++){const results=await page.evaluate(`(async()=>{const {createUIWorkerRuntime}=await import('/src/ui/worker-client.mjs'),policy={capabilities:['ui.render','state.read','state.write'],allowedEffects:['ui.render','state.read','state.write']},results=[];for(let i=0;i<4;i++){const bad=await createUIWorkerRuntime(__qaRecovery.broken,{policy,timeout:1});let code;try{await bad.dispatch('increment','press');}catch(error){code=error.code;}const confirmed=bad.snapshot().count,closed=bad.closed,good=await createUIWorkerRuntime(__qaRecovery.healthy,{policy});await good.dispatch('increment','press');const value=good.snapshot().count;await good.close();results.push({code,confirmed,closed,value});}return results;})()`);assert.deepEqual(results,Array.from({length:4},()=>({code:'EXECUTION_TIMEOUT',confirmed:0,closed:true,value:1})));}
+ const data=await page.diagnostics();assert.equal(data.errors.length,0);assert.equal(data.http.failures.length,0);assert.equal(data.workers.filter(w=>w.state!=='terminated').length,1);await page.close();
+ }finally{await browser?.close();await server.close();}
+});
