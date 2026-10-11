@@ -490,11 +490,13 @@
         "GPT-6.1 Sol",
         "GPT-6 Luna"
       ],
-      "progress": "AC-063..074 interpreted graph/control/UI stepping, breakpoints, Over/Out, durable contexts and bounded typed core inspection implemented. AC-076 adds exact source-owned grants, independently checked client/Worker pause DTO and explicit ephemeral pure-control Studio value panel. Checked release6cf20cff960c0aed363f14024623ff687bc5d7c6 passed748/140/43 and public HTTPS actual panel x1/result1/protected/clear/source-revoke plus all prior smoke proofs. Full earlier browser42/43 had blank native UI Worker startup failure; focused UI5/5 and final43/43 do not establish root cause or fix. Formal taint, scope-address grants, effectful UI state, call IR/native/compiled inspection and full parity remain open. AC-077 adds bounded privacy-preserving QA worker/module/server lifecycle evidence; actual controlled404/401/throw/reply and12 UI restarts verified. Final clean commit54b3095c2254fb0820abee0fbabb07126bcbe6dd passed752/140/45 and public HTTPS smoke using new local QA probe; live frontend remains6cf20cf. Original intermittent startup cause unproven; no retry or timeout change. AC-078 per-declaration core grants/v2 DTO and typed UI selection implemented for repeated valid lexical names; shared in-memory IR node occurrence bug corrected. Legacy unique-name/v1 compatibility retained. Corrected exact release26fd89163d2d217f3c8f3012c50c2dc87714da7b passed758/141/48 and public declared active7/inactive99/non-disclosure proof plus all prior smoke. First gate45/46 failed on native UI startup/incomplete module response; full artifact and default-passive target probe/12 recovery regression added, universal root cause remains unproven. AC-079 graph/call-IR memo-only inspection core implemented with explicit declaration grants, no extra evaluation, detached bounded values and protected/effects whole-program barrier. Composite frame/unused node/accessor/inherited context negatives verified; lifecycle declaration fixtures expanded. Exact checked release59fec33ca89afd8eaf0177104c33e224e16356a6 passed769/142/49 and public memo5/result25/default/ungranted proof plus all prior smoke. Earlier47/49 startup failures retained as unresolved risk. Studio graph/call adapter+panel remains next dependency and explicitly refuses unsupported requests. AC-080 checked visual and call-source value transport/panel implemented with canonical identity and root/path/frame/provenance/current-output/type/status/replay guards. Local774/143 and focused13 Node/2 new browser/6 compatibility PASS; full gate pending.",
+      "progress": "AC-063..080 interpreted graph/control/UI debugger includes checked points, Over/Out, durable contexts, bounded opt-in control and graph/call values with declaration identities and exact source/canonical project/library/selected root witnesses. Independent client/Worker path/frame/location/type/status/current-output/replay guards; actual memo-only values, protection/clear/revoke and old v1/v2 compatibility. Checked release dc46728d92c83edde5f9215545f60869c757c3c7 passed774/143/51 and public visual memo5/result25/protection plus all previous proofs. First full50/51 native UI startup failure remains unproven/unresolved despite focused1/final51 passes; bounded metadata/HTTP evidence retained. Collections, effectful UI values, inferred taint, compiled/native transports/full debugger parity remain open.",
       "evidence": {
-        "scope": "Original interpreted graph/control/UI debugger plus checked opt-in pure-control value transport/panel; full debugger and other inspection profiles remain open; bounded QA worker/module/HTTP evidence added under AC-077, original intermittent native failure cause unproven; per-declaration control grants/v2 and IR occurrence alias fix under AC-078; explicit graph/call memo inspection core under AC-079, no checked graph Studio adapter yet",
+        "scope": "Original interpreted graph/control/UI debugger; opt-in checked control/visual/call-IR value panel, declaration and closure/source/project identity, bounded QA native startup evidence. Full taint/effectful/collection/native/compiled profiles remain open.",
         "docs": "docs/spec/IDE_RUNTIME_DIAGNOSTICS.md",
         "testFiles": [
+          "tests/graph-inspection-transport.test.mjs",
+          "tests/browser/graph-inspection-transport.test.mjs",
           "tests/graph-inspection.test.mjs",
           "tests/browser/graph-inspection.test.mjs",
           "tests/inspection-declarations.test.mjs",
@@ -513,9 +515,9 @@
           "tests/step-frames.test.mjs",
           "tests/breakpoints.test.mjs"
         ],
-        "tests": "769/769 PASS",
-        "verify": "142/142 PASS",
-        "browserTests": "49/49 PASS",
+        "tests": "774/774 PASS",
+        "verify": "143/143 PASS",
+        "browserTests": "51/51 PASS",
         "commands": [
           "npm test",
           "npm run verify",
@@ -523,8 +525,8 @@
         ],
         "deployedRevision": "5bcd6abd41446073073db4e6e4f902a015488246",
         "live": "Final exact740/139/40 PASS; trusted public HTTPS/auth/access and Chromium typed core snapshot x1/result1/default-empty/protected-program and ungranted sentinel absence PASS. Existing graph/composite/reopen15/AVG5/text6/points5-loop3/OverOut7/UI1/live-clear1-2-3/safe-anchor/durable-Studio preserved; six foreign hashes/five active services unchanged. Core API only, IDE value transport/panel remain open.",
-        "liveRevision": "59fec33ca89afd8eaf0177104c33e224e16356a6",
-        "publicSmoke": "PASS; graph/call memo5/result25/default empty/ungranted proof, declaration7/99 and all prior proofs"
+        "liveRevision": "dc46728d92c83edde5f9215545f60869c757c3c7",
+        "publicSmoke": "PASS; visual pending→memo5/result25/clear/protected, call core/declaration/control values and all prior proofs"
       },
       "nextSlice": "Source-owned checked pure control inspection grants, strict bounded Worker DTO validation and explicit owner opt-in IDE panel; default no values, protected/effect/handle refusal, exact source/frame identity, detached snapshots and real non-leakage cases. Formal secret taint/effectful UI/native/compiled inspection remain separate."
     },
