@@ -1,6 +1,6 @@
 import { fail } from '../reference/errors.mjs';
 import { resolveType, unifyTypes, typeName } from './types.mjs';
-import { CONTROL_VERSION, CONTROL_PROFILE, validateControlIR } from '../ir/control.mjs';
+import { CONTROL_VERSION, CONTROL_PROFILE, CONTROL_ERROR_PROFILE, validateControlIR } from '../ir/control.mjs';
 
 function finite(type, node) {
   if (type.kind === 'Type' && ['Number', 'Boolean', 'String'].includes(type.name)) return type.name;
@@ -12,7 +12,7 @@ const flexible = type => type.kind === 'Variable' ? { kind: 'Variable', name: ty
 /** Specialize typed functions into semantic control blocks; locations remain a separate sidecar. */
 export function lowerControlModule(checked, entry, registry) {
   const functions = [], instances = new Map(), provenance = {};
-  let next = 0;
+  let next = 0, errors = false;
   const diagnostic = node => fail('UNSUPPORTED_PROFILE', `${node.kind} requires another IR profile`, { location: node.location });
   function specialize(target, inputs) {
     if (target.async) diagnostic(target.declaration);
@@ -59,6 +59,10 @@ export function lowerControlModule(checked, entry, registry) {
         case 'LetDeclaration': return { kind: 'let', name: node.name, type: typeOf(node.value), mutable: node.mutable, value: expression(node.value) };
         case 'ExpressionStatement': return { kind: 'expression', value: expression(node.value) };
         case 'ReturnStatement': return { kind: 'return', value: expression(node.value) };
+        case 'ThrowStatement': errors = true; return { kind: 'throw', value: expression(node.value) };
+        case 'TryStatement': errors = true; return { kind: 'try', body: block(node.body),
+          handler: node.handler ? { binding: node.handler.binding, type: finite(resolveType(checked.catchTypes.get(node.handler), substitutions), node.handler), body: block(node.handler.body) } : null,
+          finalizer: node.finalizer ? block(node.finalizer) : null };
         case 'Block': return { kind: 'block', body: block(node) };
         case 'IfStatement': return { kind: 'if', condition: expression(node.condition), then: block(node.then),
           otherwise: node.otherwise ? node.otherwise.kind === 'Block' ? block(node.otherwise) : [statement(node.otherwise)] : [] };
@@ -76,7 +80,7 @@ export function lowerControlModule(checked, entry, registry) {
   if (target.parameters.length) fail('CANNOT_INFER', 'Generic entry requires concrete types');
   const linked = specialize(target, target.inputs.map(input => input.type));
   if (linked.kind !== 'function') fail('UNSUPPORTED_PROFILE', 'Entry must have an EMS body');
-  const ir = { schemaVersion: CONTROL_VERSION, profile: CONTROL_PROFILE, id: entry,
+  const ir = { schemaVersion: CONTROL_VERSION, profile: errors ? CONTROL_ERROR_PROFILE : CONTROL_PROFILE, id: entry,
     version: checked.ast.package?.version ?? '0.1.0', entry: linked.id, functions };
   validateControlIR(ir, registry);
   return { ir, registry, provenance: { schemaVersion: 'ems-provenance/1', functions: provenance } };

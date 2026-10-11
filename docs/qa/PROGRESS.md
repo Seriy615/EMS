@@ -95,3 +95,13 @@ if/else-if, short circuit, mutable locals, lexical scopes, while/for, break/cont
 CLI module-ir/ir-run/ir-build проверены на examples/factorial.ems. Независимый модуль запускается новым процессом вне проекта. AC-033: 28 control tests (включая exact budget thresholds, guard перед сложной рекурсией, malformed IR, permissions, state rollback, CLI), пять прежних unsupported tests заменены runnable conformance. Baseline на 1721a98 — npm test 247/247 PASS, verify 40/40 PASS. Итог npm test **270/270 PASS**, npm run verify **44/44 PASS**, Node 22.21.0; логи `/tmp/ems-control-tests.log`, `/tmp/ems-control-verify.log`.
 
 EMS-015 IN_PROGRESS; следующий срез — algebraic/error execution и language futures/resource lifecycle, затем расширение cross-target conformance/IDE. M1/P1/WEB IDE/deploy и глобальная цель остаются открыты.
+
+## Продолжение — EMS-015 typed user errors и finally
+
+Новый профиль ems-control-errors/1 (ems-ir/2) добавляет throw/try/catch/finally к общему semantic control IR. Старый finite control profile отвергает новые statements. Catch types сохраняются checker как normalized metadata; aliases и generic specializations реально исполняются. Envelope ems-user-throw/1 отделяет typed user payload от host exceptions и arithmetic/system codes. Message общий, payload доступен только caller API; failure trace не содержит payload/message/stack.
+
+Runtime и standalone сохраняют порядок return evaluation, lexical catch scopes, nested rethrow и finally на normal/return/break/continue/ordinary error. Terminal CANCELLED/STEP_LIMIT/CALL_DEPTH/EVALUATION_DEPTH не могут быть подавлены finalizer return/throw. Finally использует тот же budget/signal и не гарантирует resource cleanup после cancellation/exhaustion — lifecycle ещё впереди. Effects в handler/finalizer включены в preflight; actor handled error может commit, unhandled/terminal error откатывает owned staged writes.
+
+AC-034 подтверждена 29 tests в tests/control-errors.test.mjs и verify checks: точные budget thresholds, primitive/array/alias/generic catches, unmatched/native failures, malformed/version gates, protected terminal errors, finalizer permissions, state replay/rollback, journal privacy и CLI export отдельным процессом вне EMS. Baseline на ba8ba6e: npm test 270/270 PASS и npm run verify 44/44 PASS. Итог npm test **299/299 PASS**, verify **47/47 PASS**, Node 22.21.0; логи `/tmp/ems-errors-tests.log`, `/tmp/ems-errors-verify.log`. Никакие внешние зависимости не устанавливались; JSON Schema опубликована, executable validator является test gate.
+
+EMS-015 IN_PROGRESS. Следующий срез — algebraic Option/Result/match, затем Future/Stream и resource lifecycle/structured error IDL. M1/P1/WEB IDE/deploy и глобальная цель открыты; проверенные изменения отправлять в origin main.

@@ -86,7 +86,7 @@ tasks/backlog.json          Dependency-ordered task backlog
 
 ## Immediate engineering goal
 
-M0 baseline passes. The core has normative semantics, typed versioned IR, a located AST parser and type checker. Pure SSA functions and inferred generic helpers execute through the shared IR/runtime and export to standalone JS; structured control-flow/loops/recursion now execute and export, while full language async/error/resource execution remains pending. Finite event sessions now add transactional typed state, FIFO replay and cancellation; continue M1 with algebraic/error execution and language futures, then the owner-approved Web IDE MVP; follow [`docs/qa/PROGRESS.md`](docs/qa/PROGRESS.md) and [`docs/plans/ROADMAP.md`](docs/plans/ROADMAP.md). The complete language and IDE remain under development.
+M0 baseline passes. The core has normative semantics, typed versioned IR, a located AST parser and type checker. Pure SSA functions and inferred generic helpers execute through the shared IR/runtime and export to standalone JS; structured control-flow/loops/recursion now execute and export, while typed user exceptions/finally execute through the same control IR, while full algebraic/async/resource execution remains pending. Finite event sessions now add transactional typed state, FIFO replay and cancellation; continue M1 with Option/Result/match execution and language futures, then the owner-approved Web IDE MVP; follow [`docs/qa/PROGRESS.md`](docs/qa/PROGRESS.md) and [`docs/plans/ROADMAP.md`](docs/plans/ROADMAP.md). The complete language and IDE remain under development.
 
 ## Constraints and caveats
 

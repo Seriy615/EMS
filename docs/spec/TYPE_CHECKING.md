@@ -19,7 +19,7 @@ Generic функция проверяется для всех допустимы
 
 Some/None и Ok/Err имеют типизированные payload. None и один из Result-конструкторов требуют ожидаемый полный тип. Match проверяет constructor/payload, области pattern binding и exhaustiveness для Option, Result, Boolean либо catch-all. Ограниченный pattern `Some(1)` не закрывает все Some; вложенный `Some(Some(v))` не закрывает `Some(None)`. Объединение нескольких ограниченных nested patterns анализируется консервативно и может требовать catch-all. Wrong payload и arm после catch-all отвергаются.
 
-ResourceHandle проверяет типовую идентичность, `using` требует handle. Это **не** доказательство ownership, закрытия, thread affinity или FFI ABI; lifecycle реализуется отдельно. Типизация try/catch требует явного типа catch binding в этом профиле; преобразование реальных host exceptions и полный error IDL остаются EMS-016. Effect pass EMS-014 проверяет декларации и транзитивные вызовы; чистота доверенного host-кода по-прежнему зависит от честности его metadata.
+ResourceHandle проверяет типовую идентичность, `using` требует handle. Это **не** доказательство ownership, закрытия, thread affinity или FFI ABI; lifecycle реализуется отдельно. Типизация try/catch требует явного типа catch binding в этом профиле; преобразование реальных host exceptions и полный error IDL остаются EMS-016; primitive typed throws/catches и finally реализованы по AC-034. Effect pass EMS-014 проверяет декларации и транзитивные вызовы; чистота доверенного host-кода по-прежнему зависит от честности его metadata.
 
 ## Исполняемый путь
 
@@ -27,7 +27,7 @@ ResourceHandle проверяет типовую идентичность, `usin
 
 Lowering принимает неизменяемые SSA `let`, return, арифметику `+ - * /`, unary sign, литералы, постоянные NumberArray и вызовы чистых функций/контрактов. Локальная функция становится обычным composite; generic helper специализируется по конкретным входам и также становится composite. Registry копируется в область сборки; исходный registry не изменяется.
 
-Только explicit legacy `{profile: "call"}` без effect/expression sequence остаётся demand-driven: чистый SSA binding, не достижимый от returns, не выполняется. Порядок портов/ошибок определяет `LANGUAGE_SEMANTICS.md`. В этом explicit compatibility backend control-flow, mutable locals и computed arrays отвергаются; automatic/default frontend использует structured control IR v2 (AC-033) для их реального исполнения. Async/algebraic/resource runtime ещё unsupported. Рекурсивный вызов запрещён только legacy call backend; default/control backend использует shared depth/step guards. Общие публичные executeIR/compileIRToJS выбирают проверенную семантическую версию IR.
+Только explicit legacy `{profile: "call"}` без effect/expression sequence остаётся demand-driven: чистый SSA binding, не достижимый от returns, не выполняется. Порядок портов/ошибок определяет `LANGUAGE_SEMANTICS.md`. В этом explicit compatibility backend control-flow, mutable locals и computed arrays отвергаются; automatic/default frontend использует structured control IR v2 (AC-033) для их реального исполнения. Async/algebraic/resource runtime ещё unsupported; typed exceptions выполняются отдельным control error profile (AC-034). Рекурсивный вызов запрещён только legacy call backend; default/control backend использует shared depth/step guards. Общие публичные executeIR/compileIRToJS выбирают проверенную семантическую версию IR.
 
 Lowering возвращает IR, linked registry и отдельный provenance с исходными позициями функций/узлов. Полный переносимый package lock/serialization linked bundle — EMS-016/M5. IR одного вызывающего модуля пока требует его связанного registry; standalone compiler раскрывает composite и экспортирует самодостаточный JS.
 
@@ -57,4 +57,4 @@ AC-028: `tests/types.test.mjs`, `tests/check.test.mjs`, `tests/lower.test.mjs`. 
 
 Evidence: `tests/frontend-effects.test.mjs`, расширенный `tests/effect-ir.test.mjs`, `tools/verify.mjs`; AC-029..031. EMS-014 закрывает начальный effect/capability kernel, а не OS permission broker, production scheduler или поддержку file/network/device APIs.
 
-Control slice AC-033: automatic lowering выбирает ems-ir/2 для reachable control/mutation/index/computed-array forms и local recursion; if/loops и mutable locals теперь исполняются и экспортируются. См. `CONTROL_IR.md`. Async, algebraic/error/resource runtime остаются unsupported.
+Control slice AC-033: automatic lowering выбирает ems-ir/2 для reachable control/mutation/index/computed-array forms и local recursion; if/loops и mutable locals теперь исполняются и экспортируются. См. `CONTROL_IR.md`. Typed user throws/catches/finally добавлены по AC-034 (CONTROL_ERRORS.md); async, algebraic/resource runtime остаются unsupported.

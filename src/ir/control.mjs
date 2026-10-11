@@ -4,6 +4,7 @@ import { analyzeGraphEffects, assertPolicyNames } from '../semantics/effects.mjs
 
 export const CONTROL_VERSION = 'ems-ir/2';
 export const CONTROL_PROFILE = 'ems-control-finite/1';
+export const CONTROL_ERROR_PROFILE = 'ems-control-errors/1';
 const names = /^[A-Za-z_][A-Za-z0-9_]*$/;
 export function controlFields(value, keys) {
   if (!value || typeof value !== 'object' || Array.isArray(value) || ![Object.prototype, null].includes(Object.getPrototypeOf(value)) ||
@@ -33,7 +34,7 @@ export function controlContractPolicy(contract, registry) {
 /** Strict structured control verifier. Policy is recomputed from linked implementations and local call edges. */
 export function validateControlIR(ir, registry) {
   if (ir?.schemaVersion !== CONTROL_VERSION) fail('IR_VERSION', `Expected ${CONTROL_VERSION}`);
-  if (ir.profile !== CONTROL_PROFILE) fail('UNSUPPORTED_PROFILE', `Expected ${CONTROL_PROFILE}`);
+  if (![CONTROL_PROFILE, CONTROL_ERROR_PROFILE].includes(ir.profile)) fail('UNSUPPORTED_PROFILE', `Expected ${CONTROL_PROFILE}`);
   controlFields(ir, ['schemaVersion', 'profile', 'id', 'version', 'entry', 'functions']); text(ir.id); text(ir.version); text(ir.entry);
   array(ir.functions); if (ir.functions.length > 1000) fail('IR_LIMIT', 'Too many control functions');
   const functions = new Map(), summaries = new Map(), edges = new Map(); let nodes = 0;
@@ -105,6 +106,22 @@ export function validateControlIR(ir, registry) {
             if (scope.has(statement.name)) fail('DUPLICATE_SYMBOL', 'Duplicate local');
             if (typeof statement.mutable !== 'boolean') fail('INVALID_IR', 'Invalid mutability');
             expect(expression(statement.value, scope, depth + 1), statement.type); scope.set(statement.name, { type: statement.type, mutable: statement.mutable }); break;
+          case 'throw':
+            if (ir.profile !== CONTROL_ERROR_PROFILE) fail('UNSUPPORTED_PROFILE', 'User throws require control error profile');
+            controlFields(statement, ['kind', 'value']); expression(statement.value, scope, depth + 1); terminated = true; break;
+          case 'try': {
+            if (ir.profile !== CONTROL_ERROR_PROFILE) fail('UNSUPPORTED_PROFILE', 'Try requires control error profile');
+            controlFields(statement, ['kind', 'body', 'handler', 'finalizer']);
+            if (statement.handler === null && statement.finalizer === null) fail('INVALID_IR', 'Try requires catch or finally');
+            const attempted = block(statement.body, scope, loops, depth + 1); let handled = false;
+            if (statement.handler !== null) {
+              const handler = statement.handler; controlFields(handler, ['binding', 'type', 'body']); name(handler.binding); assertTypeName(handler.type, 'catch type');
+              const nested = new Map(scope); nested.set(handler.binding, { type: handler.type, mutable: false });
+              handled = block(handler.body, nested, loops, depth + 1);
+            }
+            const finalized = statement.finalizer !== null ? block(statement.finalizer, scope, loops, depth + 1) : false;
+            terminated = finalized || (attempted && (statement.handler === null || handled)); break;
+          }
           case 'expression': case 'return': controlFields(statement, ['kind', 'value']);
             if (statement.kind === 'return') { expect(expression(statement.value, scope, depth + 1), fn.output.type); terminated = true; }
             else expression(statement.value, scope, depth + 1); break;

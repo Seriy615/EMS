@@ -3,6 +3,7 @@ import { compileStandaloneJS, standaloneHelpersJS } from '../reference/compiler.
 import { validateControlIR, decodeControlLiteral } from '../ir/control.mjs';
 import { equalControlValues, binaryControlValue, unaryControlValue, indexControlValue, controlBudgetOptions } from '../semantics/control-values.mjs';
 import { assertSignal, checkCancellation } from '../runtime/cancellation.mjs';
+import { makeControlThrow, matchesControlCatch, controlCatchValue, terminalControlError } from '../semantics/control-errors.mjs';
 
 /** Generate independent pure JavaScript from checked semantic control blocks. No AST or EMS imports in output. */
 export function compileControlJS(ir, registry) {
@@ -50,6 +51,20 @@ export function compileControlJS(ir, registry) {
           lines.push(`${statement.mutable ? 'let' : 'const'} ${local}=${value};`); break; }
         case 'expression': lines.push(`${expression(statement.value, scope)};`); break;
         case 'return': lines.push(`return ${expression(statement.value, scope)};`); break;
+        case 'throw': lines.push(`throw makeControlThrow(${expression(statement.value, scope)},${quote(statement.value.type)});`); break;
+        case 'try': {
+          let attempted = block(statement.body, scope);
+          if (statement.handler !== null) {
+            const caught = `__catch${nextLocal++}`, local = `__local${nextLocal++}`, nested = new Map(scope);
+            nested.set(statement.handler.binding, local);
+            attempted = `try{${attempted}}catch(${caught}){if(!matchesControlCatch(${caught},${quote(statement.handler.type)}))throw ${caught};const ${local}=controlCatchValue(${caught},${quote(statement.handler.type)});${block(statement.handler.body, nested)}}`;
+          }
+          if (statement.finalizer !== null) {
+            const saved = `__saved${nextLocal++}`, has = `__pending${nextLocal++}`, caught = `__caught${nextLocal++}`;
+            lines.push(`{let ${saved},${has}=false;try{${attempted}}catch(${caught}){${saved}=${caught};${has}=true;throw ${caught};}finally{try{${block(statement.finalizer, scope)}}finally{if(${has}&&terminalControlError(${saved}))throw ${saved};}}}`);
+          } else lines.push(attempted);
+          break;
+        }
         case 'break': case 'continue': lines.push(`${statement.kind};`); break;
         case 'block': lines.push(`{${block(statement.body, scope)}}`); break;
         case 'if': lines.push(`if(${expression(statement.condition, scope)}){${block(statement.then, scope)}}else{${block(statement.otherwise, scope)}}`); break;
@@ -67,8 +82,8 @@ export function compileControlJS(ir, registry) {
   const entry = checked.entry;
   const inputChecks = entry.inputs.map(input => `if(!Object.hasOwn(inputs,${quote(input.name)}))fail('MISSING_INPUT',${quote('Missing input ' + input.name)});__assertType(inputs[${quote(input.name)}],${quote(input.type)},${quote('inputs.' + input.name)});`).join('\n');
   return `// EMS control IR standalone output. Pure finite values; no EMS dependency.\n${standaloneHelpersJS()}
-const fail=__fail;
-${[equalControlValues, binaryControlValue, unaryControlValue, indexControlValue, controlBudgetOptions, assertSignal, checkCancellation].map(fn => fn.toString()).join('\n')}
+const fail=__fail,assertValueType=__assertType;
+${[equalControlValues, binaryControlValue, unaryControlValue, indexControlValue, controlBudgetOptions, assertSignal, checkCancellation, makeControlThrow, matchesControlCatch, controlCatchValue, terminalControlError].map(fn => fn.toString()).join('\n')}
 const __params=(names,values)=>Object.fromEntries(names.map((name,index)=>[name,values[index]]));
 ${wrappers.join('\n')}
 export function execute(inputs,options={}){

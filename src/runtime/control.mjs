@@ -6,6 +6,7 @@ import { validateControlIR, decodeControlLiteral } from '../ir/control.mjs';
 import { assertPolicyNames } from '../semantics/effects.mjs';
 import { assertSignal, checkCancellation, awaitCancellable } from './cancellation.mjs';
 import { binaryControlValue, unaryControlValue, indexControlValue, controlBudgetOptions } from '../semantics/control-values.mjs';
+import { makeControlThrow, matchesControlCatch, controlCatchValue, terminalControlError } from '../semantics/control-errors.mjs';
 
 export function checkControlPolicy(summary, { capabilities = [], allowedEffects = [] } = {}) {
   assertPolicyNames(capabilities, 'capabilities'); assertPolicyNames(allowedEffects, 'allowedEffects');
@@ -66,6 +67,29 @@ export async function executeControlIR(ir, inputs, registry, options = {}) {
         case 'let': scope.set(statement.name, { value: await expression(statement.value, scope) }); break;
         case 'expression': await expression(statement.value, scope); break;
         case 'return': return { kind: 'return', value: await expression(statement.value, scope) };
+        case 'throw': throw makeControlThrow(await expression(statement.value, scope), statement.value.type);
+        case 'try': {
+          let pending, hasError = false;
+          try {
+            try { exit = await block(statement.body, scope); }
+            catch (error) {
+              const handler = statement.handler;
+              if (!handler || !matchesControlCatch(error, handler.type)) throw error;
+              const nested = new Map(scope); nested.set(handler.binding, { value: controlCatchValue(error, handler.type) });
+              exit = await block(handler.body, nested);
+            }
+          } catch (error) { pending = error; hasError = true; }
+          if (statement.finalizer !== null) {
+            try {
+              const finalized = await block(statement.finalizer, scope);
+              if (finalized) { exit = finalized; if (!hasError || !terminalControlError(pending)) hasError = false; }
+            } catch (error) {
+              if (!hasError || !terminalControlError(pending)) { pending = error; hasError = true; }
+            }
+          }
+          if (hasError) throw pending;
+          break;
+        }
         case 'break': case 'continue': return { kind: statement.kind };
         case 'block': exit = await block(statement.body, scope); break;
         case 'if': exit = await block(await expression(statement.condition, scope) ? statement.then : statement.otherwise, scope); break;

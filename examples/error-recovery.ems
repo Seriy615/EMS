@@ -1,0 +1,9 @@
+// Typed user-value recovery demonstration; host errors retain their own identities.
+export fn demo.ErrorRecovery(value: Number) -> Number requires pure {
+  try {
+    if value < 0 { throw value; }
+    return value;
+  } catch (rejected: Number) {
+    return -rejected;
+  }
+}

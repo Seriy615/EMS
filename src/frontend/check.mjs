@@ -24,7 +24,7 @@ function expectType(expected, actual, node, substitutions = new Map()) {
 export function typecheckModule(ast, registry, { imports = new Map(), maxTypeNodes = 20_000, maxExpressions = 100_000 } = {}) {
   if (ast?.schemaVersion !== 'ems-ast/1') fail('AST_VERSION', 'Expected ems-ast/1');
   const aliases = new Map(), declarations = new Map(), signatures = new Map(), namespaces = new Map();
-  const types = new Map(), calls = new Map();
+  const types = new Map(), calls = new Map(), catchTypes = new Map();
   let nextCall = 0, typeNodes = 0, expressions = 0;
   for (const imported of ast.imports) {
     if (!imports.has(imported.source)) diagnostic('UNRESOLVED_IMPORT', `No binding for ${imported.source}`, imported);
@@ -231,7 +231,8 @@ export function typecheckModule(ast, registry, { imports = new Map(), maxTypeNod
           const attempted = block(statement.body, scope, context); let handled = false;
           if (statement.handler) {
             if (!statement.handler.type) diagnostic('UNSUPPORTED_SYNTAX', 'Catch binding requires an explicit type in this profile', statement.handler);
-            const nested = new Map(scope); nested.set(statement.handler.binding, { type: statement.handler.type ? type(statement.handler.type, context.parameters) : primitive('String'), mutable: false });
+            const handlerType = type(statement.handler.type, context.parameters); catchTypes.set(statement.handler, handlerType);
+            const nested = new Map(scope); nested.set(statement.handler.binding, { type: handlerType, mutable: false });
             handled = block(statement.handler.body, nested, context);
           }
           const finalized = statement.finalizer ? block(statement.finalizer, scope, context) : false;
@@ -292,7 +293,7 @@ export function typecheckModule(ast, registry, { imports = new Map(), maxTypeNod
     const context = { output: target.output, parameters: new Set(target.parameters), async: target.async, loops: 0 };
     if (!block(target.declaration.body, scope, context)) diagnostic('MISSING_RETURN', `Not every path returns from ${target.name}`, target.declaration);
   }
-  const checked = { ast, signatures, types, calls };
+  const checked = { ast, signatures, types, calls, catchTypes };
   checked.policies = checkModuleEffects(checked, registry);
   return checked;
 }

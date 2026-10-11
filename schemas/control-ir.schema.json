@@ -8,7 +8,10 @@
       "const": "ems-ir/2"
     },
     "profile": {
-      "const": "ems-control-finite/1"
+      "enum": [
+        "ems-control-finite/1",
+        "ems-control-errors/1"
+      ]
     },
     "id": {
       "type": "string",
@@ -645,8 +648,314 @@
             "kind"
           ],
           "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "const": "throw"
+            },
+            "value": {
+              "$ref": "#/$defs/expression"
+            }
+          },
+          "required": [
+            "kind",
+            "value"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "const": "try"
+            },
+            "body": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/statement"
+              }
+            },
+            "handler": {
+              "oneOf": [
+                {
+                  "type": "null"
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "binding": {
+                      "type": "string",
+                      "pattern": "^[A-Za-z_][A-Za-z0-9_]*$"
+                    },
+                    "type": {
+                      "enum": [
+                        "Number",
+                        "NumberArray",
+                        "Boolean",
+                        "String"
+                      ]
+                    },
+                    "body": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/$defs/statement"
+                      }
+                    }
+                  },
+                  "required": [
+                    "binding",
+                    "type",
+                    "body"
+                  ],
+                  "additionalProperties": false
+                }
+              ]
+            },
+            "finalizer": {
+              "oneOf": [
+                {
+                  "type": "null"
+                },
+                {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/$defs/statement"
+                  }
+                }
+              ]
+            }
+          },
+          "required": [
+            "kind",
+            "body",
+            "handler",
+            "finalizer"
+          ],
+          "additionalProperties": false
+        }
+      ]
+    },
+    "legacyStatement": {
+      "oneOf": [
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "const": "let"
+            },
+            "name": {
+              "type": "string",
+              "pattern": "^[A-Za-z_][A-Za-z0-9_]*$"
+            },
+            "type": {
+              "enum": [
+                "Number",
+                "NumberArray",
+                "Boolean",
+                "String"
+              ]
+            },
+            "mutable": {
+              "type": "boolean"
+            },
+            "value": {
+              "$ref": "#/$defs/expression"
+            }
+          },
+          "required": [
+            "kind",
+            "name",
+            "type",
+            "mutable",
+            "value"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "const": "expression"
+            },
+            "value": {
+              "$ref": "#/$defs/expression"
+            }
+          },
+          "required": [
+            "kind",
+            "value"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "const": "return"
+            },
+            "value": {
+              "$ref": "#/$defs/expression"
+            }
+          },
+          "required": [
+            "kind",
+            "value"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "const": "block"
+            },
+            "body": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/legacyStatement"
+              }
+            }
+          },
+          "required": [
+            "kind",
+            "body"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "const": "if"
+            },
+            "condition": {
+              "$ref": "#/$defs/expression"
+            },
+            "then": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/legacyStatement"
+              }
+            },
+            "otherwise": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/legacyStatement"
+              }
+            }
+          },
+          "required": [
+            "kind",
+            "condition",
+            "then",
+            "otherwise"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "const": "while"
+            },
+            "condition": {
+              "$ref": "#/$defs/expression"
+            },
+            "body": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/legacyStatement"
+              }
+            }
+          },
+          "required": [
+            "kind",
+            "condition",
+            "body"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "const": "for"
+            },
+            "binding": {
+              "type": "string",
+              "pattern": "^[A-Za-z_][A-Za-z0-9_]*$"
+            },
+            "iterable": {
+              "$ref": "#/$defs/expression"
+            },
+            "body": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/legacyStatement"
+              }
+            }
+          },
+          "required": [
+            "kind",
+            "binding",
+            "iterable",
+            "body"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "const": "break"
+            }
+          },
+          "required": [
+            "kind"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "const": "continue"
+            }
+          },
+          "required": [
+            "kind"
+          ],
+          "additionalProperties": false
         }
       ]
     }
-  }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "profile": {
+            "const": "ems-control-finite/1"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "functions": {
+            "items": {
+              "properties": {
+                "body": {
+                  "items": {
+                    "$ref": "#/$defs/legacyStatement"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  ]
 }

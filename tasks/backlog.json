@@ -270,7 +270,7 @@
       "acceptance": "Replay tests show stable semantics",
       "status": "IN_PROGRESS",
       "priority": "P0",
-      "progress": "Finite reactor session (AC-032): typed state atoms, transactional FIFO handlers using existing IR, replay, bounded queue, abort propagation and late-write rejection. Textual counter runs through shared runtime. Structured control IR v2/lowering/runtime and pure standalone implemented (AC-033): eager text semantics, typed mutable scopes, if/while/for, short circuit, generic/local recursion, indexing, identical step/depth guards. Language Future/Stream, algebraic errors/resources and standalone state export remain pending.",
+      "progress": "Finite reactor session (AC-032): typed state atoms, transactional FIFO handlers using existing IR, replay, bounded queue, abort propagation and late-write rejection. Textual counter runs through shared runtime. Structured control IR v2/lowering/runtime and pure standalone implemented (AC-033): eager text semantics, typed mutable scopes, if/while/for, short circuit, generic/local recursion, indexing, identical step/depth guards. Typed user throw/catch/finally profile implemented (AC-034): aliases/generics, terminal cancellation/budget guards, differential standalone, transaction rollback/replay and payload-free failure traces. Option/Result/match, language Future/Stream, full error/resource IDL and standalone state export remain pending.",
       "ownerModelPolicy": [
         "GPT-6.1 Sol",
         "GPT-6 Luna"

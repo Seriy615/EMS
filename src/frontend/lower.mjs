@@ -132,7 +132,7 @@ export function lowerCheckedModule(checked, entry, registry, { profile = 'auto' 
     if (target && !target.contract && !target.declaration.external && !visited.has(target.name)) {
       visited.add(target.name); pending.push(target.declaration.body);
     }
-    if (['IfStatement','WhileStatement','ForStatement','BreakStatement','ContinueStatement','AssignmentExpression','IndexExpression'].includes(node.kind) ||
+    if (['IfStatement','WhileStatement','ForStatement','BreakStatement','ContinueStatement','AssignmentExpression','IndexExpression','ThrowStatement','TryStatement'].includes(node.kind) ||
         node.kind === 'LetDeclaration' && node.mutable || node.kind === 'UnaryExpression' && node.operator === '!' ||
         node.kind === 'BinaryExpression' && !['+','-','*','/'].includes(node.operator)) control = true;
     if (node.kind === 'ArrayExpression') { try { constant(node); } catch { control = true; } }

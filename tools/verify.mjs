@@ -108,4 +108,15 @@ const controlOutput=await import(`data:text/javascript,${encodeURIComponent(comp
 await check('standalone control loop agrees and preserves execution limits',()=>{
   assert.equal(controlOutput.execute({n:5}),120);assert.throws(()=>controlOutput.execute({n:5},{maxSteps:3}),{code:'STEP_LIMIT'});return true;
 });
+const recoveryBundle=lowerCheckedModule(typecheckModule(parseEMSModule(await get('examples/error-recovery.ems')),registry),'demo.ErrorRecovery',registry);
+const recoveryIR=parseIR(serializeIR(recoveryBundle.ir,registry),registry);
+await check('typed user exceptions recover through serialized control IR',async()=>recoveryIR.profile==='ems-control-errors/1' && await executeIR(recoveryIR,{value:-5},registry)===5);
+const recoveryOutput=await import(`data:text/javascript,${encodeURIComponent(compileIRToJS(recoveryIR,registry))}`);
+await check('standalone typed catch agrees with runtime',()=>recoveryOutput.execute({value:-5})===5);
+const guarded=lowerCheckedModule(typecheckModule(parseEMSModule('fn guarded()->Number { try { while true {} return 1; } finally { return 2; } }'),registry),'guarded',registry);
+await check('finally cannot suppress exhausted execution budget',async()=>{
+  await assert.rejects(executeIR(guarded.ir,{},registry,{maxSteps:10}),{code:'STEP_LIMIT'});
+  const output=await import(`data:text/javascript,${encodeURIComponent(compileIRToJS(guarded.ir,registry))}`);
+  assert.throws(()=>output.execute({},{maxSteps:10}),{code:'STEP_LIMIT'});return true;
+});
 console.log(`\nEMS foundation verification passed (${checks} checks). Not production readiness.`);

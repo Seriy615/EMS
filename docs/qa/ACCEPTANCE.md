@@ -37,6 +37,7 @@ Each AC ID must link to executable test output / exact command / revision. The M
 | AC-031 | Textual effect inference and execution | fixed-point transitive/generic/recursive inference; located pure/budget rejection; linked extern policy; interface requirements roundtrip; ordered SSA/expression execution and pure sequence export; CLI grant file | M1 effects frontend |
 | AC-032 | Finite state/event session and cancellation | typed state contracts through text/shared IR; FIFO/replay, rollback, isolated copies, queue overflow, active/queued abort, late-write rejection, close, permissions and invalid bindings | M1 state slice |
 | AC-033 | Structured finite control IR and standalone | typed scopes, eager statements, branches/short circuit, mutable locals, loops/break/continue, generics/recursion, arrays/index, matched errors/budgets/depth guards, effects and reactor rollback, independent CLI export | M1 control slice |
+| AC-034 | Typed user exceptions and finalization | primitive/alias/generic catch, rethrow, finally on returns/loop exits, protected cancellation/budgets, profile/version checks, permissions, state rollback/replay, payload-free failure traces, matching standalone/CLI export | M1 error slice |
 
 `AC-001` is NOT official WCA Average of Five. Real WCA rules are a separate contract acceptance test.
 
