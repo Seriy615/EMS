@@ -97,3 +97,5 @@ M0 baseline passes. The core has normative semantics, typed versioned IR, a loca
 - The M0 JavaScript registry executes trusted host functions with full host permissions. **Never run unknown imported modules as plugins.**
 
 See `docs/spec/EMS_FULL_SPEC.md` for the long-term vision and exact boundaries.
+
+Initial semantic UI/DOM backend: run `npm run studio` and open `/web/ui-demo.html`. Its buttons execute the EMS counter handler through the existing transactional reactor; UI/state permissions are explicit. Typed text/checkbox events, reactive properties and lifecycle are documented in [UI_TREE.md](docs/spec/UI_TREE.md). UI authoring inside Studio, UI project transport and standalone state/UI export remain in progress; this backend demo does not complete the WEB IDE MVP.

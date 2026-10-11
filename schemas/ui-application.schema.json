@@ -1,0 +1,271 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ems.local/schemas/ui-application.schema.json",
+  "title": "EMS finite semantic UI application v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "id",
+    "version",
+    "reactor",
+    "ui"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "const": "ems-ui-app/1"
+    },
+    "id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "version": {
+      "type": "string",
+      "minLength": 1
+    },
+    "reactor": {
+      "$ref": "reactor.schema.json"
+    },
+    "ui": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schemaVersion",
+        "root"
+      ],
+      "properties": {
+        "schemaVersion": {
+          "const": "ems-ui/1"
+        },
+        "root": {
+          "$ref": "#/$defs/node"
+        }
+      }
+    }
+  },
+  "$defs": {
+    "binding": {
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "literal"
+          ],
+          "properties": {
+            "literal": {
+              "oneOf": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "array",
+                  "items": {
+                    "type": "number"
+                  }
+                }
+              ]
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "state"
+          ],
+          "properties": {
+            "state": {
+              "type": "string",
+              "minLength": 1
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "state",
+            "format"
+          ],
+          "properties": {
+            "state": {
+              "type": "string",
+              "minLength": 1
+            },
+            "format": {
+              "const": "number"
+            }
+          }
+        }
+      ]
+    },
+    "eventRef": {
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "literal"
+          ],
+          "properties": {
+            "literal": {
+              "oneOf": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "array",
+                  "items": {
+                    "type": "number"
+                  }
+                }
+              ]
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "state"
+          ],
+          "properties": {
+            "state": {
+              "type": "string",
+              "minLength": 1
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "state",
+            "format"
+          ],
+          "properties": {
+            "state": {
+              "type": "string",
+              "minLength": 1
+            },
+            "format": {
+              "const": "number"
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "value"
+          ],
+          "properties": {
+            "value": {
+              "const": true
+            }
+          }
+        }
+      ]
+    },
+    "event": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "handler",
+        "inputs"
+      ],
+      "properties": {
+        "handler": {
+          "type": "string",
+          "minLength": 1
+        },
+        "inputs": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/$defs/eventRef"
+          }
+        }
+      }
+    },
+    "node": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "kind",
+        "props",
+        "events",
+        "children"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[-A-Za-z0-9_.]+$"
+        },
+        "kind": {
+          "enum": [
+            "column",
+            "row",
+            "text",
+            "button",
+            "textInput",
+            "checkbox"
+          ]
+        },
+        "props": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "text": {
+              "$ref": "#/$defs/binding"
+            },
+            "label": {
+              "$ref": "#/$defs/binding"
+            },
+            "value": {
+              "$ref": "#/$defs/binding"
+            },
+            "checked": {
+              "$ref": "#/$defs/binding"
+            },
+            "disabled": {
+              "$ref": "#/$defs/binding"
+            }
+          }
+        },
+        "events": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "press": {
+              "$ref": "#/$defs/event"
+            },
+            "change": {
+              "$ref": "#/$defs/event"
+            }
+          }
+        },
+        "children": {
+          "type": "array",
+          "maxItems": 1000,
+          "items": {
+            "$ref": "#/$defs/node"
+          }
+        }
+      }
+    }
+  }
+}

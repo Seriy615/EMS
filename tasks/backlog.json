@@ -524,12 +524,30 @@
       "objective": "Build universal semantic UI tree with DOM adapter",
       "deliverables": "Web renderer + UI contracts",
       "acceptance": "Pass state/UI event demo AC-014",
-      "status": "TODO",
+      "status": "IN_PROGRESS",
       "priority": "P0",
       "ownerModelPolicy": [
         "GPT-6.1 Sol",
         "GPT-6 Luna"
-      ]
+      ],
+      "progress": "AC-051 first executable semantic UI/DOM profile: typed primitive property/state/event bindings, actual EMS IR handlers through existing ReactorSession, full handler policy preflight/ui.render grants, FIFO/rollback/cancellation/cleanup and safe DOM controls. Working browser counter /web/ui-demo.html and actual input/checkbox/XSS/lifecycle evidence. UI authoring/inspection in Studio, signed JSON project codec, UI contracts/IDL factory, hierarchy updates and independent standalone state/UI export remain required; full AC-014/MVP/native parity open.",
+      "acceptanceEvidence": {
+        "scope": "Initial backend profile, not completed AC-014 or full WEB IDE MVP.",
+        "docs": "docs/spec/UI_TREE.md",
+        "example": "examples/ui-counter.json",
+        "tests": "615/615 PASS",
+        "verify": "109/109 PASS",
+        "browserTests": "11/11 PASS",
+        "testFiles": [
+          "tests/ui.test.mjs",
+          "tests/browser/ui.test.mjs"
+        ],
+        "commands": [
+          "npm test",
+          "npm run verify",
+          "npm run browser:test"
+        ]
+      }
     },
     {
       "id": "EMS-051",

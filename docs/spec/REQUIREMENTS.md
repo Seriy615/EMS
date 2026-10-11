@@ -28,8 +28,8 @@
 | SYS-02 | Platform adapters separate from contract signature | M3–M8 | M0 structural proof |
 | SYS-03 | New device via driver/SDK adapter | M8 | design manifest only |
 | SYS-04 | Device capability discovery & explicit unsupported outcome | M6–M8 | planned |
-| UI-01 | Universal UI tree contract, DOM/native | M3–M6 | planned |
-| UI-02 | Reactive state, lifecycle, events, accessibility | M3–M6 | planned |
+| UI-01 | Universal UI tree contract, DOM/native | M3–M6 | partial: finite semantic tree/typed bindings and DOM backend AC-051; contract factory/IDL/native planned |
+| UI-02 | Reactive state, lifecycle, events, accessibility | M3–M6 | partial: existing reactor-driven DOM events/reactive props/cleanup/labels AC-051; dynamic hierarchy/advanced accessibility planned |
 | UI-03 | Select running widget and inspect its graph | M2–M3 | planned |
 | UI-04 | Browser DOM and native UI semantic conformance | M6 | planned |
 | RUNT-01 | Reference executable dataflow graphs | M0 | M0 demo |

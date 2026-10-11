@@ -11,6 +11,7 @@ import { validateContractInterface, compareContractInterfaces, registerContractB
 import { runNodeConformance } from './conformance.mjs';
 import { ProjectEditor,parseProject } from '../src/studio/project.mjs';
 import {textFromWorkspace,projectFromText,runTextDraft} from '../src/studio/text.mjs';
+import {UIRuntime} from '../src/ui/model.mjs';
 import {STANDARD_INTERFACES,standardCatalog} from '../src/stdlib/finite.mjs';
 const root=new URL('../',import.meta.url);
 const get=async p=>readFile(new URL(p,root),'utf8');
@@ -35,6 +36,8 @@ await check('typed collection templates execute through shared control IR',async
 await check('catalog distinguishes installed contracts and typed collection templates',()=>standardCatalog().schemaVersion==='ems-stdlib-catalog/2'&&standardCatalog().contracts.length===36&&standardCatalog().templates.length===2);
 for(const file of ['docs/spec/STUDIO_COLLECTIONS.md','schemas/studio-collection-project.schema.json']){await stat(new URL(file,root));await check(`found ${file}`,()=>true);}
 await check('saved visual collection authoring and verified control IR execute independently',async()=>{const source=await get('examples/studio-collections.ems.json'),editor=new ProjectEditor(parseProject(source));const module=await import('data:text/javascript,'+encodeURIComponent(editor.compile()));return editor.serialize()===source&&JSON.stringify(await editor.run())==='[3]'&&JSON.stringify(module.execute(editor.project.inputs))==='[3]';});
+for(const file of ['docs/spec/UI_TREE.md','schemas/ui-application.schema.json']){await stat(new URL(file,root));await check(`found ${file}`,()=>true);}
+await check('semantic UI counter dispatches actual EMS IR and renders committed state',async()=>{const application=await readJSON('examples/ui-counter.json'),linked=createStateRegistry(createCoreRegistry(),application.reactor.state),bundle=lowerCheckedModule(typecheckModule(parseEMSModule(await get('examples/counter.ems')),linked),'demo.Counter',linked);assert.equal(serializeIR(bundle.ir,linked),serializeIR(application.reactor.handlers[0].program,linked));const runtime=new UIRuntime(application,createCoreRegistry(),{policy:{capabilities:['ui.render','state.read','state.write'],allowedEffects:['ui.render','state.read','state.write']}});try{await runtime.dispatch('increment','press');await runtime.dispatch('increment','press');await runtime.dispatch('decrement','press');return runtime.view().children[1].props.text==='1';}finally{await runtime.close();}});
 const policy=await readJSON('.agents/policy.json');
 await check('models exactly Sol 6.1 + Luna 6',()=>policy.agents.approvedDisplayNames.join(',')==='GPT-6.1 Sol,GPT-6 Luna');
 await check('fallback disabled',()=>policy.agents.allowImplicitModelFallback===false);

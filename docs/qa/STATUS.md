@@ -1,5 +1,17 @@
 # Current implementation status
 
+## Последняя проверка — EMS-050 первый semantic UI/DOM backend
+
+`npm test` **615/615 PASS**, `npm run verify` **109/109 PASS**, `npm run browser:test` **11/11 PASS**. Node22 / actual Chromium156. Baseline2c4a422:608/608 tests,106/106 verify. AC-051 реализован для initial semantic backend; EMS-050 IN_PROGRESS. Full AC-014/control UI-authoring/WEB IDE MVP/standalone state-UI/deploy/global goal открыты.
+
+UI tree отделён от IR handlers и editor canvas. Typed String/Boolean properties/state refs, explicit Number display и press/change event routing используют реальную linked signature. UIRuntime владеет существующей ReactorSession; нет JS business counter/второго executor. All handlers preflight, explicit ui.render capability/effect plus state grants. Actual buttons run examples/counter.ems derived IR; verify compares actual source lowered IR to saved example. Failure/cancel/budget keeps committed snapshot, including controlled input restore. DOM text/value properties, fixed kind mapping, preserved elements/focus, aria labels, duplicate mount rejection и idempotent close/listener removal.
+
+7 new Node tests проверяют FIFO/isolated copies/snapshot/descriptor mutation, typed throw/rollback/disabled/input shape, hidden host policy/no invocation, malformed tree/unsupported DOM escapes/binding/event types, signed zero/cancel/close, saved counter и default shared control STEP_LIMIT rollback. 2 new actual browser tests: real demo click/reset/close plus policy-before-host-write, busy host, controlled String/Boolean changes and rollback, focus/labels/inert malicious-looking text, disabled button/detached event/session rejection; rejected async error observer handled. Existing11 browser suites include old core/P1/editor/collections regression. Schemas18 parsed/local refs resolved; external schema engine not run. Logs /tmp/ems-ui-tests-final.log, /tmp/ems-ui-verify-final.log, /tmp/ems-ui-browser-final.log; targeted7/7 Node and initial8/8 combined before seventh Node addition. git diff --check PASS. No added dependencies/VPS mutation. Revision — commit containing this report, parent2c4a422.
+
+Limits/next: current JSON UI example is fixed runtime backend proof, not full Studio UI editor. UI/state signed-value transport codec, UI contract factory/IDL, authoring/preview/inspect, hierarchy updates and standalone state/UI compilation remain next EMS-050/051 slices. Ordinary JSON Number loses -0 outside typed IR; runtime API preserves it and does not claim completed UI persistence. Native/UI visual parity and production plugin sandbox not implemented. Proceed to typed UI application authoring/persistence then independent UI export/third demo/full MVP and owner-authorized isolated auth/HTTPS/rollback deploy. Verified slices commit/push origin/main git@github.com:Seriy615/EMS.git. No subagents.
+
+## Предыдущая проверка — visual collections
+
 ## Последняя проверка — EMS-034 visual typed collections
 
 `npm test` **608/608 PASS**, `npm run verify` **106/106 PASS**, `npm run browser:test` **9/9 PASS**. Node22 / actual Chromium156. Baseline f743691:596/596 tests,103/103 verify,8/8 browser. AC-050 реализован; EMS-034 DONE для initial finite library/pure NumberArray typed parameters. Full AC-012, WEB IDE MVP, deploy и global goal открыты.
