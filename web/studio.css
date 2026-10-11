@@ -17,3 +17,7 @@ main{display:grid;grid-template-columns:224px minmax(0,1fr) 248px;flex:1;min-hei
 @media(max-width:520px){.canvas-guide{top:76px;padding:20px}.canvas-guide .guide-icon{display:none}.canvas-guide h2{font-size:22px}.canvas-guide p{font-size:12px;margin-bottom:16px}.guide-steps{font-size:10px;gap:6px}}
 /* Keep history actions available at every screen width. */
 @media(max-width:1180px){.history-actions{display:flex;gap:2px}.history-actions button{font-size:0;width:30px;height:32px;padding:5px}.history-actions button::before{font-size:17px}.history-actions #undo::before{content:'↶'}.history-actions #redo::before{content:'↷'}}
+
+.inspection-settings{font-size:12px}.inspection-settings fieldset{border:1px solid var(--line);border-radius:8px;padding:12px;margin:8px 0}.inspection-settings label{display:flex;gap:8px;align-items:center;margin:8px 0}#inspection-bindings{display:flex;flex-wrap:wrap;gap:8px 18px}#inspection-values{white-space:pre-wrap;overflow-wrap:anywhere;font:12px/1.6 ui-monospace,monospace;color:var(--ink)}#inspection-status{color:var(--muted)}
+
+.inspection-settings fieldset:disabled{display:none}.inspection-settings:has(fieldset:disabled)>.hint{display:none}

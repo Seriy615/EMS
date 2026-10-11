@@ -89,3 +89,16 @@ export function inspectionPatternTypes(pattern,type,result=new Map()){
  if(pattern.kind==='constructor'){const payload=controlVariants(parsed)?.get(pattern.tag);pattern.arguments.forEach((child,index)=>inspectionPatternTypes(child,payload[index],result));}
  return result;
 }
+
+/** Checked IR catalog; names with multiple declarations require a future scope-address grant. */
+export function controlInspectionBindings(fn){
+ const counts=declarations(fn),types=new Map(fn.inputs.map(input=>[input.name,input.type]));
+ for(const [,node]of controlNodeEntries(fn)){
+  if(['let','using'].includes(node.kind))types.set(node.name,node.type);
+  if(node.kind==='for')types.set(node.binding,'Number');
+  if(node.kind==='forAwait')types.set(node.binding,controlTypeName(parseControlType(node.iterable.type,true,true,true).arguments[0]));
+  if(node.kind==='try'&&node.handler)types.set(node.handler.binding,node.handler.type);
+  if(node.kind==='match')for(const arm of node.arms)for(const [name,type]of inspectionPatternTypes(arm.pattern,node.value.type))types.set(name,type);
+ }
+ return [...counts].map(([name,count])=>({name,type:types.get(name),ambiguous:count!==1}));
+}

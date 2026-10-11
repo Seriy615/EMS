@@ -21,7 +21,7 @@ function matches(event,points){
  const at=breakpointForEvent(event);return !!at&&points.some(point=>point.profile===at.profile&&point.node===at.node&&(at.profile==='graph'?point.graph===at.graph:point.function===at.function));
 }
 function validFrames(value){return Array.isArray(value)&&value.length>0&&value.length<=64&&value.every(id=>Number.isSafeInteger(id)&&id>0)&&new Set(value).size===value.length;}
-/** Payload-free operation gate for sequential and concurrent tasks in the existing evaluator. */
+/** Operation gate for the existing evaluator; values require a separately checked host grant. */
 export class GraphStepper {
  #paused=null;
  #queue=[];

@@ -1,6 +1,7 @@
 import {ProjectEditor,parseProject} from '/src/studio/project.mjs';
 import {hasCollections} from '/src/studio/collections.mjs';
 import {GraphStepper} from '/src/studio/debugger.mjs';
+import {prepareStudioInspection,validateInspectionPause} from '/src/studio/inspection-transport.mjs';
 import {runTextDraft} from '/src/studio/text.mjs';
 
 let stepper=null,started=false;
@@ -10,18 +11,19 @@ self.onmessage=async event=>{
  if(started)return;started=true;
  let failurePath=null;
  try{
-  const request=event.data;if(Object.hasOwn(request,'inspection'))throw Object.assign(new Error('Inspection transport requires a checked adapter'),{code:'UNSUPPORTED_INSPECTION_TRANSPORT'});
+  const request=event.data;
   const editor=new ProjectEditor(parseProject(request.project));
   if(request.selected)editor.openContract(request.selected);
+  const inspection=prepareStudioInspection(request,editor);
   self.postMessage({type:'validated',id:editor.workspace.graph.id});
   if(Object.hasOwn(request,'debugOptions')&&!request.debug)throw Object.assign(new Error('Debug options need debug mode'),{code:'INVALID_DEBUG_OPTION'});
   if(request.debug){
    if(request.debug!==true||!['graph','text'].includes(request.action)||request.action==='graph'&&hasCollections(editor.workspace.graph,editor.registry))throw Object.assign(new Error('Пошаговая отладка visual Map/Filter пока не поддержана; используйте текст EMS'),{code:'UNSUPPORTED_DEBUG_PROFILE'});
-   stepper=new GraphStepper(pause=>self.postMessage({type:'paused',pause}),request.debugOptions);
+   stepper=new GraphStepper(pause=>{try{self.postMessage({type:'paused',pause:inspection?validateInspectionPause(pause,inspection):pause});}catch{self.postMessage({ok:false,error:{code:'INVALID_INSPECTION_SNAPSHOT',message:'Invalid or unauthorized inspection message',details:{}}});self.close();}},request.debugOptions);
   }
   let value;
   if(request.action==='graph')value=await editor.run({onFrameExit:stepper?event=>stepper.leave(event):undefined,onNodeFailure:path=>{failurePath??=path;},onNodeEnter:stepper?event=>stepper.enter(event):undefined});
-  else if(request.action==='text')value=await runTextDraft(request.draft,editor,request.inputs,{onFrameExit:stepper?event=>stepper.leave(event):undefined,onNodeEnter:stepper?event=>stepper.enter(event):undefined,onControlEnter:stepper?event=>stepper.enter(event):undefined});
+  else if(request.action==='text')value=await runTextDraft(request.draft,editor,request.inputs,{...(inspection?{inspection:inspection.policy}:{}),onFrameExit:stepper?event=>stepper.leave(event):undefined,onNodeEnter:stepper?event=>stepper.enter(event):undefined,onControlEnter:stepper?event=>stepper.enter(event):undefined});
   else throw Object.assign(new Error('Unknown execution request'),{code:'INVALID_EXECUTION'});
   self.postMessage({ok:true,value});
  }catch(error){self.postMessage({ok:false,error:{code:error.code??'HOST_ERROR',message:error.name==='EmsError'?error.message:'Ошибка обработки программы',details:error.details??{},failurePath}});}

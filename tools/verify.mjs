@@ -374,4 +374,10 @@ await check('UI source breakpoint pauses a private write and commits through the
  await host({action:'init',id:0,project:editor.source,policy:{capabilities:['ui.render','state.read','state.write'],allowedEffects:['ui.render','state.read','state.write']},maxQueue:64,recordTrace:false,debug:true,debugOptions:{start:'continue',breakpoints:[{handler:'change',point}],sources:{change:witness}}});
  const run=host({action:'dispatch',id:1,node:'increment',event:'press',value:undefined}),reply=await paused;assert.equal(replies[0].snapshot.count,0);assert.equal(reply.pause.node,'/body/1');await host({action:'resume',id:1,token:reply.pause.token,mode:'continue'});await run;return replies.at(-1).snapshot.count===1&&replies.at(-1).value===1;
 });
+await check('Source-owned inspection transport validates real typed values and rejects forged payload types',async()=>{
+ const {prepareStudioInspection,validateInspectionPause}=await import('../src/studio/inspection-transport.mjs'),{ProjectEditor}=await import('../src/studio/project.mjs'),{runTextDraft}=await import('../src/studio/text.mjs');
+ const editor=new ProjectEditor(),draft={source:'fn main()->Number {let mut x=0;x=x+1;return x;}',entry:'main',lowering:'auto'},prepared=prepareStudioInspection({action:'text',debug:true,project:editor.serialize(),draft,inspection:{schemaVersion:'ems-source-inspection/1',...draft,policy:{allow:[{function:'main',names:['x']}]}}}),events=[];
+ assert.equal(await runTextDraft(draft,editor,{}, {inspection:prepared.policy,onControlEnter:e=>events.push(e)}),1);const pause={...events.find(e=>e.kind==='return'),token:1};assert.equal(validateInspectionPause(pause,prepared).inspection.variables[0].value,1);
+ assert.throws(()=>validateInspectionPause({...pause,inspection:{...pause.inspection,variables:[{name:'x',type:'String',status:'value',value:'invalid'}]}},prepared),{code:'INVALID_INSPECTION_SNAPSHOT'});return true;
+});
 console.log(`\nEMS foundation verification passed (${checks} checks). Not production readiness.`);

@@ -490,7 +490,7 @@
         "GPT-6.1 Sol",
         "GPT-6 Luna"
       ],
-      "progress": "AC-063..074 interpreted debugging, durable checked contexts and opt-in typed control inspection core implemented. Real frame/scopes, detached finite values, protected-program/effects/handle exclusions, bounded whole-value snapshots and payload-free defaults verified. Worker inspection transport explicitly unsupported until checked adapter; IDE panel/formal secret taint/native-compiled transports/full parity remain open.",
+      "progress": "AC-063..074 interpreted debugging, durable checked contexts and opt-in typed control inspection core implemented. Real frame/scopes, detached finite values, protected-program/effects/handle exclusions, bounded whole-value snapshots and payload-free defaults verified. Worker inspection transport explicitly unsupported until checked adapter; IDE panel/formal secret taint/native-compiled transports/full parity remain open. AC-076 checked source-owned transport and explicit ephemeral pure-control panel implemented; focused8 Node/5 Chromium PASS, full gate/public evidence pending. Full debugger/effectful UI/formal taint/native-compiled transports remain open.",
       "evidence": {
         "scope": "Original interpreted graph/control/UI debugger and typed pure control inspection core; no IDE value panel or native/compiled inspection",
         "docs": "docs/spec/IDE_RUNTIME_DIAGNOSTICS.md",
