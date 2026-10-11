@@ -5,6 +5,7 @@ import { analyzeGraphEffects, assertPolicyNames } from '../semantics/effects.mjs
 
 export const CONTROL_VERSION = 'ems-ir/2';
 export const CONTROL_PROFILE = 'ems-control-finite/1';
+export const CONTROL_FUTURE_PROFILE = 'ems-control-futures/1';
 export const CONTROL_ALGEBRAIC_PROFILE = 'ems-control-algebraic/1';
 export const CONTROL_ERROR_PROFILE = 'ems-control-errors/1';
 const names = /^[A-Za-z_][A-Za-z0-9_]*$/;
@@ -36,14 +37,16 @@ export function controlContractPolicy(contract, registry) {
 /** Strict structured control verifier. Policy is recomputed from linked implementations and local call edges. */
 export function validateControlIR(ir, registry) {
   if (ir?.schemaVersion !== CONTROL_VERSION) fail('IR_VERSION', `Expected ${CONTROL_VERSION}`);
-  if (![CONTROL_PROFILE, CONTROL_ERROR_PROFILE, CONTROL_ALGEBRAIC_PROFILE].includes(ir.profile)) fail('UNSUPPORTED_PROFILE', `Expected ${CONTROL_PROFILE}`);
+  if (![CONTROL_PROFILE, CONTROL_ERROR_PROFILE, CONTROL_ALGEBRAIC_PROFILE, CONTROL_FUTURE_PROFILE].includes(ir.profile)) fail('UNSUPPORTED_PROFILE', `Expected ${CONTROL_PROFILE}`);
   controlFields(ir, ['schemaVersion', 'profile', 'id', 'version', 'entry', 'functions']); text(ir.id); text(ir.version); text(ir.entry);
   array(ir.functions); if (ir.functions.length > 1000) fail('IR_LIMIT', 'Too many control functions');
-  const algebraic = ir.profile === CONTROL_ALGEBRAIC_PROFILE;
-  const assertType = (type, context) => algebraic ? parseControlType(type) : assertTypeName(type, context);
+  const futures = ir.profile === CONTROL_FUTURE_PROFILE;
+  const algebraic = ir.profile === CONTROL_ALGEBRAIC_PROFILE || futures;
+  const assertType = (type, context) => algebraic ? parseControlType(type, futures) : assertTypeName(type, context);
   const functions = new Map(), summaries = new Map(), edges = new Map(); let nodes = 0;
   for (const fn of ir.functions) {
-    controlFields(fn, ['id', 'inputs', 'output', 'requirements', 'policy', 'body']); text(fn.id);
+    controlFields(fn, ['id', 'inputs', 'output', 'requirements', 'policy', 'body', ...(futures ? ['async'] : [])]);
+    if (futures && typeof fn.async !== 'boolean') fail('INVALID_IR', 'Expected async function marker'); text(fn.id);
     if (functions.has(fn.id)) fail('INVALID_IR', 'Duplicate function');
     array(fn.inputs); const inputNames = new Set();
     for (const input of fn.inputs) { controlFields(input, ['name', 'type']); name(input.name); assertType(input.type, 'control input');
@@ -52,6 +55,9 @@ export function validateControlIR(ir, registry) {
     functions.set(fn.id, fn); summaries.set(fn.id, { effects: new Set(fn.requirements.effects), capabilities: new Set(fn.requirements.capabilities) }); edges.set(fn.id, new Set());
   }
   if (!functions.has(ir.entry)) fail('INVALID_IR', 'Unknown entry function');
+  const entry = functions.get(ir.entry);
+  if (futures && [...entry.inputs.map(input => input.type), entry.output.type].some(type => type.includes('Future<')))
+    fail('UNSUPPORTED_PROFILE', 'Live Future cannot cross program input/output boundaries');
   const expect = (actual, expected) => { if (actual !== expected) fail('TYPE_MISMATCH', `Control IR ${actual} does not match ${expected}`); };
   function limit(depth) { if (++nodes > 20000 || depth > 128) fail('IR_LIMIT', 'Control IR exceeds structural budget'); }
   for (const fn of functions.values()) {
@@ -77,10 +83,18 @@ export function validateControlIR(ir, registry) {
           controlFields(node, ['kind', 'type', 'operator', 'left', 'right']);
           const left = expression(node.left, scope, depth + 1), right = expression(node.right, scope, depth + 1); expect(right, left);
           if (['&&', '||'].includes(node.operator)) { expect(left, 'Boolean'); actual = 'Boolean'; }
-          else if (['==', '!='].includes(node.operator)) actual = 'Boolean';
+          else if (['==', '!='].includes(node.operator)) { if (left.includes('Future<')) fail('TYPE_MISMATCH', 'Future has no value equality'); actual = 'Boolean'; }
           else { if (!['+', '-', '*', '/', '%', '<', '<=', '>', '>='].includes(node.operator)) fail('INVALID_IR', 'Unknown binary operator');
             expect(left, 'Number'); actual = ['<', '<=', '>', '>='].includes(node.operator) ? 'Boolean' : 'Number'; }
           break;
+        }
+        case 'await': {
+          if (!futures) fail('UNSUPPORTED_PROFILE', 'Await requires future profile');
+          if (!fn.async) fail('INVALID_AWAIT', 'Await requires async function');
+          controlFields(node, ['kind', 'type', 'value']);
+          const awaited = parseControlType(expression(node.value, scope, depth + 1), true);
+          if (awaited.name !== 'Future') fail('TYPE_MISMATCH', 'Await requires Future');
+          actual = controlTypeName(awaited.arguments[0]); break;
         }
         case 'construct': {
           if (!algebraic) fail('UNSUPPORTED_PROFILE', 'Constructors require algebraic profile');
@@ -96,14 +110,16 @@ export function validateControlIR(ir, registry) {
           if (node.target?.kind === 'function') { controlFields(node.target, ['kind', 'id']); target = functions.get(node.target.id);
             if (!target) fail('UNKNOWN_SYMBOL', 'Unknown control function'); edges.get(fn.id).add(target.id); }
           else if (node.target?.kind === 'contract') {
-            controlFields(node.target, ['kind', 'id', 'version']); target = registry.resolve(node.target.id);
+            controlFields(node.target, ['kind', 'id', 'version', ...(futures ? ['async'] : [])]);
+            if (futures && typeof node.target.async !== 'boolean') fail('INVALID_IR', 'Expected async binding marker');
+            target = registry.resolve(node.target.id);
             if (target.version !== node.target.version) fail('CONTRACT_VERSION', 'Control binding version mismatch');
             const summary = controlContractPolicy(target, registry);
             for (const field of ['effects', 'capabilities']) for (const value of summary[field]) summaries.get(fn.id)[field].add(value);
-            target = { inputs: Object.entries(target.inputs).map(([name, type]) => ({ name, type: typeof type === 'string' ? type : type.type })), output: { type: target.output } };
+            target = { inputs: Object.entries(target.inputs).map(([name, type]) => ({ name, type: typeof type === 'string' ? type : type.type })), output: { type: target.output }, async: node.target.async };
           } else fail('INVALID_IR', 'Unknown call target');
           if (node.arguments.length !== target.inputs.length) fail('CALL_ARITY', 'Control argument count mismatch');
-          node.arguments.forEach((arg, index) => expect(expression(arg, scope, depth + 1), target.inputs[index].type)); actual = target.output.type; break;
+          node.arguments.forEach((arg, index) => expect(expression(arg, scope, depth + 1), target.inputs[index].type)); actual = target.async ? `Future<${target.output.type}>` : target.output.type; break;
         }
         default: fail('INVALID_IR', 'Unknown control expression');
       }
@@ -163,15 +179,15 @@ export function validateControlIR(ir, registry) {
             terminated = exits; break;
           }
           case 'throw':
-            if (![CONTROL_ERROR_PROFILE, CONTROL_ALGEBRAIC_PROFILE].includes(ir.profile)) fail('UNSUPPORTED_PROFILE', 'User throws require control error profile');
-            controlFields(statement, ['kind', 'value']); expression(statement.value, scope, depth + 1); terminated = true; break;
+            if (![CONTROL_ERROR_PROFILE, CONTROL_ALGEBRAIC_PROFILE, CONTROL_FUTURE_PROFILE].includes(ir.profile)) fail('UNSUPPORTED_PROFILE', 'User throws require control error profile');
+            controlFields(statement, ['kind', 'value']); const thrown = expression(statement.value, scope, depth + 1); if (thrown.includes('Future<')) fail('TYPE_MISMATCH', 'Cannot throw live Future'); terminated = true; break;
           case 'try': {
-            if (![CONTROL_ERROR_PROFILE, CONTROL_ALGEBRAIC_PROFILE].includes(ir.profile)) fail('UNSUPPORTED_PROFILE', 'Try requires control error profile');
+            if (![CONTROL_ERROR_PROFILE, CONTROL_ALGEBRAIC_PROFILE, CONTROL_FUTURE_PROFILE].includes(ir.profile)) fail('UNSUPPORTED_PROFILE', 'Try requires control error profile');
             controlFields(statement, ['kind', 'body', 'handler', 'finalizer']);
             if (statement.handler === null && statement.finalizer === null) fail('INVALID_IR', 'Try requires catch or finally');
             const attempted = block(statement.body, scope, loops, depth + 1); let handled = false;
             if (statement.handler !== null) {
-              const handler = statement.handler; controlFields(handler, ['binding', 'type', 'body']); name(handler.binding); assertType(handler.type, 'catch type');
+              const handler = statement.handler; controlFields(handler, ['binding', 'type', 'body']); name(handler.binding); assertType(handler.type, 'catch type'); if (handler.type.includes('Future<')) fail('TYPE_MISMATCH', 'Cannot catch live Future');
               const nested = new Map(scope); nested.set(handler.binding, { type: handler.type, mutable: false });
               handled = block(handler.body, nested, loops, depth + 1);
             }

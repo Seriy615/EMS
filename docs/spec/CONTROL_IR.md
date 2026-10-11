@@ -41,3 +41,5 @@ node tools/ems.mjs ir-build dist/factorial.ir.json --out dist/factorial.mjs
 Evidence: `tests/control.test.mjs`: ветви, loops/break/continue, mutable scopes, generics/recursion, arrays/index, negative zero, structural equality, short circuit, overflow/bounds/division errors, exact step thresholds, depth guards, tampered IR, effect preflight, state rollback и CLI export. Standalone запускается отдельным Node process вне workspace; это ещё не browser/native P1 proof. EMS-015 IN_PROGRESS: далее algebraic/resource и Future/Stream semantics, визуальное представление новых blocks, более полный конформанс.
 
 Расширение `ems-control-algebraic/1` определено в CONTROL_ALGEBRAIC.md: Option/Result, typed construct и exhaustive match, включая error statements. Прежние profile gates сохранены.
+
+Language async/Future реализованы отдельным профилем `ems-control-futures/1` (AC-036, CONTROL_FUTURES.md): explicit async markers, typed await, execution-owned handles, supervised join/abort, async standalone. Прежние profiles и primitive Registry/state ABI сохранены. Stream и гарантированный resource lifecycle остаются открыты.

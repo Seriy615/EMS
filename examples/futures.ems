@@ -1,0 +1,12 @@
+package demo.futures @ "0.1.0";
+
+async fn increment(value: Number) -> Number requires pure {
+  return value + 1;
+}
+
+// Both tasks share one execution scope; repeated await does not repeat work.
+export async fn demo.FutureTotal(value: Number) -> Number requires pure {
+  let first = increment(value);
+  let second = increment(value + 1);
+  return (await first) + (await second);
+}

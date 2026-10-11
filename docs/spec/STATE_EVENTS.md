@@ -39,3 +39,5 @@ In-memory structured cloning сохраняет signed zero; каноничес�
 `node examples/counter.mjs` выполняет текстовую программу `examples/counter.ems`: события +1,+2,-1 дают count=2, повторное воспроизведение даёт 2. `tests/reactor.test.mjs` проверяет FIFO и replay, rollback, isolation/copies, queue limits, queued/active cancel, late writes, close, malformed declarations и permissions. Stateful standalone export отвергается существующим pure backend; IDE/browser/native поддержка этим Node evidence не подтверждается.
 
 Structured control-flow IR/lowering для if/loops/mutable locals реализован по AC-033 и работает в этих transactions. EMS-015 остаётся IN_PROGRESS: далее language futures/cancellation budget, algebraic/error/resource lifecycle и расширенный replay/conformance. M1 целиком открыт.
+
+Language async/Future реализованы отдельным профилем `ems-control-futures/1` (AC-036, CONTROL_FUTURES.md): explicit async markers, typed await, execution-owned handles, supervised join/abort, async standalone. Прежние profiles и primitive Registry/state ABI сохранены. Stream и гарантированный resource lifecycle остаются открыты.

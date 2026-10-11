@@ -107,3 +107,5 @@ EMS-011 реализует версионированный IR начально�
 AC-025 требует одинаковых значений (включая знак нуля) и структурированных ошибок на векторах `ems-core-finite/1`, дополнительных отрицательных host-входах, вложенных композициях, shared nodes, порядке аргументов и больших коллекциях. Это проверка reference JS runtime и JS output, а не свидетельство нескольких ОС или настоящего браузера. Независимый переносимый target проверяет те же векторы, не определяет собственную арифметику.
 
 Исполняемый Option/Result/match профиль: `CONTROL_ALGEBRAIC.md` (AC-035). Local generic specializations, aliases, nested patterns и typed catch используют общий control IR; Registry foreign/state binding ABI остаётся primitive.
+
+AC-036: language async/Future определены в CONTROL_FUTURES.md. Hot scoped tasks, explicit typed await, supervision/join перед commit, total future budget и async standalone реализованы на общем control IR. Прежний graph-only finite standalone profile не расширяется неявно. Stream и guaranteed cleanup остаются следующими gates.

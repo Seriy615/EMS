@@ -57,3 +57,5 @@ node tools/ems.mjs ir-build dist/avg5.ir.json --out dist/avg5-from-ir.mjs
 Control error profile `ems-control-errors/1` (artifact ems-ir/2) добавляет typed user throw/catch/finally по AC-034. Старый control finite profile их не принимает. Семантика и ограничения cleanup описаны в CONTROL_ERRORS.md.
 
 Algebraic profile `ems-control-algebraic/1` добавляет canonical Option/Result types, tagged construct expressions и exhaustive match statements (AC-035, CONTROL_ALGEBRAIC.md). Общий control schema entrypoint разделяет finite/error и algebraic profiles; standalone и runtime используют одинаковые portable validators/pattern semantics.
+
+Language async/Future реализованы отдельным профилем `ems-control-futures/1` (AC-036, CONTROL_FUTURES.md): explicit async markers, typed await, execution-owned handles, supervised join/abort, async standalone. Прежние profiles и primitive Registry/state ABI сохранены. Stream и гарантированный resource lifecycle остаются открыты.

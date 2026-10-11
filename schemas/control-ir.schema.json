@@ -8,6 +8,9 @@
     },
     {
       "$ref": "control-algebraic-ir.schema.json"
+    },
+    {
+      "$ref": "control-futures-ir.schema.json"
     }
   ]
 }

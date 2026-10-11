@@ -61,7 +61,6 @@ test('EMS-013 declared extern signatures must match a real binding before execut
 });
 
 for (const [source, code] of [
-  ['async fn test() -> Number { return 1; }', 'UNSUPPORTED_PROFILE'],
   ['fn test(x: Boolean[]) -> Boolean[] { return x; }', 'UNSUPPORTED_PROFILE']
 ]) {
   test(`EMS-013 lowering rejects unsupported semantics: ${source}`, () => {

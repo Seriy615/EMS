@@ -57,6 +57,8 @@ AC-028: `tests/types.test.mjs`, `tests/check.test.mjs`, `tests/lower.test.mjs`. 
 
 Evidence: `tests/frontend-effects.test.mjs`, расширенный `tests/effect-ir.test.mjs`, `tools/verify.mjs`; AC-029..031. EMS-014 закрывает начальный effect/capability kernel, а не OS permission broker, production scheduler или поддержку file/network/device APIs.
 
-Control slice AC-033: automatic lowering выбирает ems-ir/2 для reachable control/mutation/index/computed-array forms и local recursion; if/loops и mutable locals теперь исполняются и экспортируются. См. `CONTROL_IR.md`. Typed user throws/catches/finally добавлены по AC-034 (CONTROL_ERRORS.md); async, algebraic/resource runtime остаются unsupported.
+Control slice AC-033: automatic lowering выбирает ems-ir/2 для reachable control/mutation/index/computed-array forms и local recursion; if/loops и mutable locals теперь исполняются и экспортируются. См. `CONTROL_IR.md`. Typed user throws/catches/finally добавлены по AC-034 (CONTROL_ERRORS.md); расширения algebraic/async описаны ниже; resource runtime ещё не реализован.
 
 Исполняемый Option/Result/match профиль: `CONTROL_ALGEBRAIC.md` (AC-035). Local generic specializations, aliases, nested patterns и typed catch используют общий control IR; Registry foreign/state binding ABI остаётся primitive.
+
+Language async/Future реализованы отдельным профилем `ems-control-futures/1` (AC-036, CONTROL_FUTURES.md): explicit async markers, typed await, execution-owned handles, supervised join/abort, async standalone. Прежние profiles и primitive Registry/state ABI сохранены. Stream и гарантированный resource lifecycle остаются открыты.
