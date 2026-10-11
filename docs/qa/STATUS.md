@@ -1,5 +1,9 @@
 # Current implementation status
 
+## EMS-033 — declaration identities, AC-078
+
+Предыдущая goal-итерация — progress: bounded Worker telemetry54b3095 и evidence2b7bb7b в origin/main; исходный intermittent failure остаётся открытым. Baseline752/140 PASS. Адреса объявлений для parameters/let/using/for/forAwait/catch/pattern, v2 snapshot, strict client/Worker validation и выбор повторяющихся имён в IDE реализованы. Старые unique-name grants/v1 сохранены. Новый negative alias test подтвердил реальное раскрытие sibling value при shared JS IR node; execution diagnostic tree теперь unfolds occurrences и этот negative проходит. Focused29/29 Node (до дополнительного handle case), final declaration6/6 и Chromium4/4 PASS. Initial browser fixture выбрала otherwise из-за serialized object key order; исправлена явным then declaration selector, assertions не ослаблены. UI labels используют source line/column, hidden IDs остаются structural. Local Node758/758/verify141/141/full Chromium46/46 PASS; final labels review1/1 PASS; exact committed deploy/public proof pending.
+
 ## EMS-033 — Worker startup evidence, AC-077
 
 Предыдущая итерация — progress: checked inspection panel6cf20cf и evidence4beff7b. Baseline748/140 PASS. Добавлена QA-only lifecycle telemetry64 Workers/16 errors, CDP module metadata128 events и opt-in server HTTP finish/abort trace128 recent/16 failed responses. В trace отсутствуют payloads, raw error strings, headers, credentials, URL query/fragment/external origins. Native postMessage/terminate/error semantics сохранены; поздняя ошибка не оживляет terminated record. CDP attach без pause не видит раннюю загрузку Worker entry: первоначальный focused7/8 это подтвердил. Для реальных404/401 добавлена authoritative server telemetry, затем focused8/8 Chromium PASS (diagnostics+UI+auth), Node4/4 PASS. Actual12 UI restarts→counter1 и один текущий Worker PASS.

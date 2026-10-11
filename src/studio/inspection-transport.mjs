@@ -1,7 +1,7 @@
 import {fail} from '../reference/errors.mjs';
 import {ProjectEditor,parseProject} from './project.mjs';
 import {compileTextDraft} from './text.mjs';
-import {normalizeInspectionPolicy,createControlInspector,controlInspectionBindings} from '../runtime/inspection.mjs';
+import {normalizeInspectionPolicy,createControlInspector,inspectionGrantBindings} from '../runtime/inspection.mjs';
 import {controlNodeEntries} from '../ir/control-addresses.mjs';
 import {parseControlType,controlVariants} from '../semantics/control-algebraic.mjs';
 
@@ -27,7 +27,7 @@ export function prepareStudioInspection(request,editor=null){
  editor??=new ProjectEditor(parseProject(request.project));if(request.selected&&editor.selectedContract!==request.selected)editor.openContract(request.selected);
  const bundle=compileTextDraft(request.draft,editor);if(bundle.ir.schemaVersion!=='ems-ir/2')fail('UNSUPPORTED_INSPECTION_PROFILE','This value adapter requires control IR');
  const policy=normalizeInspectionPolicy(witness.policy);createControlInspector(bundle.ir,policy);
- const functions=new Map(bundle.ir.functions.map(fn=>[fn.id,{fn,nodes:new Map(controlNodeEntries(fn)),bindings:new Map(controlInspectionBindings(fn).map(item=>[item.name,item]))}]));
+ const functions=new Map(bundle.ir.functions.map(fn=>[fn.id,{fn,nodes:new Map(controlNodeEntries(fn)),grants:policy.allow.find(grant=>grant.function===fn.id)?inspectionGrantBindings(fn,policy.allow.find(grant=>grant.function===fn.id)):[]}]));
  return {editor,bundle,policy,functions,witness:{schemaVersion:witness.schemaVersion,source:witness.source,entry:witness.entry,lowering:witness.lowering,policy}};
 }
 
@@ -43,20 +43,20 @@ function valueCopy(value,type,policy){
  fields(value,variant.length?['tag','value']:['tag']);return variant.length?{tag,value:valueCopy(value.value,variant[0],policy)}:{tag};
 }
 export function validateInspectionSnapshot(snapshot,fnId,prepared){
- fields(snapshot,['schemaVersion','variables','truncated']);if(snapshot.schemaVersion!=='ems-inspection/1'||typeof snapshot.truncated!=='boolean')error();
- const owner=prepared.functions.get(fnId);if(!owner)error();const names=prepared.policy.allow.find(item=>item.function===fnId)?.names??[],variables=array(snapshot.variables,32);
- if(variables.length>names.length||!snapshot.truncated&&variables.length!==names.length||snapshot.truncated&&variables.length>=names.length)error();
+ fields(snapshot,['schemaVersion','variables','truncated']);if(!['ems-inspection/1','ems-inspection/2'].includes(snapshot.schemaVersion)||typeof snapshot.truncated!=='boolean')error();
+ const owner=prepared.functions.get(fnId);if(!owner)error();const bindings=owner.grants,variables=array(snapshot.variables,32),version=prepared.policy.allow.some(item=>own(item,'declarations'))?'ems-inspection/2':'ems-inspection/1';if(snapshot.schemaVersion!==version)error();
+ if(variables.length>bindings.length||!snapshot.truncated&&variables.length!==bindings.length||snapshot.truncated&&variables.length>=bindings.length)error();
  const protectedProgram=prepared.policy.protectedFunctions.length>0,impure=owner.fn.policy.effects.length>0||owner.fn.policy.capabilities.length>0||(owner.fn.localEffects?.length??0)>0;
  const copied=variables.map((record,index)=>{
-  const hasValue=record&&typeof record==='object'&&own(record,'value');fields(record,hasValue?['name','type','status','value']:['name','type','status']);if(record.name!==names[index])error();
-  if(protectedProgram||impure){if(hasValue||record.type!==null||record.status!==(protectedProgram?'protected-program':'protected-effects'))error();return {name:record.name,type:null,status:record.status};}
-  if(record.status==='not-in-scope'){if(hasValue||record.type!==null)error();return {name:record.name,type:null,status:record.status};}
-  const type=owner.bindings.get(record.name)?.type;if(record.type!==type)error();const parsed=parseControlType(type,true,true,true),supported=finiteType(parsed);
-  if(!supported){if(hasValue||record.status!=='excluded-type')error();return {name:record.name,type,status:record.status};}
-  if(record.status==='value'){if(!hasValue)error();return {name:record.name,type,status:'value',value:valueCopy(record.value,parsed,prepared.policy)};}
-  if(hasValue||!['limit','unavailable'].includes(record.status))error();return {name:record.name,type,status:record.status};
+  const hasValue=record&&typeof record==='object'&&own(record,'value'),keys=['name','type','status',...(version==='ems-inspection/2'?['declaration']:[]),...(hasValue?['value']:[])];fields(record,keys);const binding=bindings[index];if(record.name!==binding.name||version==='ems-inspection/2'&&record.declaration!==binding.declaration)error();const identity=version==='ems-inspection/2'?{name:record.name,declaration:record.declaration}:{name:record.name};
+  if(protectedProgram||impure){if(hasValue||record.type!==null||record.status!==(protectedProgram?'protected-program':'protected-effects'))error();return {...identity,type:null,status:record.status};}
+  if(record.status==='not-in-scope'){if(hasValue||record.type!==null)error();return {...identity,type:null,status:record.status};}
+  const type=binding.type;if(record.type!==type)error();const parsed=parseControlType(type,true,true,true),supported=finiteType(parsed);
+  if(!supported){if(hasValue||record.status!=='excluded-type')error();return {...identity,type,status:record.status};}
+  if(record.status==='value'){if(!hasValue)error();return {...identity,type,status:'value',value:valueCopy(record.value,parsed,prepared.policy)};}
+  if(hasValue||!['limit','unavailable'].includes(record.status))error();return {...identity,type,status:record.status};
  });
- const result={schemaVersion:'ems-inspection/1',variables:copied,truncated:snapshot.truncated};if(new TextEncoder().encode(JSON.stringify(result)).length>prepared.policy.maxBytes)error();return result;
+ const result={schemaVersion:version,variables:copied,truncated:snapshot.truncated};if(new TextEncoder().encode(JSON.stringify(result)).length>prepared.policy.maxBytes)error();return result;
 }
 
 /** A pause carries exact checked operation metadata; values are allowed only under the current source grant. */

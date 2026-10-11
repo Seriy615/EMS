@@ -1,6 +1,6 @@
 import {createControlInspector,inspectionPatternTypes} from './inspection.mjs';
 import {DIAGNOSTIC_FRAMES,diagnosticFrames,nextDiagnosticFrame,notifyDiagnosticExit} from './diagnostic-frames.mjs';
-import {controlNodeEntries} from '../ir/control-addresses.mjs';
+import {controlNodeEntries,copyControlDiagnosticTree} from '../ir/control-addresses.mjs';
 import { createResourceScope,resourceBudgetOptions,executeResourceOperation,resourceCleanupOutcome } from './resources.mjs';
 import { createStreamScope, executeStreamOperation, streamBudgetOptions } from './streams.mjs';
 import { createFutureScope } from './futures.mjs';
@@ -28,7 +28,8 @@ export async function executeControlIR(ir, inputs, registry, options = {}) {
   if(options.onFrameExit!==undefined&&typeof options.onFrameExit!=='function')fail('INVALID_OPTION','Expected frame exit observer');
   if(options.onControlEnter!==undefined&&typeof options.onControlEnter!=='function')fail('INVALID_OPTION','Expected control entry observer');
   assertSignal(options.signal); checkCancellation(options.signal);
-  const checked = validateControlIR(ir, registry); checkControlPolicy(checked.policy, options);
+  let checked = validateControlIR(ir, registry);
+  if(options.onControlEnter){ir=copyControlDiagnosticTree(ir);checked=validateControlIR(ir,registry);} checkControlPolicy(checked.policy, options);
   validateControlInputs(checked.entry, inputs);
   const hasInspection=Object.hasOwn(options,'inspection')&&options.inspection!==undefined;
   if(hasInspection&&typeof options.onControlEnter!=='function')fail('INVALID_INSPECTION_POLICY','Inspection requires a control diagnostic observer');
@@ -101,8 +102,8 @@ export async function executeControlIR(ir, inputs, registry, options = {}) {
     for (const statement of body) {
       tick();if(options.onControlEnter)await observe(statement,frame,scope); let exit;
       switch (statement.kind) {
-        case 'using':{const value=resources.claim(await expression(statement.value,scope,frame),owner);owned.push(value);scope.set(statement.name,{value,type:statement.type});break;}
-        case 'let': scope.set(statement.name, { value: await expression(statement.value, scope, frame),type:statement.type }); break;
+        case 'using':{const value=resources.claim(await expression(statement.value,scope,frame),owner);owned.push(value);scope.set(statement.name,{value,type:statement.type,...(inspect?{declaration:addresses.get(statement)}:{})});break;}
+        case 'let': scope.set(statement.name, { value: await expression(statement.value, scope, frame),type:statement.type,...(inspect?{declaration:addresses.get(statement)}:{}) }); break;
         case 'expression': await expression(statement.value, scope, frame); break;
         case 'return': exitValue={kind:'return',value:await expression(statement.value,scope,frame)};return exitValue;
         case 'throw': throw makeControlThrow(await expression(statement.value, scope, frame), statement.value.type);
@@ -113,7 +114,7 @@ export async function executeControlIR(ir, inputs, registry, options = {}) {
             catch (error) {
               const handler = statement.handler;
               if (!handler || !matchesControlCatch(error, handler.type)) throw error;
-              const nested = new Map(scope); nested.set(handler.binding, { value: controlCatchValue(error, handler.type),type:handler.type });
+              const nested = new Map(scope); nested.set(handler.binding, { value: controlCatchValue(error, handler.type),type:handler.type,...(inspect?{declaration:addresses.get(statement)+'/handler/binding'}:{}) });
               exit = await block(handler.body, nested, frame);
             }
           } catch (error) { pending = error; hasError = true; }
@@ -134,7 +135,8 @@ export async function executeControlIR(ir, inputs, registry, options = {}) {
             const bindings = matchControlPattern(arm.pattern, value, tick);
             if (bindings !== null) { const nested = new Map(scope);
               const types=inspect?inspectionPatternTypes(arm.pattern,statement.value.type):null;
-              for (const [name, value] of bindings) nested.set(name, { value,type:types?.get(name) });
+              const patternDeclarations=inspect?new Map([...controlNodeEntries({body:[arm.pattern]})].filter(([,p])=>p.kind==='binding').map(([,p])=>[p.name,addresses.get(p)])):null;
+              for (const [name, value] of bindings) nested.set(name, { value,type:types?.get(name),...(inspect?{declaration:patternDeclarations.get(name)}:{}) });
               exit = await block(arm.body, nested, frame); break;
             }
           }
@@ -154,14 +156,14 @@ export async function executeControlIR(ir, inputs, registry, options = {}) {
           while (true) {
             tick(); const item=await streams.next(stream);checkCancellation(options.signal);
             if (item.tag === 'None') break;
-            tick();const nested=new Map(scope);nested.set(statement.binding,{value:item.value,type:statement.iterable.type.slice(7,-1)});
+            tick();const nested=new Map(scope);nested.set(statement.binding,{value:item.value,type:statement.iterable.type.slice(7,-1),...(inspect?{declaration:addresses.get(statement)+'/binding'}:{})});
             const result=await block(statement.body,nested,frame);if(result?.kind==='return'){exitValue=result;return result;}if(result?.kind==='break')break;
           }
           break;
         }
         case 'for': {
           const values = [...await expression(statement.iterable, scope, frame)];
-          for (const value of values) { tick(); const nested = new Map(scope); nested.set(statement.binding, { value,type:'Number' });
+          for (const value of values) { tick(); const nested = new Map(scope); nested.set(statement.binding, { value,type:'Number',...(inspect?{declaration:addresses.get(statement)+'/binding'}:{}) });
             const result = await block(statement.body, nested, frame); if (result?.kind === 'return'){exitValue=result;return result;} if (result?.kind === 'break') break;
           } break;
         }
@@ -173,7 +175,7 @@ export async function executeControlIR(ir, inputs, registry, options = {}) {
   async function invoke(fn, args, parent = { depth: 0, evaluationDepth: 0 }) {
     tick(); const frame = { depth: parent.depth + 1, evaluationDepth: parent.evaluationDepth, function:fn.id,frames:nextDiagnosticFrame(diagnostics,parent.frames??diagnostics.stack),callStack:[...(parent.callStack??[]),fn.id] };
     if (frame.depth > budget.maxDepth) fail('CALL_DEPTH', 'Control call depth exhausted', { maxDepth: budget.maxDepth });
-    const scope = new Map(fn.inputs.map((input, index) => [input.name, { value: args[index],type:input.type }]));
+    const scope = new Map(fn.inputs.map((input, index) => [input.name, { value: args[index],type:input.type,...(inspect?{declaration:'/inputs/'+index}:{}) }]));
     try{const outcome = await block(fn.body, scope, frame); validateValue(outcome?.value, fn.output.type, 'control return'); return outcome.value;}finally{notifyDiagnosticExit(options,frame.frames);}
   }
   let result,pending,hasError=false;

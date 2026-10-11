@@ -380,4 +380,9 @@ await check('Source-owned inspection transport validates real typed values and r
  assert.equal(await runTextDraft(draft,editor,{}, {inspection:prepared.policy,onControlEnter:e=>events.push(e)}),1);const pause={...events.find(e=>e.kind==='return'),token:1};assert.equal(validateInspectionPause(pause,prepared).inspection.variables[0].value,1);
  assert.throws(()=>validateInspectionPause({...pause,inspection:{...pause.inspection,variables:[{name:'x',type:'String',status:'value',value:'invalid'}]}},prepared),{code:'INVALID_INSPECTION_SNAPSHOT'});return true;
 });
+await check('Declaration-address grants isolate sibling bindings even for aliased in-memory IR nodes',async()=>{
+ const {controlInspectionDeclarations}=await import('../src/runtime/inspection.mjs');
+ const registry=createCoreRegistry(),source='fn main(secret:String)->Number {if true {let x=secret;return 1;}else{let x=secret;return 2;}}',bundle=lowerCheckedModule(typecheckModule(parseEMSModule(source),registry),'main',registry,{profile:'control'}),fn=bundle.ir.functions.find(fn=>fn.id==='main');fn.body[0].otherwise[0]=fn.body[0].then[0];const declaration=controlInspectionDeclarations(fn).find(d=>d.name==='x'&&d.declaration.includes('/otherwise/')).declaration,events=[];
+ assert.equal(await executeIR(bundle.ir,{secret:'PRIVATE_VERIFY_SENTINEL'},bundle.registry,{inspection:{allow:[{function:'main',declarations:[declaration]}]},onControlEnter:e=>events.push(e)}),1);assert.ok(events.every(e=>e.inspection.schemaVersion==='ems-inspection/2'&&e.inspection.variables[0].status==='not-in-scope'));assert.ok(!JSON.stringify(events).includes('PRIVATE_VERIFY_SENTINEL'));return true;
+});
 console.log(`\nEMS foundation verification passed (${checks} checks). Not production readiness.`);

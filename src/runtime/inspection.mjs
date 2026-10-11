@@ -21,25 +21,17 @@ export function normalizeInspectionPolicy(value){
  for(const [key,actual,min,max]of [['maxBytes',maxBytes,256,65536],['maxStringBytes',maxStringBytes,0,16384],['maxArrayItems',maxArrayItems,0,1024]])if(!Number.isSafeInteger(actual)||actual<min||actual>max)fail('INVALID_INSPECTION_POLICY','Invalid inspection budget',{field:key});
  const functions=new Set();let slots=0;
  const grants=allow.map(record=>{
-  fields(record,['function','names'],['function','names']);
-  const names=list(record.names,32);
-  if(!functionId(record.function)||functions.has(record.function)||!names.length||names.some(name=>!identifier(name))||new Set(names).size!==names.length)fail('INVALID_INSPECTION_POLICY','Invalid named inspection grant');
-  functions.add(record.function);slots+=names.length;if(slots>32)fail('INVALID_INSPECTION_POLICY','At most 32 named inspection slots');
-  return {function:record.function,names};
+  fields(record,['function','names','declarations'],['function']);
+  const named=Object.hasOwn(record,'names'),addressed=Object.hasOwn(record,'declarations');if(named===addressed)fail('INVALID_INSPECTION_POLICY','Choose names or declarations');
+  const key=named?'names':'declarations',entries=list(record[key],32);
+  const valid=named?identifier:entry=>typeof entry==='string'&&entry.length<=1024&&/^\/(?:inputs\/[0-9]+|body(?:\/[A-Za-z0-9_~/-]+)?)$/.test(entry);
+  if(!functionId(record.function)||functions.has(record.function)||!entries.length||entries.some(entry=>!valid(entry))||new Set(entries).size!==entries.length)fail('INVALID_INSPECTION_POLICY','Invalid inspection grant');
+  functions.add(record.function);slots+=entries.length;if(slots>32)fail('INVALID_INSPECTION_POLICY','At most 32 inspection slots');
+  return {function:record.function,[key]:entries};
  });
  return {allow:grants,protectedFunctions:[...protectedFunctions],maxBytes,maxStringBytes,maxArrayItems};
 }
 
-function declarations(fn){
- const counts=new Map();const add=name=>counts.set(name,(counts.get(name)??0)+1);
- fn.inputs.forEach(input=>add(input.name));
- for(const [,node]of controlNodeEntries(fn)){
-  if(['let','using'].includes(node.kind)||node.kind==='binding')add(node.name);
-  if(['for','forAwait'].includes(node.kind))add(node.binding);
-  if(node.kind==='try'&&node.handler)add(node.handler.binding);
- }
- return counts;
-}
 const supported=type=>['Number','Boolean','String','NumberArray','Option','Result'].includes(type.name)&&type.arguments.every(supported);
 function copyFinite(value,type,policy,depth=0){
  if(depth>32)throw 'limit';
@@ -62,23 +54,24 @@ function copyFinite(value,type,policy,depth=0){
 /** Initial confidentiality boundary: pure functions only; any marked protected function blocks the whole program.
  * This is conservative host classification, not inferred taint tracking or declassification. */
 export function createControlInspector(ir,value){
- const policy=normalizeInspectionPolicy(value),functions=new Map(ir.functions.map(fn=>[fn.id,fn])),grants=new Map(policy.allow.map(record=>[record.function,record.names]));
+ const policy=normalizeInspectionPolicy(value),functions=new Map(ir.functions.map(fn=>[fn.id,fn])),grants=new Map(),version=policy.allow.some(record=>Object.hasOwn(record,'declarations'))?'ems-inspection/2':'ems-inspection/1';
  for(const id of policy.protectedFunctions)if(!functions.has(id))fail('INVALID_INSPECTION_POLICY','Unknown protected function');
- for(const [id,names]of grants){const fn=functions.get(id);if(!fn)fail('INVALID_INSPECTION_POLICY','Unknown inspected function');const declared=declarations(fn);if(names.some(name=>declared.get(name)!==1))fail('INVALID_INSPECTION_POLICY','Unknown or ambiguous inspected binding');}
+ for(const grant of policy.allow){const fn=functions.get(grant.function);if(!fn)fail('INVALID_INSPECTION_POLICY','Unknown inspected function');grants.set(fn.id,inspectionGrantBindings(fn,grant));}
  return (id,scope)=>{
-  const variables=[],fn=functions.get(id),names=grants.get(id)??[],protectedProgram=policy.protectedFunctions.length>0,impure=(fn.policy?.effects.length??0)>0||(fn.policy?.capabilities.length??0)>0||(fn.localEffects?.length??0)>0;let truncated=false;
-  for(const name of names){
-   let record={name,type:null,status:protectedProgram?'protected-program':impure?'protected-effects':'not-in-scope'};
-   if(!protectedProgram&&!impure&&scope.has(name)){
+  const variables=[],fn=functions.get(id),bindings=grants.get(id)??[],protectedProgram=policy.protectedFunctions.length>0,impure=(fn.policy?.effects.length??0)>0||(fn.policy?.capabilities.length??0)>0||(fn.localEffects?.length??0)>0;let truncated=false;
+  for(const binding of bindings){
+   const {name,declaration}=binding;const identity=version==='ems-inspection/2'?{name,declaration}:{name};
+   let record={...identity,type:null,status:protectedProgram?'protected-program':impure?'protected-effects':'not-in-scope'};
+   if(!protectedProgram&&!impure&&scope.has(name)&&(!binding.addressed||scope.get(name).declaration===declaration)){
     const cell=scope.get(name);record.type=cell.type??null;
-    try{const type=parseControlType(cell.type,true,true,true);if(!supported(type))record.status='excluded-type';else{record={name,type:cell.type,status:'value',value:copyFinite(cell.value,type,policy)};}}
+    try{const type=parseControlType(cell.type,true,true,true);if(!supported(type))record.status='excluded-type';else{record={...identity,type:cell.type,status:'value',value:copyFinite(cell.value,type,policy)};}}
     catch(reason){record.status=['limit','unavailable'].includes(reason)?reason:'unavailable';}
    }
-   const next={schemaVersion:'ems-inspection/1',variables:[...variables,record],truncated:false};
+   const next={schemaVersion:version,variables:[...variables,record],truncated:false};
    if(new TextEncoder().encode(JSON.stringify(next)).length>policy.maxBytes){truncated=true;break;}
    variables.push(record);
   }
-  return {schemaVersion:'ems-inspection/1',variables,truncated};
+  return {schemaVersion:version,variables,truncated};
  };
 }
 
@@ -90,15 +83,34 @@ export function inspectionPatternTypes(pattern,type,result=new Map()){
  return result;
 }
 
-/** Checked IR catalog; names with multiple declarations require a future scope-address grant. */
-export function controlInspectionBindings(fn){
- const counts=declarations(fn),types=new Map(fn.inputs.map(input=>[input.name,input.type]));
- for(const [,node]of controlNodeEntries(fn)){
-  if(['let','using'].includes(node.kind))types.set(node.name,node.type);
-  if(node.kind==='for')types.set(node.binding,'Number');
-  if(node.kind==='forAwait')types.set(node.binding,controlTypeName(parseControlType(node.iterable.type,true,true,true).arguments[0]));
-  if(node.kind==='try'&&node.handler)types.set(node.handler.binding,node.handler.type);
-  if(node.kind==='match')for(const arm of node.arms)for(const [name,type]of inspectionPatternTypes(arm.pattern,node.value.type))types.set(name,type);
+/** Catalog each declaration by a structural IR address, independent of canvas and source offsets. */
+export function controlInspectionDeclarations(fn){
+ const result=fn.inputs.map((input,index)=>({name:input.name,type:input.type,declaration:'/inputs/'+index})),patterns=new Map();
+ function patternTypes(pattern,type){
+  if(pattern.kind==='binding')patterns.set(pattern,controlTypeName(type));
+  if(pattern.kind==='constructor'){const payload=controlVariants(type).get(pattern.tag);pattern.arguments.forEach((child,index)=>patternTypes(child,payload[index]));}
  }
- return [...counts].map(([name,count])=>({name,type:types.get(name),ambiguous:count!==1}));
+ const entries=[...controlNodeEntries(fn)];
+ for(const [,node]of entries)if(node.kind==='match')for(const arm of node.arms)patternTypes(arm.pattern,parseControlType(node.value.type,true,true,true));
+ for(const [path,node]of entries){
+  if(['let','using'].includes(node.kind))result.push({name:node.name,type:node.type,declaration:path});
+  if(node.kind==='binding')result.push({name:node.name,type:patterns.get(node),declaration:path});
+  if(['for','forAwait'].includes(node.kind))result.push({name:node.binding,type:node.kind==='for'?'Number':controlTypeName(parseControlType(node.iterable.type,true,true,true).arguments[0]),declaration:path+'/binding'});
+  if(node.kind==='try'&&node.handler)result.push({name:node.handler.binding,type:node.handler.type,declaration:path+'/handler/binding'});
+ }
+ return result;
+}
+/** Resolve a validated grant against declarations; legacy names must remain unambiguous. */
+export function inspectionGrantBindings(fn,grant){
+ const catalog=controlInspectionDeclarations(fn);
+ const addressed=Object.hasOwn(grant,'declarations');
+ return (addressed?grant.declarations:grant.names).map(key=>{
+  const candidates=catalog.filter(item=>addressed?item.declaration===key:item.name===key);
+  if(candidates.length!==1)fail('INVALID_INSPECTION_POLICY','Unknown or ambiguous inspected binding');return {...candidates[0],addressed};
+ });
+}
+/** Legacy name catalog, retaining ambiguity information for existing host consumers. */
+export function controlInspectionBindings(fn){
+ const catalog=controlInspectionDeclarations(fn),names=new Set(catalog.map(item=>item.name));
+ return [...names].map(name=>{const declarations=catalog.filter(item=>item.name===name);return {name,type:declarations[0].type,ambiguous:declarations.length!==1};});
 }

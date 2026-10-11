@@ -7,3 +7,10 @@ export function* controlNodeEntries(fn){
   }
   yield* walk(fn.body,'/body');
 }
+
+/** Unfold a validated semantic tree so diagnostic addresses denote occurrences rather than JS object aliases. */
+export function copyControlDiagnosticTree(value){
+ if(!value||typeof value!=='object')return value;
+ if(Array.isArray(value))return value.map(copyControlDiagnosticTree);
+ return Object.fromEntries(Object.keys(value).map(key=>[key,copyControlDiagnosticTree(Object.getOwnPropertyDescriptor(value,key).value)]));
+}

@@ -1,4 +1,4 @@
-import {controlInspectionBindings} from '/src/runtime/inspection.mjs';
+import {controlInspectionDeclarations} from '/src/runtime/inspection.mjs';
 import {captureSourceBreakpoint} from '/src/studio/source-anchors.mjs';
 import {StudioDebuggerStorage,studioDebuggerContext,resolveStudioDebugger} from '/src/studio/debugger-storage.mjs';
 import {breakpointForEvent} from '/src/studio/debugger.mjs';
@@ -239,16 +239,22 @@ function syncInspection(identity){
 }
 function inspectionWitness(debug){
  if(!debug||!textMode||!inspectionState||inspectionState.identity!==currentBreakpointIdentity())return null;
- const allow=[...inspectionState.grants].filter(([,names])=>names.size).map(([fn,names])=>({function:fn,names:[...names]}));
+ const allow=[...inspectionState.grants].filter(([,names])=>names.size).map(([fn,names])=>({function:fn,declarations:[...names]}));
  if(!allow.length)return null;
  return {schemaVersion:'ems-source-inspection/1',source:draft().source,entry:draft().entry,lowering:draft().lowering,policy:{allow,protectedFunctions:$('inspection-protected').checked?[inspectionState.bundle.ir.entry]:[]}};
 }
+function inspectionDeclarationLabel(fn,item){
+ if(item.declaration.startsWith('/inputs/'))return 'параметр';
+ const locations=inspectionState.bundle.provenance.functions[fn.id]?.nodes??{};let path=item.declaration;
+ while(path&&!locations[path])path=path.slice(0,path.lastIndexOf('/'));
+ const at=locations[path]?.start;return at?'строка '+at.line+', столбец '+at.column:'локальная переменная';
+}
 function inspectionChoices(){
  const fn=inspectionState?.bundle.ir.functions.find(fn=>fn.id===$('inspection-function').value);$('inspection-bindings').replaceChildren();if(!fn)return;
- for(const item of controlInspectionBindings(fn)){
-  const label=el('label'),input=el('input');input.type='checkbox';input.dataset.inspectionName=item.name;input.disabled=item.ambiguous||item.name.length>128;input.checked=inspectionState.grants.get(fn.id)?.has(item.name)??false;
-  input.onchange=()=>{const count=[...inspectionState.grants.values()].reduce((n,names)=>n+names.size,0);if(input.checked&&count>=32){input.checked=false;$('inspection-status').textContent='Можно выбрать не более 32 переменных.';return;}const names=inspectionState.grants.get(fn.id)??new Set();input.checked?names.add(item.name):names.delete(item.name);inspectionState.grants.set(fn.id,names);clearInspectionValues();$('inspection-status').textContent='Разрешение применится при следующем запуске отладки.';};
-  label.append(input,document.createTextNode(item.name+' · '+item.type+(item.ambiguous?' — неоднозначное имя':'')));$('inspection-bindings').append(label);
+ for(const item of controlInspectionDeclarations(fn)){
+  const label=el('label'),input=el('input');input.type='checkbox';input.dataset.inspectionName=item.name;input.dataset.inspectionDeclaration=item.declaration;input.disabled=item.declaration.length>1024;input.checked=inspectionState.grants.get(fn.id)?.has(item.declaration)??false;
+  input.onchange=()=>{const count=[...inspectionState.grants.values()].reduce((n,names)=>n+names.size,0);if(input.checked&&count>=32){input.checked=false;$('inspection-status').textContent='Можно выбрать не более 32 переменных.';return;}const names=inspectionState.grants.get(fn.id)??new Set();input.checked?names.add(item.declaration):names.delete(item.declaration);inspectionState.grants.set(fn.id,names);clearInspectionValues();$('inspection-status').textContent='Разрешение применится при следующем запуске отладки.';};
+  label.append(input,document.createTextNode(item.name+' · '+item.type+' · '+inspectionDeclarationLabel(fn,item)));$('inspection-bindings').append(label);
  }
 }
 $('inspection-choose').onclick=()=>{try{const bundle=textAPI.compileTextDraft(draft(),editor);if(bundle.ir.schemaVersion!=='ems-ir/2')throw Object.assign(new Error('Просмотр доступен для последовательного EMS-кода. Выберите обычные вычисления в настройках.'),{code:'UNSUPPORTED_INSPECTION_PROFILE'});inspectionState={identity:currentBreakpointIdentity(),bundle,grants:new Map()};$('inspection-function').replaceChildren(...bundle.ir.functions.map(fn=>{const option=el('option',fn.id);option.value=fn.id;return option;}));$('inspection-function').value=bundle.ir.entry;inspectionChoices();clearInspectionValues();$('inspection-status').textContent='Отметьте разрешённые переменные, затем начните отладку.';}catch(error){sourceError(error);}};
@@ -259,5 +265,5 @@ function showInspection(pause){
  if(!pause.inspection){$('inspection-status').textContent='В этом графовом кадре просмотр значений недоступен.';return;}
  const statuses={'not-in-scope':'ещё не в области видимости','protected-program':'защищённая программа','protected-effects':'функция с эффектами','excluded-type':'непрозрачный тип','limit':'превышен лимит','unavailable':'недоступно'};
  $('inspection-status').textContent=pause.function+' · кадр '+pause.frames.at(-1)+(pause.inspection.truncated?' · достигнут лимит снимка':'');
- $('inspection-values').textContent=pause.inspection.variables.map(v=>v.name+(v.type?' · '+v.type:'')+' = '+(v.status==='value'?json(v.value):statuses[v.status])).join('\n');
+ $('inspection-values').textContent=pause.inspection.variables.map(v=>v.name+(controlInspectionDeclarations(inspectionState.bundle.ir.functions.find(fn=>fn.id===pause.function)).filter(item=>item.name===v.name).length>1?' ['+inspectionDeclarationLabel(inspectionState.bundle.ir.functions.find(fn=>fn.id===pause.function),{declaration:v.declaration})+']':'')+(v.type?' · '+v.type:'')+' = '+(v.status==='value'?json(v.value):statuses[v.status])).join('\n');
 }
