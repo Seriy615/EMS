@@ -453,7 +453,7 @@
         "GPT-6.1 Sol",
         "GPT-6 Luna"
       ],
-      "progress": "AC-047/059/060/061 initial text/control graph integration: typed source regions, structured node operations, actual contract/source function catalog, typed parameters/locals and lexical value-to-call port connection with definition identity/visibility checks. Reuses computed effects once; wrong types/scopes/ports/stale state rejected. Actual runtime/compiler/Undo/Chromium catalog and connection outcomes verified. Full arbitrary wires/control CFG/layout/collection projection/runtime source trace/unified projects/AC-012 remain open. See docs/spec/CONTROL_GRAPH.md.",
+      "progress": "AC-047/059/060/061 initial text/control graph integration: typed source regions, structured node operations, actual contract/source function catalog, typed parameters/locals and lexical value-to-call port connection with definition identity/visibility checks. Reuses computed effects once; wrong types/scopes/ports/stale state rejected. Actual runtime/compiler/Undo/Chromium catalog and connection outcomes verified. Full arbitrary wires/control CFG/layout/collection projection/runtime source trace/unified projects/AC-012 remain open. See docs/spec/CONTROL_GRAPH.md. AC-066 extends function provenance with actual control operation structural addresses and exact source ranges, preserved outside semantic IR; actual runtime/Chromium text debug source selection tested. Full visual roundtrip remains open.",
       "evidence": {
         "scope": "Initial typed source graph, structured operations/catalog/lexical port connections; not full canvas/AC-012.",
         "docs": "docs/spec/CONTROL_GRAPH.md",
@@ -490,24 +490,24 @@
         "GPT-6.1 Sol",
         "GPT-6 Luna"
       ],
-      "progress": "AC-063 failure locations/lifecycle and AC-065 actual call-graph stepping: payload-free onNodeEnter observer pauses existing evaluator, dependency memoization/sequence/nested types/caller paths preserved. Tokenized Worker Step/Continue/Stop/deadline and real Chromium AVG5/recovery verified. Unsupported text/control/collection debug refused explicitly. Full control/source/state debugger, nested navigation/breakpoints/value policy and compiler debug hooks remain open.",
+      "progress": "AC-063 failure locations/lifecycle and AC-065 actual call-graph stepping: payload-free onNodeEnter observer pauses existing evaluator, dependency memoization/sequence/nested types/caller paths preserved. Tokenized Worker Step/Continue/Stop/deadline and real Chromium AVG5/recovery verified. Unsupported text/control/collection debug refused explicitly. Full control/source/state debugger, nested navigation/breakpoints/value policy and compiler debug hooks remain open. AC-066: actual control/text statement-expression pauses and fresh source locations, queued local futures, exact Chromium textarea selection with stale snapshot guard; cancellation/limits/finally/resource cleanup remain protected. Full UI event/state/breakpoint/Step Over/native/compiled debugging remains open.",
       "evidence": {
-        "scope": "Actual call-graph debugger, not full control/source/state debugging",
+        "scope": "Actual call graph and text/control source stepping; full debugger remains open",
         "docs": "docs/spec/IDE_RUNTIME_DIAGNOSTICS.md",
         "testFiles": [
           "tests/graph-debugger.test.mjs",
-          "tests/browser/graph-debugger.test.mjs"
+          "tests/control-debugger.test.mjs",
+          "tests/browser/graph-debugger.test.mjs",
+          "tests/browser/control-debugger.test.mjs"
         ],
-        "tests": "683/683 PASS",
-        "verify": "131/131 PASS",
-        "browserTests": "27/27 PASS",
+        "tests": "688/688 PASS",
+        "verify": "132/132 PASS",
+        "browserTests": "28/28 PASS",
         "commands": [
           "npm test",
           "npm run verify",
           "npm run browser:test"
-        ],
-        "deployedRevision": "af30dcb0bf4c905a7dce814492b863ed5ccffc90",
-        "live": "Authenticated public Chromium composite pause/Step to leaf/Continue original AVG5 result PASS; other graph/composite/reopen/counter/auth gates retained. See docs/qa/DEPLOYMENT.md."
+        ]
       }
     },
     {

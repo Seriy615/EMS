@@ -143,3 +143,8 @@ Release dc7ced8 опубликован на https://dev-ems.d-mash.ru после
 ## После AC-065 — EMS-033 call-graph debugger
 
 Actual runtime/Worker/IDE pause→Step→Continue/Stop implemented for call/dataflow graphs and nested composites, using the existing evaluator and payload-free metadata; Node/compiler/browser evidence in STATUS. Full EMS-033 stays IN_PROGRESS: next shared control runtime/source correspondence/state handler debugger and nested navigation/breakpoints. New dev publication must pass the existing gated deploy and live smoke; full language/platform/ecosystem goal unchanged.
+
+
+## После AC-066 — text/control debugger на исходной семантике
+
+Control statement/expression stepping и fresh source sidecar работают на прежнем IR/runtime; lazy flow, queued futures и protected cleanup проверены. Textarea selection использует snapshot guard/UTF-16 source offsets, без превращения IR в layout artifact. Next: source-owned UI event handler debugging с сохранением transaction/FIFO/rollback/cancellation, затем breakpoints/nested canvas navigation/Step Over/full visual parity. EMS-032/033 IN_PROGRESS; global PROJECT_GOAL.md сохраняет весь language/platform/FFI/compiler/AI/ecosystem scope. Deployment — только gated checked commit + actual live evidence.

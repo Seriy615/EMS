@@ -22,7 +22,17 @@ export function compileTextDraft(draft,editor){
  }
  bundle.ir=parseIR(serializeIR(bundle.ir,bundle.registry),bundle.registry);return bundle;
 }
-export async function runTextDraft(draft,editor,inputs){const bundle=compileTextDraft(draft,editor);return executeIR(bundle.ir,inputs,bundle.registry,{maxSteps:10000,maxDepth:32});}
+export async function runTextDraft(draft,editor,inputs,options={}){
+ for(const key of ['onNodeEnter','onControlEnter'])if(options[key]!==undefined&&typeof options[key]!=='function')fail('INVALID_OPTION','Expected diagnostic observer');
+ const bundle=compileTextDraft(draft,editor);
+ const locate=event=>{
+  const call=event.callPath?.at(-1),fn=event.function??call?.graph,node=event.node??call?.node;
+  return {...event,location:structuredClone(bundle.provenance.functions[fn]?.nodes?.[node]??null)};
+ };
+ return executeIR(bundle.ir,inputs,bundle.registry,{...options,maxSteps:10000,maxDepth:32,
+  onNodeEnter:options.onNodeEnter?event=>options.onNodeEnter(locate(event)):undefined,
+  onControlEnter:options.onControlEnter?event=>options.onControlEnter(locate(event)):undefined});
+}
 export function compileTextJS(draft,editor){const bundle=compileTextDraft(draft,editor);return compileIRToJS(bundle.ir,bundle.registry);}
 function layout(graph,previous){
  const positions=Object.fromEntries([...Object.keys(graph.inputs).map((name,index)=>[`input:${name}`,{x:30,y:100+index*120}]),...graph.nodes.map((node,index)=>[node.id,{x:280+(index%2)*250,y:70+Math.floor(index/2)*160}])]);

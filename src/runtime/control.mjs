@@ -1,3 +1,4 @@
+import {controlNodeEntries} from '../ir/control-addresses.mjs';
 import { createResourceScope,resourceBudgetOptions,executeResourceOperation,resourceCleanupOutcome } from './resources.mjs';
 import { createStreamScope, executeStreamOperation, streamBudgetOptions } from './streams.mjs';
 import { createFutureScope } from './futures.mjs';
@@ -22,10 +23,18 @@ export function controlSignature(fn) {
 
 /** Execute semantic blocks. Every statement/expression/call shares one bounded step/depth domain. */
 export async function executeControlIR(ir, inputs, registry, options = {}) {
+  if(options.onControlEnter!==undefined&&typeof options.onControlEnter!=='function')fail('INVALID_OPTION','Expected control entry observer');
   assertSignal(options.signal); checkCancellation(options.signal);
   const checked = validateControlIR(ir, registry); checkControlPolicy(checked.policy, options);
   validateControlInputs(checked.entry, inputs);
   const budget = controlBudgetOptions(options); let steps = 0;
+  const addresses=new WeakMap();
+  if(options.onControlEnter)for(const fn of ir.functions)for(const [path,node] of controlNodeEntries(fn))addresses.set(node,path);
+  async function observe(node,frame){
+    const event={phase:'enter',profile:'control',function:frame.function,node:addresses.get(node),kind:node.kind,type:node.type??null,callStack:[...frame.callStack],step:steps};
+    try{await awaitCancellable(options.onControlEnter(event),options.signal);}catch{/* Diagnostics cannot replace semantic errors. */}
+    checkCancellation(options.signal);
+  }
   const resourceProfile=ir.profile===CONTROL_RESOURCE_PROFILE;
   if(resourceProfile)resourceBudgetOptions(options);
   if ([CONTROL_STREAM_PROFILE,CONTROL_RESOURCE_PROFILE].includes(ir.profile)) streamBudgetOptions(options);
@@ -39,6 +48,7 @@ export async function executeControlIR(ir, inputs, registry, options = {}) {
     tick();
     if (++frame.evaluationDepth > 256) { frame.evaluationDepth--; fail('EVALUATION_DEPTH', 'Control expression depth exhausted', { maxEvaluationDepth: 256 }); }
     try {
+    if(options.onControlEnter)await observe(node,frame);
     let value;
     switch (node.kind) {
       case 'literal': value = decodeControlLiteral(node.value, node.type); break;
@@ -69,7 +79,7 @@ export async function executeControlIR(ir, inputs, registry, options = {}) {
           if(target.kind!=='resource')assertValueType(result, target.output, 'result of ' + node.target.id); return result;
         };
         value = (node.target.kind === 'function' ? target.async : node.target.async)
-          ? futures.start(node.type.slice(7,-1), () => operation({ depth: frame.depth, evaluationDepth: 0 })) : await operation();
+          ? futures.start(node.type.slice(7,-1), () => operation({ depth: frame.depth, evaluationDepth: 0,callStack:frame.callStack })) : await operation();
         break;
       }
     }
@@ -81,7 +91,7 @@ export async function executeControlIR(ir, inputs, registry, options = {}) {
     try{return await run();}catch(error){pending=error;hasError=true;throw error;}finally{if(resources){let escape;try{if(exitValue?.kind==='return')resources.escaping(exitValue.value,owned);}catch(error){escape=error;}const failures=await resources.dispose(owned,pending,hasError);resourceCleanupOutcome(escape??pending,!!escape||hasError,failures);}}
     async function run(){
     for (const statement of body) {
-      tick(); let exit;
+      tick();if(options.onControlEnter)await observe(statement,frame); let exit;
       switch (statement.kind) {
         case 'using':{const value=resources.claim(await expression(statement.value,scope,frame),owner);owned.push(value);scope.set(statement.name,{value});break;}
         case 'let': scope.set(statement.name, { value: await expression(statement.value, scope, frame) }); break;
@@ -152,7 +162,7 @@ export async function executeControlIR(ir, inputs, registry, options = {}) {
   }
   }
   async function invoke(fn, args, parent = { depth: 0, evaluationDepth: 0 }) {
-    tick(); const frame = { depth: parent.depth + 1, evaluationDepth: parent.evaluationDepth };
+    tick(); const frame = { depth: parent.depth + 1, evaluationDepth: parent.evaluationDepth, function:fn.id,callStack:[...(parent.callStack??[]),fn.id] };
     if (frame.depth > budget.maxDepth) fail('CALL_DEPTH', 'Control call depth exhausted', { maxDepth: budget.maxDepth });
     const scope = new Map(fn.inputs.map((input, index) => [input.name, { value: args[index] }]));
     const outcome = await block(fn.body, scope, frame); validateValue(outcome?.value, fn.output.type, 'control return'); return outcome.value;

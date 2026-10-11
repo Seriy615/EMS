@@ -1,3 +1,4 @@
+import {controlNodeEntries} from '../ir/control-addresses.mjs';
 import { fail } from '../reference/errors.mjs';
 import { resolveType, unifyTypes, typeName } from './types.mjs';
 import { CONTROL_VERSION, CONTROL_PROFILE, CONTROL_ERROR_PROFILE, CONTROL_ALGEBRAIC_PROFILE, CONTROL_FUTURE_PROFILE, CONTROL_STREAM_PROFILE, CONTROL_RESOURCE_PROFILE, validateControlIR } from '../ir/control.mjs';
@@ -12,7 +13,7 @@ const flexible = type => type.kind === 'Variable' ? { kind: 'Variable', name: ty
 
 /** Specialize typed functions into semantic control blocks; locations remain a separate sidecar. */
 export function lowerControlModule(checked, entry, registry) {
-  const functions = [], instances = new Map(), provenance = {};
+  const functions = [], instances = new Map(), provenance = {}, locations=new WeakMap();
   let next = 0, errors = false, algebraic = false, futures = false, streams = false, resources = false;
   const diagnostic = node => fail('UNSUPPORTED_PROFILE', `${node.kind} requires another IR profile`, { location: node.location });
   function specialize(target, inputs) {
@@ -47,7 +48,8 @@ export function lowerControlModule(checked, entry, registry) {
       if (node.kind === 'LiteralPattern') return { kind: 'literal', type: typeOf(node.value), value: node.value.value };
       return { kind: 'constructor', tag: node.name, arguments: node.arguments.map(argument => pattern(argument, actual.arguments[node.name === 'Err' ? 1 : 0])) };
     }
-    function expression(node) {
+    function expression(node){const result=lowerExpression(node);locations.set(result,node.location);return result;}
+    function lowerExpression(node) {
       if (node.kind === 'GroupExpression') return expression(node.value);
       const type = typeOf(node); if (type.includes('<')) algebraic = true;
       switch (node.kind) {
@@ -67,7 +69,8 @@ export function lowerControlModule(checked, entry, registry) {
       diagnostic(node);
     }
     function block(node) { return node.statements.map(statement); }
-    function statement(node) {
+    function statement(node){const result=lowerStatement(node);locations.set(result,node.location);return result;}
+    function lowerStatement(node) {
       switch (node.kind) {
         case 'UsingDeclaration': resources=true;return {kind:'using',name:node.name,type:typeOf(node.value),value:expression(node.value)};
         case 'LetDeclaration': return { kind: 'let', name: node.name, type: typeOf(node.value), mutable: node.mutable, value: expression(node.value) };
@@ -117,6 +120,7 @@ export function lowerControlModule(checked, entry, registry) {
     }
     functions.forEach(normalize);
   }
+  for(const fn of functions)provenance[fn.id].nodes=Object.fromEntries([...controlNodeEntries(fn)].filter(([,node])=>locations.has(node)).map(([path,node])=>[path,structuredClone(locations.get(node))]));
   validateControlIR(ir, registry);
   return { ir, registry, provenance: { schemaVersion: 'ems-provenance/1', functions: provenance } };
 }

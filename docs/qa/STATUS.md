@@ -1,5 +1,9 @@
 # Current implementation status
 
+## EMS-033/032 — text/control source stepping, AC-066
+
+Baseline b391eef:683/683 Node,131/131 verify PASS. Итог **688/688 Node,132/132 verify,28/28 Chromium PASS**. Control runtime останавливается перед реальными statement/expression; структурные addresses связаны с fresh AST ranges отдельным sidecar, semantic IR не содержит координат. Проверены branches/loop/nested function/call IR maps, queued futures, protected cancellation/limits/finally/resource cleanup; actual Chromium precise selection/Unicode/stale source/Continue6/Stop/recovery PASS. Полные EMS-032/033 и UI event/state/native/compiled debugger остаются открытыми. Логи /tmp/ems-control-debug-{baseline-tests,baseline-verify,tests,verify,browser}.log; docs/spec/IDE_RUNTIME_DIAGNOSTICS.md. Публикация нового среза следует после checked commit; live artifact af30dcb до фактического deployment evidence.
+
 ## EMS-033 — actual call-graph stepping, AC-065
 
 Baseline 1a65d25:678/678 Node,130/130 verify PASS. Итог **683/683 Node,131/131 verify,27/27 Chromium PASS**. Runtime onNodeEnter pauses before actual operations with detached payload-free types/caller paths; original evaluator keeps dependency memoization, explicit sequence and semantic errors. Worker/IDE Step/Continue/Stop and bounded deadline verified in real Chromium, including nested AVG5 and recovery; unsupported text/collection debug rejected explicitly. Full step/control/source/state debugger remains open, EMS-033 IN_PROGRESS. Docs: docs/spec/IDE_RUNTIME_DIAGNOSTICS.md; logs /tmp/ems-debugger-{tests,verify,browser}.log. Опубликован gated artifact af30dcb0bf4c905a7dce814492b863ed5ccffc90; actual authenticated HTTPS Chromium AVG5 Step/Continue и existing graph/composite/reopen/counter smoke PASS. Шесть чужих nginx hashes неизменны, пять observed services active. Логи /tmp/ems-debugger-deploy.log, /tmp/ems-debugger-live-smoke.log, /tmp/ems-debugger-vps.log.

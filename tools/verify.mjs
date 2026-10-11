@@ -328,4 +328,11 @@ await check('graph debugger steps the original evaluator with payload-free exact
  const value=await editor.run({onNodeEnter:event=>gate.enter(event)});
  return Math.abs(value-12.566666666666663)<1e-12&&locations.length===7&&locations[0].callPath[0].node==='avg5'&&locations[1].callPath.at(-1).node==='total'&&Object.keys(locations[1].inputs).join(',')==='values'&&locations[1].inputs.values==='NumberArray';
 });
+await check('control text debugger maps actual lazy execution to fresh source locations',async()=>{
+ const {GraphStepper}=await import('../src/studio/debugger.mjs'),events=[];
+ let gate;gate=new GraphStepper(pause=>{events.push(pause);gate.resume(pause.token,'step');});
+ const draft={source:'fn test(x:Number)->Number {if x>0 {return x*2;}else {return core.div(1,0);}}',entry:'test',lowering:'auto'};
+ const value=await runTextDraft(draft,new ProjectEditor(),{x:3},{onControlEnter:event=>gate.enter(event)});
+ return value===6&&events[0].kind==='if'&&events.every(event=>event.location)&&!events.some(event=>draft.source.slice(event.location.start.offset,event.location.end.offset)==='core.div(1,0)');
+});
 console.log(`\nEMS foundation verification passed (${checks} checks). Not production readiness.`);
