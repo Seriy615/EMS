@@ -43,3 +43,13 @@ ssh ems-vps 'bash /opt/ems-language-dev/current/deploy/rollback.sh'
 Gated local tests677/130/24 прошли повторно внутри deployment. Isolated configs/user/release созданы; certbot действительно выпустил сертификат для `dev-ems.d-mash.ru`. Service exited0 без listen: existing CLI entrypoint сравнивал symlink argv path с physical import URL и не вызывал start. Local readiness не прошёл; deploy завершился ошибкой, previous successful artifact отсутствовал. TLS nginx reload после readiness не выполнялся; live success не заявлен. Прежние unrelated конфигурации не заменены.
 
 Исправление: CLI сравнивает realpath, regression test запускает настоящий процесс через release symlink и проверяет GET200. Provision сохраняет previous только для active/ready предыдущего сервиса, не записывает failed startup как успешную rollback target. Новый release требуется повторно проверить и развернуть.
+
+### Первая успешная публикация — f356ee3
+
+Gated deploy снова прошёл678 Node/130 verify/24 Chromium tests и опубликовал `f356ee3cbc01f1ad540676c664da551c3f54a3fe`. Dedicated service active, User=ems-language-dev, NoNewPrivileges=yes, memory≈21MiB. Публичный сертификат действительно покрывает dev-ems.d-mash.ru, notBefore2026-10-11/notAfter2027-01-09; проверка HTTPS проходит без insecure bypass. Неавторизованный HTTPS401, HTTP301→HTTPS; authenticated assets200, Git/tools/deploy403, POST405.
+
+`tools/deploy-smoke.mjs`: actual Chromium создаёт/соединяет7+8→15, переоткрывает→15, раскрывает AVG5 и получает12.56666..., запускает DOM counter→1. Первый browser probe с manually injected Authorization header не передавал credentials Worker и завершился EXECUTION_WORKER. Исправлен тестовый transport: реальный Fetch HTTP authentication challenge, origin-scoped credentials и browser HTTP auth cache. Production auth не ослаблялась. Новый local auth regression также проверяет Worker и401 без credentials.
+
+Recovery: принудительно завершён только новый EMS service main PID19022; systemd восстановил PID19242, localhost readiness PASS, NRestarts1, memory≈17MiB. Шесть прочих enabled nginx configs имеют те же SHA256; nginx и четыре observed stage services active, ничего из них не перезапущено принудительно/не заменено. Логи: /tmp/ems-live-deploy-fixed.log, /tmp/ems-live-smoke-auth.log, /tmp/ems-live-recovery.log, /tmp/ems-vps-{before,after}-deploy.log.
+
+Actual rollback ещё требует второй successful release: первый failed artifact412bf38 не принят как previous. До проверки переключения нельзя считать rollback gate завершённым.

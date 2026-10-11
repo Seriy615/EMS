@@ -2,7 +2,7 @@
 
 ## EMS-035/033 — owner MVP proof и подготовка publication
 
-678/678 Node PASS,130/130 verify PASS,24/24 browser PASS. Исправлен symlink CLI entrypoint, добавлен настоящий process regression; первый deployment412bf38 выявил это, не прошёл readiness и не объявлен успешным. Domain certificate выпущен, fixed release pending publication. Named local scenarios и границы — docs/qa/WEB_IDE_MVP.md. Реальный composite AVG5/вложенность/shared edit/reopen, точная graph failure location/lifecycle log. Deployment tooling подготовлен; public domain пока имеет TLS SAN mismatch, remote success требует actual release/auth/HTTPS/Chromium/recovery/rollback evidence. Глобальная цель и full step/control/source debugger остаются открытыми.
+678/678 Node PASS,130/130 verify PASS,24/24 browser PASS. Исправлен symlink CLI entrypoint, добавлен настоящий process regression; первый deployment412bf38 выявил это, не прошёл readiness и не объявлен успешным. f356ee3 опубликован: verified HTTPS/auth/live Chromium graph15/reopen15/AVG5/counter1 и service recovery PASS. Rollback второго successful release ещё требует evidence. Named local scenarios и границы — docs/qa/WEB_IDE_MVP.md. Реальный composite AVG5/вложенность/shared edit/reopen, точная graph failure location/lifecycle log. Actual domain TLS/auth/Chromium/recovery evidence есть; initial failed412bf38 исправлен и не принят как предыдущий успешный artifact. Откат требует второго successful release; полная production acceptance не заявлена. Глобальная цель и full step/control/source debugger остаются открытыми.
 
 ## Последняя проверка — EMS-050 unified local project catalog, AC-062
 

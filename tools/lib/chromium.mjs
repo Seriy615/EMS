@@ -61,10 +61,25 @@ export async function launchChromium() {
         pending.set(id, { resolve, reject, timer }); socket.send(JSON.stringify({ id, method, params, ...(sessionId ? { sessionId } : {}) }));
       });
     }
-    async function page(url,{headers={}}={}) {
+    async function page(url,{headers={},credentials=null}={}) {
       const { targetId } = await send('Target.createTarget', { url: 'about:blank' });
       const { sessionId } = await send('Target.attachToTarget', { targetId, flatten: true });
       await send('Page.enable', {}, sessionId);
+      let authenticationListener;
+      if(credentials){
+        const origin=new URL(url).origin;
+        authenticationListener=message=>{
+          if(message.sessionId!==sessionId)return;
+          if(message.method==='Fetch.requestPaused')send('Fetch.continueRequest',{requestId:message.params.requestId},sessionId).catch(()=>{});
+          if(message.method==='Fetch.authRequired'){
+            let sameOrigin=false;try{sameOrigin=new URL(message.params.request.url).origin===origin&&new URL(message.params.authChallenge.origin).origin===origin;}catch{}
+            const response=sameOrigin?{response:'ProvideCredentials',username:credentials.username,password:credentials.password}:{response:'CancelAuth'};
+            send('Fetch.continueWithAuth',{requestId:message.params.requestId,authChallengeResponse:response},sessionId).catch(()=>{});
+          }
+        };
+        listeners.add(authenticationListener);
+        await send('Fetch.enable',{handleAuthRequests:true},sessionId);
+      }
       if(Object.keys(headers).length){await send('Network.enable',{},sessionId);await send('Network.setExtraHTTPHeaders',{headers},sessionId);}
       const loaded = new Promise((resolve, reject) => {
         const timer = setTimeout(() => { listeners.delete(listener); reject(new Error('Page load timeout')); }, 10000);
@@ -84,7 +99,7 @@ export async function launchChromium() {
           if (result.exceptionDetails) throw new Error(JSON.stringify(result.exceptionDetails));
           return result.result.value;
         },
-        close: () => send('Target.closeTarget', { targetId })
+        close: () => {if(authenticationListener)listeners.delete(authenticationListener);return send('Target.closeTarget', { targetId });}
       };
     }
     return { executable, version: await send('Browser.getVersion'), page, close };
