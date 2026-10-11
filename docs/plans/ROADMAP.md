@@ -41,9 +41,9 @@ M0 -> M1 -> M2/M3 -> M4 -> M5 -> M6; M7 builds on networking/storage contracts; 
 
 ## Ближайший этап: проверяемое ядро M1
 
-Исторический baseline M0: 16/16 тестов и 18/18 verify, Node.js 22.21.0. EMS-010..014 завершены для документированных finite профилей: core semantics, IR, grammar, types и effects. EMS-015 IN_PROGRESS: state/FIFO/replay/cancellation (AC-032) structured control IR/runtime/standalone (AC-033) typed user exceptions/finally (AC-034) Option/Result/match (AC-035) language async/Future (AC-036) и Stream/backpressure/for-await (AC-037) реализованы. Текущий итог — 401/401 tests, 62/62 verify; точная история в docs/qa/PROGRESS.md. Следующий зависимый срез — ResourceHandle/using lifecycle, затем IDL/conformance EMS-016/017. Зависимости не обходятся ради красивого редактора.
+Исторический baseline M0: 16/16 тестов и 18/18 verify, Node.js 22.21.0. EMS-010..014 завершены для документированных finite профилей: core semantics, IR, grammar, types и effects. EMS-015 IN_PROGRESS: state/FIFO/replay/cancellation (AC-032) structured control IR/runtime/standalone (AC-033) typed user exceptions/finally (AC-034) Option/Result/match (AC-035) language async/Future (AC-036) Stream/backpressure/for-await (AC-037) и ResourceHandle/using lifecycle (AC-038) реализованы. Текущий итог — 431/431 tests, 67/67 verify; точная история в docs/qa/PROGRESS.md. Следующий зависимый срез — full error/resource IDL и stable conformance EMS-016/017; standalone state export остаётся открыт. Зависимости не обходятся ради красивого редактора.
 
-Gate ядра: формально описанные значения/вызовы/ошибки, совпадающие результаты и отказы runtime/standalone, отсутствие влияния canvas, каноническая сериализация IR с контролем версии и точные отрицательные тесты. Он приближает G-01/02/03/11/12, но не завершает M1: остаются расширенные runtime-типы, structured error IDL, ресурсы и stable IDL/conformance (EMS-015..017).
+Gate ядра: формально описанные значения/вызовы/ошибки, совпадающие результаты и отказы runtime/standalone, отсутствие влияния canvas, каноническая сериализация IR с контролем версии и точные отрицательные тесты. Он приближает G-01/02/03/11/12, но не завершает M1: остаются расширенные runtime-типы, structured error/resource IDL и stable conformance (EMS-015..017).
 
 До расширения платформ начать P1 из PROJECT_GOAL.md на чистом ядре: тот же источник и векторы в Node.js и настоящем браузере плюс standalone вне проекта. Если браузер отсутствует, оставить gate открытым. M6 дополнительно требует реальный native/desktop backend и платформенные bindings; выполнение двух JS функций в одном Node.js не закрывает этот gate.
 
@@ -62,6 +62,6 @@ Gate ядра: формально описанные значения/вызов
 
 ## Уточнение владельца: ядро и WEB IDE MVP
 
-WEB IDE MVP и деплой на `ems-vps` / `https://dev-ems.d-mash.ru` явно утверждены. Последующее уточнение: **сначала ядро, затем IDE**, обе части обязательны. Сейчас EMS-010..013 приняты в документированных начальных профилях, EMS-014 начата. До IDE завершить необходимые effect/state/event semantics; поддержка всех будущих API не является условием первого MVP.
+WEB IDE MVP и деплой на `ems-vps` / `https://dev-ems.d-mash.ru` явно утверждены. Последующее уточнение: **сначала ядро, затем IDE**, обе части обязательны. Сейчас EMS-010..014 приняты в документированных начальных профилях, EMS-015 IN_PROGRESS с evidence AC-032..038. До IDE завершить необходимые effect/state/event semantics; поддержка всех будущих API не является условием первого MVP.
 
 Пользовательский gate MVP: калькулятор, раскрываемый arithmetic AVG5, интерактивный DOM-счётчик, создание/соединение/исполнение/сохранение графов, text mode через общий IR, browser E2E и защищённый HTTPS deployment с проверкой и rollback. Пока не пройдены все сценарии, MVP не завершён. TLS домена при первичной проверке не соответствует SAN сертификата; чужие VPS-сервисы не изменялись.

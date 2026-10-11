@@ -14,6 +14,9 @@
     },
     {
       "$ref": "control-streams-ir.schema.json"
+    },
+    {
+      "$ref": "control-resources-ir.schema.json"
     }
   ]
 }

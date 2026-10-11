@@ -12,7 +12,7 @@ const get=async p=>readFile(new URL(p,root),'utf8');
 const readJSON=async p=>JSON.parse(await get(p));
 let checks=0;
 async function check(desc, fn) { const x=await fn(); assert.ok(x,desc); checks++; console.log('✓',desc); }
-const required=['AGENTS.md','.agents/policy.json','PROJECT_GOAL.md','docs/spec/LANGUAGE_SEMANTICS.md','docs/spec/IR.md','schemas/ir.schema.json','docs/spec/STATE_EVENTS.md','schemas/reactor.schema.json','docs/spec/CONTROL_IR.md','schemas/control-ir.schema.json','schemas/control-finite-ir.schema.json','schemas/control-algebraic-ir.schema.json','docs/spec/CONTROL_ALGEBRAIC.md','docs/spec/CONTROL_FUTURES.md','schemas/control-futures-ir.schema.json','docs/spec/CONTROL_STREAMS.md','schemas/control-streams-ir.schema.json','docs/qa/PROGRESS.md','docs/spec/EMS_FULL_SPEC.md','docs/plans/ROADMAP.md','docs/qa/ACCEPTANCE.md','tasks/backlog.json'];
+const required=['AGENTS.md','.agents/policy.json','PROJECT_GOAL.md','docs/spec/LANGUAGE_SEMANTICS.md','docs/spec/IR.md','schemas/ir.schema.json','docs/spec/STATE_EVENTS.md','schemas/reactor.schema.json','docs/spec/CONTROL_IR.md','schemas/control-ir.schema.json','schemas/control-finite-ir.schema.json','schemas/control-algebraic-ir.schema.json','docs/spec/CONTROL_ALGEBRAIC.md','docs/spec/CONTROL_FUTURES.md','schemas/control-futures-ir.schema.json','docs/spec/CONTROL_STREAMS.md','schemas/control-streams-ir.schema.json','docs/spec/CONTROL_RESOURCES.md','schemas/control-resources-ir.schema.json','docs/qa/PROGRESS.md','docs/spec/EMS_FULL_SPEC.md','docs/plans/ROADMAP.md','docs/qa/ACCEPTANCE.md','tasks/backlog.json'];
 for(const f of required) { await stat(new URL(f,root)); await check(`found ${f}`,()=>true); }
 const policy=await readJSON('.agents/policy.json');
 await check('models exactly Sol 6.1 + Luna 6',()=>policy.agents.approvedDisplayNames.join(',')==='GPT-6.1 Sol,GPT-6 Luna');
@@ -150,5 +150,21 @@ await check('independent Stream standalone agrees with runtime',async()=>await s
 await check('terminal producer budget failure releases Stream waiters and preserves code',async()=>{
   await assert.rejects(executeIR(streamsIR,{values:[1,2,3]},registry,{maxSteps:30}),{code:'STEP_LIMIT'});
   await assert.rejects(streamsOutput.execute({values:[1,2,3]},{maxSteps:30}),{code:'STEP_LIMIT'});return true;
+});
+const resourcesBundle=lowerCheckedModule(typecheckModule(parseEMSModule(await get('examples/resources.ems')),registry),'demo.ResourceTotal',registry);
+const resourcesIR=parseIR(serializeIR(resourcesBundle.ir,registry),registry);
+await check('resource using executes from typed serialized IR',async()=>resourcesIR.profile==='ems-control-resources/1' && await executeIR(resourcesIR,{value:4},registry)===5);
+const resourcesOutput=await import(`data:text/javascript,${encodeURIComponent(compileIRToJS(resourcesIR,registry))}`);
+await check('independent resource standalone agrees and releases once',async()=>{
+  const events=[];assert.equal(await resourcesOutput.execute({value:4},{onResourceCleanup:event=>events.push(event)}),5);
+  assert.equal(events.length,1);return events[0].phase==='released';
+});
+await check('resource cleanup survives program step exhaustion in runtime and standalone',async()=>{
+  const bundle=lowerCheckedModule(typecheckModule(parseEMSModule('fn guarded()->Number { using cell=resource.cell(1); while true {} return 0; }'),registry),'guarded',registry);
+  const output=await import(`data:text/javascript,${encodeURIComponent(compileIRToJS(bundle.ir,registry))}`);
+  for(const run of [options=>executeIR(bundle.ir,{},registry,options),options=>output.execute({},options)]){
+    const events=[];await assert.rejects(run({maxSteps:20,onResourceCleanup:event=>events.push(event)}),{code:'STEP_LIMIT'});
+    assert.equal(events.length,1);assert.equal(events[0].phase,'released');
+  }return true;
 });
 console.log(`\nEMS foundation verification passed (${checks} checks). Not production readiness.`);

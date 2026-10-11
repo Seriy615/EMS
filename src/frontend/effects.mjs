@@ -33,7 +33,8 @@ export function checkModuleEffects(checked, registry) {
     const entry = { target, declared, pure, explicit: requirements.length > 0,
       effects: new Set(declared.effects), capabilities: new Set(declared.capabilities), localEffects: new Set(), calls: [] };
     if (target.declaration.external && registry.items.has(target.name)) {
-      const policy = contractPolicy(registry.resolve(target.name));
+      const binding=registry.resolve(target.name);if(binding.kind==='resource')entry.localEffects.add('resource.create');
+      const policy = contractPolicy(binding);
       for (const field of ['effects', 'capabilities']) for (const value of policy[field]) entry[field].add(value);
     }
     const pending = target.declaration.body ? [target.declaration.body] : [];
@@ -41,8 +42,11 @@ export function checkModuleEffects(checked, registry) {
       const node = pending.pop();
       if (!node || typeof node !== 'object') continue;
       const call = checked.calls.get(node);
+      if(call?.resourceOperation)entry.localEffects.add('resource.'+({cell:'create',read:'read',write:'write',close:'close',isClosed:'inspect'}[call.resourceOperation]));
+      if(node.kind==='UsingDeclaration')entry.localEffects.add('resource.close');
       if (call?.streamOperation) entry.localEffects.add({channel:'stream.create',fromArray:'stream.create',next:'stream.read',send:'stream.write',close:'stream.close'}[call.streamOperation]);
       if (node.kind === 'ForStatement' && node.asynchronous) entry.localEffects.add('stream.read');
+      if(call?.target?.contract?.kind==='resource')entry.localEffects.add('resource.create');
       if (call?.target) entry.calls.push({ target: call.target, node });
       for (const [key, value] of Object.entries(node)) {
         if (key === 'location') continue;
@@ -73,7 +77,7 @@ export function checkModuleEffects(checked, registry) {
   }
   const policies = new Map(); checked.localEffects = new Map();
   for (const [name, entry] of entries) {
-    if (entry.pure && entry.localEffects.size) diagnostic('EFFECT_MISMATCH', `${name}: pure cannot mutate local Stream state`, entry.target.declaration);
+    if (entry.pure && entry.localEffects.size) diagnostic('EFFECT_MISMATCH', `${name}: pure cannot perform local handle effects`, entry.target.declaration);
     checked.localEffects.set(name,[...entry.localEffects].sort());
     for (const field of ['effects', 'capabilities']) {
       if (entry.explicit && [...entry[field]].some(value => !entry.declared[field].includes(value)))

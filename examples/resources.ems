@@ -1,0 +1,5 @@
+fn demo.ResourceTotal(value: Number) -> Number {
+  using cell = resource.cell(value);
+  resource.write(cell, resource.read(cell) + 1);
+  return resource.read(cell);
+}

@@ -10,6 +10,12 @@ export class Registry {
     this.#register({ id, version, kind: 'atomic', inputs, output, effects, capabilities, execute, emitJS });
     return this;
   }
+  registerResource({id,version='1.0.0',inputs,valueType,effects=[],capabilities=[],acquire,read,write=null,release}) {
+    if(typeof version!=='string' || !version)fail('INVALID_CONTRACT','Resource version must be nonempty string');
+    for(const [name,callback] of Object.entries({acquire,read,release}))if(typeof callback!=='function')fail('INVALID_IMPL',`${id}: ${name} must be a function`);
+    if(write!==null && typeof write!=='function')fail('INVALID_IMPL',`${id}: write must be a function`);
+    this.#register({id,version,kind:'resource',inputs,output:`ResourceHandle<${valueType}>`,valueType,effects,capabilities,acquire,read,write,release});return this;
+  }
   registerComposite({ id, version = '1.0.0', graph, effects = [], capabilities = [] }) {
     if (!graph || graph.id !== id) fail('INVALID_IMPL', `${id}: composite graph id mismatch`);
     this.#register({ id, version, kind: 'composite', inputs: graph.inputs, output: graph.output.type, effects, capabilities, graph });
@@ -20,7 +26,7 @@ export class Registry {
     if (this.items.has(item.id)) fail('DUPLICATE_CONTRACT', `Duplicate contract ${item.id}`);
     if (!item.inputs || typeof item.inputs !== 'object') fail('INVALID_CONTRACT', `Missing inputs for ${item.id}`);
     for (const [key, v] of Object.entries(item.inputs)) assertTypeName(typeof v === 'string' ? v : v.type, `${item.id}.${key}`);
-    assertTypeName(item.output, `${item.id}.output`);
+    assertTypeName(item.kind==='resource'?item.valueType:item.output, `${item.id}.output`);
     assertPolicyNames(item.effects, 'effects');
     assertPolicyNames(item.capabilities, 'capabilities');
     this.items.set(item.id, Object.freeze({ ...item, effects: Object.freeze([...item.effects]), capabilities: Object.freeze([...item.capabilities]) }));

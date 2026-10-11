@@ -2,11 +2,13 @@
 
 ## Последняя проверка — ядро перед IDE
 
-`npm test` **401/401 PASS**, `npm run verify` **62/62 PASS**. EMS-010..014 DONE для документированных начальных профилей (AC-025..031); M1 целиком не завершён. Новый текстовый AST frontend типизируется и реально исполняет чистые программы/generic helpers через общий IR/runtime, экспортирует standalone. Finite state/events и отмена host futures реализованы по AC-032. Structured control-flow и pure standalone реализованы по AC-033. Typed user exceptions/finally добавлены по AC-034; Option/Result/match исполнение и standalone добавлены по AC-035 (33 tests); language async/Future исполнение и standalone добавлены по AC-036; Stream/backpressure/for-await и computed localEffects добавлены по AC-037; ResourceHandle lifecycle ещё впереди.
+`npm test` **431/431 PASS**, `npm run verify` **67/67 PASS**, Node 22.21.0. EMS-010..014 DONE для начальных профилей AC-025..031. EMS-015 IN_PROGRESS: state/events/cancellation AC-032, control-flow AC-033, typed errors AC-034, algebraic values/match AC-035, async/Future AC-036, Stream AC-037 и ResourceHandle/using AC-038 реализованы через общий IR/runtime; supported standalone paths проверены отдельно.
 
-EMS-014 DONE для начального finite effect/capability kernel: транзитивный policy preflight встроен в `executeGraph` (AC-029). Вложенные/unused декларации проверяются до первого host-вызова; раздельные grants и ошибочные списки проверены в `tests/effects.test.mjs`. Effect IR и explicit nested sequencing проверены по AC-030; AST effect pass, straight-line lowering, interface requirements и pure sequence export проверены по AC-031. EMS-015 IN_PROGRESS: transactional state events, bounded FIFO, replay и cancellation проверены; control IR v2/runtime/standalone также проверены по AC-033; typed user exceptions/finally также проверены по AC-034; Option/Result/match проверены по AC-035; async/Future проверены по AC-036; Stream проверен по AC-037; следующий срез — ResourceHandle/using lifecycle; production permissions и IO compiler bindings остаются впереди. Глобальная цель остаётся активной. WEB IDE MVP и деплой разрешены, но по уточнению владельца сначала продолжается ядро. Deploy не выполнен; TLS SAN mismatch остаётся обнаруженным инфраструктурным дефектом.
+AC-038: 30 новых resource tests, typed owned cells и independent standalone, lexical ownership/escape и LIFO cleanup на всех exits, отдельные cleanup signal/deadline вне maxSteps. Trusted native lifecycle binding реально закрывает OS file descriptor (EBADF); preflight и pinned versions проверены. Cancelled acquisition и active read получают bounded wait/late exact-once release attempt, не фиктивный physical cleanup. Native binding export явно UNSUPPORTED_TARGET. Reactor commit ждёт cleanup; отказ освобождения откатывает owned state. Подробности: docs/spec/CONTROL_RESOURCES.md.
 
-Baseline перед AC-037: 8c20120, 365/365 tests и 57/57 verify. Текущие логи: `/tmp/ems-stream-tests.log`, `/tmp/ems-stream-verify.log`; Node 22.21.0. Новые схемы разделяют finite/error, algebraic, future и stream profiles; executable validation — обязательный gate. Полная история — PROGRESS.md.
+Baseline AC-038: `0fbee2a`, 401/401 tests, 62/62 verify. Логи `/tmp/ems-resource-tests.log`, `/tmp/ems-resource-verify.log`; schemas JSON parsed и local refs resolved (11 schemas), внешний schema engine не запускался. `node examples/resource-file.mjs examples/resources.ems` реально прочитал файл. Внешние зависимости не устанавливались.
+
+Следующий срез: завершить описания full error/resource IDL и stable conformance (EMS-016/017); standalone state export остаётся открыт. Глобальная цель активна; M1/P1/browser/WEB IDE MVP/deploy не завершены. Владелец разрешил WEB IDE и deploy, уточнил core-first и origin `git@github.com:Seriy615/EMS.git`. TLS SAN mismatch ранее обнаружен; VPS services в этом срезе не изменялись. Проверенные изменения commit/push в main, без force.
 
 ## Текущее состояние после EMS-012
 
@@ -38,7 +40,7 @@ EMS-010 завершена как нормативный начальный пр
 
 **Model restriction:** only GPT-6.1 Sol / GPT-6 Luna for any agent work; no GPT-5.6 Sol / Astra.
 
-**Next action:** continue EMS-015 ResourceHandle/using lifecycle, from `docs/qa/PROGRESS.md`. Bootstrap sections below describe the original scaffold, not completed M1.
+**Next action:** continue full error/resource IDL and conformance after EMS-015 resource slice, from `docs/qa/PROGRESS.md`. Bootstrap sections below describe the original scaffold, not completed M1.
 
 Точная ревизия без Git: `docs/qa/evidence/2026-10-11-core.json` содержит SHA-256 implementation/test/spec-format файлов и aggregate snapshot `2495e5f62507e4819ee55a7b8a7c4b73638d096b13b88fae991f98ccb7d78602`. Metadata состояния QA обновляется отдельно от этого semantic/source snapshot.
 

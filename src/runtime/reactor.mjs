@@ -29,6 +29,7 @@ function copyRegistry(base) {
   const registry = new Registry();
   for (const contract of base.items.values()) {
     if (contract.kind === 'atomic') registry.registerAtomic(contract);
+    else if(contract.kind==='resource')registry.registerResource(contract);
     else registry.registerComposite(contract);
   }
   return registry;

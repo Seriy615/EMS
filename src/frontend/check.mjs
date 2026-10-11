@@ -76,7 +76,7 @@ export function typecheckModule(ast, registry, { imports = new Map(), maxTypeNod
     try { contract = registry.resolve(id); } catch { diagnostic('UNKNOWN_SYMBOL', `Unknown callable ${name}`, at); }
     const syntax = typeName_ => ({ kind: 'NamedType', name: typeName_, arguments: [], location: at.location });
     return { name: id, parameters: [], inputs: Object.entries(contract.inputs).map(([name, spec]) => ({ name, type: type(syntax(typeof spec === 'string' ? spec : spec.type)) })),
-      output: type(syntax(contract.output)), async: false, contract };
+      output: contract.kind==='resource'?term('ResourceHandle',[type(syntax(contract.valueType))]):type(syntax(contract.output)), async: false, contract };
   }
   function expression(node, scope, context, expected = null) {
     if (++expressions > maxExpressions) diagnostic('TYPE_LIMIT', 'Expression checking exceeds configured budget', node);
@@ -150,6 +150,16 @@ export function typecheckModule(ast, registry, { imports = new Map(), maxTypeNod
       case 'CallExpression': {
         const name = qualified(node.callee);
         if (!name) diagnostic('UNSUPPORTED_CALL', 'Callable must have a declared qualified name', node.callee);
+        if(['resource.cell','resource.read','resource.write','resource.close','resource.isClosed'].includes(name) && !signatures.has(name)) {
+          const operation=name.slice(9),arity=operation==='write'?2:1;
+          if(node.arguments.length!==arity)diagnostic('CALL_ARITY','Wrong resource operation arity',node);
+          if(operation==='cell')result=term('ResourceHandle',[expression(node.arguments[0],scope,context,expected?.name==='ResourceHandle'?expected.arguments[0]:null)]);
+          else { const resource=expression(node.arguments[0],scope,context);if(resource.name!=='ResourceHandle')diagnostic('TYPE_MISMATCH','Resource operation requires ResourceHandle',node);
+            if(operation==='write')expectType(resource.arguments[0],expression(node.arguments[1],scope,context,resource.arguments[0]),node);
+            result=['close','isClosed'].includes(operation)?primitive('Boolean'):resource.arguments[0];
+          }
+          calls.set(node,{resourceOperation:operation,output:result});break;
+        }
         if (['stream.channel','stream.fromArray','stream.next','stream.send','stream.close'].includes(name) && !signatures.has(name)) {
           const operation = name.slice(7), arity = operation === 'send' ? 2 : 1;
           if (node.arguments.length !== arity) diagnostic('CALL_ARITY', 'Wrong stream operation arity', node);
@@ -214,6 +224,7 @@ export function typecheckModule(ast, registry, { imports = new Map(), maxTypeNod
           if (scope.has(statement.name)) diagnostic('DUPLICATE_SYMBOL', `Duplicate local ${statement.name}`, statement);
           const expected = statement.type ? type(statement.type, context.parameters) : null;
           const actual = expression(statement.value, scope, context, expected);
+          if(statement.kind==='UsingDeclaration' && statement.mutable)diagnostic('RESOURCE_OWNERSHIP','Using binding must be immutable',statement);
           if (statement.kind === 'UsingDeclaration' && actual.name !== 'ResourceHandle') diagnostic('TYPE_MISMATCH', 'using requires ResourceHandle', statement);
           scope.set(statement.name, { type: expected ?? actual, mutable: statement.mutable }); break;
         }

@@ -44,6 +44,7 @@ export function validateGraph(graph, registry) {
     if (visiting.has(node.id)) fail('GRAPH_CYCLE', `Cycle detected at ${node.id}`);
     visiting.add(node.id);
     const contract = registry.resolve(node.uses);
+    if(contract.kind==='resource')fail('UNSUPPORTED_PROFILE','Resource bindings require resource control IR');
     for (const [arg, typ] of Object.entries(contract.inputs)) {
       const ref = node.args[arg];
       if (!ref) fail('MISSING_ARGUMENT', `${node.id}: missing argument ${arg}`);

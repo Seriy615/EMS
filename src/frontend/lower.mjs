@@ -28,6 +28,7 @@ function lowerCallModule(checked, entry, baseRegistry, eager = false) {
   const registry = new Registry();
   for (const item of baseRegistry.items.values()) {
     if (item.kind === 'atomic') registry.registerAtomic(item);
+    else if(item.kind==='resource')registry.registerResource(item);
     else registry.registerComposite(item);
   }
   const entrySignature = checked.signatures.get(entry);
@@ -122,7 +123,7 @@ function lowerCallModule(checked, entry, baseRegistry, eager = false) {
 /** Select one semantic profile from the checked module; preserve the working call-IR backend. */
 export function lowerCheckedModule(checked, entry, registry, { profile = 'auto' } = {}) {
   if (!['auto', 'call', 'control'].includes(profile)) fail('UNSUPPORTED_PROFILE', 'Unknown frontend lowering profile');
-  let control = profile === 'auto' && checked.signatures.get(entry)?.async || profile === 'control' || profile === 'auto' && checked.signatures.get(entry)?.inputs.some(input => ['Option','Result','Future','Stream'].includes(input.type.name));
+  let control = profile === 'auto' && checked.signatures.get(entry)?.async || profile === 'control' || profile === 'auto' && checked.signatures.get(entry)?.inputs.some(input => ['Option','Result','Future','Stream','ResourceHandle'].includes(input.type.name));
   const entryTarget = checked.signatures.get(entry);
   const pending = entryTarget?.declaration.body ? [entryTarget.declaration.body] : [];
   const visited = new Set([entry]);
@@ -136,6 +137,7 @@ export function lowerCheckedModule(checked, entry, registry, { profile = 'auto' 
         node.kind === 'LetDeclaration' && node.mutable || node.kind === 'UnaryExpression' && node.operator === '!' ||
         node.kind === 'BinaryExpression' && !['+','-','*','/'].includes(node.operator)) control = true;
     if (target?.async || node.kind === 'UnaryExpression' && node.operator === 'await') control = true;
+    if(checked.calls.get(node)?.resourceOperation || target?.contract?.kind==='resource' || checked.types.get(node)?.name==='ResourceHandle' || node.kind==='UsingDeclaration')control=true;
     if (checked.calls.get(node)?.streamOperation || node.kind === 'ForStatement' && node.asynchronous) control = true;
     if (checked.calls.get(node)?.algebraicConstructor || checked.types.get(node)?.name === 'Option' || checked.types.get(node)?.name === 'Result') control = true;
     if (node.kind === 'ArrayExpression') { try { constant(node); } catch { control = true; } }

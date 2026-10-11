@@ -5,6 +5,7 @@ import { analyzeGraphEffects, assertPolicyNames } from '../semantics/effects.mjs
 
 export const CONTROL_VERSION = 'ems-ir/2';
 export const CONTROL_PROFILE = 'ems-control-finite/1';
+export const CONTROL_RESOURCE_PROFILE = 'ems-control-resources/1';
 export const CONTROL_STREAM_PROFILE = 'ems-control-streams/1';
 export const CONTROL_FUTURE_PROFILE = 'ems-control-futures/1';
 export const CONTROL_ALGEBRAIC_PROFILE = 'ems-control-algebraic/1';
@@ -29,6 +30,7 @@ function policy(value) {
   for (const field of ['effects', 'capabilities']) assertPolicyNames(value[field], field);
 }
 export function controlContractPolicy(contract, registry) {
+  if(contract.kind==='resource')return {effects:[...contract.effects].sort(),capabilities:[...contract.capabilities].sort()};
   const literals = { Number: 0, NumberArray: [], Boolean: false, String: '' };
   const graph = { schemaVersion: '0.1', id: 'control:policy', inputs: {}, output: { type: contract.output },
     nodes: [{ id: 'call', uses: contract.id, args: Object.fromEntries(Object.entries(contract.inputs).map(([key, type]) => [key, { literal: literals[typeof type === 'string' ? type : type.type] }])) }], returns: { node: 'call' } };
@@ -38,18 +40,19 @@ export function controlContractPolicy(contract, registry) {
 /** Strict structured control verifier. Policy is recomputed from linked implementations and local call edges. */
 export function validateControlIR(ir, registry) {
   if (ir?.schemaVersion !== CONTROL_VERSION) fail('IR_VERSION', `Expected ${CONTROL_VERSION}`);
-  if (![CONTROL_PROFILE, CONTROL_ERROR_PROFILE, CONTROL_ALGEBRAIC_PROFILE, CONTROL_FUTURE_PROFILE, CONTROL_STREAM_PROFILE].includes(ir.profile)) fail('UNSUPPORTED_PROFILE', `Expected ${CONTROL_PROFILE}`);
+  if (![CONTROL_PROFILE, CONTROL_ERROR_PROFILE, CONTROL_ALGEBRAIC_PROFILE, CONTROL_FUTURE_PROFILE, CONTROL_STREAM_PROFILE, CONTROL_RESOURCE_PROFILE].includes(ir.profile)) fail('UNSUPPORTED_PROFILE', `Expected ${CONTROL_PROFILE}`);
   controlFields(ir, ['schemaVersion', 'profile', 'id', 'version', 'entry', 'functions']); text(ir.id); text(ir.version); text(ir.entry);
   array(ir.functions); if (ir.functions.length > 1000) fail('IR_LIMIT', 'Too many control functions');
-  const streams = ir.profile === CONTROL_STREAM_PROFILE;
+  const resources=ir.profile===CONTROL_RESOURCE_PROFILE;
+  const streams = ir.profile === CONTROL_STREAM_PROFILE || resources;
   const futures = ir.profile === CONTROL_FUTURE_PROFILE || streams;
   const algebraic = ir.profile === CONTROL_ALGEBRAIC_PROFILE || futures;
-  const live = type => type.includes('Future<') || type.includes('Stream<');
+  const live = type => type.includes('Future<') || type.includes('Stream<') || type.includes('ResourceHandle<');
   const assertType = (type, context) => {
     if (!algebraic) return assertTypeName(type, context);
-    const parsed = parseControlType(type, futures, streams);
+    const parsed = parseControlType(type, futures, streams, resources);
     function visit(type) {
-      if (type.name === 'Stream' && live(controlTypeName(type.arguments[0]))) fail('TYPE_MISMATCH', 'Stream elements must be serializable finite values');
+      if (['Stream','ResourceHandle'].includes(type.name) && live(controlTypeName(type.arguments[0]))) fail('TYPE_MISMATCH', 'Handle payload must be serializable finite value');
       type.arguments.forEach(visit);
     }
     visit(parsed); return parsed;
@@ -58,7 +61,7 @@ export function validateControlIR(ir, registry) {
   for (const fn of ir.functions) {
     controlFields(fn, ['id', 'inputs', 'output', 'requirements', 'policy', 'body', ...(futures ? ['async'] : []), ...(streams ? ['localEffects'] : [])]);
     if (futures && typeof fn.async !== 'boolean') fail('INVALID_IR', 'Expected async function marker'); text(fn.id);
-    if (streams) { assertPolicyNames(fn.localEffects,'localEffects'); if (fn.localEffects.some(effect=>!['stream.create','stream.read','stream.write','stream.close'].includes(effect))) fail('INVALID_IR','Unknown local stream effect'); }
+    if (streams) { assertPolicyNames(fn.localEffects,'localEffects'); if (fn.localEffects.some(effect=>![...['stream.create','stream.read','stream.write','stream.close'],...(resources?['resource.create','resource.read','resource.write','resource.close','resource.inspect']:[])].includes(effect))) fail('INVALID_IR','Unknown local stream effect'); }
     if (functions.has(fn.id)) fail('INVALID_IR', 'Duplicate function');
     array(fn.inputs); const inputNames = new Set();
     for (const input of fn.inputs) { controlFields(input, ['name', 'type']); name(input.name); assertType(input.type, 'control input');
@@ -100,6 +103,18 @@ export function validateControlIR(ir, registry) {
             expect(left, 'Number'); actual = ['<', '<=', '>', '>='].includes(node.operator) ? 'Boolean' : 'Number'; }
           break;
         }
+        case 'resource': {
+          if(!resources)fail('UNSUPPORTED_PROFILE','Resource operations require resource profile');
+          controlFields(node,['kind','type','operation','arguments']);array(node.arguments);
+          if(!['cell','read','write','close','isClosed'].includes(node.operation))fail('INVALID_IR','Unknown resource operation');
+          if(node.arguments.length!==(node.operation==='write'?2:1))fail('CALL_ARITY','Resource operation arity mismatch');
+          summaries.get(fn.id).localEffects.add('resource.'+({cell:'create',read:'read',write:'write',close:'close',isClosed:'inspect'}[node.operation]));
+          if(node.operation==='cell'){const payload=expression(node.arguments[0],scope,depth+1);if(live(payload))fail('TYPE_MISMATCH','Resource cell requires serializable value');actual=`ResourceHandle<${payload}>`;}
+          else {const handle=parseControlType(expression(node.arguments[0],scope,depth+1),true,true,true);if(handle.name!=='ResourceHandle')fail('TYPE_MISMATCH','Expected ResourceHandle');const payload=controlTypeName(handle.arguments[0]);
+            if(node.operation==='write')expect(expression(node.arguments[1],scope,depth+1),payload);
+            actual=['close','isClosed'].includes(node.operation)?'Boolean':payload;
+          }break;
+        }
         case 'stream': {
           if (!streams) fail('UNSUPPORTED_PROFILE', 'Stream operations require stream profile');
           controlFields(node, ['kind','type','operation','arguments']); array(node.arguments);
@@ -109,10 +124,10 @@ export function validateControlIR(ir, registry) {
           if (node.arguments.length !== arity) fail('CALL_ARITY','Stream operation arity mismatch');
           if (operation === 'channel') {
             expect(expression(node.arguments[0],scope,depth+1),'Number');
-            if (parseControlType(node.type,true,true).name !== 'Stream') fail('TYPE_MISMATCH','Channel requires Stream type'); actual = node.type;
+            if (parseControlType(node.type,true,true,resources).name !== 'Stream') fail('TYPE_MISMATCH','Channel requires Stream type'); actual = node.type;
           } else if (operation === 'fromArray') { expect(expression(node.arguments[0],scope,depth+1),'NumberArray'); actual='Stream<Number>'; }
           else {
-            const stream = parseControlType(expression(node.arguments[0],scope,depth+1),true,true);
+            const stream = parseControlType(expression(node.arguments[0],scope,depth+1),true,true,resources);
             if (stream.name !== 'Stream') fail('TYPE_MISMATCH','Stream operation requires Stream');
             const element = controlTypeName(stream.arguments[0]);
             if (operation === 'send') expect(expression(node.arguments[1],scope,depth+1),element);
@@ -124,7 +139,7 @@ export function validateControlIR(ir, registry) {
           if (!futures) fail('UNSUPPORTED_PROFILE', 'Await requires future profile');
           if (!fn.async) fail('INVALID_AWAIT', 'Await requires async function');
           controlFields(node, ['kind', 'type', 'value']);
-          const awaited = parseControlType(expression(node.value, scope, depth + 1), true, streams);
+          const awaited = parseControlType(expression(node.value, scope, depth + 1), true, streams,resources);
           if (awaited.name !== 'Future') fail('TYPE_MISMATCH', 'Await requires Future');
           actual = controlTypeName(awaited.arguments[0]); break;
         }
@@ -146,6 +161,7 @@ export function validateControlIR(ir, registry) {
             if (futures && typeof node.target.async !== 'boolean') fail('INVALID_IR', 'Expected async binding marker');
             target = registry.resolve(node.target.id);
             if (target.version !== node.target.version) fail('CONTRACT_VERSION', 'Control binding version mismatch');
+            if(target.kind==='resource')summaries.get(fn.id).localEffects.add('resource.create');
             const summary = controlContractPolicy(target, registry);
             for (const field of ['effects', 'capabilities']) for (const value of summary[field]) summaries.get(fn.id)[field].add(value);
             target = { inputs: Object.entries(target.inputs).map(([name, type]) => ({ name, type: typeof type === 'string' ? type : type.type })), output: { type: target.output }, async: node.target.async };
@@ -163,6 +179,13 @@ export function validateControlIR(ir, registry) {
         limit(depth); if (!statement || typeof statement !== 'object') fail('INVALID_IR', 'Expected control statement');
         if (terminated) fail('UNREACHABLE_CODE', 'Control statement after exit');
         switch (statement.kind) {
+          case 'using': {
+            if(!resources)fail('UNSUPPORTED_PROFILE','Using requires resource profile');
+            controlFields(statement,['kind','name','type','value']);name(statement.name);assertType(statement.type,'using type');
+            if(parseControlType(statement.type,true,true,true).name!=='ResourceHandle')fail('TYPE_MISMATCH','Using requires ResourceHandle');
+            if(scope.has(statement.name))fail('DUPLICATE_SYMBOL','Duplicate using binding');expect(expression(statement.value,scope,depth+1),statement.type);
+            scope.set(statement.name,{type:statement.type,mutable:false});summaries.get(fn.id).localEffects.add('resource.close');break;
+          }
           case 'let': controlFields(statement, ['kind', 'name', 'type', 'mutable', 'value']); name(statement.name); assertType(statement.type, 'local');
             if (scope.has(statement.name)) fail('DUPLICATE_SYMBOL', 'Duplicate local');
             if (typeof statement.mutable !== 'boolean') fail('INVALID_IR', 'Invalid mutability');
@@ -211,10 +234,10 @@ export function validateControlIR(ir, registry) {
             terminated = exits; break;
           }
           case 'throw':
-            if (![CONTROL_ERROR_PROFILE, CONTROL_ALGEBRAIC_PROFILE, CONTROL_FUTURE_PROFILE, CONTROL_STREAM_PROFILE].includes(ir.profile)) fail('UNSUPPORTED_PROFILE', 'User throws require control error profile');
+            if (![CONTROL_ERROR_PROFILE, CONTROL_ALGEBRAIC_PROFILE, CONTROL_FUTURE_PROFILE, CONTROL_STREAM_PROFILE, CONTROL_RESOURCE_PROFILE].includes(ir.profile)) fail('UNSUPPORTED_PROFILE', 'User throws require control error profile');
             controlFields(statement, ['kind', 'value']); const thrown = expression(statement.value, scope, depth + 1); if (live(thrown)) fail('TYPE_MISMATCH', 'Cannot throw live handle'); terminated = true; break;
           case 'try': {
-            if (![CONTROL_ERROR_PROFILE, CONTROL_ALGEBRAIC_PROFILE, CONTROL_FUTURE_PROFILE, CONTROL_STREAM_PROFILE].includes(ir.profile)) fail('UNSUPPORTED_PROFILE', 'Try requires control error profile');
+            if (![CONTROL_ERROR_PROFILE, CONTROL_ALGEBRAIC_PROFILE, CONTROL_FUTURE_PROFILE, CONTROL_STREAM_PROFILE, CONTROL_RESOURCE_PROFILE].includes(ir.profile)) fail('UNSUPPORTED_PROFILE', 'Try requires control error profile');
             controlFields(statement, ['kind', 'body', 'handler', 'finalizer']);
             if (statement.handler === null && statement.finalizer === null) fail('INVALID_IR', 'Try requires catch or finally');
             const attempted = block(statement.body, scope, loops, depth + 1); let handled = false;
@@ -239,7 +262,7 @@ export function validateControlIR(ir, registry) {
             if (!fn.async) fail('INVALID_AWAIT','Async iteration requires async function');
             summaries.get(fn.id).localEffects.add('stream.read');
             controlFields(statement,['kind','binding','iterable','body']); name(statement.binding);
-            const iterable=parseControlType(expression(statement.iterable,scope,depth+1),true,true);
+            const iterable=parseControlType(expression(statement.iterable,scope,depth+1),true,true,resources);
             if (iterable.name !== 'Stream') fail('TYPE_MISMATCH','Async iteration requires Stream');
             const nested=new Map(scope);nested.set(statement.binding,{type:controlTypeName(iterable.arguments[0]),mutable:false});block(statement.body,nested,loops+1,depth+1);break;
           }
