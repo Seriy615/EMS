@@ -117,3 +117,7 @@ IDE скачивает actual edited application archive через общий N
 ## Точка продолжения после AC-059
 
 Source-owned control handlers имеют typed structural graph/SVG selection/node-fragment edits, original frontend/IR/witness/Undo/persistence и actual execution parity. Это начальная интеграция, не full AC-012: дальше graphical node operations/ports/source linking, unified project manager и runtime graph debugger, owner MVP audit/deploy. Initial state/UI/IDE export proofs остаются проверенными; global language/platform/ecosystem goal активна.
+
+## Точка продолжения после AC-060
+
+Control source graph supports real structured literal/operator/call/instruction insert-delete operations with frontend/IR validation and actual Node/compiler/Chromium outcomes. Initial graph editing advanced; free operand wiring/control canvas/catalog selection/layout/source trace/unified project manager still open. Owner MVP gate/deploy follow those dependencies; global language/runtime/compiler/platform/ecosystem goal stays active.

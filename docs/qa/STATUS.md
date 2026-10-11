@@ -1,5 +1,12 @@
 # Current implementation status
 
+## Последняя проверка — EMS-032 structured graph operations, AC-060
+
+`npm test` **664/664 PASS**, `npm run verify` **127/127 PASS**, `npm run browser:test` **19/19 PASS**. Baseline c3a4556:660/126/18. Node22 / actual Chromium156. Full AC-012/free wiring/layout/unified manager/MVP/deploy/global goal открыты.
+
+Literal/operator/call и single-statement insert/delete структурируют реальные source node edits. Own AST ranges/exact stale guard/category/schema/single-fragment checks; ordinary frontend проверяет types/scope/policy/IR/UI closure до commit. Runtime/standalone values, signed zero, Undo, wrong types/syntax injection/missing return negatives PASS. Actual Chromium forms call3/insert63/delete3/literal4/operator5, invalid call preserves source/preview. Логи `/tmp/ems-graph-ops-{tests,verify,browser}.log`; scope — docs/spec/CONTROL_GRAPH.md.
+
+
 ## Последняя проверка — EMS-032/050 control source graph, AC-059
 
 `npm test` **660/660 PASS**, `npm run verify` **126/126 PASS**, `npm run browser:test` **18/18 PASS**. Baseline75e5e65:656/125/17. Node22 / actual Chromium156. Full AC-012/free control canvas/unified manager/MVP/deploy/global goal открыты.

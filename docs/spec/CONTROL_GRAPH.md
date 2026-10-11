@@ -23,3 +23,17 @@ Undo/Redo/storage/import/export используют прежний source-owned
 Tests/control-graph.test.mjs: typed region/sequence/helper links and atomic signatures, exact ranges, helper constant edit changes actual runtime and standalone result to3, witness/storage/undo/redo, invalid types/stale source/fake IDs preserve state/history, async/error structure, missing source/synthetic collection negatives.
 
 Tests/browser/control-graph.test.mjs: actual SVG selection/fragment edit → preview2, invalid literal type preserves source/preview, Undo→1, Redo/Save/reopen restores source and graph/preview2. Full arbitrary graphical node creation/connect/delete, persisted free layout, collection projection, source maps/runtime graph debugger и unified manager остаются следующими итерациями. Global goal и полный MVP/deploy открыты.
+
+## Структурированные операции — AC-060
+
+`editHandlerGraphNode(editor,event,expectedSource,id,operation)` в src/studio/control-graph-ops.mjs предлагает пять операций над существующим checked AST:
+
+- `literal {value}` меняет primitive literal с проверкой исходного типа; Number -0 сохраняется.
+- `operator {operator}` меняет supported binary/unary operator, оборачивая operands для сохранения precedence/evaluation order. Await этим действием не изменяется.
+- `call {target,arguments}` меняет qualified target и expression arguments. Каждый argument обязан быть одним синтаксическим выражением; actual target/signature/effects проверяет frontend.
+- `insert {index,statement}` вставляет одну инструкцию в выбранный Block перед указанной позицией (или в конец). Parser не позволяет выдать несколько instructions/declarations за одну.
+- `delete` удаляет выбранный statement из Block. Missing return, dangling locals или other semantic errors отклоняются без commit.
+
+Operation record имеет точные fields, node category и stale-source guards. Диапазоны восстанавливаются из собственного AST, user offsets не принимаются. Новая программа проходит прежние source/IR/closure/UI checks и existing Undo/persistence. Это структурные source edits, не самостоятельный графовый язык и не arbitrary port rewiring. Формы IDE заполняют literal/operator/call values из выбранного узла; call arguments вводятся EMS expressions по одному в строке. Для блока — позиция и инструкция. Generic/full CFG/collection/free layout ограничения AC-059 сохраняются.
+
+Tests/control-graph-ops.test.mjs доказывает actual literal/operator/runtime+standalone result, signed zero, typed call and argument injection negatives, block insertion/deletion/Undo, missing return, multi-statement and stale/category/field failures. Actual Chromium forms меняют call→3, вставляют state write перед вычислением→63, удаляют его→3, меняют literal→4 и operator→5; wrong call argument не меняет source/preview. Full canvas/unified manager/MVP/deploy остаются открытыми.

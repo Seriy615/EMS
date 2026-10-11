@@ -5,3 +5,5 @@
 fieldset{border:1px solid #354b67;border-radius:6px;margin:1rem 0;padding:1rem}fieldset input,fieldset select{font:inherit;padding:.4rem;max-width:100%;margin:.3rem}#handler-source{box-sizing:border-box;width:100%;height:160px;background:#111a2a;color:#e7edf7;font:14px ui-monospace,monospace}#handler-inspect{max-height:220px;overflow:auto}#event-inputs label{display:flex;gap:.5rem;align-items:center}
 
 #control-graph{max-height:500px;overflow:auto;border:1px solid #354b67;margin-top:1rem}#control-graph text{font:12px ui-monospace,monospace}#control-graph g{cursor:pointer}#control-graph g.selected rect{stroke:#ffcf75;stroke-width:3}#control-graph .edge-call{stroke-dasharray:4}#graph-node-source{box-sizing:border-box;width:100%;height:100px;background:#111a2a;color:#e7edf7;font:14px ui-monospace,monospace}
+
+#graph-operations{display:flex;flex-wrap:wrap;gap:.5rem;margin-top:1rem}#graph-operations textarea{box-sizing:border-box;width:100%;height:65px;background:#111a2a;color:#e7edf7}

@@ -5,6 +5,7 @@ import {compileReactorJS} from '../src/compiler/reactor.mjs';
 import {compileUIJS} from '../src/compiler/ui.mjs';
 import {buildUIProjectPackage} from '../src/compiler/ui-package.mjs';
 import {handlerSourceGraph,replaceHandlerGraphNode} from '../src/studio/control-graph.mjs';
+import {editHandlerGraphNode} from '../src/studio/control-graph-ops.mjs';
 import { readFile, stat, open } from 'node:fs/promises';
 import { createCoreRegistry, parseTextEMS, validateGraph, executeGraph, compileStandaloneJS, compiledAtomicManifest, registerCompiledAtomic, registerTrustedJSBindings } from '../src/reference/index.mjs';
 import { lowerGraphToIR, serializeIR, parseIR, executeIR, compileIRToJS, graphProvenance } from '../src/ir/index.mjs';
@@ -297,5 +298,12 @@ await check('typed control graph edit recompiles an actual source-owned UI handl
  replaceHandlerGraphNode(editor,'change',graph.source,node.id,'state.count.read()+delta*2');
  const runtime=new UIRuntime(editor.application,standaloneUIBase,{policy:{capabilities:['ui.render','state.read','state.write'],allowedEffects:['ui.render','state.read','state.write']}});
  try{return await runtime.dispatch('increment','press')===2;}finally{await runtime.close();}
+});
+await check('structured graph call edit executes through the original typed handler frontend',async()=>{
+ const editor=new UIProjectEditor(standaloneUIApplication,standaloneUIBase,{sources:JSON.parse(await get('examples/ui-source-counter.ems-ui.json')).sources});
+ const graph=handlerSourceGraph(editor,'change'),node=graph.nodes.find(item=>item.contract?.id==='state.count.write');
+ editHandlerGraphNode(editor,'change',graph.source,node.id,{kind:'call',target:'state.count.write',arguments:['next*3']});
+ const runtime=new UIRuntime(editor.application,standaloneUIBase,{policy:{capabilities:['ui.render','state.read','state.write'],allowedEffects:['ui.render','state.read','state.write']}});
+ try{return await runtime.dispatch('increment','press')===3;}finally{await runtime.close();}
 });
 console.log(`\nEMS foundation verification passed (${checks} checks). Not production readiness.`);

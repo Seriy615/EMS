@@ -19,7 +19,7 @@ export function handlerSourceGraph(editor,event){
   const type=checked.types.get(node),call=checked.calls.get(node),target=call?.target;
   const text=draft.source.slice(node.location.start.offset,node.location.end.offset);
   const contract=target?.contract??(target?.declaration?.external?registry.resolve(target.name):null);
-  const item={id,kind:node.kind,type:type?typeName(type):null,label:node.operator??node.name??node.binding??node.kind,text,location:structuredClone(node.location),depth,editable:!node.external,contract:contract?{id:contract.id,version:contract.version,kind:contract.kind,inputs:structuredClone(contract.inputs),output:contract.output,effects:[...contract.effects],capabilities:[...contract.capabilities]}:null,callee:target&&!contract?target.name:null};
+  const item={id,kind:node.kind,type:type?typeName(type):null,label:node.operator??node.name??node.binding??node.kind,literalValue:node.kind==='LiteralExpression'?node.value:null,arguments:node.kind==='CallExpression'?node.arguments.map(argument=>draft.source.slice(argument.location.start.offset,argument.location.end.offset)):null,text,location:structuredClone(node.location),depth,editable:!node.external,contract:contract?{id:contract.id,version:contract.version,kind:contract.kind,inputs:structuredClone(contract.inputs),output:contract.output,effects:[...contract.effects],capabilities:[...contract.capabilities]}:null,callee:target&&!contract?target.name:null};
   nodes.push(item);if(['FunctionDeclaration','ContractDeclaration'].includes(node.kind))functions.set(node.name,id);
   for(const [key,value]of Object.entries(node)){
    if(['location','callee','type','output','parameters','requirements'].includes(key))continue;

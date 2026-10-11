@@ -453,17 +453,18 @@
         "GPT-6.1 Sol",
         "GPT-6 Luna"
       ],
-      "progress": "AC-047 existing text integration plus AC-059 initial checked control source graph: AST/typechecker projection with source ranges, typed operand/control/sequence/local helper edges, atomic public interfaces, SVG selection and transactional source-fragment edits through original frontend/IR. Actual runtime/standalone changes, witness/storage/undo/stale/type rollback and browser save/reopen pass. Full AC-012/free port wiring/graphical node creation/layout/control CFG/runtime source trace and unified projects remain open. See docs/spec/CONTROL_GRAPH.md.",
+      "progress": "AC-047/059/060 initial text/source graph integration: checked typed source-region graph, SVG selection, raw node fragments and structured literal/operator/call/single-statement insertion/deletion operations. Exact AST ranges/stale guards and ordinary frontend/IR/witness/UI binding checks; runtime/standalone/signed-zero/Undo and actual Chromium forms outcomes validated. Full AC-012/free port wiring/graphical control CFG/layout/runtime source trace/unified projects remain open. See docs/spec/CONTROL_GRAPH.md.",
       "evidence": {
-        "scope": "Initial source-region control graph +node fragment editing, not full control canvas/AC-012.",
+        "scope": "Initial source-region graph plus structured source node operations; not full canvas/AC-012.",
         "docs": "docs/spec/CONTROL_GRAPH.md",
         "testFiles": [
           "tests/control-graph.test.mjs",
+          "tests/control-graph-ops.test.mjs",
           "tests/browser/control-graph.test.mjs"
         ],
-        "tests": "660/660 PASS",
-        "verify": "126/126 PASS",
-        "browserTests": "18/18 PASS",
+        "tests": "664/664 PASS",
+        "verify": "127/127 PASS",
+        "browserTests": "19/19 PASS",
         "commands": [
           "npm test",
           "npm run verify",
