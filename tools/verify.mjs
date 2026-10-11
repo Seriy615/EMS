@@ -12,7 +12,7 @@ const get=async p=>readFile(new URL(p,root),'utf8');
 const readJSON=async p=>JSON.parse(await get(p));
 let checks=0;
 async function check(desc, fn) { const x=await fn(); assert.ok(x,desc); checks++; console.log('✓',desc); }
-const required=['AGENTS.md','.agents/policy.json','PROJECT_GOAL.md','docs/spec/LANGUAGE_SEMANTICS.md','docs/spec/IR.md','schemas/ir.schema.json','docs/spec/STATE_EVENTS.md','schemas/reactor.schema.json','docs/spec/CONTROL_IR.md','schemas/control-ir.schema.json','schemas/control-finite-ir.schema.json','schemas/control-algebraic-ir.schema.json','docs/spec/CONTROL_ALGEBRAIC.md','docs/spec/CONTROL_FUTURES.md','schemas/control-futures-ir.schema.json','docs/qa/PROGRESS.md','docs/spec/EMS_FULL_SPEC.md','docs/plans/ROADMAP.md','docs/qa/ACCEPTANCE.md','tasks/backlog.json'];
+const required=['AGENTS.md','.agents/policy.json','PROJECT_GOAL.md','docs/spec/LANGUAGE_SEMANTICS.md','docs/spec/IR.md','schemas/ir.schema.json','docs/spec/STATE_EVENTS.md','schemas/reactor.schema.json','docs/spec/CONTROL_IR.md','schemas/control-ir.schema.json','schemas/control-finite-ir.schema.json','schemas/control-algebraic-ir.schema.json','docs/spec/CONTROL_ALGEBRAIC.md','docs/spec/CONTROL_FUTURES.md','schemas/control-futures-ir.schema.json','docs/spec/CONTROL_STREAMS.md','schemas/control-streams-ir.schema.json','docs/qa/PROGRESS.md','docs/spec/EMS_FULL_SPEC.md','docs/plans/ROADMAP.md','docs/qa/ACCEPTANCE.md','tasks/backlog.json'];
 for(const f of required) { await stat(new URL(f,root)); await check(`found ${f}`,()=>true); }
 const policy=await readJSON('.agents/policy.json');
 await check('models exactly Sol 6.1 + Luna 6',()=>policy.agents.approvedDisplayNames.join(',')==='GPT-6.1 Sol,GPT-6 Luna');
@@ -141,5 +141,14 @@ await check('independent async standalone matches language Future result',async(
 await check('future creation budget is shared by runtime and standalone',async()=>{
   await assert.rejects(executeIR(futuresIR,{value:3},registry,{maxFutures:1}),{code:'FUTURE_LIMIT'});
   await assert.rejects(futuresOutput.execute({value:3},{maxFutures:1}),{code:'FUTURE_LIMIT'});return true;
+});
+const streamsBundle=lowerCheckedModule(typecheckModule(parseEMSModule(await get('examples/streams.ems')),registry),'demo.StreamTotal',registry);
+const streamsIR=parseIR(serializeIR(streamsBundle.ir,registry),registry);
+await check('bounded Stream producer/consumer executes through serialized shared IR',async()=>streamsIR.profile==='ems-control-streams/1' && await executeIR(streamsIR,{values:[1,2,3]},registry)===6);
+const streamsOutput=await import(`data:text/javascript,${encodeURIComponent(compileIRToJS(streamsIR,registry))}`);
+await check('independent Stream standalone agrees with runtime',async()=>await streamsOutput.execute({values:[1,2,3]})===6);
+await check('terminal producer budget failure releases Stream waiters and preserves code',async()=>{
+  await assert.rejects(executeIR(streamsIR,{values:[1,2,3]},registry,{maxSteps:30}),{code:'STEP_LIMIT'});
+  await assert.rejects(streamsOutput.execute({values:[1,2,3]},{maxSteps:30}),{code:'STEP_LIMIT'});return true;
 });
 console.log(`\nEMS foundation verification passed (${checks} checks). Not production readiness.`);

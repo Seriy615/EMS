@@ -31,7 +31,7 @@ export function checkModuleEffects(checked, registry) {
     if (pure && (declared.effects.length || declared.capabilities.length))
       diagnostic('INVALID_REQUIREMENT', 'pure cannot be combined with effects or capabilities', target.declaration);
     const entry = { target, declared, pure, explicit: requirements.length > 0,
-      effects: new Set(declared.effects), capabilities: new Set(declared.capabilities), calls: [] };
+      effects: new Set(declared.effects), capabilities: new Set(declared.capabilities), localEffects: new Set(), calls: [] };
     if (target.declaration.external && registry.items.has(target.name)) {
       const policy = contractPolicy(registry.resolve(target.name));
       for (const field of ['effects', 'capabilities']) for (const value of policy[field]) entry[field].add(value);
@@ -41,6 +41,8 @@ export function checkModuleEffects(checked, registry) {
       const node = pending.pop();
       if (!node || typeof node !== 'object') continue;
       const call = checked.calls.get(node);
+      if (call?.streamOperation) entry.localEffects.add({channel:'stream.create',fromArray:'stream.create',next:'stream.read',send:'stream.write',close:'stream.close'}[call.streamOperation]);
+      if (node.kind === 'ForStatement' && node.asynchronous) entry.localEffects.add('stream.read');
       if (call?.target) entry.calls.push({ target: call.target, node });
       for (const [key, value] of Object.entries(node)) {
         if (key === 'location') continue;
@@ -63,14 +65,16 @@ export function checkModuleEffects(checked, registry) {
     const source = entries.get(name);
     for (const parent of dependents.get(name)) {
       const destination = entries.get(parent); let changed = false;
-      for (const field of ['effects', 'capabilities']) for (const value of source[field]) {
+      for (const field of ['effects', 'capabilities', 'localEffects']) for (const value of source[field]) {
         if (!destination[field].has(value)) { destination[field].add(value); changed = true; }
       }
       if (changed && !queued.has(parent)) { queue.push(parent); queued.add(parent); }
     }
   }
-  const policies = new Map();
+  const policies = new Map(); checked.localEffects = new Map();
   for (const [name, entry] of entries) {
+    if (entry.pure && entry.localEffects.size) diagnostic('EFFECT_MISMATCH', `${name}: pure cannot mutate local Stream state`, entry.target.declaration);
+    checked.localEffects.set(name,[...entry.localEffects].sort());
     for (const field of ['effects', 'capabilities']) {
       if (entry.explicit && [...entry[field]].some(value => !entry.declared[field].includes(value)))
         diagnostic('EFFECT_MISMATCH', `${name}: inferred ${field} exceed declared requirements`, entry.target.declaration);

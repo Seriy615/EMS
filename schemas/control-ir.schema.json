@@ -11,6 +11,9 @@
     },
     {
       "$ref": "control-futures-ir.schema.json"
+    },
+    {
+      "$ref": "control-streams-ir.schema.json"
     }
   ]
 }

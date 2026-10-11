@@ -216,3 +216,9 @@ test('FIFO next event waits for discarded task completion before observing commi
   assert.equal(completed,false);assert.deepEqual(session.snapshot(),{count:0});release(7);
   assert.equal(await pending,0);assert.equal(await queued,7);assert.deepEqual(session.snapshot(),{count:7});await session.close();
 });
+
+test('terminal failure in one task cancels a sibling uncooperative host wait',{timeout:3000},async()=>{
+  const registry=createCoreRegistry();registry.registerAtomic({id:'waiting',inputs:{},output:'Number',execute:()=>new Promise(()=>{})});
+  const bundle=lower('async fn blocked()->Number { return waiting(); } async fn exhausted()->Number { while true {} return 0; } async fn test()->Number { let pending=blocked(); exhausted(); return await pending; }',registry);
+  await assert.rejects(executeIR(bundle.ir,{},registry,{maxSteps:40}),{code:'STEP_LIMIT'});
+});

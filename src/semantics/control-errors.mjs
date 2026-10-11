@@ -18,5 +18,5 @@ export function controlCatchValue(error, type) {
   return cloneControlValue(error.value);
 }
 export function terminalControlError(error) {
-  return error?.name === 'EmsError' && ['CANCELLED', 'STEP_LIMIT', 'CALL_DEPTH', 'EVALUATION_DEPTH', 'FUTURE_LIMIT'].includes(error.code);
+  return error?.name === 'EmsError' && ['CANCELLED', 'STEP_LIMIT', 'CALL_DEPTH', 'EVALUATION_DEPTH', 'FUTURE_LIMIT', 'STREAM_LIMIT', 'STREAM_PENDING_LIMIT'].includes(error.code);
 }

@@ -109,3 +109,5 @@ AC-025 требует одинаковых значений (включая зн
 Исполняемый Option/Result/match профиль: `CONTROL_ALGEBRAIC.md` (AC-035). Local generic specializations, aliases, nested patterns и typed catch используют общий control IR; Registry foreign/state binding ABI остаётся primitive.
 
 AC-036: language async/Future определены в CONTROL_FUTURES.md. Hot scoped tasks, explicit typed await, supervision/join перед commit, total future budget и async standalone реализованы на общем control IR. Прежний graph-only finite standalone profile не расширяется неявно. Stream и guaranteed cleanup остаются следующими gates.
+
+AC-037: Stream<T>, typed intrinsics/for await и обязательные computed localEffects реализованы в ems-control-streams/1 (CONTROL_STREAMS.md). Bounded channels/FIFO/backpressure/cancellation, terminal task wakeup, actor rollback/replay и standalone используют общий IR/helpers. ResourceHandle/using lifecycle и foreign Stream adapters ещё не реализованы.

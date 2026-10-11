@@ -2,7 +2,7 @@ import { fail } from '../reference/errors.mjs';
 import { assertValueType as assertPrimitiveValueType } from '../reference/types.mjs';
 
 /** Canonical finite type grammar for the algebraic control profile, independent of frontend AST. */
-export function parseControlType(source, allowFuture = false) {
+export function parseControlType(source, allowFuture = false, allowStream = false) {
   if (typeof source !== 'string' || source.length > 4096) fail('UNKNOWN_TYPE', 'Invalid control type');
   let offset = 0;
   function parse(depth) {
@@ -11,7 +11,7 @@ export function parseControlType(source, allowFuture = false) {
     if (!match) fail('UNKNOWN_TYPE', 'Invalid control type ' + source);
     const name = match[0]; offset += name.length;
     if (['Number', 'NumberArray', 'Boolean', 'String'].includes(name)) return { name, arguments: [] };
-    if (!['Option', 'Result', ...(allowFuture ? ['Future'] : [])].includes(name) || source[offset++] !== '<') fail('UNKNOWN_TYPE', 'Invalid control type ' + source);
+    if (!['Option', 'Result', ...(allowFuture ? ['Future'] : []), ...(allowStream ? ['Stream'] : [])].includes(name) || source[offset++] !== '<') fail('UNKNOWN_TYPE', 'Invalid control type ' + source);
     const arguments_ = [parse(depth + 1)];
     if (name === 'Result') { if (source[offset++] !== ',') fail('UNKNOWN_TYPE', 'Invalid control type ' + source); arguments_.push(parse(depth + 1)); }
     if (source[offset++] !== '>') fail('UNKNOWN_TYPE', 'Invalid control type ' + source);
@@ -25,13 +25,17 @@ export function controlTypeName(type) {
   return type.name + (type.arguments.length ? '<' + type.arguments.map(controlTypeName).join(',') + '>' : '');
 }
 export function controlVariants(type) {
-  const parsed = typeof type === 'string' ? parseControlType(type, true) : type;
+  const parsed = typeof type === 'string' ? parseControlType(type, true, true) : type;
   return parsed.name === 'Option' ? new Map([['Some', [parsed.arguments[0]]], ['None', []]])
     : parsed.name === 'Result' ? new Map([['Ok', [parsed.arguments[0]]], ['Err', [parsed.arguments[1]]]]) : null;
 }
-export function assertControlValueType(value, expected, context, futureCheck) {
-  const type = parseControlType(expected, !!futureCheck);
+export function assertControlValueType(value, expected, context, futureCheck, streamCheck) {
+  const type = parseControlType(expected, !!futureCheck, !!streamCheck);
   function check(value, type) {
+    if (type.name === 'Stream') {
+      if (!streamCheck?.(value, controlTypeName(type.arguments[0]))) fail('TYPE_MISMATCH', `${context}: expected ${expected}, got Unknown`, { expected, received: 'Unknown', context });
+      return;
+    }
     if (type.name === 'Future') {
       if (!futureCheck?.(value, controlTypeName(type.arguments[0]))) fail('TYPE_MISMATCH', `${context}: expected ${expected}, got Unknown`, { expected, received: 'Unknown', context });
       return;

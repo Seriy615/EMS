@@ -1,3 +1,4 @@
+import { terminalControlError } from '../semantics/control-errors.mjs';
 import { fail } from '../reference/errors.mjs';
 import { assertSignal, checkCancellation, awaitCancellable } from './cancellation.mjs';
 
@@ -8,10 +9,14 @@ export function createFutureScope(options, validate) {
   if (!Number.isSafeInteger(maxFutures) || maxFutures < 1 || maxFutures > 100000)
     fail('INVALID_BUDGET', 'Expected future budget between 1 and 100000');
   const controller = new AbortController(), futures = new WeakMap(), tasks = [];
-  let closed = false;
+  let closed = false, terminalFailure;
   const relay = () => controller.abort();
   options.signal?.addEventListener('abort', relay, { once: true });
   if (options.signal?.aborted) relay();
+  function failure(error) {
+    if (terminalControlError(error)) { terminalFailure ??= error; controller.abort(); }
+    return { error, failed: true };
+  }
   function check(value, type) {
     const task = value !== null && typeof value === 'object' ? futures.get(value) : null;
     return !!task && task.type === type && !closed;
@@ -25,9 +30,9 @@ export function createFutureScope(options, validate) {
     // Attach both outcome handlers immediately: abandoned failures are supervised, never unhandled rejections.
     task.outcome = Promise.resolve().then(() => {
       checkCancellation(controller.signal); return awaitCancellable(operation(), controller.signal);
-    }).then(value => { checkCancellation(controller.signal); validate(value, type, 'future result'); return { value }; }, error => ({ error, failed: true }));
+    }).then(value => { checkCancellation(controller.signal); validate(value, type, 'future result'); return { value }; }, failure);
     // Validation can itself fail in the fulfillment handler.
-    task.outcome = task.outcome.catch(error => ({ error, failed: true }));
+    task.outcome = task.outcome.catch(failure);
     return handle;
   }
   async function wait(handle, type) {
@@ -53,5 +58,5 @@ export function createFutureScope(options, validate) {
     for (let index = 0; index < tasks.length; index++) await tasks[index].outcome;
   }
   function close() { closed = true; options.signal?.removeEventListener('abort', relay); }
-  return { signal: controller.signal, start, wait, join, abort, close, check };
+  return { signal: controller.signal, start, wait, join, abort, close, check, terminalFailure: () => terminalFailure };
 }

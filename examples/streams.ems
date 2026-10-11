@@ -1,0 +1,25 @@
+package demo.streams @ "0.1.0";
+
+async fn produce(values: Number[], output: Stream<Number>) -> Number {
+  let mut count = 0;
+  try {
+    for value in values {
+      await stream.send(output, value);
+      count = count + 1;
+    }
+    return count;
+  } finally {
+    stream.close(output);
+  }
+}
+
+// Capacity 1 provides real backpressure; completion joins the producer task.
+export async fn demo.StreamTotal(values: Number[]) -> Number {
+  let source: Stream<Number> = stream.channel(1);
+  let producer = produce(values, source);
+  let mut total = 0;
+  for await value in source {
+    total = total + value;
+  }
+  return total;
+}

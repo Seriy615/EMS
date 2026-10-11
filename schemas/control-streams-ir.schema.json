@@ -1,0 +1,957 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ems.local/schemas/control-streams-ir.schema.json",
+  "title": "EMS structured Stream IR v2",
+  "type": "object",
+  "properties": {
+    "schemaVersion": {
+      "const": "ems-ir/2"
+    },
+    "profile": {
+      "const": "ems-control-streams/1"
+    },
+    "id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "version": {
+      "type": "string",
+      "minLength": 1
+    },
+    "entry": {
+      "type": "string",
+      "minLength": 1
+    },
+    "functions": {
+      "type": "array",
+      "maxItems": 1000,
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "inputs": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "name": {
+                  "type": "string",
+                  "pattern": "^[A-Za-z_][A-Za-z0-9_]*$"
+                },
+                "type": {
+                  "$ref": "#/$defs/valueType"
+                }
+              },
+              "required": [
+                "name",
+                "type"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "output": {
+            "type": "object",
+            "properties": {
+              "type": {
+                "$ref": "#/$defs/valueType"
+              }
+            },
+            "required": [
+              "type"
+            ],
+            "additionalProperties": false
+          },
+          "requirements": {
+            "type": "object",
+            "properties": {
+              "effects": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "pattern": "^[-a-zA-Z0-9_.]+$"
+                },
+                "uniqueItems": true
+              },
+              "capabilities": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "pattern": "^[-a-zA-Z0-9_.]+$"
+                },
+                "uniqueItems": true
+              }
+            },
+            "required": [
+              "effects",
+              "capabilities"
+            ],
+            "additionalProperties": false
+          },
+          "policy": {
+            "type": "object",
+            "properties": {
+              "effects": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "pattern": "^[-a-zA-Z0-9_.]+$"
+                },
+                "uniqueItems": true
+              },
+              "capabilities": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "pattern": "^[-a-zA-Z0-9_.]+$"
+                },
+                "uniqueItems": true
+              }
+            },
+            "required": [
+              "effects",
+              "capabilities"
+            ],
+            "additionalProperties": false
+          },
+          "body": {
+            "type": "array",
+            "items": {
+              "$ref": "#/$defs/statement"
+            }
+          },
+          "async": {
+            "type": "boolean"
+          },
+          "localEffects": {
+            "type": "array",
+            "uniqueItems": true,
+            "items": {
+              "enum": [
+                "stream.create",
+                "stream.read",
+                "stream.write",
+                "stream.close"
+              ]
+            }
+          }
+        },
+        "required": [
+          "id",
+          "inputs",
+          "output",
+          "requirements",
+          "policy",
+          "body",
+          "async",
+          "localEffects"
+        ],
+        "additionalProperties": false
+      }
+    }
+  },
+  "required": [
+    "schemaVersion",
+    "profile",
+    "id",
+    "version",
+    "entry",
+    "functions"
+  ],
+  "additionalProperties": false,
+  "$defs": {
+    "expression": {
+      "oneOf": [
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "const": "literal"
+            },
+            "type": {
+              "enum": [
+                "Number",
+                "NumberArray",
+                "Boolean",
+                "String"
+              ]
+            },
+            "value": {
+              "type": [
+                "number",
+                "boolean",
+                "string",
+                "array"
+              ]
+            }
+          },
+          "required": [
+            "kind",
+            "type",
+            "value"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "const": "local"
+            },
+            "type": {
+              "$ref": "#/$defs/valueType"
+            },
+            "name": {
+              "type": "string",
+              "pattern": "^[A-Za-z_][A-Za-z0-9_]*$"
+            }
+          },
+          "required": [
+            "kind",
+            "type",
+            "name"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "const": "array"
+            },
+            "type": {
+              "$ref": "#/$defs/valueType"
+            },
+            "elements": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/expression"
+              }
+            }
+          },
+          "required": [
+            "kind",
+            "type",
+            "elements"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "const": "index"
+            },
+            "type": {
+              "$ref": "#/$defs/valueType"
+            },
+            "value": {
+              "$ref": "#/$defs/expression"
+            },
+            "index": {
+              "$ref": "#/$defs/expression"
+            }
+          },
+          "required": [
+            "kind",
+            "type",
+            "value",
+            "index"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "const": "assign"
+            },
+            "type": {
+              "$ref": "#/$defs/valueType"
+            },
+            "name": {
+              "type": "string",
+              "pattern": "^[A-Za-z_][A-Za-z0-9_]*$"
+            },
+            "value": {
+              "$ref": "#/$defs/expression"
+            }
+          },
+          "required": [
+            "kind",
+            "type",
+            "name",
+            "value"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "const": "unary"
+            },
+            "type": {
+              "$ref": "#/$defs/valueType"
+            },
+            "operator": {
+              "enum": [
+                "+",
+                "-",
+                "!"
+              ]
+            },
+            "value": {
+              "$ref": "#/$defs/expression"
+            }
+          },
+          "required": [
+            "kind",
+            "type",
+            "operator",
+            "value"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "const": "binary"
+            },
+            "type": {
+              "$ref": "#/$defs/valueType"
+            },
+            "operator": {
+              "enum": [
+                "+",
+                "-",
+                "*",
+                "/",
+                "%",
+                "<",
+                "<=",
+                ">",
+                ">=",
+                "==",
+                "!=",
+                "&&",
+                "||"
+              ]
+            },
+            "left": {
+              "$ref": "#/$defs/expression"
+            },
+            "right": {
+              "$ref": "#/$defs/expression"
+            }
+          },
+          "required": [
+            "kind",
+            "type",
+            "operator",
+            "left",
+            "right"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "const": "call"
+            },
+            "type": {
+              "$ref": "#/$defs/valueType"
+            },
+            "target": {
+              "oneOf": [
+                {
+                  "type": "object",
+                  "properties": {
+                    "kind": {
+                      "const": "function"
+                    },
+                    "id": {
+                      "type": "string",
+                      "minLength": 1
+                    }
+                  },
+                  "required": [
+                    "kind",
+                    "id"
+                  ],
+                  "additionalProperties": false
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "kind": {
+                      "const": "contract"
+                    },
+                    "id": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "version": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "async": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "kind",
+                    "id",
+                    "version",
+                    "async"
+                  ],
+                  "additionalProperties": false
+                }
+              ]
+            },
+            "arguments": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/expression"
+              }
+            }
+          },
+          "required": [
+            "kind",
+            "type",
+            "target",
+            "arguments"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "const": "construct"
+            },
+            "type": {
+              "$ref": "#/$defs/valueType"
+            },
+            "tag": {
+              "enum": [
+                "Some",
+                "None",
+                "Ok",
+                "Err"
+              ]
+            },
+            "arguments": {
+              "type": "array",
+              "maxItems": 1,
+              "items": {
+                "$ref": "#/$defs/expression"
+              }
+            }
+          },
+          "required": [
+            "kind",
+            "type",
+            "tag",
+            "arguments"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "const": "await"
+            },
+            "type": {
+              "$ref": "#/$defs/valueType"
+            },
+            "value": {
+              "$ref": "#/$defs/expression"
+            }
+          },
+          "required": [
+            "kind",
+            "type",
+            "value"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "const": "stream"
+            },
+            "type": {
+              "$ref": "#/$defs/valueType"
+            },
+            "operation": {
+              "enum": [
+                "channel",
+                "fromArray",
+                "next",
+                "send",
+                "close"
+              ]
+            },
+            "arguments": {
+              "type": "array",
+              "minItems": 1,
+              "maxItems": 2,
+              "items": {
+                "$ref": "#/$defs/expression"
+              }
+            }
+          },
+          "required": [
+            "kind",
+            "type",
+            "operation",
+            "arguments"
+          ],
+          "additionalProperties": false
+        }
+      ]
+    },
+    "statement": {
+      "oneOf": [
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "const": "let"
+            },
+            "name": {
+              "type": "string",
+              "pattern": "^[A-Za-z_][A-Za-z0-9_]*$"
+            },
+            "type": {
+              "$ref": "#/$defs/valueType"
+            },
+            "mutable": {
+              "type": "boolean"
+            },
+            "value": {
+              "$ref": "#/$defs/expression"
+            }
+          },
+          "required": [
+            "kind",
+            "name",
+            "type",
+            "mutable",
+            "value"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "const": "expression"
+            },
+            "value": {
+              "$ref": "#/$defs/expression"
+            }
+          },
+          "required": [
+            "kind",
+            "value"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "const": "return"
+            },
+            "value": {
+              "$ref": "#/$defs/expression"
+            }
+          },
+          "required": [
+            "kind",
+            "value"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "const": "block"
+            },
+            "body": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/statement"
+              }
+            }
+          },
+          "required": [
+            "kind",
+            "body"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "const": "if"
+            },
+            "condition": {
+              "$ref": "#/$defs/expression"
+            },
+            "then": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/statement"
+              }
+            },
+            "otherwise": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/statement"
+              }
+            }
+          },
+          "required": [
+            "kind",
+            "condition",
+            "then",
+            "otherwise"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "const": "while"
+            },
+            "condition": {
+              "$ref": "#/$defs/expression"
+            },
+            "body": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/statement"
+              }
+            }
+          },
+          "required": [
+            "kind",
+            "condition",
+            "body"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "const": "for"
+            },
+            "binding": {
+              "type": "string",
+              "pattern": "^[A-Za-z_][A-Za-z0-9_]*$"
+            },
+            "iterable": {
+              "$ref": "#/$defs/expression"
+            },
+            "body": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/statement"
+              }
+            }
+          },
+          "required": [
+            "kind",
+            "binding",
+            "iterable",
+            "body"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "const": "break"
+            }
+          },
+          "required": [
+            "kind"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "const": "continue"
+            }
+          },
+          "required": [
+            "kind"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "const": "throw"
+            },
+            "value": {
+              "$ref": "#/$defs/expression"
+            }
+          },
+          "required": [
+            "kind",
+            "value"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "const": "try"
+            },
+            "body": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/statement"
+              }
+            },
+            "handler": {
+              "oneOf": [
+                {
+                  "type": "null"
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "binding": {
+                      "type": "string",
+                      "pattern": "^[A-Za-z_][A-Za-z0-9_]*$"
+                    },
+                    "type": {
+                      "$ref": "#/$defs/valueType"
+                    },
+                    "body": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/$defs/statement"
+                      }
+                    }
+                  },
+                  "required": [
+                    "binding",
+                    "type",
+                    "body"
+                  ],
+                  "additionalProperties": false
+                }
+              ]
+            },
+            "finalizer": {
+              "oneOf": [
+                {
+                  "type": "null"
+                },
+                {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/$defs/statement"
+                  }
+                }
+              ]
+            }
+          },
+          "required": [
+            "kind",
+            "body",
+            "handler",
+            "finalizer"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "const": "match"
+            },
+            "value": {
+              "$ref": "#/$defs/expression"
+            },
+            "arms": {
+              "type": "array",
+              "minItems": 1,
+              "items": {
+                "type": "object",
+                "properties": {
+                  "pattern": {
+                    "$ref": "#/$defs/pattern"
+                  },
+                  "body": {
+                    "type": "array",
+                    "items": {
+                      "$ref": "#/$defs/statement"
+                    }
+                  }
+                },
+                "required": [
+                  "pattern",
+                  "body"
+                ],
+                "additionalProperties": false
+              }
+            }
+          },
+          "required": [
+            "kind",
+            "value",
+            "arms"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "const": "forAwait"
+            },
+            "binding": {
+              "type": "string",
+              "pattern": "^[A-Za-z_][A-Za-z0-9_]*$"
+            },
+            "iterable": {
+              "$ref": "#/$defs/expression"
+            },
+            "body": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/statement"
+              }
+            }
+          },
+          "required": [
+            "kind",
+            "binding",
+            "iterable",
+            "body"
+          ],
+          "additionalProperties": false
+        }
+      ]
+    },
+    "valueType": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 4096,
+      "pattern": "^(Number|NumberArray|Boolean|String|(Option|Result|Future|Stream)<[A-Za-z<>,]+>)$",
+      "$comment": "Canonical balanced grammar, arities and depth <=32 are checked by validateControlIR."
+    },
+    "pattern": {
+      "oneOf": [
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "const": "wildcard"
+            }
+          },
+          "required": [
+            "kind"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "const": "binding"
+            },
+            "name": {
+              "type": "string",
+              "pattern": "^[A-Za-z_][A-Za-z0-9_]*$"
+            }
+          },
+          "required": [
+            "kind",
+            "name"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "const": "literal"
+            },
+            "type": {
+              "enum": [
+                "Number",
+                "Boolean",
+                "String"
+              ]
+            },
+            "value": {
+              "type": [
+                "number",
+                "boolean",
+                "string"
+              ]
+            }
+          },
+          "required": [
+            "kind",
+            "type",
+            "value"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "const": "constructor"
+            },
+            "tag": {
+              "enum": [
+                "Some",
+                "None",
+                "Ok",
+                "Err"
+              ]
+            },
+            "arguments": {
+              "type": "array",
+              "maxItems": 1,
+              "items": {
+                "$ref": "#/$defs/pattern"
+              }
+            }
+          },
+          "required": [
+            "kind",
+            "tag",
+            "arguments"
+          ],
+          "additionalProperties": false
+        }
+      ]
+    }
+  }
+}

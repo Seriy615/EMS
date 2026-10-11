@@ -1,9 +1,10 @@
+import { createStreamScope, executeStreamOperation, streamBudgetOptions } from './streams.mjs';
 import { createFutureScope } from './futures.mjs';
 import { fail } from '../reference/errors.mjs';
 import { assertValueType } from '../reference/types.mjs';
 import { assertControlValueType, validateControlInputs, matchControlPattern } from '../semantics/control-algebraic.mjs';
 import { executeGraph } from '../reference/runtime.mjs';
-import { validateControlIR, decodeControlLiteral, CONTROL_FUTURE_PROFILE } from '../ir/control.mjs';
+import { validateControlIR, decodeControlLiteral, CONTROL_FUTURE_PROFILE, CONTROL_STREAM_PROFILE } from '../ir/control.mjs';
 import { assertPolicyNames } from '../semantics/effects.mjs';
 import { assertSignal, checkCancellation, awaitCancellable } from './cancellation.mjs';
 import { binaryControlValue, unaryControlValue, indexControlValue, controlBudgetOptions } from '../semantics/control-values.mjs';
@@ -24,9 +25,11 @@ export async function executeControlIR(ir, inputs, registry, options = {}) {
   const checked = validateControlIR(ir, registry); checkControlPolicy(checked.policy, options);
   validateControlInputs(checked.entry, inputs);
   const budget = controlBudgetOptions(options); let steps = 0;
-  const futures = ir.profile === CONTROL_FUTURE_PROFILE ? createFutureScope(options, validateValue) : null;
+  if (ir.profile === CONTROL_STREAM_PROFILE) streamBudgetOptions(options);
+  const futures = [CONTROL_FUTURE_PROFILE, CONTROL_STREAM_PROFILE].includes(ir.profile) ? createFutureScope(options, validateValue) : null;
   if (futures) options = { ...options, signal: futures.signal };
-  function validateValue(value, type, context) { assertControlValueType(value, type, context, futures?.check); }
+  const streams = ir.profile === CONTROL_STREAM_PROFILE ? createStreamScope(options) : null;
+  function validateValue(value, type, context) { assertControlValueType(value, type, context, futures?.check, streams?.check); }
   function tick() { checkCancellation(options.signal); if (++steps > budget.maxSteps) fail('STEP_LIMIT', 'Control execution step budget exhausted', { maxSteps: budget.maxSteps }); }
   async function expression(node, scope, frame) {
     tick();
@@ -47,6 +50,7 @@ export async function executeControlIR(ir, inputs, registry, options = {}) {
         else value = binaryControlValue(node.operator, left, await expression(node.right, scope, frame)); break;
       }
       case 'construct': value = node.arguments.length ? { tag: node.tag, value: await expression(node.arguments[0], scope, frame) } : { tag: node.tag }; break;
+      case 'stream': { const args=[];for(const argument of node.arguments)args.push(await expression(argument,scope,frame));value=executeStreamOperation(node.operation,node.type,args,streams,futures);break; }
       case 'await': value = await futures.wait(await expression(node.value, scope, frame), node.type); break;
       case 'call': {
         const args = []; for (const argument of node.arguments) args.push(await expression(argument, scope, frame));
@@ -118,6 +122,16 @@ export async function executeControlIR(ir, inputs, registry, options = {}) {
             if (result?.kind === 'return') return result;
             if (result?.kind === 'break') break;
           } break;
+        case 'forAwait': {
+          const stream = await expression(statement.iterable,scope,frame);
+          while (true) {
+            tick(); const item=await streams.next(stream);checkCancellation(options.signal);
+            if (item.tag === 'None') break;
+            tick();const nested=new Map(scope);nested.set(statement.binding,{value:item.value});
+            const result=await block(statement.body,nested,frame);if(result?.kind==='return')return result;if(result?.kind==='break')break;
+          }
+          break;
+        }
         case 'for': {
           const values = [...await expression(statement.iterable, scope, frame)];
           for (const value of values) { tick(); const nested = new Map(scope); nested.set(statement.binding, { value });
@@ -138,6 +152,6 @@ export async function executeControlIR(ir, inputs, registry, options = {}) {
     const result = await invoke(checked.entry, checked.entry.inputs.map(input => inputs[input.name]));
     if (futures) await futures.join();
     return result;
-  } catch (error) { if (futures) await futures.abort(); throw error; }
-  finally { futures?.close(); }
+  } catch (error) { const pending = futures?.terminalFailure() ?? error; if (futures) await futures.abort(); throw pending; }
+  finally { streams?.finish(); futures?.close(); }
 }

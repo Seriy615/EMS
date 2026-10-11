@@ -43,3 +43,5 @@ Evidence: `tests/control.test.mjs`: ветви, loops/break/continue, mutable sc
 Расширение `ems-control-algebraic/1` определено в CONTROL_ALGEBRAIC.md: Option/Result, typed construct и exhaustive match, включая error statements. Прежние profile gates сохранены.
 
 Language async/Future реализованы отдельным профилем `ems-control-futures/1` (AC-036, CONTROL_FUTURES.md): explicit async markers, typed await, execution-owned handles, supervised join/abort, async standalone. Прежние profiles и primitive Registry/state ABI сохранены. Stream и гарантированный resource lifecycle остаются открыты.
+
+AC-037: Stream<T>, typed intrinsics/for await и обязательные computed localEffects реализованы в ems-control-streams/1 (CONTROL_STREAMS.md). Bounded channels/FIFO/backpressure/cancellation, terminal task wakeup, actor rollback/replay и standalone используют общий IR/helpers. ResourceHandle/using lifecycle и foreign Stream adapters ещё не реализованы.

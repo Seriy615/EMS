@@ -41,3 +41,5 @@ In-memory structured cloning сохраняет signed zero; каноничес�
 Structured control-flow IR/lowering для if/loops/mutable locals реализован по AC-033 и работает в этих transactions. EMS-015 остаётся IN_PROGRESS: далее language futures/cancellation budget, algebraic/error/resource lifecycle и расширенный replay/conformance. M1 целиком открыт.
 
 Language async/Future реализованы отдельным профилем `ems-control-futures/1` (AC-036, CONTROL_FUTURES.md): explicit async markers, typed await, execution-owned handles, supervised join/abort, async standalone. Прежние profiles и primitive Registry/state ABI сохранены. Stream и гарантированный resource lifecycle остаются открыты.
+
+AC-037: Stream<T>, typed intrinsics/for await и обязательные computed localEffects реализованы в ems-control-streams/1 (CONTROL_STREAMS.md). Bounded channels/FIFO/backpressure/cancellation, terminal task wakeup, actor rollback/replay и standalone используют общий IR/helpers. ResourceHandle/using lifecycle и foreign Stream adapters ещё не реализованы.

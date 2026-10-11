@@ -1,11 +1,11 @@
 import { fail } from '../reference/errors.mjs';
 import { resolveType, unifyTypes, typeName } from './types.mjs';
-import { CONTROL_VERSION, CONTROL_PROFILE, CONTROL_ERROR_PROFILE, CONTROL_ALGEBRAIC_PROFILE, CONTROL_FUTURE_PROFILE, validateControlIR } from '../ir/control.mjs';
+import { CONTROL_VERSION, CONTROL_PROFILE, CONTROL_ERROR_PROFILE, CONTROL_ALGEBRAIC_PROFILE, CONTROL_FUTURE_PROFILE, CONTROL_STREAM_PROFILE, validateControlIR } from '../ir/control.mjs';
 
 function controlType(type, node) {
   if (type.kind === 'Type' && ['Number', 'Boolean', 'String'].includes(type.name)) return type.name;
   if (type.name === 'Array' && type.arguments[0]?.name === 'Number') return 'NumberArray';
-  if (['Option', 'Result', 'Future'].includes(type.name)) return `${type.name}<${type.arguments.map(argument => controlType(argument, node)).join(',')}>`;
+  if (['Option', 'Result', 'Future', 'Stream'].includes(type.name)) return `${type.name}<${type.arguments.map(argument => controlType(argument, node)).join(',')}>`;
   fail('UNSUPPORTED_PROFILE', `Control IR cannot represent ${typeName(type)}`, { location: node?.location });
 }
 const flexible = type => type.kind === 'Variable' ? { kind: 'Variable', name: type.name } : { ...type, arguments: type.arguments.map(flexible) };
@@ -13,7 +13,7 @@ const flexible = type => type.kind === 'Variable' ? { kind: 'Variable', name: ty
 /** Specialize typed functions into semantic control blocks; locations remain a separate sidecar. */
 export function lowerControlModule(checked, entry, registry) {
   const functions = [], instances = new Map(), provenance = {};
-  let next = 0, errors = false, algebraic = false, futures = false;
+  let next = 0, errors = false, algebraic = false, futures = false, streams = false;
   const diagnostic = node => fail('UNSUPPORTED_PROFILE', `${node.kind} requires another IR profile`, { location: node.location });
   function specialize(target, inputs) {
     if (target.async) futures = true;
@@ -33,10 +33,11 @@ export function lowerControlModule(checked, entry, registry) {
     const reference = { kind: 'function', id }; instances.set(key, reference);
     const fn = { id, inputs: target.inputs.map((input, index) => ({ name: input.name, type: controlType(inputs[index], target.declaration) })),
       output: { type: controlType(resolveType(target.output, substitutions), target.declaration) }, requirements: { effects: target.declaration.requirements.filter(r => r.name === 'effect').map(r => r.value).sort(), capabilities: target.declaration.requirements.filter(r => r.name === 'capability').map(r => r.value).sort() }, policy: structuredClone(checked.policies.get(target.name)), body: [] };
-    fn.async = target.async;
+    fn.async = target.async; fn.localEffects = [...checked.localEffects.get(target.name)];
     functions.push(fn); provenance[id] = { location: target.declaration.location };
-    const typeOf = node => { const type = controlType(resolveType(checked.types.get(node), substitutions), node); if (type.includes('Future<')) futures = true; return type; };
+    const typeOf = node => { const type = controlType(resolveType(checked.types.get(node), substitutions), node); if (type.includes('Future<')) futures = true; if (type.includes('Stream<')) streams = true; return type; };
     if ([...fn.inputs.map(input => input.type), fn.output.type].some(type => type.includes('Future<'))) futures = true;
+    if ([...fn.inputs.map(input => input.type), fn.output.type].some(type => type.includes('Stream<'))) streams = true;
     if ([...fn.inputs.map(input => input.type), fn.output.type].some(type => type.includes('<'))) algebraic = true;
     function pattern(node, actual) {
       if (node.kind === 'WildcardPattern') return { kind: 'wildcard' };
@@ -56,7 +57,7 @@ export function lowerControlModule(checked, entry, registry) {
         case 'BinaryExpression': return { kind: 'binary', type, operator: node.operator, left: expression(node.left), right: expression(node.right) };
         case 'AssignmentExpression': return { kind: 'assign', type, name: node.left.name, value: expression(node.right) };
         case 'CallExpression': {
-          const call = checked.calls.get(node); if (call.algebraicConstructor) { algebraic = true; return { kind: 'construct', type, tag: call.algebraicConstructor, arguments: node.arguments.map(expression) }; }
+          const call = checked.calls.get(node); if (call.streamOperation) { streams = true; return { kind: 'stream', type, operation: call.streamOperation, arguments: node.arguments.map(expression) }; } if (call.algebraicConstructor) { algebraic = true; return { kind: 'construct', type, tag: call.algebraicConstructor, arguments: node.arguments.map(expression) }; }
           const target = specialize(call.target, call.inputs.map(input => resolveType(input, substitutions)));
           return { kind: 'call', type, target, arguments: node.arguments.map(expression) };
         }
@@ -75,6 +76,7 @@ export function lowerControlModule(checked, entry, registry) {
           const type = node.handler ? controlType(resolveType(checked.catchTypes.get(node.handler), substitutions), node.handler) : null;
           if (type?.includes('<')) algebraic = true;
           if (type?.includes('Future<')) futures = true;
+          if (type?.includes('Stream<')) streams = true;
           return { kind: 'try', body: block(node.body),
             handler: node.handler ? { binding: node.handler.binding, type, body: block(node.handler.body) } : null,
             finalizer: node.finalizer ? block(node.finalizer) : null };
@@ -84,7 +86,7 @@ export function lowerControlModule(checked, entry, registry) {
         case 'IfStatement': return { kind: 'if', condition: expression(node.condition), then: block(node.then),
           otherwise: node.otherwise ? node.otherwise.kind === 'Block' ? block(node.otherwise) : [statement(node.otherwise)] : [] };
         case 'WhileStatement': return { kind: 'while', condition: expression(node.condition), body: block(node.body) };
-        case 'ForStatement': return { kind: 'for', binding: node.binding, iterable: expression(node.iterable), body: block(node.body) };
+        case 'ForStatement': if (node.asynchronous) streams = true; return { kind: node.asynchronous ? 'forAwait' : 'for', binding: node.binding, iterable: expression(node.iterable), body: block(node.body) };
         case 'BreakStatement': return { kind: 'break' };
         case 'ContinueStatement': return { kind: 'continue' };
       }
@@ -97,8 +99,10 @@ export function lowerControlModule(checked, entry, registry) {
   if (target.parameters.length) fail('CANNOT_INFER', 'Generic entry requires concrete types');
   const linked = specialize(target, target.inputs.map(input => input.type));
   if (linked.kind !== 'function') fail('UNSUPPORTED_PROFILE', 'Entry must have an EMS body');
-  const ir = { schemaVersion: CONTROL_VERSION, profile: futures ? CONTROL_FUTURE_PROFILE : algebraic ? CONTROL_ALGEBRAIC_PROFILE : errors ? CONTROL_ERROR_PROFILE : CONTROL_PROFILE, id: entry,
+  const ir = { schemaVersion: CONTROL_VERSION, profile: streams ? CONTROL_STREAM_PROFILE : futures ? CONTROL_FUTURE_PROFILE : algebraic ? CONTROL_ALGEBRAIC_PROFILE : errors ? CONTROL_ERROR_PROFILE : CONTROL_PROFILE, id: entry,
     version: checked.ast.package?.version ?? '0.1.0', entry: linked.id, functions };
+  if (streams) futures = true;
+  else for (const fn of functions) delete fn.localEffects;
   if (!futures) for (const fn of functions) delete fn.async;
   else {
     function normalize(node) {

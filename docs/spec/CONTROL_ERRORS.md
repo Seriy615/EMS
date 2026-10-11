@@ -1,6 +1,6 @@
 # Пользовательские исключения и finally: control error profile
 
-EMS-015, AC-034, G-01/03/11/12. Профиль `ems-control-errors/1`, semantic artifact `ems-ir/2`. Реализация: `src/semantics/control-errors.mjs`, общий control validator/runtime/compiler. Это исполняемый error slice; Option/Result/match реализованы отдельным расширением CONTROL_ALGEBRAIC.md; полный error IDL, Future добавлены в CONTROL_FUTURES.md; Stream и resource lifecycle ещё впереди.
+EMS-015, AC-034, G-01/03/11/12. Профиль `ems-control-errors/1`, semantic artifact `ems-ir/2`. Реализация: `src/semantics/control-errors.mjs`, общий control validator/runtime/compiler. Это исполняемый error slice; Option/Result/match реализованы отдельным расширением CONTROL_ALGEBRAIC.md; полный error IDL, Future добавлены в CONTROL_FUTURES.md; Stream добавлен в CONTROL_STREAMS.md; resource lifecycle ещё впереди.
 
 ## Значения и catch
 
@@ -24,7 +24,7 @@ Abrupt finalizer outcome заменяет pending ordinary outcome: return за�
 
 ## Терминальные отказы и cleanup границы
 
-CANCELLED, STEP_LIMIT, CALL_DEPTH и EVALUATION_DEPTH — terminal control failures; future profile добавляет FUTURE_LIMIT. Catch не сопоставляет их с user values. Если такой отказ уже pending, даже return/break/новая ошибка finalizer не могут его подавить: сохраняется исходный code/details. Новый terminal отказ во время ordinary finalizer имеет обычный приоритет новой ошибки. Guard совпадает в runtime и generated JS.
+CANCELLED, STEP_LIMIT, CALL_DEPTH и EVALUATION_DEPTH — terminal control failures; future profile добавляет FUTURE_LIMIT, stream profile — STREAM_LIMIT/STREAM_PENDING_LIMIT. Catch не сопоставляет их с user values. Если такой отказ уже pending, даже return/break/новая ошибка finalizer не могут его подавить: сохраняется исходный code/details. Новый terminal отказ во время ordinary finalizer имеет обычный приоритет новой ошибки. Guard совпадает в runtime и generated JS.
 
 Finalizer использует тот же budget и signal; каждый его statement/expression учитывается обычными ticks. После abort или STEP_LIMIT guard может остановить его до первой инструкции. Поэтому этот finally **не** гарантирует освобождение ресурсов при cancellation/exhaustion. Бounded cleanup scope с самостоятельным lifecycle protocol ещё не реализован; нельзя выдавать данную функциональность за using/ResourceHandle cleanup. Synchronous trusted host work по-прежнему не preempted.
 
@@ -40,4 +40,4 @@ node tools/ems.mjs ir-run dist/recovery.ir.json '{"value":-5}'
 node tools/ems.mjs ir-build dist/recovery.ir.json --out dist/recovery.mjs
 ```
 
-Пример демонстрирует numeric user-value recovery. Tests: `tests/control-errors.test.mjs` — 29 positive/negative/differential tests: primitive/array/alias/generic catches, nesting/rethrow, signed zero, lexical shadowing, return/break/continue/finally priority, terminal failure preservation, exact budgets, malformed/profile IR, effects, state rollback/replay, trace omission и independent CLI/process export. Node evidence не закрывает browser/native P1. Следующая часть EMS-015 — Stream и lifecycle.
+Пример демонстрирует numeric user-value recovery. Tests: `tests/control-errors.test.mjs` — 29 positive/negative/differential tests: primitive/array/alias/generic catches, nesting/rethrow, signed zero, lexical shadowing, return/break/continue/finally priority, terminal failure preservation, exact budgets, malformed/profile IR, effects, state rollback/replay, trace omission и independent CLI/process export. Node evidence не закрывает browser/native P1. Следующая часть EMS-015 — resource lifecycle.

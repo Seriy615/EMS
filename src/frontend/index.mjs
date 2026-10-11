@@ -200,8 +200,9 @@ class Parser {
       const condition = this.expression(), body = this.block(); return this.node('WhileStatement', start, { condition, body });
     }
     if (this.take('for')) {
+      const asynchronous = this.take('await');
       const binding = this.identifier(); this.expect('in'); const iterable = this.expression(), body = this.block();
-      return this.node('ForStatement', start, { binding, iterable, body });
+      return this.node('ForStatement', start, { binding, iterable, body, ...(asynchronous ? { asynchronous: true } : {}) });
     }
     if (this.take('match')) {
       const value = this.expression(), arms = []; this.expect('{');

@@ -8,7 +8,7 @@ EMS-015, AC-036, G-01/03/11/12. Новый профиль `ems-control-futures/1
 
 IR expression `{kind:"await", type:T, value:expression<Future<T>>}` проверяет тип, async context и profile. Contract call target в этом профиле дополнительно содержит Boolean `async`, отражающий explicit extern declaration; binding inputs/output всё ещё primitive Registry ABI. Runtime получает primitive payload от host Promise и создаёт typed EMS Future для async extern. Смена marker не выдаёт capabilities и не скрывает effects. Function/target metadata обязательна; старые профили не принимают её неявно.
 
-Entry inputs/output не могут содержать live Future, включая вложенные Option/Result. Function entry может быть async: API execute возвращает Promise её проверенного payload. Внутренние Future handles не сериализуются, не попадают в actor state/snapshot/trace и не переносятся в другое исполнение. Transport/remote Future, Stream, async iterator, race/select и отдельный spawn API — последующие возможности, не текущая реализация.
+Entry inputs/output не могут содержать live Future, включая вложенные Option/Result. Function entry может быть async: API execute возвращает Promise её проверенного payload. Внутренние Future handles не сериализуются, не попадают в actor state/snapshot/trace и не переносятся в другое исполнение. Stream реализован отдельным расширением CONTROL_STREAMS.md; transport/remote Future, arbitrary host async iterator, race/select и отдельный spawn API ещё впереди.
 
 Future не имеет value equality и не может быть typed throw/catch payload. Проверки применяются к вложенным Future также. Numeric/array/algebraic результаты async задач сохраняют прежнюю value semantics и -0.
 
@@ -48,3 +48,5 @@ node tools/ems.mjs ir-build dist/futures.ir.json --out dist/futures.mjs
 ```
 
 Схема `schemas/control-futures-ir.schema.json` включена в общий control schema entrypoint. Executable verifier проверяет grammar/ownership boundary, async markers, await typing, policies и profile gates; schema не заменяет эту проверку. AC-036: `tests/control-futures.test.mjs` — 34 tests, positive/negative/differential cases, controlled host concurrency, supervised failure/cancel, exact budgets/depth, state join/rollback/replay и независимый CLI export. EMS-015 не завершён: Stream, resource lifecycle, полный structured error/ownership IDL и standalone state ещё открыты.
+
+AC-037 исправляет supervision liveness: первый terminal task failure latch сохраняется и немедленно abort всех siblings/waiters; execution API возвращает исходный terminal code/details. Caught ordinary typed failures по-прежнему не запускают global abort. Регрессия task STEP_LIMIT при sibling uncooperative host wait проверена в control-futures.test.mjs.

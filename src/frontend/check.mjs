@@ -150,6 +150,22 @@ export function typecheckModule(ast, registry, { imports = new Map(), maxTypeNod
       case 'CallExpression': {
         const name = qualified(node.callee);
         if (!name) diagnostic('UNSUPPORTED_CALL', 'Callable must have a declared qualified name', node.callee);
+        if (['stream.channel','stream.fromArray','stream.next','stream.send','stream.close'].includes(name) && !signatures.has(name)) {
+          const operation = name.slice(7), arity = operation === 'send' ? 2 : 1;
+          if (node.arguments.length !== arity) diagnostic('CALL_ARITY', 'Wrong stream operation arity', node);
+          if (operation === 'channel') {
+            if (expected?.name !== 'Stream') diagnostic('CANNOT_INFER', 'stream.channel requires expected Stream element type', node);
+            expectType(primitive('Number'), expression(node.arguments[0], scope, context), node.arguments[0]); result = expected;
+          } else if (operation === 'fromArray') {
+            expectType(term('Array',[primitive('Number')]), expression(node.arguments[0],scope,context),node.arguments[0]); result = term('Stream',[primitive('Number')]);
+          } else {
+            const stream = expression(node.arguments[0],scope,context);
+            if (stream.name !== 'Stream') diagnostic('TYPE_MISMATCH', 'Stream operation requires Stream',node.arguments[0]);
+            if (operation === 'send') expectType(stream.arguments[0],expression(node.arguments[1],scope,context,stream.arguments[0]),node.arguments[1]);
+            result = operation === 'next' ? term('Future',[term('Option',[stream.arguments[0]])]) : operation === 'send' ? term('Future',[primitive('Boolean')]) : primitive('Boolean');
+          }
+          calls.set(node,{streamOperation:operation,output:result}); break;
+        }
         if (['Some', 'None', 'Ok', 'Err'].includes(name) && !signatures.has(name)) {
           const option = ['Some', 'None'].includes(name), empty = name === 'None';
           if (node.arguments.length !== (empty ? 0 : 1)) diagnostic('CALL_ARITY', `Wrong constructor arity ${name}`, node);
@@ -220,7 +236,8 @@ export function typecheckModule(ast, registry, { imports = new Map(), maxTypeNod
         }
         case 'ForStatement': {
           const collection = expression(statement.iterable, scope, context);
-          if (collection.name !== 'Array') diagnostic('TYPE_MISMATCH', 'for requires Array', statement.iterable);
+          if (statement.asynchronous && !context.async) diagnostic('INVALID_AWAIT','for await requires async function',statement);
+          if (collection.name !== (statement.asynchronous ? 'Stream' : 'Array')) diagnostic('TYPE_MISMATCH', statement.asynchronous ? 'for await requires Stream' : 'for requires Array', statement.iterable);
           const nested = new Map(scope); nested.set(statement.binding, { type: collection.arguments[0], mutable: false });
           block(statement.body, nested, { ...context, loops: context.loops + 1 }); break;
         }
