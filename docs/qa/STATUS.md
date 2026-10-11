@@ -1,5 +1,16 @@
 # Current implementation status
 
+## EMS-033 — source-owned UI event breakpoints, AC-071
+
+Предыдущая goal-итерация — progress: activation-aware Over/Out опубликованd2639e8, evidence commitd9dab60. Baseline **711/711 Node,135/135 verify PASS**. Реализована bounded per-handler debug policy с exact source/entry witness и fresh typed provenance address validation. Policy updates требуют active event ID/token и не освобождают паузу; следующий queued event получает свежую policy на своём первом runtime enter. Original permissions/FIFO/private state/commit/rollback/Over/Out сохранены. IDE source cursor/selected source-graph node/current pause points и clear/run-to-point размещены в дополнительных controls. Добавление idle точки сохраняет runtime state и требует явного нового debug launch; новая policy применяется live на текущей matching паузе. IR/export/saved program не содержат breakpoint metadata.
+
+**716/716 Node,136/136 verify,34/34 Chromium PASS**. Новые5 Node cases: реальный Worker private-write point, queued live clear→1→2, distinct FIFO event IDs/Out/Stop keeps confirmed1, stale/IR-equivalent witness/absent address/SOURCE_IR mismatch reject, stale ID/token/policy ignored, bounded fields/orphans/disabled-debug reject before Worker and detached configs. Actual Chromium source+graph points, exact return selection/private0→commit1/private1→live clear→2→3, idle add retains3/unapplied source rejected/applied witness clears points. Verify actual UI host/private point→commit1; public smoke расширен UI points/live-clear1→2→3.
+
+Скриншот настоящей UI-паузы `/tmp/ems-ui-points.png` просмотрен. Промежуточная ошибка записи CSS выявлена по diff и исправлена до публикации; полный Chromium suite выполнен с правильными стилями. В текущих проверках Worker startup failure не наблюдался, историческая причина не считается устранённой. Логи `/tmp/ems-ui-points-baseline-{tests,verify}.log`, `/tmp/ems-ui-points-focused.log`, `/tmp/ems-ui-points-browser-focused.log`, `/tmp/ems-ui-points-tests.log`, `/tmp/ems-ui-points-verify-final.log`, `/tmp/ems-ui-points-browser.log`.
+
+Remote publication pending exact gate. EMS-033 IN_PROGRESS: persistent source anchors, value/secret inspection policy, native/compiled transports и full IDE parity открыты. Следующий срез — устойчивые source anchors для debugger при безопасных source edits с проверяемым переназначением и отказом при неоднозначности; общий язык/экосистема остаются активной целью.
+
+
 ## EMS-033 — activation-aware Step Over/Out, AC-070
 
 Предыдущая goal-итерация — progress: graph/text breakpoints AC-069 опубликованы55763fb, evidence commit1cb49f8. Текущий baseline **703/703 Node,134/134 verify PASS**.

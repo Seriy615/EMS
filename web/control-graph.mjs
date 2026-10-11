@@ -19,6 +19,7 @@ export function installControlGraph(getEditor,change,report){
   }
   host.append(canvas);
  }catch(failure){graph=null;selected=null;host.replaceChildren();report(failure);}}
+ document.querySelector('#ui-graph-breakpoint').onclick=()=>{if(selected)document.dispatchEvent(new CustomEvent('ems:graph-breakpoint',{detail:{handler:graph.event,source:graph.source,offset:selected.location.start.offset}}));};
  document.querySelector('#open-control-graph').onclick=open;
  document.querySelector('#apply-graph-node').onclick=()=>{if(!graph||!selected)return;const current=graph,node=selected,replacement=snippet.value;change(editor=>replaceHandlerGraphNode(editor,current.event,current.source,node.id,replacement)).then(()=>{const draft=getEditor().sources[current.event];document.querySelector('#handler-event').value=current.event;document.querySelector('#handler-entry').value=draft.entry;document.querySelector('#handler-source').value=draft.source;open();}).catch(report);};
  document.querySelector('#apply-graph-operation').onclick=()=>{

@@ -15,3 +15,5 @@ a{color:var(--accent)}#control-graph:empty{display:none}.author-panel fieldset:h
 .preview-controls{margin-top:16px}.preview-controls #ui-debug-location{flex-basis:100%;margin:8px 0}.preview-controls #ui-debug-location:empty{display:none}
 
 #ui-debug-over:disabled,#ui-debug-out:disabled{display:none}
+
+.ui-point-settings{margin-top:16px;font-size:12px}#ui-point-list{font-size:11px;color:var(--muted);white-space:pre-wrap;overflow-wrap:anywhere}#ui-point-status{font-size:11px;color:var(--muted)}#ui-point-current:disabled{display:none}.author-panel fieldset:has(#control-graph:empty) #ui-graph-breakpoint{display:none}

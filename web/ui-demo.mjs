@@ -1,3 +1,5 @@
+import {breakpointAtTextOffset} from '../src/studio/breakpoints.mjs';
+import {breakpointForEvent} from '../src/studio/debugger.mjs';
 import {ProjectManager} from '../src/studio/manager.mjs';
 import {installControlGraph} from './control-graph.mjs';
 import {buildUIProjectPackage} from '../src/compiler/ui-package.mjs';
@@ -15,24 +17,49 @@ const policy={capabilities:['ui.render','state.read','state.write'],allowedEffec
 const base=createCoreRegistry(),storage=new UIProjectStorage(localStorage,base);
 const managedId=new URLSearchParams(location.search).get('project'),manager=managedId?new ProjectManager(localStorage):null;
 let managedRecord;try{managedRecord=manager?.load(managedId);if(manager&&managedRecord?.kind!=='ui')throw new Error('UI project not found');}catch(failure){error.textContent=(failure.code??'HOST_ERROR')+': '+failure.message;throw failure;}
-let debugMode=false,pausedEvent=null;let restarting=Promise.resolve(),authoringQueue=Promise.resolve(),authoring;export let applicationController,editor;
+let debugMode=false,pausedEvent=null,pausedOperation=null,previewIdentity=null,pointIdentity=null,uiPoints=[];
+function syncUIPoints(){
+ if(!editor)return;const identity=editor.source;if(pointIdentity!==identity){pointIdentity=identity;uiPoints=[];}
+ document.querySelector('#ui-point-count').textContent=String(uiPoints.length);document.querySelector('#ui-point-list').textContent=uiPoints.map(item=>item.handler+' / '+(item.point.function??item.point.graph)+' / '+item.point.node).join('\n')||'Выберите операцию в обработчике или его графе.';
+ document.querySelector('#ui-point-current').disabled=!pausedOperation||previewIdentity!==identity;
+}
+function uiDebugOptions(){syncUIPoints();return {start:document.querySelector('#ui-run-to-point').checked?'continue':'step',breakpoints:uiPoints,sources:Object.fromEntries([...new Set(uiPoints.map(item=>item.handler))].map(handler=>[handler,editor.sources[handler]]))};}
+function updateUIPolicy(){
+ const options=uiDebugOptions();if(debugMode&&previewIdentity===pointIdentity&&applicationController?.runtime.setDebugOptions(options))document.querySelector('#ui-point-status').textContent='Точки применены к текущей паузе и следующим событиям.';
+ else document.querySelector('#ui-point-status').textContent='Точки применятся при новом запуске отладки.';
+}
+function toggleUIPoint(handler,point){
+ syncUIPoints();const item={handler,point},key=JSON.stringify(item),index=uiPoints.findIndex(value=>JSON.stringify(value)===key);
+ if(index>=0)uiPoints.splice(index,1);else{if(uiPoints.length>=64)throw Object.assign(Error('Breakpoint limit'),{code:'INVALID_DEBUG_BREAKPOINT'});uiPoints.push(item);}updateUIPolicy();syncUIPoints();
+}
+function pointAt(handler,offset,expectedSource){
+ const draft=Object.hasOwn(editor.sources,handler)?editor.sources[handler]:null;
+ if(!draft||draft.source!==expectedSource)throw Object.assign(Error('Apply checked handler source first'),{code:'STALE_DEBUG_SOURCE'});
+ toggleUIPoint(handler,breakpointAtTextOffset(compileUIHandler(draft.source,draft.entry,editor.application,base),offset));
+}
+let restarting=Promise.resolve(),authoringQueue=Promise.resolve(),authoring;export let applicationController,editor;
 function report(failure){error.textContent=failure.code??'HOST_ERROR';const location=failure.details?.location;if(location?.start?.offset!==undefined){const field=document.querySelector('#handler-source');field.focus();field.setSelectionRange(location.start.offset,location.end?.offset??location.start.offset);error.textContent+=' — '+location.start.line+':'+location.start.column;}}
-function render(){authoring?.refresh();source.value=editor.source;document.querySelector('#undo-ui').disabled=!editor.history.length;document.querySelector('#redo-ui').disabled=!editor.future.length;}
+function render(){syncUIPoints();authoring?.refresh();source.value=editor.source;document.querySelector('#undo-ui').disabled=!editor.history.length;document.querySelector('#redo-ui').disabled=!editor.future.length;}
 function debugPause(pause){
- pausedEvent=pause.eventId;
+ pausedEvent=pause.eventId;pausedOperation=pause;syncUIPoints();
  const field=document.querySelector('#handler-source'),draft=editor.sources[pause.handler];
  document.querySelector('#ui-debug-location').textContent='Пауза события '+pause.handler+' / '+pause.eventId+'\n'+(pause.profile==='control'?pause.callStack.join(' → ')+' / '+pause.node+' ('+pause.kind+')':pause.callPath.map(call=>call.graph+' / '+call.node).join(' → '));
  document.querySelector('#ui-debug-over').disabled=document.querySelector('#ui-debug-out').disabled=document.querySelector('#ui-debug-step').disabled=false;document.querySelector('#ui-debug-continue').disabled=false;
  if(draft&&pause.location&&document.querySelector('#handler-event').value===pause.handler&&field.value===draft.source){field.focus();field.setSelectionRange(pause.location.start.offset,pause.location.end.offset);}
 }
-for(const [id,mode]of [['ui-debug-step','step'],['ui-debug-over','over'],['ui-debug-out','out'],['ui-debug-continue','continue']])document.querySelector('#'+id).onclick=()=>{if(applicationController?.runtime.resume(mode)){document.querySelector('#ui-debug-over').disabled=document.querySelector('#ui-debug-out').disabled=document.querySelector('#ui-debug-step').disabled=true;document.querySelector('#ui-debug-continue').disabled=true;}};
+for(const [id,mode]of [['ui-debug-step','step'],['ui-debug-over','over'],['ui-debug-out','out'],['ui-debug-continue','continue']])document.querySelector('#'+id).onclick=()=>{if(applicationController?.runtime.resume(mode)){pausedOperation=null;syncUIPoints();document.querySelector('#ui-debug-over').disabled=document.querySelector('#ui-debug-out').disabled=document.querySelector('#ui-debug-step').disabled=true;document.querySelector('#ui-debug-continue').disabled=true;}};
+document.querySelector('#ui-source-breakpoint').onclick=()=>{try{const handler=document.querySelector('#handler-event').value,field=document.querySelector('#handler-source');if(editor.sources[handler]?.entry!==document.querySelector('#handler-entry').value)throw Object.assign(Error('Entry changed'),{code:'STALE_DEBUG_SOURCE'});pointAt(handler,field.selectionStart,field.value);}catch(failure){report(failure);}};
+document.querySelector('#ui-point-current').onclick=()=>{try{if(pausedOperation&&previewIdentity===editor.source)toggleUIPoint(pausedOperation.handler,breakpointForEvent(pausedOperation));}catch(failure){report(failure);}};
+document.querySelector('#ui-clear-points').onclick=()=>{try{syncUIPoints();uiPoints=[];updateUIPolicy();syncUIPoints();}catch(failure){report(failure);}};
+document.querySelector('#ui-run-to-point').onchange=()=>{try{updateUIPolicy();}catch(failure){report(failure);}};
+document.addEventListener('ems:graph-breakpoint',event=>{try{pointAt(event.detail.handler,event.detail.offset,event.detail.source);}catch(failure){report(failure);}});
 document.querySelector('#ui-debug-start').onclick=()=>{debugMode=true;startDemo().catch(report);};
-export function startDemo(){const task=restarting.then(async()=>{const application=editor.application;const checked=new UIRuntime(application,base,{policy});await checked.close();const runtime=await createUIWorkerRuntime(editor.source,{policy,debug:debugMode,timeout:debugMode?60000:5000,onPause:debugPause,onDebugEnd:record=>{if(record.eventId===pausedEvent){pausedEvent=null;document.querySelector('#ui-debug-over').disabled=document.querySelector('#ui-debug-out').disabled=document.querySelector('#ui-debug-step').disabled=true;document.querySelector('#ui-debug-continue').disabled=true;document.querySelector('#ui-debug-location').textContent=record.ok?'Событие подтверждено':'Событие отклонено: '+record.code;}}});await applicationController?.close();error.textContent='';try{applicationController=mountDOMRuntime(host,application,runtime,{onError:report});}catch(failure){await runtime.close();throw failure;}render();});restarting=task.catch(()=>{});return task;}
+export function startDemo(){const task=restarting.then(async()=>{syncUIPoints();const identity=editor.source,options=uiDebugOptions(),application=editor.application;const checked=new UIRuntime(application,base,{policy});await checked.close();const runtime=await createUIWorkerRuntime(editor.source,{policy,debug:debugMode,...(debugMode?{debugOptions:options}:{}),timeout:debugMode?60000:5000,onPause:debugPause,onDebugEnd:record=>{if(record.eventId===pausedEvent){pausedEvent=null;pausedOperation=null;syncUIPoints();document.querySelector('#ui-debug-over').disabled=document.querySelector('#ui-debug-out').disabled=document.querySelector('#ui-debug-step').disabled=true;document.querySelector('#ui-debug-continue').disabled=true;document.querySelector('#ui-debug-location').textContent=record.ok?'Событие подтверждено':'Событие отклонено: '+record.code;}}});await applicationController?.close();error.textContent='';try{previewIdentity=identity;pausedOperation=null;document.querySelector('#ui-point-status').textContent=debugMode?'Точки применены к этому запуску отладки.':'Точки применятся при новом запуске отладки.';applicationController=mountDOMRuntime(host,application,runtime,{onError:report});}catch(failure){await runtime.close();throw failure;}render();});restarting=task.catch(()=>{});return task;}
 async function apply(candidate){const application=parseUIProject(candidate,base),checked=new UIRuntime(application,base,{policy});await checked.close();editor.replace(candidate);await startDemo();saveManaged();status.textContent='Проект проверен и применён.';}
 const response=await fetch('/examples/ui-counter.json');if(!response.ok)throw new Error('Cannot load EMS UI application');const example=await response.json(),counterSource=await (await fetch('/examples/counter.ems')).text();example.reactor.handlers[0].program=compileUIHandler(counterSource,'demo.Counter',example,base).ir;let authoredSources={change:{source:counterSource,entry:'demo.Counter'}},application=example;
 try{const saved=manager?parseUIWorkspace(managedRecord.source,base):storage.loadWorkspace();if(saved){const checked=new UIRuntime(saved.application,base,{policy});await checked.close();application=saved.application;authoredSources=saved.sources;}}catch(failure){report(failure);if(manager)throw failure;status.textContent='Сохранённая запись повреждена; пример открыт без перезаписи.';}
 editor=new UIProjectEditor(application,base,{sources:authoredSources});const savedError=error.textContent;await startDemo();if(savedError)error.textContent=savedError;
-document.querySelector('#restart').onclick=()=>{debugMode=false;startDemo().catch(report);};document.querySelector('#ui-debug-stop').onclick=()=>{pausedEvent=null;applicationController.runtime.close().catch(report);document.querySelector('#ui-debug-over').disabled=document.querySelector('#ui-debug-out').disabled=document.querySelector('#ui-debug-step').disabled=true;document.querySelector('#ui-debug-continue').disabled=true;document.querySelector('#ui-debug-location').textContent='Отладка остановлена; незавершённое событие не подтверждено.';};
+document.querySelector('#restart').onclick=()=>{debugMode=false;startDemo().catch(report);};document.querySelector('#ui-debug-stop').onclick=()=>{pausedEvent=null;pausedOperation=null;syncUIPoints();applicationController.runtime.close().catch(report);document.querySelector('#ui-debug-over').disabled=document.querySelector('#ui-debug-out').disabled=document.querySelector('#ui-debug-step').disabled=true;document.querySelector('#ui-debug-continue').disabled=true;document.querySelector('#ui-debug-location').textContent='Отладка остановлена; незавершённое событие не подтверждено.';};
 document.querySelector('#close').onclick=()=>applicationController.close().catch(report);
 document.querySelector('#apply-ui').onclick=()=>{apply(source.value).catch(report);};
 document.querySelector('#save-ui').onclick=()=>{try{saveProject();status.textContent='Программа сохранена.';}catch(failure){report(failure);}};

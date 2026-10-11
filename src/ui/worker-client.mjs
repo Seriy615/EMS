@@ -1,9 +1,12 @@
+import {normalizeUIDebugOptions} from './debug-policy.mjs';
 import {EmsError,fail} from '../reference/errors.mjs';
 import {assertSignal} from '../runtime/cancellation.mjs';
 const copy=value=>structuredClone(value);
 /** Persistent worker preview. Deadline/Stop terminates the session; only acknowledged snapshots remain visible. */
-export async function createUIWorkerRuntime(project,{policy={},timeout=5000,initTimeout=5000,maxQueue=64,recordTrace=false,debug=false,onPause=()=>{},onDebugEnd=()=>{},workerFactory=()=>new Worker('/web/ui-worker.mjs',{type:'module'})}={}){
+export async function createUIWorkerRuntime(project,{policy={},timeout=5000,initTimeout=5000,maxQueue=64,recordTrace=false,debug=false,debugOptions,onPause=()=>{},onDebugEnd=()=>{},workerFactory=()=>new Worker('/web/ui-worker.mjs',{type:'module'})}={}){
  if(!Number.isSafeInteger(timeout)||timeout<1||timeout>60000||!Number.isSafeInteger(initTimeout)||initTimeout<1||initTimeout>60000||!Number.isSafeInteger(maxQueue)||maxQueue<1||maxQueue>64||typeof recordTrace!=='boolean'||typeof debug!=='boolean'||typeof onPause!=='function'||typeof onDebugEnd!=='function'||typeof workerFactory!=='function')fail('INVALID_UI_WORKER','Invalid bounded worker options');
+ if(debugOptions!==undefined&&!debug)fail('INVALID_DEBUG_OPTION','UI policy requires debug mode');
+ const checkedDebugOptions=debugOptions===undefined?undefined:normalizeUIDebugOptions(debugOptions);
  let worker;try{worker=workerFactory();}catch{fail('EXECUTION_WORKER','Cannot create UI worker');}
  if(!worker||typeof worker.postMessage!=='function'||typeof worker.terminate!=='function')fail('EXECUTION_WORKER','Invalid UI worker transport');
  const pending=new Map();let next=0,closed=false,closing,snapshot,view,trace=[],pause=null;
@@ -39,6 +42,6 @@ export async function createUIWorkerRuntime(project,{policy={},timeout=5000,init
   data.ok?item.resolve(data.value):item.reject(new EmsError(data.error.code,data.error.message,data.error.details));
  };
  worker.onerror=()=>stop(new EmsError('EXECUTION_WORKER','UI worker failed'));
- try{await request({action:'init',project,policy,maxQueue,recordTrace,...(debug?{debug:true}:{})},undefined,initTimeout);if(snapshot===undefined||view===undefined)throw new EmsError('EXECUTION_WORKER','Missing UI worker initialization snapshot');}catch(error){await stop(error);throw error;}
- return Object.freeze({snapshot:()=>copy(snapshot),view:()=>copy(view),trace:()=>copy(trace),resume:(mode='step')=>{if(closed||!pause||!['step','continue','over','out'].includes(mode))return false;const current=pause;pause=null;try{worker.postMessage({action:'resume',id:current.id,token:current.token,mode});}catch{stop(new EmsError('INVALID_EXECUTION','UI debug command cannot be transferred'));return false;}return true;},dispatch:async(node,event,value,{signal}={})=>request({action:'dispatch',node,event,value},signal),close:()=>stop(new EmsError('CANCELLED','UI preview closed')),get closed(){return closed;}});
+ try{await request({action:'init',project,policy,maxQueue,recordTrace,...(debug?{debug:true,...(checkedDebugOptions?{debugOptions:checkedDebugOptions}:{})}:{})},undefined,initTimeout);if(snapshot===undefined||view===undefined)throw new EmsError('EXECUTION_WORKER','Missing UI worker initialization snapshot');}catch(error){await stop(error);throw error;}
+ return Object.freeze({setDebugOptions:options=>{if(closed||!debug||!pause)return false;const checked=normalizeUIDebugOptions(options);try{worker.postMessage({action:'debug-policy',id:pause.id,token:pause.token,options:checked});}catch{stop(new EmsError('INVALID_EXECUTION','UI debug policy cannot be transferred'));return false;}return true;},snapshot:()=>copy(snapshot),view:()=>copy(view),trace:()=>copy(trace),resume:(mode='step')=>{if(closed||!pause||!['step','continue','over','out'].includes(mode))return false;const current=pause;pause=null;try{worker.postMessage({action:'resume',id:current.id,token:current.token,mode});}catch{stop(new EmsError('INVALID_EXECUTION','UI debug command cannot be transferred'));return false;}return true;},dispatch:async(node,event,value,{signal}={})=>request({action:'dispatch',node,event,value},signal),close:()=>stop(new EmsError('CANCELLED','UI preview closed')),get closed(){return closed;}});
 }

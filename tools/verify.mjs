@@ -352,4 +352,11 @@ await check('Step Over/Out follows actual activation frames and original control
  const value=await runTextDraft(draft,new ProjectEditor(),{}, {onControlEnter:event=>gate.enter(event),onFrameExit:event=>{exits.push(event);gate.leave(event);}});
  return value===7&&events.length===2&&events[0].node==='/body/0'&&events[1].node==='/body/1'&&events[0].frames[0]===events[1].frames[0]&&exits.some(event=>event.frames.length===2);
 });
+await check('UI source breakpoint pauses a private write and commits through the original host',async()=>{
+ const {createUIWorkerHost}=await import('../src/ui/worker-host.mjs'),{parseUIWorkspace}=await import('../src/ui/project.mjs'),{compileUIHandler}=await import('../src/ui/source.mjs'),{breakpointAtTextOffset}=await import('../src/studio/breakpoints.mjs');
+ const base=createCoreRegistry(),saved=parseUIWorkspace(await get('examples/ui-source-counter.ems-ui.json'),base),editor=new UIProjectEditor(saved.application,base,{sources:saved.sources});editor.applyHandler('change','fn update(delta:Number)->Number {state.count.write(state.count.read()+delta);return state.count.read();}','update');
+ const witness=editor.sources.change,bundle=compileUIHandler(witness.source,witness.entry,editor.application,base),point=breakpointAtTextOffset(bundle,witness.source.indexOf('return')),replies=[];let ready;const paused=new Promise(resolve=>ready=resolve),host=createUIWorkerHost(reply=>{replies.push(reply);if(reply.type==='paused')ready(reply);});
+ await host({action:'init',id:0,project:editor.source,policy:{capabilities:['ui.render','state.read','state.write'],allowedEffects:['ui.render','state.read','state.write']},maxQueue:64,recordTrace:false,debug:true,debugOptions:{start:'continue',breakpoints:[{handler:'change',point}],sources:{change:witness}}});
+ const run=host({action:'dispatch',id:1,node:'increment',event:'press',value:undefined}),reply=await paused;assert.equal(replies[0].snapshot.count,0);assert.equal(reply.pause.node,'/body/1');await host({action:'resume',id:1,token:reply.pause.token,mode:'continue'});await run;return replies.at(-1).snapshot.count===1&&replies.at(-1).value===1;
+});
 console.log(`\nEMS foundation verification passed (${checks} checks). Not production readiness.`);

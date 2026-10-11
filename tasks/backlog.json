@@ -490,28 +490,28 @@
         "GPT-6.1 Sol",
         "GPT-6 Luna"
       ],
-      "progress": "AC-063/065/066/067/069 plus AC-070 activation-aware graph/control/UI Over/Out on original evaluator frames and exit notifications. Nested/recursive/async/mixed ancestry, breakpoints/stale tokens, copied payload-free metadata/cancellation/cleanup/budgets/errors/IR and compiled parity, actual Chromium Studio and transactional UI Over/Out verified. UI event breakpoint authoring/persistent anchors/value policy/native-compiled debugging remain open; historical Worker cause unproven.",
+      "progress": "AC-063..071 graph/text/control/UI stepping, frame-aware Over/Out and source-owned UI event breakpoints implemented on original evaluators/kernel. Exact bounded handler source witness/typed address validation, current event ID/token live policy, lazy next FIFO gate, private draft/commit/rollback/Stop and source/graph authoring verified. Persistent anchors/value-secret policy/native-compiled transports/full parity remain open; historical Worker cause unproven.",
       "evidence": {
-        "scope": "Original interpreted graph/text/control/UI stepping, graph/text breakpoints and activation-aware Over/Out; not full debugger",
+        "scope": "Original interpreted graph/text/control/UI stepping, Over/Out and source-owned breakpoints; not full debugger",
         "docs": "docs/spec/IDE_RUNTIME_DIAGNOSTICS.md",
         "testFiles": [
+          "tests/ui-breakpoints.test.mjs",
+          "tests/browser/ui-breakpoints.test.mjs",
           "tests/step-frames.test.mjs",
-          "tests/browser/step-frames.test.mjs",
-          "tests/breakpoints.test.mjs",
-          "tests/ui-debugger.test.mjs"
+          "tests/breakpoints.test.mjs"
         ],
-        "tests": "711/711 PASS",
-        "verify": "135/135 PASS",
-        "browserTests": "33/33 PASS",
+        "tests": "716/716 PASS",
+        "verify": "136/136 PASS",
+        "browserTests": "34/34 PASS",
         "commands": [
           "npm test",
           "npm run verify",
           "npm run browser:test"
         ],
         "deployedRevision": "d2639e8d53ebb1c44b69bdaf992ada15f69f04ce",
-        "live": "Public trusted HTTPS/auth/access + actual Chromium control Over/Out7 and UI Over confirmed0/Out commit1 PASS, earlier graph/composite/reopen/AVG5/text/UI/counter/breakpoints retained. Exact gated711/135/33 PASS; unrelated vhost hashes and five observed active services unchanged. Full debugger and historical Worker startup cause remain open. See docs/qa/DEPLOYMENT.md."
+        "live": "Earlier Over/Out release d2639e8 remains live; UI source/graph points passed local716/136/34, pending gated publication and live UI commits1/2/3."
       },
-      "nextSlice": "Source-owned UI event breakpoints with fresh handler witness, per-event ID/token/FIFO/private draft/commit/rollback, precise source cursor and graph operation targets; preserve execution-local frames and Over/Out."
+      "nextSlice": "Persistent source debugger anchors across safe source edits: checked stable operation identity, exact reattachment evidence and refusal on deleted/ambiguous/changed semantic operations; preserve IR and source witnesses."
     },
     {
       "id": "EMS-034",
