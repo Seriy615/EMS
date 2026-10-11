@@ -72,3 +72,7 @@ node examples/resource-file.mjs examples/resources.ems
 ```
 
 AC-038 — tests/control-resources.test.mjs: runtime/standalone parity, copies/ownership/LIFO, all exits, exact budget thresholds, timeout/cancel/late IO, native actual fd EBADF после освобождения, preflight/versions/types/read-only, primary/secondary errors, reactor commit/rollback/replay и independent CLI export новым процессом вне EMS. Node evidence не закрывает browser/native portability P1. EMS-015/M1 остаются открыты для полного error/resource IDL, standalone state и stable conformance.
+
+## Public resource interface binding — AC-041
+
+ems-resource-interface/1 добавляет typed factory/read/write/release errors/conditions и execution ownership к separate public IDL. registerContractBinding installs compatible native resource under public id/version; ResourceScope сохраняет actual tail и проверяет factory post только после ownership record, чтобы не потерять late/failed acquisition. Rebinding сохраняет ordered phase guards при одном callback/release. Старые trusted resources без metadata работают как раньше. See RESOURCE_IDL.md; advanced native ABI/standalone export ещё открыты.

@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 import assert from 'node:assert/strict';
-import { readFile, stat } from 'node:fs/promises';
+import { readFile, stat, open } from 'node:fs/promises';
 import { createCoreRegistry, parseTextEMS, validateGraph, executeGraph, compileStandaloneJS, compiledAtomicManifest, registerCompiledAtomic, registerTrustedJSBindings } from '../src/reference/index.mjs';
 import { lowerGraphToIR, serializeIR, parseIR, executeIR, compileIRToJS, graphProvenance } from '../src/ir/index.mjs';
 import { parseEMSModule } from '../src/frontend/index.mjs';
@@ -13,7 +13,7 @@ const get=async p=>readFile(new URL(p,root),'utf8');
 const readJSON=async p=>JSON.parse(await get(p));
 let checks=0;
 async function check(desc, fn) { const x=await fn(); assert.ok(x,desc); checks++; console.log('✓',desc); }
-const required=['AGENTS.md','.agents/policy.json','PROJECT_GOAL.md','docs/spec/LANGUAGE_SEMANTICS.md','docs/spec/IR.md','schemas/ir.schema.json','docs/spec/STATE_EVENTS.md','schemas/reactor.schema.json','docs/spec/CONTROL_IR.md','schemas/control-ir.schema.json','schemas/control-finite-ir.schema.json','schemas/control-algebraic-ir.schema.json','docs/spec/CONTROL_ALGEBRAIC.md','docs/spec/CONTROL_FUTURES.md','schemas/control-futures-ir.schema.json','docs/spec/CONTROL_STREAMS.md','schemas/control-streams-ir.schema.json','docs/spec/CONTRACT_IDL.md','schemas/contract-interface.schema.json','schemas/contract-binding.schema.json','docs/spec/CONTROL_RESOURCES.md','schemas/control-resources-ir.schema.json','docs/qa/PROGRESS.md','docs/spec/EMS_FULL_SPEC.md','docs/plans/ROADMAP.md','docs/qa/ACCEPTANCE.md','tasks/backlog.json'];
+const required=['AGENTS.md','.agents/policy.json','PROJECT_GOAL.md','docs/spec/LANGUAGE_SEMANTICS.md','docs/spec/IR.md','schemas/ir.schema.json','docs/spec/STATE_EVENTS.md','schemas/reactor.schema.json','docs/spec/CONTROL_IR.md','schemas/control-ir.schema.json','schemas/control-finite-ir.schema.json','schemas/control-algebraic-ir.schema.json','docs/spec/CONTROL_ALGEBRAIC.md','docs/spec/CONTROL_FUTURES.md','schemas/control-futures-ir.schema.json','docs/spec/CONTROL_STREAMS.md','schemas/control-streams-ir.schema.json','docs/spec/RESOURCE_IDL.md','schemas/resource-interface.schema.json','docs/spec/CONTRACT_IDL.md','schemas/contract-interface.schema.json','schemas/contract-binding.schema.json','docs/spec/CONTROL_RESOURCES.md','schemas/control-resources-ir.schema.json','docs/qa/PROGRESS.md','docs/spec/EMS_FULL_SPEC.md','docs/plans/ROADMAP.md','docs/qa/ACCEPTANCE.md','tasks/backlog.json'];
 for(const f of required) { await stat(new URL(f,root)); await check(`found ${f}`,()=>true); }
 const policy=await readJSON('.agents/policy.json');
 await check('models exactly Sol 6.1 + Luna 6',()=>policy.agents.approvedDisplayNames.join(',')==='GPT-6.1 Sol,GPT-6 Luna');
@@ -196,5 +196,14 @@ const compositeOutput=await import(`data:text/javascript,${encodeURIComponent(co
 await check('direct composite IR and standalone retain public precondition',async()=>{
   await assert.rejects(executeIR(parseIR(serializeIR(compositeIR,compositeRegistry),compositeRegistry),{a:1,b:0},compositeRegistry),{code:'PRECONDITION_FAILED'});
   assert.throws(()=>compositeOutput.execute({a:1,b:0}),{code:'PRECONDITION_FAILED'});return compositeOutput.execute({a:6,b:2})===3;
+});
+const resourceInterface=validateContractInterface(await readJSON('examples/resource-interface.json'));
+await check('resource public IDL exposes readonly execution-owned lifecycle',()=>resourceInterface.lifecycle.ownership==='execution'&&resourceInterface.lifecycle.write===null);
+const resourceIDLRegistry=createCoreRegistry();let resourceIDLReleased=0;
+resourceIDLRegistry.registerResource({id:'node.file.read',inputs:{path:'String'},valueType:'String',effects:['fs.read'],capabilities:['fs.read'],acquire:({path})=>open(path,'r'),read:file=>file.readFile('utf8'),release:async file=>{await file.close();resourceIDLReleased++;}});
+registerContractBinding(resourceIDLRegistry,resourceInterface,await readJSON('examples/resource-binding.json'),{target:'node'});
+const resourceIDLBundle=lowerCheckedModule(typecheckModule(parseEMSModule('fn read(path:String)->String { using value=std.file.read(path); return resource.read(value); }'),resourceIDLRegistry),'read',resourceIDLRegistry);
+await check('public resource interface reads an actual file and completes owned release',async()=>{
+  assert.equal(await executeIR(resourceIDLBundle.ir,{path:new URL('examples/resources.ems',root).pathname},resourceIDLBundle.registry,{allowedEffects:['fs.read'],capabilities:['fs.read']}),await get('examples/resources.ems'));return resourceIDLReleased===1;
 });
 console.log(`\nEMS foundation verification passed (${checks} checks). Not production readiness.`);

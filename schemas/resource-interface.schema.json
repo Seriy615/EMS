@@ -1,0 +1,319 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ems.local/schemas/resource-interface.schema.json",
+  "type": "object",
+  "properties": {
+    "schemaVersion": {
+      "const": "ems-resource-interface/1"
+    },
+    "id": {
+      "type": "string",
+      "pattern": "^[-A-Za-z0-9_.]+$"
+    },
+    "version": {
+      "type": "string",
+      "pattern": "^(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)$"
+    },
+    "inputs": {
+      "type": "array",
+      "maxItems": 1000,
+      "items": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "pattern": "^[A-Za-z_][A-Za-z0-9_]*$"
+          },
+          "type": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 4096,
+            "pattern": "^(Number|NumberArray|Boolean|String|(Option|Result|Future|Stream|ResourceHandle)<[A-Za-z<>,]+>)$",
+            "$comment": "Canonical balanced grammar, arity and depth are checked by the executable validator."
+          }
+        },
+        "required": [
+          "name",
+          "type"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "output": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 4096,
+          "pattern": "^(Number|NumberArray|Boolean|String|(Option|Result|Future|Stream|ResourceHandle)<[A-Za-z<>,]+>)$",
+          "$comment": "Canonical balanced grammar, arity and depth are checked by the executable validator."
+        }
+      },
+      "required": [
+        "type"
+      ],
+      "additionalProperties": false
+    },
+    "errors": {
+      "type": "array",
+      "maxItems": 1000,
+      "items": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string",
+            "pattern": "^[-A-Za-z0-9_.]+$"
+          },
+          "payloadType": {
+            "oneOf": [
+              {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 4096,
+                "pattern": "^(Number|NumberArray|Boolean|String|(Option|Result|Future|Stream|ResourceHandle)<[A-Za-z<>,]+>)$",
+                "$comment": "Canonical balanced grammar, arity and depth are checked by the executable validator."
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "code",
+          "payloadType"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "semantics": {
+      "type": "object",
+      "properties": {
+        "determinism": {
+          "enum": [
+            "deterministic",
+            "unspecified"
+          ]
+        },
+        "effects": {
+          "type": "array",
+          "maxItems": 1000,
+          "items": {
+            "type": "string",
+            "pattern": "^[-A-Za-z0-9_.]+$"
+          },
+          "uniqueItems": true
+        },
+        "capabilities": {
+          "type": "array",
+          "maxItems": 1000,
+          "items": {
+            "type": "string",
+            "pattern": "^[-A-Za-z0-9_.]+$"
+          },
+          "uniqueItems": true
+        }
+      },
+      "required": [
+        "determinism",
+        "effects",
+        "capabilities"
+      ],
+      "additionalProperties": false
+    },
+    "conditions": {
+      "type": "object",
+      "properties": {
+        "pre": {
+          "type": "array",
+          "maxItems": 1000,
+          "items": {
+            "type": "object",
+            "properties": {
+              "kind": {
+                "enum": [
+                  "nonzero",
+                  "positive",
+                  "nonempty"
+                ]
+              },
+              "subject": {
+                "oneOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "input": {
+                        "type": "string",
+                        "pattern": "^[A-Za-z_][A-Za-z0-9_]*$"
+                      }
+                    },
+                    "required": [
+                      "input"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "result": {
+                        "const": true
+                      }
+                    },
+                    "required": [
+                      "result"
+                    ],
+                    "additionalProperties": false
+                  }
+                ]
+              }
+            },
+            "required": [
+              "kind",
+              "subject"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "post": {
+          "type": "array",
+          "maxItems": 1000,
+          "items": {
+            "type": "object",
+            "properties": {
+              "kind": {
+                "enum": [
+                  "nonzero",
+                  "positive",
+                  "nonempty"
+                ]
+              },
+              "subject": {
+                "oneOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "input": {
+                        "type": "string",
+                        "pattern": "^[A-Za-z_][A-Za-z0-9_]*$"
+                      }
+                    },
+                    "required": [
+                      "input"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "result": {
+                        "const": true
+                      }
+                    },
+                    "required": [
+                      "result"
+                    ],
+                    "additionalProperties": false
+                  }
+                ]
+              }
+            },
+            "required": [
+              "kind",
+              "subject"
+            ],
+            "additionalProperties": false
+          }
+        }
+      },
+      "required": [
+        "pre",
+        "post"
+      ],
+      "additionalProperties": false
+    },
+    "lifecycle": {
+      "type": "object",
+      "properties": {
+        "ownership": {
+          "const": "execution"
+        },
+        "valueType": {
+          "$ref": "contract-interface.schema.json#/properties/output/properties/type"
+        },
+        "read": {
+          "type": "object",
+          "properties": {
+            "errors": {
+              "$ref": "contract-interface.schema.json#/properties/errors"
+            },
+            "conditions": {
+              "$ref": "contract-interface.schema.json#/properties/conditions"
+            }
+          },
+          "required": [
+            "errors",
+            "conditions"
+          ],
+          "additionalProperties": false
+        },
+        "write": {
+          "oneOf": [
+            {
+              "type": "object",
+              "properties": {
+                "errors": {
+                  "$ref": "contract-interface.schema.json#/properties/errors"
+                },
+                "conditions": {
+                  "$ref": "contract-interface.schema.json#/properties/conditions"
+                }
+              },
+              "required": [
+                "errors",
+                "conditions"
+              ],
+              "additionalProperties": false
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "release": {
+          "type": "object",
+          "properties": {
+            "errors": {
+              "$ref": "contract-interface.schema.json#/properties/errors"
+            }
+          },
+          "required": [
+            "errors"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "ownership",
+        "valueType",
+        "read",
+        "write",
+        "release"
+      ],
+      "additionalProperties": false
+    }
+  },
+  "required": [
+    "schemaVersion",
+    "id",
+    "version",
+    "inputs",
+    "output",
+    "errors",
+    "semantics",
+    "conditions",
+    "lifecycle"
+  ],
+  "additionalProperties": false,
+  "title": "EMS execution-owned resource interface v1"
+}

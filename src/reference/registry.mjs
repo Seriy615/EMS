@@ -11,11 +11,21 @@ export class Registry {
     this.#register({ id, version, kind: 'atomic', inputs, output, effects, capabilities, execute, emitJS });
     return this;
   }
-  registerResource({id,version='1.0.0',inputs,valueType,effects=[],capabilities=[],acquire,read,write=null,release}) {
+  registerResource({id,version='1.0.0',inputs,valueType,effects=[],capabilities=[],acquire,read,write=null,release,resourceBoundaries=[]}) {
     if(typeof version!=='string' || !version)fail('INVALID_CONTRACT','Resource version must be nonempty string');
     for(const [name,callback] of Object.entries({acquire,read,release}))if(typeof callback!=='function')fail('INVALID_IMPL',`${id}: ${name} must be a function`);
     if(write!==null && typeof write!=='function')fail('INVALID_IMPL',`${id}: write must be a function`);
-    this.#register({id,version,kind:'resource',inputs,output:`ResourceHandle<${valueType}>`,valueType,effects,capabilities,acquire,read,write,release});return this;
+    if(!Array.isArray(resourceBoundaries)||resourceBoundaries.length>32||Object.keys(resourceBoundaries).length!==resourceBoundaries.length)fail('INVALID_CONTRACT','Invalid resource boundary chain');
+    resourceBoundaries=Object.freeze(resourceBoundaries.map((boundary,index)=>{
+      if(!boundary||typeof boundary!=='object'||Object.keys(boundary).length!==2||!Object.hasOwn(boundary,'interface')||!Object.hasOwn(boundary,'binding'))fail('INVALID_CONTRACT','Invalid resource boundary descriptor');
+      const spec=validateContractInterface(boundary.interface),binding=validateContractBinding(boundary.binding);
+      const ports=Object.entries(inputs).map(([name,type])=>({name,type:typeof type==='string'?type:type.type}));
+      if(!spec.lifecycle||spec.lifecycle.valueType!==valueType||spec.inputs.length!==ports.length||ports.some((port,i)=>port.name!==spec.inputs[i].name||port.type!==spec.inputs[i].type))fail('INCOMPATIBLE_BINDING','Resource boundary signature mismatch');
+      if(binding.interface.id!==spec.id||binding.interface.version!==spec.version||index===0&&(spec.id!==id||spec.version!==version))fail('CONTRACT_VERSION','Resource boundary identity mismatch');
+      if(index===0&&((spec.lifecycle.write===null)!==(write===null)))fail('INCOMPATIBLE_BINDING','Resource boundary write availability mismatch');
+      return Object.freeze({interface:spec,binding});
+    }));
+    this.#register({id,version,kind:'resource',inputs,output:`ResourceHandle<${valueType}>`,valueType,effects,capabilities,acquire,read,write,release,resourceBoundaries});return this;
   }
   registerComposite({ id, version = '1.0.0', graph, effects = [], capabilities = [], interfaceBoundary = null }) {
     if (!graph || graph.id !== id) fail('INVALID_IMPL', `${id}: composite graph id mismatch`);

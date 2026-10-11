@@ -2,13 +2,13 @@
 
 ## Последняя проверка — ядро перед IDE
 
-`npm test` **468/468 PASS**, `npm run verify` **75/75 PASS**, Node 22.21.0. EMS-010..014 DONE для начальных профилей AC-025..031. EMS-015 IN_PROGRESS: state/events/control/errors/algebraic/Future/Stream/resources AC-032..038. EMS-016 IN_PROGRESS: separate public interface/binding IDL AC-039 и preserved composite interface execution AC-040.
+`npm test` **485/485 PASS**, `npm run verify` **79/79 PASS**, Node 22.21.0. EMS-010..014 DONE для начальных профилей. EMS-015 IN_PROGRESS: AC-032..038 state/control/errors/algebraic/Future/Stream/resources. EMS-016 IN_PROGRESS: public atomic/composite/resource interfaces AC-039..041 реально исполняются через общий IR/runtime.
 
-AC-040: 14 новых composite tests. Finite public binding сохраняет kind composite и editable independent source graph snapshot; nested body исполняется под shared pre/post/error guards в graph/IR/text runtime и standalone. Direct graph использует ems-contract-graph/1, direct IR — contract core/effect profiles с mandatory interfaceRef. Missing binding, legacy downcast, version/signature и policy erasure отвергаются. Rebinding уже public composite сохраняет обе boundaries через inspectable call. Standalone seal/reimport сохраняет actual conditions; actor postcondition failure откатывает owned state. Декларации implementation policy и hidden nested effects учитываются до callbacks.
+AC-041: 17 новых resource IDL tests. ems-resource-interface/1 описывает execution ownership, valueType, typed predicates/errors factory/read/write/release. Native acquisition записывается во владение runtime до factory postconditions; отказ не теряет release. Readonly public interface скрывает physical write, nested rebinding сохраняет predicates/errors вокруг одного callback/release. Whole-lifecycle policy/pins checked before callbacks. Actual Node file fd закрывается (EBADF), late cancelled acquisition/active read дают bounded wait/deferred release, actor postcondition failure откатывает staged state. Phase metadata проходит registry clones; owned-cell standalone regression suite зелёный.
 
-Baseline b08a94e: 454/454 tests, 73/73 verify. Итог логи /tmp/ems-composite-idl-tests.log и /tmp/ems-composite-idl-verify.log. JSON schemas parsed/local refs resolved (13), external schema engine не запускался. examples/composite-interface.mjs: composite 1 3, independent output 3. git diff --check PASS. Внешние зависимости не устанавливались, VPS не менялся.
+Baseline a3d8388: 468/468 tests, 75/75 verify. Итог логи /tmp/ems-resource-idl-tests.log, /tmp/ems-resource-idl-verify.log. Schemas parsed/local refs resolved (14), external schema engine не запускался. examples/resource-interface.mjs реально прочитал examples/resources.ems; verify тоже читает actual file через public interface и ждёт release. git diff --check PASS. Внешние зависимости не устанавливались, VPS не менялся.
 
-Следующий срез EMS-016: resource/advanced bindings и full lifecycle/error ABI, затем lock/conformance. Resource installation пока UNSUPPORTED_BINDING; checked lifecycle scope из AC-038 остаётся рабочим. Standalone state export и EMS-017 открыты. Глобальная цель/M1/P1/browser/WEB IDE/deploy не завершены. Владелец разрешил deploy и указал core-first; slices commit/push main git@github.com:Seriy615/EMS.git без force.
+Далее — exact dependency locking и common conformance gate для исходных/экспортированных программ, затем реальный browser P1 и WEB IDE MVP по dependencies. Non-primitive native ABI/error variants — следующие расширения; Native standalone export пока UNSUPPORTED_TARGET. Timeout не гарантирует physical release навечно зависшего callback. EMS-015/016/M1/P1/IDE/deploy и полная цель остаются открыты до acceptance audit. Проверенные slices commit/push main git@github.com:Seriy615/EMS.git.
 
 ## Текущее состояние после EMS-012
 
@@ -40,7 +40,7 @@ EMS-010 завершена как нормативный начальный пр
 
 **Model restriction:** only GPT-6.1 Sol / GPT-6 Luna for any agent work; no GPT-5.6 Sol / Astra.
 
-**Next action:** continue EMS-016 resource/advanced interface bindings and error ABI, then conformance, from `docs/qa/PROGRESS.md`. Bootstrap sections below describe the original scaffold, not completed M1.
+**Next action:** continue dependency locking and common conformance, then actual browser P1 and IDE, from `docs/qa/PROGRESS.md`. Bootstrap sections below describe the original scaffold, not completed M1.
 
 Точная ревизия без Git: `docs/qa/evidence/2026-10-11-core.json` содержит SHA-256 implementation/test/spec-format файлов и aggregate snapshot `2495e5f62507e4819ee55a7b8a7c4b73638d096b13b88fae991f98ccb7d78602`. Metadata состояния QA обновляется отдельно от этого semantic/source snapshot.
 

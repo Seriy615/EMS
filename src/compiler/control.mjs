@@ -1,3 +1,5 @@
+import { runResourcePhase,checkResourceAcquired } from '../contracts/resource-conditions.mjs';
+import { checkContractConditions,checkContractFailure } from '../contracts/conditions.mjs';
 import { parseControlType, controlTypeName, controlVariants, assertControlValueType, cloneControlValue, matchControlPattern, validateControlInputs } from '../semantics/control-algebraic.mjs';
 import { createResourceScope,resourceBudgetOptions,executeResourceOperation,resourceCleanupOutcome } from '../runtime/resources.mjs';
 import { createStreamScope, executeStreamOperation, streamBudgetOptions } from '../runtime/streams.mjs';
@@ -127,7 +129,7 @@ async function __value(type,fn,frame){__tick();if(++frame.evaluationDepth>256){f
     : `return ${functionNames.get(entry.id)}(${arguments_});`;
   return `// EMS control IR standalone output. Pure finite values; no EMS dependency.\n${standaloneHelpersJS()}
 const fail=__fail,assertPrimitiveValueType=__assertType,assertValueType=assertControlValueType;
-${[parseControlType, controlTypeName, controlVariants, assertControlValueType, cloneControlValue, matchControlPattern, validateControlInputs, equalControlValues, binaryControlValue, unaryControlValue, indexControlValue, controlBudgetOptions, assertSignal, checkCancellation, ...(futures ? [awaitCancellable,createFutureScope] : []), ...(streams ? [streamBudgetOptions,createStreamScope,executeStreamOperation] : []),resourceCleanupOutcome,...(resources?[resourceBudgetOptions,createResourceScope,executeResourceOperation]:[]), makeControlThrow, matchesControlCatch, controlCatchValue, terminalControlError].map(fn => fn.toString()).join('\n')}
+${[parseControlType, controlTypeName, controlVariants, assertControlValueType, cloneControlValue, matchControlPattern, validateControlInputs, equalControlValues, binaryControlValue, unaryControlValue, indexControlValue, controlBudgetOptions, assertSignal, checkCancellation, ...(futures ? [awaitCancellable,createFutureScope] : []), ...(streams ? [streamBudgetOptions,createStreamScope,executeStreamOperation] : []),resourceCleanupOutcome,...(resources?[resourceBudgetOptions,runResourcePhase,checkResourceAcquired,checkContractConditions,checkContractFailure,createResourceScope,executeResourceOperation]:[]), makeControlThrow, matchesControlCatch, controlCatchValue, terminalControlError].map(fn => fn.toString()).join('\n')}
 const __params=(names,values)=>Object.fromEntries(names.map((name,index)=>[name,values[index]]));
 ${wrappers.join('\n')}
 export ${futures ? 'async ' : ''}function execute(inputs,options={}){

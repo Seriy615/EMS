@@ -30,7 +30,7 @@ Typed user exception использует existing `USER_THROW`, `ems-user-throw
 
 `registerContractBinding(registry,interface,binding,{target})` устанавливает public id/version поверх выбранной **finite atomic/composite** реализации. Вызовы проверяют pre/post/errors в runtime; emitJS включает те же predicate/error/type helpers в независимый output без EMS imports. Adapter использует conservative interface policy даже при более чистой выбранной реализации. Поэтому preflight не исчезает при binding replacement. Missing pure emit hook остаётся unsupported compiler target.
 
-Resource/advanced signatures проверяются на compatibility, но их **installation** сейчас UNSUPPORTED_BINDING. Native lifecycle wrappers и полный ownership/error binding ABI — следующий срез EMS-016. М0 manifests/seals и trusted imports продолжают работать как раньше.
+Native resources устанавливаются через explicit ems-resource-interface/1 и phase lifecycle guards: см. [RESOURCE_IDL.md](RESOURCE_IDL.md). Advanced non-primitive binding signatures пока UNSUPPORTED_BINDING. М0 manifests/seals и trusted imports продолжают работать как раньше.
 
 ## Составная граница — AC-040
 
@@ -60,6 +60,6 @@ node examples/contract-division.mjs /tmp/ems-divide.mjs
 
 CLI binding-check использует existing core registry; foreign implementations подключаются через trusted programmatic API, CLI не импортирует произвольный JS для проверки. interface-compare завершает процесс code 1 при incompatibility. Эти команды не делают сетевых запросов.
 
-AC-039 — tests/contracts-idl.test.mjs: exact version/target/type/policy checks до callbacks, hidden composite effects, strict descriptors и immutable snapshots, compatible/incompatible evolution, pre/post/type/error parity call/control runtime/standalone, typed catch и malformed error payload, CLI и independent new-process export вне EMS. JSON Schema external engine не запускался; executable validation обязательна. EMS-016/M1 остаются открыты для advanced bindings, resource/error ABI, advanced resource condition preservation и dependency lock.
+AC-039 — tests/contracts-idl.test.mjs: exact version/target/type/policy checks до callbacks, hidden composite effects, strict descriptors и immutable snapshots, compatible/incompatible evolution, pre/post/type/error parity call/control runtime/standalone, typed catch и malformed error payload, CLI и independent new-process export вне EMS. JSON Schema external engine не запускался; executable validation обязательна. EMS-016/M1 остаются открыты для advanced bindings/error variants, advanced resource condition preservation и dependency lock.
 
 AC-040 — tests/contracts-composite.test.mjs: graph/IR/text call/control parity, positive/zero/-0/post failures, editable snapshot/representation, nested condition order до callbacks, declared/undeclared errors, policy/version/signature bypass negatives, own implementation policy, atomic sealing/reimport, independent process export и transactional state rollback.

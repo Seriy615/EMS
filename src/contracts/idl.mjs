@@ -33,8 +33,9 @@ function freeze(value) {
 
 /** Validate a public interface without loading or invoking an implementation. */
 export function validateContractInterface(spec) {
-  fields(spec,['schemaVersion','id','version','inputs','output','errors','semantics','conditions']);
-  if(spec.schemaVersion!=='ems-contract-interface/1')fail('IDL_VERSION','Unsupported interface schema');
+  const resource=spec?.schemaVersion==='ems-resource-interface/1';
+  fields(spec,['schemaVersion','id','version','inputs','output','errors','semantics','conditions',...(resource?['lifecycle']:[])]);
+  if(!resource&&spec.schemaVersion!=='ems-contract-interface/1')fail('IDL_VERSION','Unsupported interface schema');
   identifier(spec.id);version(spec.version);list(spec.inputs);const names=new Map();
   for(const input of spec.inputs){fields(input,['name','type']);if(typeof input.name!=='string'||!/^[A-Za-z_][A-Za-z0-9_]*$/.test(input.name)||names.has(input.name))fail('INVALID_IDL','Invalid or duplicate port');type(input.type);names.set(input.name,input.type);}
   fields(spec.output,['type']);type(spec.output.type);list(spec.errors);const codes=new Set();
@@ -53,7 +54,29 @@ export function validateContractInterface(spec) {
       const key=`${condition.kind}:${condition.subject.input??'@result'}`;if(seen.has(key))fail('INVALID_IDL','Duplicate condition');seen.add(key);
     }
   }
+  if(resource){
+    fields(spec.lifecycle,['ownership','valueType','read','write','release']);
+    if(spec.lifecycle.ownership!=='execution')fail('INVALID_IDL','Resource requires execution ownership');
+    parseControlType(spec.lifecycle.valueType);
+    if(spec.output.type!==`ResourceHandle<${spec.lifecycle.valueType}>`)fail('INVALID_IDL','Resource output disagrees with lifecycle value type');
+    for(const phase of ['read','write']){
+      if(phase==='write'&&spec.lifecycle.write===null)continue;
+      const operation=spec.lifecycle[phase];fields(operation,['errors','conditions']);
+      validateContractInterface(resourceOperationInterface(spec,phase));
+    }
+    fields(spec.lifecycle.release,['errors']);
+    validateContractInterface(resourceOperationInterface(spec,'release'));
+  }
   return freeze(canonical(spec));
+}
+
+/** Reuse the ordinary interface type/condition/error rules for each resource phase. */
+export function resourceOperationInterface(spec,phase) {
+  return {schemaVersion:'ems-contract-interface/1',id:spec.id+'.'+phase,version:spec.version,
+    inputs:phase==='write'?[{name:'value',type:spec.lifecycle.valueType}]:[],
+    output:{type:phase==='release'?'Boolean':spec.lifecycle.valueType},
+    errors:spec.lifecycle[phase].errors,semantics:{determinism:spec.semantics.determinism,effects:[],capabilities:[]},
+    conditions:phase==='release'?{pre:[],post:[]}:spec.lifecycle[phase].conditions};
 }
 
 /** Strict, exact-version implementation selection metadata, separate from package/license/visibility. */
@@ -71,6 +94,7 @@ export function validateContractBinding(binding) {
 export function compareContractInterfaces(oldSpec,newSpec) {
   const old=validateContractInterface(oldSpec),next=validateContractInterface(newSpec),reasons=[];
   const ov=version(old.version),nv=version(next.version);
+  if(old.schemaVersion!==next.schemaVersion)reasons.push('schema');
   if(old.id!==next.id)reasons.push('identity');
   if(nv[0]!==ov[0])reasons.push('major');
   if(nv[0]<ov[0] || nv[0]===ov[0] && (nv[1]<ov[1] || nv[1]===ov[1] && nv[2]<ov[2]))reasons.push('version-regression');
@@ -81,6 +105,14 @@ export function compareContractInterfaces(oldSpec,newSpec) {
   const key=condition=>`${condition.kind}:${condition.subject.input??'@result'}`;
   if(next.conditions.pre.some(condition=>!old.conditions.pre.some(previous=>key(previous)===key(condition))))reasons.push('preconditions');
   if(old.conditions.post.some(condition=>!next.conditions.post.some(updated=>key(updated)===key(condition))))reasons.push('postconditions');
+  if(old.lifecycle&&next.lifecycle){
+    if(old.lifecycle.valueType!==next.lifecycle.valueType||old.lifecycle.ownership!==next.lifecycle.ownership)reasons.push('lifecycle');
+    for(const phase of ['read','write','release']){
+      if((old.lifecycle[phase]===null)!==(next.lifecycle[phase]===null)){reasons.push(phase);continue;}
+      if(old.lifecycle[phase]===null)continue;
+      for(const reason of compareContractInterfaces(resourceOperationInterface(old,phase),resourceOperationInterface(next,phase)).reasons)reasons.push(phase+'.'+reason);
+    }
+  }
   if(old.version===next.version&&JSON.stringify(old)!==JSON.stringify(next))reasons.push('changed-without-version');
   return Object.freeze({compatible:reasons.length===0,reasons:Object.freeze(reasons)});
 }
@@ -97,12 +129,24 @@ export function checkContractBinding(spec,descriptor,registry,target) {
   const policy=implementation.kind==='composite'?analyzeGraphEffects(implementation.graph,registry):implementation;
   for(const field of ['effects','capabilities'])if([...policy[field],...implementation[field]].some(name=>!contract.semantics[field].includes(name)))fail('INCOMPATIBLE_BINDING','Implementation exceeds interface policy',{field});
   if(contract.semantics.determinism==='deterministic'&&binding.determinism!=='deterministic')fail('INCOMPATIBLE_BINDING','Implementation determinism mismatch');
+  if(contract.lifecycle){
+    if(implementation.kind!=='resource'||implementation.valueType!==contract.lifecycle.valueType||contract.lifecycle.write!==null&&typeof implementation.write!=='function')
+      fail('INCOMPATIBLE_BINDING','Resource lifecycle implementation mismatch');
+  }
   return {contract,binding,implementation};
 }
 
 /** Install a finite interface binding while preserving atomic/composite representation. */
 export function registerContractBinding(registry,spec,descriptor,{target}={}) {
   const {contract,binding,implementation}=checkContractBinding(spec,descriptor,registry,target);
+  if(contract.lifecycle){
+    if(!contract.inputs.every(input=>PRIMITIVE_TYPES.has(input.type))||!PRIMITIVE_TYPES.has(contract.lifecycle.valueType))fail('UNSUPPORTED_BINDING','Resource native ABI requires primitive inputs/value type');
+    registry.registerResource({id:contract.id,version:contract.version,inputs:Object.fromEntries(contract.inputs.map(input=>[input.name,input.type])),valueType:contract.lifecycle.valueType,
+      effects:contract.semantics.effects,capabilities:contract.semantics.capabilities,
+      acquire:implementation.acquire,read:implementation.read,write:contract.lifecycle.write===null?null:implementation.write,release:implementation.release,
+      resourceBoundaries:[{interface:contract,binding},...(implementation.resourceBoundaries??[])]});
+    return Object.freeze({interface:contract,binding});
+  }
   if(!['atomic','composite'].includes(implementation.kind)||!contract.inputs.every(input=>PRIMITIVE_TYPES.has(input.type))||!PRIMITIVE_TYPES.has(contract.output.type))
     fail('UNSUPPORTED_BINDING','Interface adapter currently requires finite atomic/composite ABI');
   const inputs=Object.fromEntries(contract.inputs.map(input=>[input.name,input.type]));

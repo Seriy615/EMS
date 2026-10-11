@@ -1,0 +1,17 @@
+{
+  "schemaVersion": "ems-resource-interface/1",
+  "id": "std.file.read",
+  "version": "1.0.0",
+  "inputs": [{"name":"path","type":"String"}],
+  "output": {"type":"ResourceHandle<String>"},
+  "errors": [{"code":"ENOENT","payloadType":null}],
+  "semantics": {"determinism":"unspecified","effects":["fs.read"],"capabilities":["fs.read"]},
+  "conditions": {"pre":[],"post":[]},
+  "lifecycle": {
+    "ownership": "execution",
+    "valueType": "String",
+    "read": {"errors":[],"conditions":{"pre":[],"post":[]}},
+    "write": null,
+    "release": {"errors":[]}
+  }
+}

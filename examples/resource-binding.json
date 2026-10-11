@@ -1,0 +1,9 @@
+{
+  "schemaVersion": "ems-contract-binding/1",
+  "id": "ems.node.file.read",
+  "version": "1.0.0",
+  "interface": {"id":"std.file.read","version":"1.0.0"},
+  "implementation": {"id":"node.file.read","version":"1.0.0"},
+  "targets": ["node"],
+  "determinism": "unspecified"
+}

@@ -1,3 +1,4 @@
+import { runResourcePhase,checkResourceAcquired } from '../contracts/resource-conditions.mjs';
 import { fail } from '../reference/errors.mjs';
 import { assertSignal, checkCancellation, awaitCancellable } from './cancellation.mjs';
 import { parseControlType, assertControlValueType, cloneControlValue } from '../semantics/control-algebraic.mjs';
@@ -48,7 +49,7 @@ export function createResourceScope(options) {
   function releaseOnce(state, why) {
     if (state.release) return state.release;
     state.release = deadline(async signal=>{
-      await state.binding.release(state.native,Object.freeze({signal,reason:why})); state.native=undefined;
+      await runResourcePhase(state.binding,'release',{},()=>state.binding.release(state.native,Object.freeze({signal,reason:why}))); state.native=undefined;
       report(state,'released',why);
     });
     // Deferred release failures are retained and observed; no native error payload is logged.
@@ -73,12 +74,12 @@ export function createResourceScope(options) {
   }
   async function acquire(binding, params) {
     const state=reserve(binding);
-    const acquisition=Promise.resolve().then(()=>{checkCancellation(options.signal);return binding.acquire(params,Object.freeze({signal:options.signal,state:options.state}));});
+    const acquisition=Promise.resolve().then(()=>{checkCancellation(options.signal);return runResourcePhase(binding,'acquire',params,()=>binding.acquire(params,Object.freeze({signal:options.signal,state:options.state})));});
     state.tail=acquisition.then(native=>{
       state.native=native;state.acquired=true;
       if (ended || state.closed || options.signal?.aborted) releaseOnce(state,'cancelled').catch(()=>{});
     },()=>{});
-    await awaitCancellable(acquisition,options.signal);checkCancellation(options.signal);return expose(state);
+    await awaitCancellable(acquisition,options.signal);checkCancellation(options.signal);checkResourceAcquired(binding,params);return expose(state);
   }
   function cell(value,type) {
     assertControlValueType(value,type,'resource cell');
@@ -93,8 +94,8 @@ export function createResourceScope(options) {
       checkCancellation(options.signal);if(state.closed)fail('RESOURCE_CLOSED','Resource is closed');
       const context=Object.freeze({signal:options.signal,state:options.state});let result;
       if(state.binding.id==='resource.cell'){if(writing)state.native=copy;result=state.native;}
-      else if(writing){if(typeof state.binding.write!=='function')fail('RESOURCE_READ_ONLY','Resource is read-only');result=await state.binding.write(state.native,copy,context);}
-      else result=await state.binding.read(state.native,context);
+      else if(writing){if(typeof state.binding.write!=='function')fail('RESOURCE_READ_ONLY','Resource is read-only');result=await runResourcePhase(state.binding,'write',{value:copy},()=>state.binding.write(state.native,copy,context));}
+      else result=await runResourcePhase(state.binding,'read',{},()=>state.binding.read(state.native,context));
       assertControlValueType(result,state.type,'resource result');return cloneControlValue(result);
     });
     state.tail=work.then(()=>{},()=>{});return awaitCancellable(work,options.signal);
