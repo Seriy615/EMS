@@ -49,3 +49,9 @@ P1 и AC-018 открыты: сравнение runtime/standalone в одном
 ## Продолжение — репозиторий владельца
 
 Владелец указал `git@github.com:Seriy615/EMS.git` для всех коммитов и push. Репозиторий доступен по SSH и пуст (проверен `git ls-remote`); локальная Git-история создаётся впервые. Доступ настроен локально через существующий SSH identity, приватные ключи в проект не копируются. Первый коммит сохраняет текущий исходный прототип, цель, результаты EMS-010..013 и незавершённый EMS-014. SHA snapshot в evidence относится к состоянию до добавления этой записи и Git metadata; это исторический снимок, не подтверждение будущих изменений. Далее сохранять историю, коммитить проверенные срезы и отправлять в этот remote.
+
+## Продолжение — EMS-014 runtime policy preflight
+
+Транзитивный анализ встроен в `executeGraph` до первого host-вызова: проверяется весь граф, включая unused nodes и вложенные composite. Grants capabilities и allowedEffects независимы, по умолчанию пусты и наследуются nested вызовами. Registry и runtime отклоняют malformed декларации/grants (`INVALID_POLICY`); JSON schema согласована с именами policy. Экспорты reference API открывают анализ и проверку отдельно.
+
+AC-029 подтверждена executable тестами: отказ на поздней зависимости не допускает раннего side effect; denied nested/unused effect не выполняется; разрешённый nested graph работает. `npm test` 215/215 PASS, `npm run verify` 33/33 PASS, baseline 211/211 и 33/33 на c4c47fe. Лог `/tmp/ems-effects-tests.log`. Доверенные атомы по-прежнему обладают полномочиями процесса, metadata enforcement не является OS sandbox. EMS-014 остаётся IN_PROGRESS: следующий срез — effectful semantic IR и explicit sequencing, затем state/events для IDE.

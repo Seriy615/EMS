@@ -2,9 +2,9 @@
 
 ## Последняя проверка — ядро перед IDE
 
-`npm test` **211/211 PASS**, `npm run verify` **33/33 PASS**. EMS-010..013 DONE для документированных начальных профилей (AC-025..028); M1 целиком не завершён. Новый текстовый AST frontend типизируется и реально исполняет чистые программы/generic helpers через общий IR/runtime, экспортирует standalone. Полные эффекты, состояние, события, async runtime и lifecycle ещё впереди.
+`npm test` **215/215 PASS**, `npm run verify` **33/33 PASS**. EMS-010..013 DONE для документированных начальных профилей (AC-025..028); M1 целиком не завершён. Новый текстовый AST frontend типизируется и реально исполняет чистые программы/generic helpers через общий IR/runtime, экспортирует standalone. Полные эффекты, состояние, события, async runtime и lifecycle ещё впереди.
 
-EMS-014 IN_PROGRESS: transitive metadata analysis и раздельные capability/effect preflight gates проверены в `tests/effects.test.mjs`; AST/IR/runtime integration и sequencing пока не завершены. Глобальная цель остаётся активной. WEB IDE MVP и деплой разрешены, но по уточнению владельца сначала продолжается ядро. Deploy не выполнен; TLS SAN mismatch остаётся обнаруженным инфраструктурным дефектом.
+EMS-014 IN_PROGRESS: транзитивный policy preflight встроен в `executeGraph` (AC-029). Вложенные/unused декларации проверяются до первого host-вызова; раздельные grants и ошибочные списки проверены в `tests/effects.test.mjs`. AST/IR effect fields и explicit sequencing ещё не завершены. Глобальная цель остаётся активной. WEB IDE MVP и деплой разрешены, но по уточнению владельца сначала продолжается ядро. Deploy не выполнен; TLS SAN mismatch остаётся обнаруженным инфраструктурным дефектом.
 
 ## Текущее состояние после EMS-012
 

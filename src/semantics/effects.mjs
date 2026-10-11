@@ -1,6 +1,13 @@
 import { fail } from '../reference/errors.mjs';
 import { validateGraph } from '../reference/validate.mjs';
 
+/** Validate explicit declaration/grant lists; a string is never an implicit list. */
+export function assertPolicyNames(names, label) {
+  if (!Array.isArray(names) || names.some(name => typeof name !== 'string' || !/^[-a-zA-Z0-9_.]+$/.test(name)) ||
+      Object.keys(names).length !== names.length || new Set(names).size !== names.length)
+    fail('INVALID_POLICY', `${label} must be a dense array of unique nonempty policy names`, { field: label });
+}
+
 /** Compute transitive declarations without invoking trusted or foreign implementations. */
 export function analyzeGraphEffects(graph, registry) {
   const summaries = new Map();
@@ -32,6 +39,8 @@ export function analyzeGraphEffects(graph, registry) {
 
 /** Verify declared grants/allowed effects before any graph execution. Metadata is not OS isolation. */
 export function checkGraphPolicy(graph, registry, { capabilities = [], allowedEffects = [] } = {}) {
+  assertPolicyNames(capabilities, 'capabilities');
+  assertPolicyNames(allowedEffects, 'allowedEffects');
   const summary = analyzeGraphEffects(graph, registry);
   const grants = new Set(capabilities), permitted = new Set(allowedEffects);
   for (const capability of summary.capabilities) {

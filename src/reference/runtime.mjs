@@ -1,11 +1,13 @@
 import { fail } from './errors.mjs';
 import { assertValueType } from './types.mjs';
 import { validateGraph, validateRuntimeInputs } from './validate.mjs';
+import { checkGraphPolicy } from '../semantics/effects.mjs';
 
 /** Reference-only synchronous dataflow evaluator. Not a security sandbox, production scheduler or real-time engine. */
 export async function executeGraph(graph, inputs, registry, options = {}) {
   const { nodes } = validateGraph(graph, registry);
   validateRuntimeInputs(graph, inputs);
+  checkGraphPolicy(graph, registry, options);
   const allowed = new Set(options.capabilities ?? []);
   const callStack = options.callStack ?? [];
   if (callStack.includes(graph.id) || callStack.length >= 32) fail('RECURSIVE_COMPOSITE', `Recursive or too-deep composite ${graph.id}`);
@@ -26,7 +28,7 @@ export async function executeGraph(graph, inputs, registry, options = {}) {
     const params = Object.create(null);
     for (const key of Object.keys(contract.inputs)) params[key] = await refValue(node.args[key]);
     const result = contract.kind === 'composite'
-      ? await executeGraph(contract.graph, params, registry, { capabilities: [...allowed], callStack: nextStack })
+      ? await executeGraph(contract.graph, params, registry, { capabilities: [...allowed], allowedEffects: options.allowedEffects ?? [], callStack: nextStack })
       : await contract.execute(params);
     assertValueType(result, contract.output, `result of ${contract.id}`);
     memo.set(id, result);

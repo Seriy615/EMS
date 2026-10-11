@@ -1,5 +1,6 @@
 import { fail } from './errors.mjs';
 import { assertTypeName } from './types.mjs';
+import { assertPolicyNames } from '../semantics/effects.mjs';
 
 /** Trust boundary: registerAtomic accepts host-trusted implementations only. No plugin sandbox in M0. */
 export class Registry {
@@ -20,6 +21,8 @@ export class Registry {
     if (!item.inputs || typeof item.inputs !== 'object') fail('INVALID_CONTRACT', `Missing inputs for ${item.id}`);
     for (const [key, v] of Object.entries(item.inputs)) assertTypeName(typeof v === 'string' ? v : v.type, `${item.id}.${key}`);
     assertTypeName(item.output, `${item.id}.output`);
+    assertPolicyNames(item.effects, 'effects');
+    assertPolicyNames(item.capabilities, 'capabilities');
     this.items.set(item.id, Object.freeze({ ...item, effects: Object.freeze([...item.effects]), capabilities: Object.freeze([...item.capabilities]) }));
   }
   resolve(id) {
