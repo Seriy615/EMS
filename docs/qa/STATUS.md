@@ -2,7 +2,7 @@
 
 ## EMS-035/033 — owner MVP proof и подготовка publication
 
-677/677 Node PASS,130/130 verify PASS,24/24 browser PASS (только после terminal browser result). Named local scenarios и границы — docs/qa/WEB_IDE_MVP.md. Реальный composite AVG5/вложенность/shared edit/reopen, точная graph failure location/lifecycle log. Deployment tooling подготовлен; public domain пока имеет TLS SAN mismatch, remote success требует actual release/auth/HTTPS/Chromium/recovery/rollback evidence. Глобальная цель и full step/control/source debugger остаются открытыми.
+678/678 Node PASS,130/130 verify PASS,24/24 browser PASS. Исправлен symlink CLI entrypoint, добавлен настоящий process regression; первый deployment412bf38 выявил это, не прошёл readiness и не объявлен успешным. Domain certificate выпущен, fixed release pending publication. Named local scenarios и границы — docs/qa/WEB_IDE_MVP.md. Реальный composite AVG5/вложенность/shared edit/reopen, точная graph failure location/lifecycle log. Deployment tooling подготовлен; public domain пока имеет TLS SAN mismatch, remote success требует actual release/auth/HTTPS/Chromium/recovery/rollback evidence. Глобальная цель и full step/control/source debugger остаются открытыми.
 
 ## Последняя проверка — EMS-050 unified local project catalog, AC-062
 

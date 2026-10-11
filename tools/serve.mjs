@@ -22,6 +22,6 @@ const server=createServer(async (req, res) => {
 await new Promise((resolve,reject)=>{server.once('error',reject);server.listen(port,'127.0.0.1',resolve);});
 return {origin:`http://127.0.0.1:${server.address().port}`,close:()=>new Promise(resolve=>{server.close(resolve);server.closeAllConnections();})};
 }
-if(process.argv[1]&&resolve(process.argv[1])===fileURLToPath(import.meta.url)) {
+if(process.argv[1]&&await realpath(resolve(process.argv[1]))===fileURLToPath(import.meta.url)) {
   const server=await startStudioServer();console.log(`EMS reference explorer: ${server.origin}`);
 }

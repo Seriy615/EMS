@@ -21,7 +21,7 @@ install -m 0644 "$release/deploy/ems-language-dev.service" /etc/systemd/system/e
 install -m 0644 "$release/deploy/nginx.conf" /etc/nginx/sites-available/ems-language-dev
 ln -sfn /etc/nginx/sites-available/ems-language-dev /etc/nginx/sites-enabled/ems-language-dev
 nginx -t
-if [[ -L $deploy_root/current && $(readlink "$deploy_root/current") != "$release" ]]; then readlink "$deploy_root/current" > "$deploy_root/previous"; fi
+if [[ -L $deploy_root/current && $(readlink "$deploy_root/current") != "$release" ]] && systemctl is-active --quiet ems-language-dev.service && curl --fail --silent --output /dev/null http://127.0.0.1:18877/; then readlink "$deploy_root/current" > "$deploy_root/previous"; fi
 ln -sfn "$release" "$deploy_root/next"
 mv -Tf "$deploy_root/next" "$deploy_root/current"
 systemctl daemon-reload
