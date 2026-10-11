@@ -1,0 +1,1121 @@
+{
+  "schemaVersion": "ems-conformance-report/1",
+  "executors": [
+    "node-reference",
+    "chromium-reference",
+    "chromium-locked-reference",
+    "node-independent-standalone",
+    "chromium-independent-standalone"
+  ],
+  "passed": 57,
+  "failed": 0,
+  "environment": {
+    "node": "v22.21.0",
+    "platform": "linux",
+    "browser": {
+      "protocolVersion": "1.3",
+      "product": "HeadlessChrome/156.0.8078.4",
+      "revision": "@f842f52ef39fd97b449eb27cff414bf05a98ddce",
+      "userAgent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/156.0.8078.4 Safari/537.36",
+      "jsVersion": "15.6.75"
+    },
+    "webCrypto": {
+      "secureContext": true,
+      "subtleCrypto": true
+    }
+  },
+  "browserLockRejections": [
+    {
+      "accepted": false,
+      "code": "LOCK_MISMATCH"
+    },
+    {
+      "accepted": false,
+      "code": "LOCK_MISMATCH"
+    }
+  ],
+  "portableApplication": {
+    "schemaVersion": "ems-portable-proof/1",
+    "source": {
+      "file": "portable-analysis.ems",
+      "sha256": "3dfdff04408ccbff3bcb9565cfa087c75b47ee390b4f4e20763aed096a645fcc"
+    },
+    "semanticIR": "3f15af85b97f5603f9b480301542f3f688854421e3ea96bd9db096c3c3d09e42",
+    "artifact": {
+      "file": "program.mjs",
+      "sha256": "3f48d0786a39da1c1039d7c9378e6e6f8faaaef960dcf4357938433e6e282100"
+    },
+    "profile": "ems-control-errors/1",
+    "bindings": [],
+    "grants": [],
+    "dependencies": [],
+    "runtimeOriginClosedBeforeUI": true,
+    "ui": {
+      "positive": {
+        "status": "success",
+        "text": "Среднее: 6"
+      },
+      "empty": {
+        "status": "error",
+        "text": "Добавьте хотя бы одно число."
+      },
+      "invalid": {
+        "status": "error",
+        "text": "Проверьте формат: нужен массив чисел."
+      }
+    },
+    "independentRequests": [
+      "/index.html",
+      "/style.css",
+      "/app.mjs",
+      "/program.mjs",
+      "/driver.mjs",
+      "/codec.mjs",
+      "/fixture-0.mjs",
+      "/fixture-1.mjs",
+      "/fixture-2.mjs",
+      "/fixture-3.mjs",
+      "/fixture-4.mjs",
+      "/fixture-5.mjs",
+      "/fixture-6.mjs",
+      "/fixture-7.mjs",
+      "/fixture-8.mjs",
+      "/fixture-9.mjs",
+      "/fixture-10.mjs",
+      "/fixture-11.mjs",
+      "/fixture-12.mjs",
+      "/fixture-13.mjs",
+      "/fixture-14.mjs",
+      "/fixture-15.mjs",
+      "/fixture-16.mjs",
+      "/fixture-17.mjs",
+      "/fixture-18.mjs",
+      "/fixture-19.mjs",
+      "/fixture-20.mjs",
+      "/fixture-21.mjs",
+      "/fixture-22.mjs",
+      "/fixture-23.mjs",
+      "/fixture-24.mjs",
+      "/fixture-25.mjs",
+      "/fixture-26.mjs",
+      "/fixture-27.mjs",
+      "/fixture-28.mjs",
+      "/fixture-29.mjs",
+      "/fixture-30.mjs",
+      "/fixture-31.mjs",
+      "/fixture-32.mjs",
+      "/fixture-33.mjs",
+      "/fixture-34.mjs",
+      "/fixture-35.mjs",
+      "/fixture-36.mjs",
+      "/fixture-37.mjs",
+      "/fixture-38.mjs",
+      "/fixture-39.mjs",
+      "/fixture-40.mjs",
+      "/fixture-41.mjs",
+      "/fixture-42.mjs",
+      "/fixture-43.mjs",
+      "/fixture-44.mjs",
+      "/fixture-45.mjs",
+      "/fixture-46.mjs",
+      "/fixture-47.mjs",
+      "/fixture-48.mjs",
+      "/fixture-49.mjs",
+      "/fixture-50.mjs",
+      "/fixture-51.mjs",
+      "/fixture-52.mjs",
+      "/fixture-53.mjs"
+    ],
+    "sourceDependenciesRequested": false
+  },
+  "commands": [
+    "npm run browser:test",
+    "npm run browser:verify -- --out /tmp/ems-browser-report.json",
+    "npm run export:portable -- --out dist/portable-analysis"
+  ],
+  "fixtureHashes": {
+    "tests/fixtures/semantics.json": "c7902bed8c8050d8bc5030dd22c81e16d14dbaf300d3e2c587c556208423b0af",
+    "tests/fixtures/language-conformance.json": "5e24e73a18a9710790bf8ad1af1c584bc4309c0e82e2be9a386532881bb653b6"
+  },
+  "results": [
+    {
+      "id": "ems-core-finite/1/add",
+      "passed": true
+    },
+    {
+      "id": "ems-core-finite/1/sub",
+      "passed": true
+    },
+    {
+      "id": "ems-core-finite/1/mul",
+      "passed": true
+    },
+    {
+      "id": "ems-core-finite/1/div",
+      "passed": true
+    },
+    {
+      "id": "ems-core-finite/1/binary64-rounding",
+      "passed": true
+    },
+    {
+      "id": "ems-core-finite/1/positive-zero-divisor",
+      "passed": true
+    },
+    {
+      "id": "ems-core-finite/1/negative-zero-divisor",
+      "passed": true
+    },
+    {
+      "id": "ems-core-finite/1/negative-zero-product",
+      "passed": true
+    },
+    {
+      "id": "ems-core-finite/1/underflow",
+      "passed": true
+    },
+    {
+      "id": "ems-core-finite/1/negative-underflow",
+      "passed": true
+    },
+    {
+      "id": "ems-core-finite/1/addition-overflow",
+      "passed": true
+    },
+    {
+      "id": "ems-core-finite/1/multiplication-overflow",
+      "passed": true
+    },
+    {
+      "id": "ems-core-finite/1/empty-sum",
+      "passed": true
+    },
+    {
+      "id": "ems-core-finite/1/empty-min",
+      "passed": true
+    },
+    {
+      "id": "ems-core-finite/1/empty-max",
+      "passed": true
+    },
+    {
+      "id": "ems-core-finite/1/left-fold-sum",
+      "passed": true
+    },
+    {
+      "id": "ems-core-finite/1/sum-overflow",
+      "passed": true
+    },
+    {
+      "id": "ems-core-finite/1/min",
+      "passed": true
+    },
+    {
+      "id": "ems-core-finite/1/max",
+      "passed": true
+    },
+    {
+      "id": "ems-core-finite/1/min-negative-zero",
+      "passed": true
+    },
+    {
+      "id": "ems-core-finite/1/max-positive-zero",
+      "passed": true
+    },
+    {
+      "id": "ems-core-finite/1/overflow-before-finite-return",
+      "passed": true
+    },
+    {
+      "id": "ems-core-finite/1/number-identity",
+      "passed": true
+    },
+    {
+      "id": "ems-core-finite/1/boolean-identity",
+      "passed": true
+    },
+    {
+      "id": "ems-core-finite/1/string-identity",
+      "passed": true
+    },
+    {
+      "id": "ems-core-finite/1/array-identity",
+      "passed": true
+    },
+    {
+      "id": "ems-core-finite/1/literal-negative-zero",
+      "passed": true
+    },
+    {
+      "id": "ems-core-finite/1/literal-array-negative-zero",
+      "passed": true
+    },
+    {
+      "id": "ems-finite-language/1/branch",
+      "passed": true
+    },
+    {
+      "id": "ems-finite-language/1/loop-order",
+      "passed": true
+    },
+    {
+      "id": "ems-finite-language/1/recursive",
+      "passed": true
+    },
+    {
+      "id": "ems-finite-language/1/short-circuit",
+      "passed": true
+    },
+    {
+      "id": "ems-finite-language/1/bounds",
+      "passed": true
+    },
+    {
+      "id": "ems-finite-language/1/step-limit",
+      "passed": true
+    },
+    {
+      "id": "ems-finite-language/1/call-depth",
+      "passed": true
+    },
+    {
+      "id": "ems-finite-language/1/typed-catch",
+      "passed": true
+    },
+    {
+      "id": "ems-finite-language/1/unhandled-throw",
+      "passed": true
+    },
+    {
+      "id": "ems-finite-language/1/finally-order",
+      "passed": true
+    },
+    {
+      "id": "ems-finite-language/1/algebraic",
+      "passed": true
+    },
+    {
+      "id": "ems-finite-language/1/result",
+      "passed": true
+    },
+    {
+      "id": "ems-finite-language/1/async-join",
+      "passed": true
+    },
+    {
+      "id": "ems-finite-language/1/supervised-failure",
+      "passed": true
+    },
+    {
+      "id": "ems-finite-language/1/snapshot-stream",
+      "passed": true
+    },
+    {
+      "id": "ems-finite-language/1/channel-backpressure",
+      "passed": true
+    },
+    {
+      "id": "ems-finite-language/1/stream-zero",
+      "passed": true
+    },
+    {
+      "id": "ems-finite-language/1/owned-cell",
+      "passed": true
+    },
+    {
+      "id": "ems-finite-language/1/cleanup-on-throw",
+      "passed": true
+    },
+    {
+      "id": "ems-finite-language/1/invalid-input",
+      "passed": true
+    },
+    {
+      "id": "ems-finite-language/1/overflow",
+      "passed": true
+    },
+    {
+      "id": "ems-finite-language/1/generic-scope",
+      "passed": true
+    },
+    {
+      "id": "ems-finite-language/1/atomic-interface",
+      "passed": true
+    },
+    {
+      "id": "ems-finite-language/1/atomic-precondition",
+      "passed": true
+    },
+    {
+      "id": "ems-finite-language/1/composite-interface",
+      "passed": true
+    },
+    {
+      "id": "ems-finite-language/1/composite-precondition",
+      "passed": true
+    },
+    {
+      "id": "P1/mean",
+      "passed": true,
+      "outcomes": [
+        {
+          "executor": "node-reference",
+          "outcome": [
+            "object",
+            [
+              [
+                "status",
+                [
+                  "string",
+                  "returned"
+                ]
+              ],
+              [
+                "value",
+                [
+                  "number",
+                  "4"
+                ]
+              ]
+            ]
+          ],
+          "expected": true
+        },
+        {
+          "executor": "chromium-reference",
+          "outcome": [
+            "object",
+            [
+              [
+                "status",
+                [
+                  "string",
+                  "returned"
+                ]
+              ],
+              [
+                "value",
+                [
+                  "number",
+                  "4"
+                ]
+              ]
+            ]
+          ],
+          "expected": true
+        },
+        {
+          "executor": "chromium-locked-reference",
+          "outcome": [
+            "object",
+            [
+              [
+                "status",
+                [
+                  "string",
+                  "returned"
+                ]
+              ],
+              [
+                "value",
+                [
+                  "number",
+                  "4"
+                ]
+              ]
+            ]
+          ],
+          "expected": true
+        },
+        {
+          "executor": "node-independent-standalone",
+          "outcome": [
+            "object",
+            [
+              [
+                "status",
+                [
+                  "string",
+                  "returned"
+                ]
+              ],
+              [
+                "value",
+                [
+                  "number",
+                  "4"
+                ]
+              ]
+            ]
+          ],
+          "expected": true
+        },
+        {
+          "executor": "chromium-independent-standalone",
+          "outcome": [
+            "object",
+            [
+              [
+                "status",
+                [
+                  "string",
+                  "returned"
+                ]
+              ],
+              [
+                "value",
+                [
+                  "number",
+                  "4"
+                ]
+              ]
+            ]
+          ],
+          "expected": true
+        }
+      ]
+    },
+    {
+      "id": "P1/empty",
+      "passed": true,
+      "outcomes": [
+        {
+          "executor": "node-reference",
+          "outcome": [
+            "object",
+            [
+              [
+                "error",
+                [
+                  "object",
+                  [
+                    [
+                      "code",
+                      [
+                        "string",
+                        "USER_THROW"
+                      ]
+                    ],
+                    [
+                      "details",
+                      [
+                        "object",
+                        []
+                      ]
+                    ],
+                    [
+                      "name",
+                      [
+                        "string",
+                        "EmsError"
+                      ]
+                    ],
+                    [
+                      "value",
+                      [
+                        "string",
+                        "EMPTY_SAMPLE"
+                      ]
+                    ],
+                    [
+                      "valueType",
+                      [
+                        "string",
+                        "String"
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                "status",
+                [
+                  "string",
+                  "failed"
+                ]
+              ]
+            ]
+          ],
+          "expected": true
+        },
+        {
+          "executor": "chromium-reference",
+          "outcome": [
+            "object",
+            [
+              [
+                "error",
+                [
+                  "object",
+                  [
+                    [
+                      "code",
+                      [
+                        "string",
+                        "USER_THROW"
+                      ]
+                    ],
+                    [
+                      "details",
+                      [
+                        "object",
+                        []
+                      ]
+                    ],
+                    [
+                      "name",
+                      [
+                        "string",
+                        "EmsError"
+                      ]
+                    ],
+                    [
+                      "value",
+                      [
+                        "string",
+                        "EMPTY_SAMPLE"
+                      ]
+                    ],
+                    [
+                      "valueType",
+                      [
+                        "string",
+                        "String"
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                "status",
+                [
+                  "string",
+                  "failed"
+                ]
+              ]
+            ]
+          ],
+          "expected": true
+        },
+        {
+          "executor": "chromium-locked-reference",
+          "outcome": [
+            "object",
+            [
+              [
+                "error",
+                [
+                  "object",
+                  [
+                    [
+                      "code",
+                      [
+                        "string",
+                        "USER_THROW"
+                      ]
+                    ],
+                    [
+                      "details",
+                      [
+                        "object",
+                        []
+                      ]
+                    ],
+                    [
+                      "name",
+                      [
+                        "string",
+                        "EmsError"
+                      ]
+                    ],
+                    [
+                      "value",
+                      [
+                        "string",
+                        "EMPTY_SAMPLE"
+                      ]
+                    ],
+                    [
+                      "valueType",
+                      [
+                        "string",
+                        "String"
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                "status",
+                [
+                  "string",
+                  "failed"
+                ]
+              ]
+            ]
+          ],
+          "expected": true
+        },
+        {
+          "executor": "node-independent-standalone",
+          "outcome": [
+            "object",
+            [
+              [
+                "error",
+                [
+                  "object",
+                  [
+                    [
+                      "code",
+                      [
+                        "string",
+                        "USER_THROW"
+                      ]
+                    ],
+                    [
+                      "details",
+                      [
+                        "object",
+                        []
+                      ]
+                    ],
+                    [
+                      "name",
+                      [
+                        "string",
+                        "EmsError"
+                      ]
+                    ],
+                    [
+                      "value",
+                      [
+                        "string",
+                        "EMPTY_SAMPLE"
+                      ]
+                    ],
+                    [
+                      "valueType",
+                      [
+                        "string",
+                        "String"
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                "status",
+                [
+                  "string",
+                  "failed"
+                ]
+              ]
+            ]
+          ],
+          "expected": true
+        },
+        {
+          "executor": "chromium-independent-standalone",
+          "outcome": [
+            "object",
+            [
+              [
+                "error",
+                [
+                  "object",
+                  [
+                    [
+                      "code",
+                      [
+                        "string",
+                        "USER_THROW"
+                      ]
+                    ],
+                    [
+                      "details",
+                      [
+                        "object",
+                        []
+                      ]
+                    ],
+                    [
+                      "name",
+                      [
+                        "string",
+                        "EmsError"
+                      ]
+                    ],
+                    [
+                      "value",
+                      [
+                        "string",
+                        "EMPTY_SAMPLE"
+                      ]
+                    ],
+                    [
+                      "valueType",
+                      [
+                        "string",
+                        "String"
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                "status",
+                [
+                  "string",
+                  "failed"
+                ]
+              ]
+            ]
+          ],
+          "expected": true
+        }
+      ]
+    },
+    {
+      "id": "P1/invalid-input",
+      "passed": true,
+      "outcomes": [
+        {
+          "executor": "node-reference",
+          "outcome": [
+            "object",
+            [
+              [
+                "error",
+                [
+                  "object",
+                  [
+                    [
+                      "code",
+                      [
+                        "string",
+                        "TYPE_MISMATCH"
+                      ]
+                    ],
+                    [
+                      "details",
+                      [
+                        "object",
+                        [
+                          [
+                            "context",
+                            [
+                              "string",
+                              "inputs.values"
+                            ]
+                          ],
+                          [
+                            "expected",
+                            [
+                              "string",
+                              "NumberArray"
+                            ]
+                          ],
+                          [
+                            "received",
+                            [
+                              "string",
+                              "Unknown"
+                            ]
+                          ]
+                        ]
+                      ]
+                    ],
+                    [
+                      "name",
+                      [
+                        "string",
+                        "EmsError"
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                "status",
+                [
+                  "string",
+                  "failed"
+                ]
+              ]
+            ]
+          ],
+          "expected": true
+        },
+        {
+          "executor": "chromium-reference",
+          "outcome": [
+            "object",
+            [
+              [
+                "error",
+                [
+                  "object",
+                  [
+                    [
+                      "code",
+                      [
+                        "string",
+                        "TYPE_MISMATCH"
+                      ]
+                    ],
+                    [
+                      "details",
+                      [
+                        "object",
+                        [
+                          [
+                            "context",
+                            [
+                              "string",
+                              "inputs.values"
+                            ]
+                          ],
+                          [
+                            "expected",
+                            [
+                              "string",
+                              "NumberArray"
+                            ]
+                          ],
+                          [
+                            "received",
+                            [
+                              "string",
+                              "Unknown"
+                            ]
+                          ]
+                        ]
+                      ]
+                    ],
+                    [
+                      "name",
+                      [
+                        "string",
+                        "EmsError"
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                "status",
+                [
+                  "string",
+                  "failed"
+                ]
+              ]
+            ]
+          ],
+          "expected": true
+        },
+        {
+          "executor": "chromium-locked-reference",
+          "outcome": [
+            "object",
+            [
+              [
+                "error",
+                [
+                  "object",
+                  [
+                    [
+                      "code",
+                      [
+                        "string",
+                        "TYPE_MISMATCH"
+                      ]
+                    ],
+                    [
+                      "details",
+                      [
+                        "object",
+                        [
+                          [
+                            "context",
+                            [
+                              "string",
+                              "inputs.values"
+                            ]
+                          ],
+                          [
+                            "expected",
+                            [
+                              "string",
+                              "NumberArray"
+                            ]
+                          ],
+                          [
+                            "received",
+                            [
+                              "string",
+                              "Unknown"
+                            ]
+                          ]
+                        ]
+                      ]
+                    ],
+                    [
+                      "name",
+                      [
+                        "string",
+                        "EmsError"
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                "status",
+                [
+                  "string",
+                  "failed"
+                ]
+              ]
+            ]
+          ],
+          "expected": true
+        },
+        {
+          "executor": "node-independent-standalone",
+          "outcome": [
+            "object",
+            [
+              [
+                "error",
+                [
+                  "object",
+                  [
+                    [
+                      "code",
+                      [
+                        "string",
+                        "TYPE_MISMATCH"
+                      ]
+                    ],
+                    [
+                      "details",
+                      [
+                        "object",
+                        [
+                          [
+                            "context",
+                            [
+                              "string",
+                              "inputs.values"
+                            ]
+                          ],
+                          [
+                            "expected",
+                            [
+                              "string",
+                              "NumberArray"
+                            ]
+                          ],
+                          [
+                            "received",
+                            [
+                              "string",
+                              "Unknown"
+                            ]
+                          ]
+                        ]
+                      ]
+                    ],
+                    [
+                      "name",
+                      [
+                        "string",
+                        "EmsError"
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                "status",
+                [
+                  "string",
+                  "failed"
+                ]
+              ]
+            ]
+          ],
+          "expected": true
+        },
+        {
+          "executor": "chromium-independent-standalone",
+          "outcome": [
+            "object",
+            [
+              [
+                "error",
+                [
+                  "object",
+                  [
+                    [
+                      "code",
+                      [
+                        "string",
+                        "TYPE_MISMATCH"
+                      ]
+                    ],
+                    [
+                      "details",
+                      [
+                        "object",
+                        [
+                          [
+                            "context",
+                            [
+                              "string",
+                              "inputs.values"
+                            ]
+                          ],
+                          [
+                            "expected",
+                            [
+                              "string",
+                              "NumberArray"
+                            ]
+                          ],
+                          [
+                            "received",
+                            [
+                              "string",
+                              "Unknown"
+                            ]
+                          ]
+                        ]
+                      ]
+                    ],
+                    [
+                      "name",
+                      [
+                        "string",
+                        "EmsError"
+                      ]
+                    ]
+                  ]
+                ]
+              ],
+              [
+                "status",
+                [
+                  "string",
+                  "failed"
+                ]
+              ]
+            ]
+          ],
+          "expected": true
+        }
+      ]
+    }
+  ]
+}

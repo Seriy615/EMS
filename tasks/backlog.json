@@ -352,12 +352,24 @@
       "objective": "Execute the same platform-independent EMS programs in Node and an actual browser, including independent standalone output",
       "deliverables": "Real browser runner, shared fixture results and reproducible portable application proof",
       "acceptance": "Actual Chromium/browser runtime and generated output match common fixture values/errors; one source works in Node/browser and standalone static host without EMS IDE. Document unsupported targets; no Node data URL counts as browser evidence.",
-      "status": "TODO",
+      "status": "DONE",
       "priority": "P0",
       "ownerModelPolicy": [
         "GPT-6.1 Sol",
         "GPT-6 Luna"
-      ]
+      ],
+      "progress": "Actual Chromium/156.0.8078.4 and Node22 portable pure-core gate implemented: 57 fixtures across five executors (Node runtime, Chromium runtime, Chromium locked runtime, fresh Node standalone and independent Chromium standalone). Node-produced SHA-256 locks verify in browser Web Crypto, changed digest/target rejected. P1 portable-analysis EMS source compiles to the same program.mjs used by both standalone targets; source/IR/artifact hashes and bindings recorded, actual static UI positive/negative submits work after runtime origin shutdown. 510/510 Node tests, 89/89 verify, 2/2 actual browser tests, browser:verify 57/57 PASS. Existing explorer transitive source routes restored and browser-tested. Pure-core P1 only; M6/AC-018 native target, state/native export, full IDE and deployment remain open.",
+      "acceptanceEvidence": {
+        "commands": [
+          "npm run browser:test",
+          "npm run browser:verify -- --out /tmp/ems-browser-report.json",
+          "npm run export:portable -- --out dist/portable-analysis"
+        ],
+        "docs": "docs/qa/BROWSER_P1.md",
+        "evidence": "docs/qa/evidence/browser-p1.json",
+        "browser": "HeadlessChrome/156.0.8078.4",
+        "scope": "Actual Node/Web pure-core P1; no claim of native target or full M1."
+      }
     },
     {
       "id": "EMS-030",

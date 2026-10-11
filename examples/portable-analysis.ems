@@ -1,0 +1,11 @@
+// Platform-independent application logic. Empty samples produce a typed user error.
+fn analyze(values:Number[])->Number {
+  let mut total=0;
+  let mut count=0;
+  for value in values {
+    total=total+value;
+    count=count+1;
+  }
+  if count==0 { throw "EMPTY_SAMPLE"; }
+  return total/count;
+}
