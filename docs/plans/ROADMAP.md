@@ -97,3 +97,7 @@ AC-053: UI/state/property/event authoring forms создают настоящи�
 ## Текущий срез EMS-050 — Worker preview
 
 AC-054 реализован для reference preview: настоящий persistent Worker исполняет существующий UIRuntime/ReactorSession, с полным init preflight, typed request/reply/confirmed snapshots, ограниченной очередью, deadline и terminal Stop. Node worker/local parity и actual browser responsiveness во время EMS loop/recovery подтверждены;630 tests/118 verify/14 browser. Handler execution вынесен из editor thread; plugin sandbox/individual retry/IO rollback не заявлены. EMS-050 IN_PROGRESS. Следующая зависимость ядра — real standalone state/UI compiler с сохранением transaction/FIFO/abort/error semantics и independent exported browser app. Full graphical control handlers/text maps/unified UI project manager и whole MVP acceptance остаются впереди; затем owner-authorized isolated auth/HTTPS/rollback deploy.
+
+## Точка продолжения после AC-055
+
+EMS-060 IN_PROGRESS: независимые control state handlers с kernel witness/grants реализованы и проверены; общий транзакционный scheduler и целое приложение ещё не экспортированы. Следующий core gate — compiled session FIFO/rollback/replay/cancel без второго evaluator, затем EMS-061 independent browser UI package. Полный handler canvas/unified manager остаются зависимостями WEB IDE MVP; deploy следует после его приёмки. См. docs/spec/STATE_COMPILER.md и docs/qa/PROGRESS.md.

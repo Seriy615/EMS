@@ -38,3 +38,7 @@ Differential tests: same inputs through reference evaluator and target artifact,
 ## Проверенное начальное ядро M1
 
 `docs/spec/LANGUAGE_SEMANTICS.md` фиксирует профиль `ems-core-finite/1`. `src/ir/index.mjs` реализует начальный typed call-IR `ems-ir/1` с точными версиями непосредственно вызываемых контрактов, канонической сериализацией, проверкой типов/ссылок и JSON Pointer provenance отдельно от семантики. См. `docs/spec/IR.md` и AC-025/026. SSA control-flow, state, async, ownership и production backend остаются будущими расширениями; исходное предложение IR выше не объявляется реализованным целиком.
+
+## Начальная компиляция state handlers
+
+Отдельный `compileStateControlJS` разрешает только проверенные kernel state intrinsics в control IR v2 и сохраняет runtime grants. Выход исполняется без EMS imports, но требует execution-owned transactional context. Pure targets прежние. Scheduler/store/commit/rollback и полный UI export этим API не реализованы; границы и AC-055 — `docs/spec/STATE_COMPILER.md`.

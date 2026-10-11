@@ -1,5 +1,12 @@
 # Current implementation status
 
+## Последняя проверка — EMS-060 state handler compiler, AC-055
+
+`npm test` **638/638 PASS**, `npm run verify` **120/120 PASS**, `npm run browser:test` **14/14 PASS**. Baseline a26af74:630/118/14. Node22 / actual Chromium156. EMS-060 IN_PROGRESS: независимый compiler обработчиков завершён в указанном профиле; standalone reactor/UI, production backend, full MVP/deploy/global goal открыты.
+
+`compileStateControlJS` допускает реальные kernel state read/write и pure bindings; callback/ID/version/signature/policy witness отвергает подмены. Generated code проверяет grants/inputs/cancellation и сохраняет existing control budget/errors/async semantics. Differential tests сравнивают результаты и state call order; fresh Node process исполняет output без EMS imports. Контекст транзакции должен предоставить execution owner; scheduler/commit/rollback этим шагом не экспортированы. Ограничения: `docs/spec/STATE_COMPILER.md`. Логи `/tmp/ems-state-compiler-{tests,verify,browser}.log`.
+
+
 ## Последняя проверка — EMS-050 worker preview, AC-054
 
 `npm test` **630/630 PASS**, `npm run verify` **118/118 PASS**, `npm run browser:test` **14/14 PASS**. Node22 / actual Chromium156. Baseline b2f038e625/115. EMS-050 IN_PROGRESS; full handler graphical representation/unified manager/standalone state/UI/AC-014/full MVP/deploy/global goal открыты.

@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 import assert from 'node:assert/strict';
+import {compileStateControlJS} from '../src/compiler/control.mjs';
 import { readFile, stat, open } from 'node:fs/promises';
 import { createCoreRegistry, parseTextEMS, validateGraph, executeGraph, compileStandaloneJS, compiledAtomicManifest, registerCompiledAtomic, registerTrustedJSBindings } from '../src/reference/index.mjs';
 import { lowerGraphToIR, serializeIR, parseIR, executeIR, compileIRToJS, graphProvenance } from '../src/ir/index.mjs';
@@ -248,5 +249,16 @@ await check('common conformance gate matches a typed value and detailed failure 
     {id:'verify.error',source:'fn test()->Number {return 1/0;}',expected:{error:'DIV_BY_ZERO'}}
   ]);
   return report.passed===2&&report.failed===0;
+});
+const compiledStateRegistry=createStateRegistry(createCoreRegistry(),[{id:'count',type:'Number',initial:0}]);
+const compiledStateIR=lowerCheckedModule(typecheckModule(parseEMSModule(await get('examples/counter.ems')),compiledStateRegistry),'demo.Counter',compiledStateRegistry,{profile:'control'}).ir;
+const compiledStateModule=await import(`data:text/javascript,${encodeURIComponent(compileStateControlJS(compiledStateIR,compiledStateRegistry))}`);
+await check('kernel state handler compiles without EMS imports and keeps actual reads/writes',()=>{
+  let count=0;const state={read:()=>count,write:(_,value)=>(count=value)};
+  const options={state,capabilities:['state.read','state.write'],allowedEffects:['state.read','state.write']};
+  return compiledStateModule.execute({delta:2},options)===2&&compiledStateModule.execute({delta:3},options)===5&&count===5;
+});
+await check('compiled state handler preserves permission checks before state access',()=>{
+  let calls=0;assert.throws(()=>compiledStateModule.execute({delta:1},{state:{read:()=>++calls,write:()=>++calls}}),{code:'PERMISSION_DENIED'});return calls===0;
 });
 console.log(`\nEMS foundation verification passed (${checks} checks). Not production readiness.`);

@@ -580,13 +580,28 @@
       "objective": "Implement IR to standalone JS, with source maps and explicit host calls",
       "deliverables": "JS backend/linker",
       "acceptance": "Conformance suite, no runtime IDE",
-      "status": "TODO",
+      "status": "IN_PROGRESS",
       "priority": "P0",
       "ownerModelPolicy": [
         "GPT-6.1 Sol",
         "GPT-6 Luna"
       ],
-      "progress": "Explicit remaining deliverables from core acceptance audit: compile typed state/event sessions to standalone with replay/rollback/cancellation semantics; native bindings/host calls and source maps by target gates. Reference pure/control/async/owned-resource standalone exists, production backend task remains TODO. State callback provenance/lock support also needs explicit implementation; no successful export is claimed yet."
+      "progress": "AC-055 initial stateful control handler compiler implemented: independent JS, genuine private kernel callback/metadata witness, retained runtime grants, interpreter/compiled state-call/error/budget/async parity and fresh Node execution without EMS imports. Pure export unchanged. Existing transaction scheduler/store not yet exported; FIFO/rollback/replay/cancel standalone sessions, state provenance/lock, native host calls/source maps and complete UI application remain open. See docs/spec/STATE_COMPILER.md.",
+      "evidence": {
+        "scope": "Initial state control handlers only; production/session/UI export not complete.",
+        "docs": "docs/spec/STATE_COMPILER.md",
+        "testFiles": [
+          "tests/state-compiler.test.mjs"
+        ],
+        "tests": "638/638 PASS",
+        "verify": "120/120 PASS",
+        "browserTests": "14/14 PASS",
+        "commands": [
+          "npm test",
+          "npm run verify",
+          "npm run browser:test"
+        ]
+      }
     },
     {
       "id": "EMS-061",

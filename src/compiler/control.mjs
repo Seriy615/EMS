@@ -1,3 +1,6 @@
+import {stateIntrinsic} from '../runtime/state-bindings.mjs';
+import {checkControlPolicy} from '../runtime/control.mjs';
+import {assertPolicyNames} from '../semantics/effects.mjs';
 import { runResourcePhase,checkResourceAcquired } from '../contracts/resource-conditions.mjs';
 import { checkContractConditions,checkContractFailure } from '../contracts/conditions.mjs';
 import { parseControlType, controlTypeName, controlVariants, assertControlValueType, cloneControlValue, matchControlPattern, validateControlInputs } from '../semantics/control-algebraic.mjs';
@@ -11,11 +14,11 @@ import { equalControlValues, binaryControlValue, unaryControlValue, indexControl
 import { assertSignal, checkCancellation, awaitCancellable } from '../runtime/cancellation.mjs';
 import { makeControlThrow, matchesControlCatch, controlCatchValue, terminalControlError } from '../semantics/control-errors.mjs';
 
-/** Generate independent pure JavaScript from checked semantic control blocks. No AST or EMS imports in output. */
-export function compileControlJS(ir, registry) {
+/** Generate independent JavaScript from checked semantic control blocks. No AST or EMS imports in output. */
+export function compileControlJS(ir, registry,{stateful=false}={}) {
   const checked = validateControlIR(ir, registry), resources=ir.profile===CONTROL_RESOURCE_PROFILE,streams = ir.profile === CONTROL_STREAM_PROFILE || resources, futures = ir.profile === CONTROL_FUTURE_PROFILE || streams;
-  for (const fn of checked.functions.values()) if (fn.policy.effects.length || fn.policy.capabilities.length)
-    fail('UNSUPPORTED_TARGET', 'Control standalone target requires pure bindings');
+  for (const fn of checked.functions.values()) if (fn.policy.effects.some(name=>!stateful||!['state.read','state.write'].includes(name)) || fn.policy.capabilities.some(name=>!stateful||!['state.read','state.write'].includes(name)))
+    fail('UNSUPPORTED_TARGET', 'Control standalone target requires pure bindings or explicitly enabled kernel state operations');
   const functionNames = new Map([...checked.functions.keys()].map((id, index) => [id, `__fn${index}`]));
   const hosts = new Map(), wrappers = []; let nextLocal = 0;
   const quote = JSON.stringify;
@@ -23,7 +26,8 @@ export function compileControlJS(ir, registry) {
   function host(id) {
     if (hosts.has(id)) return hosts.get(id);
     const contract = registry.resolve(id);if(contract.kind==='resource')fail('UNSUPPORTED_TARGET','Native resource binding has no standalone backend');
-    const wrapper = `__host${hosts.size}`;
+    const wrapper = `__host${hosts.size}`,state=stateful?stateIntrinsic(contract):null;
+    if(state){hosts.set(id,wrapper);wrappers.push(`function ${wrapper}(params,options){if(!options.state)fail('STATE_CONTEXT','State contracts require an active event transaction');return options.state.${state.action}(${quote(state.slot)}${state.action==='write'?',params.value':''});}`);return wrapper;}
     const graph = { schemaVersion: '0.1', id: `control:compiled:${id}`, version: contract.version,
       inputs: Object.fromEntries(Object.entries(contract.inputs).map(([name, type]) => [name, { type: typeof type === 'string' ? type : type.type }])),
       output: { type: contract.output }, nodes: [{ id: 'call', uses: id, args: Object.fromEntries(Object.keys(contract.inputs).map(name => [name, { input: name }])) }], returns: { node: 'call' } };
@@ -52,7 +56,7 @@ export function compileControlJS(ir, registry) {
           result = futures ? target.async ? `__futureCall(${quote(target.output.type)},${name},__frame,[${args}])` : `(await ${name}(__frame${args ? ','+args : ''}))`
             : `${name}(${args})`;
         }
-        else { const contract = registry.resolve(node.target.id); const params = `__params(${quote(Object.keys(contract.inputs))},[${args}])`; result = node.target.async ? `__futureHost(${quote(contract.output)},${host(contract.id)},${params})` : `${host(contract.id)}(${params})`; } break;
+        else { const contract = registry.resolve(node.target.id); const params = `__params(${quote(Object.keys(contract.inputs))},[${args}])`; result = node.target.async ? `__futureHost(${quote(contract.output)},${host(contract.id)},${params})` : `${host(contract.id)}(${params},options)`; } break;
       }
     }
     return futures ? `(await __value(${quote(node.type)},async()=>${result},__frame))` : `__value(${quote(node.type)},()=>${result})`;
@@ -121,19 +125,21 @@ const __streams=${streams ? 'createStreamScope(options)' : 'null'};
 const __resources=${resources?'createResourceScope(options)':'null'};
 function __validate(value,type,context){assertControlValueType(value,type,context,__futures.check,__streams?.check,__resources?.check);}
 function __futureCall(type,fn,parent,args){const frame={depth:parent.depth,evaluationDepth:0};return __futures.start(type,()=>fn(frame,...args));}
-function __futureHost(type,fn,params){return __futures.start(type,()=>fn(params));}
+function __futureHost(type,fn,params){return __futures.start(type,()=>fn(params,options));}
 async function __value(type,fn,frame){__tick();if(++frame.evaluationDepth>256){frame.evaluationDepth--;fail('EVALUATION_DEPTH','Control expression depth exhausted',{maxEvaluationDepth:256});}try{const value=await fn();checkCancellation(options.signal);__validate(value,type,'control expression');return value;}finally{frame.evaluationDepth--;}}` : `function __value(type,fn){__tick();if(++__evaluationDepth>256){__evaluationDepth--;fail('EVALUATION_DEPTH','Control expression depth exhausted',{maxEvaluationDepth:256});}try{const value=fn();checkCancellation(options.signal);assertControlValueType(value,type,'control expression');return value;}finally{__evaluationDepth--;}}`;
   const arguments_ = entry.inputs.map(input => `inputs[${quote(input.name)}]`).join(',');
   const entryCall=`${functionNames.get(entry.id)}({depth:0,evaluationDepth:0}${arguments_ ? ','+arguments_ : ''})`;
   const executeEntry = futures ? `let result,pending,hasError=false;try{result=await ${entryCall};await __futures.join();}catch(error){pending=__futures.terminalFailure()??error;hasError=true;await __futures.abort();}finally{try{const failures=__resources?await __resources.finish(pending,hasError):[];resourceCleanupOutcome(pending,hasError,failures);}finally{__streams?.finish();__futures.close();}}return result;`
     : `return ${functionNames.get(entry.id)}(${arguments_});`;
-  return `// EMS control IR standalone output. Pure finite values; no EMS dependency.\n${standaloneHelpersJS()}
+  return `// EMS control IR standalone output. Finite typed values; no EMS dependency.\n${standaloneHelpersJS()}
+${stateful?[assertPolicyNames,checkControlPolicy].map(fn=>fn.toString()).join('\n'):''}
 const fail=__fail,assertPrimitiveValueType=__assertType,assertValueType=assertControlValueType;
 ${[parseControlType, controlTypeName, controlVariants, assertControlValueType, cloneControlValue, matchControlPattern, validateControlInputs, equalControlValues, binaryControlValue, unaryControlValue, indexControlValue, controlBudgetOptions, assertSignal, checkCancellation, ...(futures ? [awaitCancellable,createFutureScope] : []), ...(streams ? [streamBudgetOptions,createStreamScope,executeStreamOperation] : []),resourceCleanupOutcome,...(resources?[resourceBudgetOptions,runResourcePhase,checkResourceAcquired,checkContractConditions,checkContractFailure,createResourceScope,executeResourceOperation]:[]), makeControlThrow, matchesControlCatch, controlCatchValue, terminalControlError].map(fn => fn.toString()).join('\n')}
 const __params=(names,values)=>Object.fromEntries(names.map((name,index)=>[name,values[index]]));
 ${wrappers.join('\n')}
 export ${futures ? 'async ' : ''}function execute(inputs,options={}){
 assertSignal(options.signal);checkCancellation(options.signal);
+${stateful?`checkControlPolicy(${quote(checked.policy)},options);`:''}
 validateControlInputs(${quote({inputs:entry.inputs})},inputs);
 const __budget=controlBudgetOptions(options);let __steps=0,__depth=0,__evaluationDepth=0;
 function __tick(){checkCancellation(options.signal);if(++__steps>__budget.maxSteps)fail('STEP_LIMIT','Control execution step budget exhausted',{maxSteps:__budget.maxSteps});}
@@ -142,3 +148,6 @@ ${definitions.join('\n')}
 ${executeEntry}
 }\n`;
 }
+
+/** Emit actual stateful control functions. Transactions must come from an execution-owned state context. */
+export function compileStateControlJS(ir,registry){return compileControlJS(ir,registry,{stateful:true});}

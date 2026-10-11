@@ -1,3 +1,4 @@
+import {installStateBindings} from './state-bindings.mjs';
 import { fail } from '../reference/errors.mjs';
 import { Registry } from '../reference/registry.mjs';
 import { assertTypeName, assertValueType } from '../reference/types.mjs';
@@ -34,22 +35,8 @@ function copyRegistry(base) {
   }
   return registry;
 }
-function stateContext(context) {
-  if (!context?.state) fail('STATE_CONTEXT', 'State contracts require an active event transaction');
-  return context.state;
-}
-
 /** Install typed state interfaces. Memory belongs to each reactor session, never to this registry. */
-export function createStateRegistry(base, state) {
-  const registry = copyRegistry(base);
-  for (const [id, slot] of declarations(state)) {
-    registry.registerAtomic({ id: `state.${id}.read`, inputs: {}, output: slot.type,
-      effects: ['state.read'], capabilities: ['state.read'], execute: (_, context) => stateContext(context).read(id) });
-    registry.registerAtomic({ id: `state.${id}.write`, inputs: { value: slot.type }, output: slot.type,
-      effects: ['state.write'], capabilities: ['state.write'], execute: ({ value }, context) => stateContext(context).write(id, value) });
-  }
-  return registry;
-}
+export function createStateRegistry(base,state){return installStateBindings(copyRegistry(base),declarations(state));}
 
 /** Single-owner transactional event runner for finite EMS IR. No external-effect rollback or plugin sandbox. */
 export class ReactorSession {
