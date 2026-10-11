@@ -414,12 +414,27 @@
       "objective": "Inspect nested composite graphs; atoms remain leaves",
       "deliverables": "Graph navigator",
       "acceptance": "Pass AC-013 demo with nested graph",
-      "status": "TODO",
+      "status": "DONE",
       "priority": "P0",
       "ownerModelPolicy": [
         "GPT-6.1 Sol",
         "GPT-6 Luna"
-      ]
+      ],
+      "progress": "Initial pure composite Studio authoring/navigation implemented (AC-046): snapshot current graph as typed definition, reusable catalog nodes, open/expand/collapse recursively, independent per-workspace inputs/canvas, aggregate edits/undo rebuild actual registry, strict whole-project caller/type/version/dependency validation, atomic leaves. Project v2 persists canonical root/body IR and exact referenced versions; v1 still roundtrips unchanged, missing bodies/pins/metadata rejected. Standalone JS export uses existing compiler with actual nested bodies; independent process output verified. Conservative expanded-operation budget prevents exponential fanout before lowering. 524/524 Node tests, 94/94 verify, 4/4 browser tests; actual browser creates/edits/nests/reopens result12. DONE for finite editable pure dataflow composites, not full IDE/MVP or sealed JS package import.",
+      "acceptanceEvidence": {
+        "commands": [
+          "npm test",
+          "npm run verify",
+          "npm run browser:test"
+        ],
+        "tests": [
+          "tests/studio-composites.test.mjs",
+          "tests/browser/studio.test.mjs"
+        ],
+        "docs": "docs/spec/STUDIO_COMPOSITES.md",
+        "example": "examples/studio-composite.ems.json",
+        "scope": "Finite pure dataflow composite authoring/navigation/persistence; full text/control visual parity and MVP remain open."
+      }
     },
     {
       "id": "EMS-032",
@@ -452,6 +467,24 @@
       "acceptance": "Pinpoint node and hide secrets",
       "status": "TODO",
       "priority": "P1",
+      "ownerModelPolicy": [
+        "GPT-6.1 Sol",
+        "GPT-6 Luna"
+      ]
+    },
+    {
+      "id": "EMS-034",
+      "title": "Working Studio logic text and array contract library",
+      "phase": "M2/MVP",
+      "dependsOn": [
+        "EMS-016",
+        "EMS-031"
+      ],
+      "objective": "Provide real typed blocks needed by the owner-approved WEB IDE MVP through the shared kernel",
+      "deliverables": "Value/logic/comparison/conditional/text/array contracts and catalog with executable implementations, compiler support and negative tests",
+      "acceptance": "Programs built from the expanded catalog run through shared IR/runtime; deterministic contracts match standalone. Map/Filter contract parameters and effects are explicitly typed/validated; no dummy unsupported blocks or second executor. Document lazy control vs eager value selection semantics.",
+      "status": "TODO",
+      "priority": "P0",
       "ownerModelPolicy": [
         "GPT-6.1 Sol",
         "GPT-6 Luna"

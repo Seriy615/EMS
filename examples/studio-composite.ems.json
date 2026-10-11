@@ -1,0 +1,318 @@
+{
+  "schemaVersion": "ems-studio-project/2",
+  "id": "nested",
+  "name": "Вложенные составные контракты",
+  "ir": {
+    "schemaVersion": "ems-ir/1",
+    "profile": "ems-core-finite/1",
+    "id": "project.main",
+    "version": "1.0.0",
+    "inputs": [
+      {
+        "name": "x",
+        "type": "Number"
+      },
+      {
+        "name": "y",
+        "type": "Number"
+      }
+    ],
+    "output": {
+      "type": "Number"
+    },
+    "operations": [
+      {
+        "id": "n1",
+        "contract": {
+          "id": "core.add",
+          "version": "1.0.0"
+        },
+        "arguments": [
+          {
+            "port": "a",
+            "value": {
+              "kind": "input",
+              "name": "x"
+            }
+          },
+          {
+            "port": "b",
+            "value": {
+              "kind": "input",
+              "name": "y"
+            }
+          }
+        ],
+        "type": "Number"
+      },
+      {
+        "id": "n2",
+        "contract": {
+          "id": "user.Sum",
+          "version": "1.0.0"
+        },
+        "arguments": [
+          {
+            "port": "x",
+            "value": {
+              "kind": "input",
+              "name": "x"
+            }
+          },
+          {
+            "port": "y",
+            "value": {
+              "kind": "input",
+              "name": "y"
+            }
+          }
+        ],
+        "type": "Number"
+      },
+      {
+        "id": "n3",
+        "contract": {
+          "id": "user.Outer",
+          "version": "1.0.0"
+        },
+        "arguments": [
+          {
+            "port": "x",
+            "value": {
+              "kind": "input",
+              "name": "x"
+            }
+          },
+          {
+            "port": "y",
+            "value": {
+              "kind": "input",
+              "name": "y"
+            }
+          }
+        ],
+        "type": "Number"
+      }
+    ],
+    "result": {
+      "kind": "node",
+      "id": "n3"
+    }
+  },
+  "inputs": {
+    "x": 2,
+    "y": 3
+  },
+  "canvas": {
+    "positions": {
+      "input:x": {
+        "x": 40,
+        "y": 170
+      },
+      "input:y": {
+        "x": 40,
+        "y": 290
+      },
+      "n1": {
+        "x": 280,
+        "y": 70
+      },
+      "n2": {
+        "x": 530,
+        "y": 70
+      },
+      "n3": {
+        "x": 280,
+        "y": 230
+      }
+    },
+    "view": {
+      "x": 0,
+      "y": 0,
+      "scale": 1
+    }
+  },
+  "contracts": [
+    {
+      "ir": {
+        "schemaVersion": "ems-ir/1",
+        "profile": "ems-core-finite/1",
+        "id": "user.Outer",
+        "version": "1.0.0",
+        "inputs": [
+          {
+            "name": "x",
+            "type": "Number"
+          },
+          {
+            "name": "y",
+            "type": "Number"
+          }
+        ],
+        "output": {
+          "type": "Number"
+        },
+        "operations": [
+          {
+            "id": "n1",
+            "contract": {
+              "id": "core.add",
+              "version": "1.0.0"
+            },
+            "arguments": [
+              {
+                "port": "a",
+                "value": {
+                  "kind": "input",
+                  "name": "x"
+                }
+              },
+              {
+                "port": "b",
+                "value": {
+                  "kind": "input",
+                  "name": "y"
+                }
+              }
+            ],
+            "type": "Number"
+          },
+          {
+            "id": "n2",
+            "contract": {
+              "id": "user.Sum",
+              "version": "1.0.0"
+            },
+            "arguments": [
+              {
+                "port": "x",
+                "value": {
+                  "kind": "input",
+                  "name": "x"
+                }
+              },
+              {
+                "port": "y",
+                "value": {
+                  "kind": "input",
+                  "name": "y"
+                }
+              }
+            ],
+            "type": "Number"
+          }
+        ],
+        "result": {
+          "kind": "node",
+          "id": "n2"
+        }
+      },
+      "inputs": {
+        "x": 2,
+        "y": 3
+      },
+      "canvas": {
+        "positions": {
+          "input:x": {
+            "x": 40,
+            "y": 170
+          },
+          "input:y": {
+            "x": 40,
+            "y": 290
+          },
+          "n1": {
+            "x": 280,
+            "y": 70
+          },
+          "n2": {
+            "x": 530,
+            "y": 70
+          }
+        },
+        "view": {
+          "x": 0,
+          "y": 0,
+          "scale": 1
+        }
+      }
+    },
+    {
+      "ir": {
+        "schemaVersion": "ems-ir/1",
+        "profile": "ems-core-finite/1",
+        "id": "user.Sum",
+        "version": "1.0.0",
+        "inputs": [
+          {
+            "name": "x",
+            "type": "Number"
+          },
+          {
+            "name": "y",
+            "type": "Number"
+          }
+        ],
+        "output": {
+          "type": "Number"
+        },
+        "operations": [
+          {
+            "id": "n1",
+            "contract": {
+              "id": "core.add",
+              "version": "1.0.0"
+            },
+            "arguments": [
+              {
+                "port": "a",
+                "value": {
+                  "kind": "input",
+                  "name": "x"
+                }
+              },
+              {
+                "port": "b",
+                "value": {
+                  "kind": "literal",
+                  "type": "Number",
+                  "value": 10
+                }
+              }
+            ],
+            "type": "Number"
+          }
+        ],
+        "result": {
+          "kind": "node",
+          "id": "n1"
+        }
+      },
+      "inputs": {
+        "x": 2,
+        "y": 3
+      },
+      "canvas": {
+        "positions": {
+          "input:x": {
+            "x": 40,
+            "y": 170
+          },
+          "input:y": {
+            "x": 40,
+            "y": 290
+          },
+          "n1": {
+            "x": 280,
+            "y": 70
+          }
+        },
+        "view": {
+          "x": 0,
+          "y": 0,
+          "scale": 1
+        }
+      }
+    }
+  ]
+}

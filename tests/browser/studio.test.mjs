@@ -35,3 +35,24 @@ test('actual IDE create/connect/run/save/reload and invalid type rejection use r
   await page.close();const reopened=await browser.page(server.origin);const again=await reopened.evaluate(`(async()=>{await import('/web/studio.mjs');document.querySelector('#run').click();await new Promise(resolve=>setTimeout(resolve,30));return {output:document.querySelector('#output').textContent,inputs:document.querySelectorAll('.input-card').length};})()`);assert.equal(again.output,'5');assert.equal(again.inputs,3);
  }finally{await browser?.close();await server.close();await rm(downloads,{recursive:true,force:true});}
 });
+
+test('actual IDE creates, expands, edits and persists recursively nested composite contracts',async()=>{
+ const server=await startStudioServer({port:0});let browser;
+ try{
+  browser=await launchChromium();const page=await browser.page(server.origin);await page.viewport(1440,900);
+  const actual=await page.evaluate(`(async()=>{
+   await import('/web/studio.mjs');const click=selector=>{const node=document.querySelector(selector);if(!node)throw new Error('Missing '+selector);node.click();};
+   const examples=document.querySelector('#examples');examples.value='sum';examples.dispatchEvent(new Event('change'));
+   function create(id){document.querySelector('#composite-id').value=id;click('#create-composite');}
+   function call(id,node){click('[data-contract="'+id+'"]');for(const port of ['a','b']){click('[data-node="input:'+port+'"][data-port="out"]');click('[data-node="'+node+'"][data-port="'+port+'"]');}click('[data-node="'+node+'"][data-port="out"]');click('[data-node="output"][data-port="return"]');}
+   create('user.Sum');call('user.Sum','n1');click('[data-card="n1"]');click('#expand');const expanded=document.querySelector('#scope').textContent;
+   click('[data-card="sum"]');const sections=[...document.querySelectorAll('.argument')];sections.find(section=>section.querySelector('label').textContent.startsWith('b ')).querySelector('button').click();
+   const field=document.querySelector('[data-literal="b"]');field.value='10';field.closest('.argument').querySelector('button').click();click('#collapse');
+   create('user.Outer');call('user.Outer','n2');click('[data-card="n2"]');click('#expand');const outer=document.querySelector('#scope').textContent;click('[data-card="n1"]');click('#expand');const inner=document.querySelector('#scope').textContent;click('#collapse');const back=document.querySelector('#scope').textContent;click('#collapse');click('#run');await new Promise(resolve=>setTimeout(resolve,40));
+   return {expanded,outer,inner,back,output:document.querySelector('#output').textContent,saved:document.querySelector('#save-status').textContent,error:document.querySelector('#error').textContent};
+  })()`);
+  assert.deepEqual(actual,{expanded:'user.Sum',outer:'user.Outer',inner:'user.Sum',back:'user.Outer',output:'12',saved:'Сохранено локально',error:''});
+  await page.close();const reopened=await browser.page(server.origin);const restored=await reopened.evaluate(`(async()=>{await import('/web/studio.mjs');document.querySelector('#run').click();await new Promise(resolve=>setTimeout(resolve,40));return {output:document.querySelector('#output').textContent,contracts:[...document.querySelectorAll('[data-open-contract]')].map(node=>node.dataset.openContract)};})()`);
+  assert.equal(restored.output,'12');assert.deepEqual(restored.contracts.sort(),['user.Outer','user.Sum']);
+ }finally{await browser?.close();await server.close();}
+});

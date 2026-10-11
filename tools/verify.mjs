@@ -19,7 +19,9 @@ const required=['AGENTS.md','.agents/policy.json','PROJECT_GOAL.md','docs/spec/L
 for(const f of required) { await stat(new URL(f,root)); await check(`found ${f}`,()=>true); }
 for(const f of ['docs/qa/CONFORMANCE.md','tests/fixtures/language-conformance.json','docs/qa/BROWSER_P1.md','examples/portable-analysis.ems']) { await stat(new URL(f,root)); await check(`found ${f}`,()=>true); }
 for(const f of ['docs/spec/STUDIO_PROJECT.md','schemas/studio-project.schema.json']) { await stat(new URL(f,root)); await check(`found ${f}`,()=>true); }
+await stat(new URL('docs/spec/STUDIO_COMPOSITES.md',root));await check('found docs/spec/STUDIO_COMPOSITES.md',()=>true);
 await check('saved Studio example executes through existing semantic IR',async()=>await new ProjectEditor(parseProject(await get('examples/studio-sum.ems.json'))).run()===5);
+await check('saved nested Studio composite dependencies execute actual edited body',async()=>await new ProjectEditor(parseProject(await get('examples/studio-composite.ems.json'))).run()===12);
 const policy=await readJSON('.agents/policy.json');
 await check('models exactly Sol 6.1 + Luna 6',()=>policy.agents.approvedDisplayNames.join(',')==='GPT-6.1 Sol,GPT-6 Luna');
 await check('fallback disabled',()=>policy.agents.allowImplicitModelFallback===false);
