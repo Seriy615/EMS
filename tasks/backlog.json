@@ -490,28 +490,30 @@
         "GPT-6.1 Sol",
         "GPT-6 Luna"
       ],
-      "progress": "AC-063..071 graph/text/control/UI stepping, frame-aware Over/Out and source-owned UI event breakpoints implemented on original evaluators/kernel. Exact bounded handler source witness/typed address validation, current event ID/token live policy, lazy next FIFO gate, private draft/commit/rollback/Stop and source/graph authoring verified. Persistent anchors/value-secret policy/native-compiled transports/full parity remain open; historical Worker cause unproven.",
+      "progress": "AC-063..072 original graph/control/UI stepping and checked semantic source anchors: safe fresh-address reattachment, changed/missing/ambiguous refusal, UI durable bounded sidecar/atomic quota and Studio invalid-draft workspace recovery. Full Studio persistence/value-secret policy/native-compiled transports/full parity remain open; historical Worker cause unproven.",
       "evidence": {
         "scope": "Original interpreted graph/text/control/UI stepping, Over/Out and source-owned breakpoints; not full debugger",
         "docs": "docs/spec/IDE_RUNTIME_DIAGNOSTICS.md",
         "testFiles": [
+          "tests/source-anchors.test.mjs",
+          "tests/browser/source-anchors.test.mjs",
           "tests/ui-breakpoints.test.mjs",
           "tests/browser/ui-breakpoints.test.mjs",
           "tests/step-frames.test.mjs",
           "tests/breakpoints.test.mjs"
         ],
-        "tests": "716/716 PASS",
-        "verify": "136/136 PASS",
-        "browserTests": "34/34 PASS",
+        "tests": "723/723 PASS",
+        "verify": "137/137 PASS",
+        "browserTests": "36/36 PASS",
         "commands": [
           "npm test",
           "npm run verify",
           "npm run browser:test"
         ],
         "deployedRevision": "50f40ddee56bb3166084b5cc23835fa67a14c881",
-        "live": "Exact gated716/136/34 PASS; trusted public HTTPS/auth/access and actual Chromium UI source points/private pause→commit1/live clear→2/next event3 PASS. Existing graph/composite/reopen15, AVG5/text6, graph5/text3 and Over/Out7/UI1 preserved; foreign six config hashes/five services unchanged."
+        "live": "Prior50f40dd live; source anchors local723/137/36, pending exact gate/public reattachment probe."
       },
-      "nextSlice": "Persistent source debugger anchors across safe source edits: checked stable operation identity, exact reattachment evidence and refusal on deleted/ambiguous/changed semantic operations; preserve IR and source witnesses."
+      "nextSlice": "Durable Studio debugger sidecar: project/library identity, fresh checked restoration across reopening/mode changes, explicit import/export scope; retain invalid/ambiguous anchors inactive. Then typed value/secret inspection policy."
     },
     {
       "id": "EMS-034",

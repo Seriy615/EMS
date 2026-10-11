@@ -15,7 +15,7 @@
 <section id="application" aria-label="Приложение EMS">
 </section>
 <div id="error" role="alert"></div>
-<details class="ui-point-settings"><summary>Точки останова (<span id="ui-point-count">0</span>)</summary><label><input id="ui-run-to-point" type="checkbox"> При отладке идти до точки</label><p class="hint">Создайте точку в коде или графе обработчика. Изменение приложения сбрасывает точки.</p><button id="ui-point-current" disabled>Точка на текущей операции</button><button id="ui-clear-points">Убрать все точки</button><pre id="ui-point-list"></pre><p id="ui-point-status" role="status"></p></details>
+<details class="ui-point-settings"><summary>Точки останова (<span id="ui-point-count">0</span>)</summary><label><input id="ui-run-to-point" type="checkbox"> При отладке идти до точки</label><p class="hint">Создайте точку в коде или графе обработчика. При изменениях точки проверяются заново; потерявшие привязку не останавливают выполнение.</p><button id="ui-point-current" disabled>Точка на текущей операции</button><button id="ui-clear-points">Убрать все точки</button><pre id="ui-point-list"></pre><p id="ui-point-status" role="status"></p></details>
 <div class="preview-controls">
 <button id="restart">Начать заново</button>
 <button id="ui-debug-start" title="Перезапустить предпросмотр и выполнять события по шагам">Отладка событий (новый запуск)</button>

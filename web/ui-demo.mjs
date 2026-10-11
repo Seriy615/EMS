@@ -1,3 +1,4 @@
+import {captureSourceBreakpoint,resolveSourceBreakpoint,UISourceBreakpointStorage} from '../src/studio/source-anchors.mjs';
 import {breakpointAtTextOffset} from '../src/studio/breakpoints.mjs';
 import {breakpointForEvent} from '../src/studio/debugger.mjs';
 import {ProjectManager} from '../src/studio/manager.mjs';
@@ -17,10 +18,19 @@ const policy={capabilities:['ui.render','state.read','state.write'],allowedEffec
 const base=createCoreRegistry(),storage=new UIProjectStorage(localStorage,base);
 const managedId=new URLSearchParams(location.search).get('project'),manager=managedId?new ProjectManager(localStorage):null;
 let managedRecord;try{managedRecord=manager?.load(managedId);if(manager&&managedRecord?.kind!=='ui')throw new Error('UI project not found');}catch(failure){error.textContent=(failure.code??'HOST_ERROR')+': '+failure.message;throw failure;}
-let debugMode=false,pausedEvent=null,pausedOperation=null,previewIdentity=null,pointIdentity=null,uiPoints=[];
+let debugMode=false,pausedEvent=null,pausedOperation=null,previewIdentity=null,pointIdentity=null,uiPoints=[],uiAnchors=[],pointOwner=null,pointStorage=null;
 function syncUIPoints(){
- if(!editor)return;const identity=editor.source;if(pointIdentity!==identity){pointIdentity=identity;uiPoints=[];}
- document.querySelector('#ui-point-count').textContent=String(uiPoints.length);document.querySelector('#ui-point-list').textContent=uiPoints.map(item=>item.handler+' / '+(item.point.function??item.point.graph)+' / '+item.point.node).join('\n')||'Выберите операцию в обработчике или его графе.';
+ if(!editor)return;const identity=editor.source;
+ const owner=(managedId??'local')+':'+editor.application.id;
+ if(pointOwner!==owner){pointOwner=owner;pointStorage=new UISourceBreakpointStorage(localStorage,owner);try{uiAnchors=pointStorage.load();}catch(failure){uiAnchors=[];report(failure);}uiPoints=[];pointIdentity=null;}
+
+ if(pointIdentity!==identity){
+  pointIdentity=identity;const bundles=new Map();
+  for(const item of uiAnchors){try{const draft=editor.sources[item.handler];if(!draft)throw Error('Missing source');if(!bundles.has(item.handler))bundles.set(item.handler,compileUIHandler(draft.source,draft.entry,editor.application,base));const resolved=resolveSourceBreakpoint(bundles.get(item.handler),item.anchor);item.point=resolved.point;item.reason=resolved.reason;}catch(failure){item.point=null;item.reason=failure.code??'changed-or-missing';}}
+  uiPoints=uiAnchors.filter(item=>item.point).map(({handler,point})=>({handler,point}));
+ }
+
+ document.querySelector('#ui-point-count').textContent=String(uiAnchors.length);document.querySelector('#ui-point-list').textContent=uiAnchors.map(item=>item.handler+' / '+((item.point??item.anchor.point).function??(item.point??item.anchor.point).graph)+' / '+(item.point?.node??('не привязана: '+item.reason))).join('\n')||'Выберите операцию в обработчике или его графе.';
  document.querySelector('#ui-point-current').disabled=!pausedOperation||previewIdentity!==identity;
 }
 function uiDebugOptions(){syncUIPoints();return {start:document.querySelector('#ui-run-to-point').checked?'continue':'step',breakpoints:uiPoints,sources:Object.fromEntries([...new Set(uiPoints.map(item=>item.handler))].map(handler=>[handler,editor.sources[handler]]))};}
@@ -29,8 +39,9 @@ function updateUIPolicy(){
  else document.querySelector('#ui-point-status').textContent='Точки применятся при новом запуске отладки.';
 }
 function toggleUIPoint(handler,point){
- syncUIPoints();const item={handler,point},key=JSON.stringify(item),index=uiPoints.findIndex(value=>JSON.stringify(value)===key);
- if(index>=0)uiPoints.splice(index,1);else{if(uiPoints.length>=64)throw Object.assign(Error('Breakpoint limit'),{code:'INVALID_DEBUG_BREAKPOINT'});uiPoints.push(item);}updateUIPolicy();syncUIPoints();
+ syncUIPoints();const item={handler,point},key=JSON.stringify(item),index=uiPoints.findIndex(value=>JSON.stringify(value)===key),nextPoints=[...uiPoints];let nextAnchors=[...uiAnchors];
+ if(index>=0){nextPoints.splice(index,1);nextAnchors=nextAnchors.filter(value=>!(value.handler===handler&&JSON.stringify(value.point)===JSON.stringify(point)));}
+ else{if(uiAnchors.length>=64)throw Object.assign(Error('Breakpoint limit'),{code:'INVALID_DEBUG_BREAKPOINT'});const draft=editor.sources[handler],anchor=captureSourceBreakpoint(compileUIHandler(draft.source,draft.entry,editor.application,base),point);nextPoints.push(item);nextAnchors.push({handler,point,anchor,reason:null});}pointStorage.save(nextAnchors);uiPoints=nextPoints;uiAnchors=nextAnchors;updateUIPolicy();syncUIPoints();
 }
 function pointAt(handler,offset,expectedSource){
  const draft=Object.hasOwn(editor.sources,handler)?editor.sources[handler]:null;
@@ -50,7 +61,7 @@ function debugPause(pause){
 for(const [id,mode]of [['ui-debug-step','step'],['ui-debug-over','over'],['ui-debug-out','out'],['ui-debug-continue','continue']])document.querySelector('#'+id).onclick=()=>{if(applicationController?.runtime.resume(mode)){pausedOperation=null;syncUIPoints();document.querySelector('#ui-debug-over').disabled=document.querySelector('#ui-debug-out').disabled=document.querySelector('#ui-debug-step').disabled=true;document.querySelector('#ui-debug-continue').disabled=true;}};
 document.querySelector('#ui-source-breakpoint').onclick=()=>{try{const handler=document.querySelector('#handler-event').value,field=document.querySelector('#handler-source');if(editor.sources[handler]?.entry!==document.querySelector('#handler-entry').value)throw Object.assign(Error('Entry changed'),{code:'STALE_DEBUG_SOURCE'});pointAt(handler,field.selectionStart,field.value);}catch(failure){report(failure);}};
 document.querySelector('#ui-point-current').onclick=()=>{try{if(pausedOperation&&previewIdentity===editor.source)toggleUIPoint(pausedOperation.handler,breakpointForEvent(pausedOperation));}catch(failure){report(failure);}};
-document.querySelector('#ui-clear-points').onclick=()=>{try{syncUIPoints();uiPoints=[];updateUIPolicy();syncUIPoints();}catch(failure){report(failure);}};
+document.querySelector('#ui-clear-points').onclick=()=>{try{syncUIPoints();pointStorage.save([]);uiPoints=[];uiAnchors=[];updateUIPolicy();syncUIPoints();}catch(failure){report(failure);}};
 document.querySelector('#ui-run-to-point').onchange=()=>{try{updateUIPolicy();}catch(failure){report(failure);}};
 document.addEventListener('ems:graph-breakpoint',event=>{try{pointAt(event.detail.handler,event.detail.offset,event.detail.source);}catch(failure){report(failure);}});
 document.querySelector('#ui-debug-start').onclick=()=>{debugMode=true;startDemo().catch(report);};

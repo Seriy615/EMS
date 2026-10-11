@@ -1,5 +1,13 @@
 # Current implementation status
 
+## EMS-033 — checked source anchors, AC-072
+
+Предыдущая goal-итерация — progress: UI breakpoint release50f40dd/evidence402953a опубликованы и отправлены origin/main. Baseline716/716 Node,136/136 verify PASS. Реализованы typed operation/context anchors для control/call IR и fresh-provenance resolve без nearest-path fallback; changed/missing/ambiguous отказ. Original evaluator/IR/compiler/FIFO/source witness сохранены. UI durable sidecar отдельно в bounded localStorage; invalid/changed точки видимы и исключены из Worker; quota сохраняет прежний набор. Studio safe/invalid draft recovery работает в workspace; durable Studio storage открыт.
+
+Local **723/723 Node,137/137 verify,36/36 Chromium PASS**; после final quota/budget review повторены focused7 Node/2 browser PASS. Реальные shifted source pause/standalone parity, binding/branch/dependency rejection, duplicates/deletion/Undo, bounded/corrupt storage; Chromium UI edit/reopen/private0→1/changed inactive/Undo/quota и Studio invalid draft→fresh path/result1→changed inactive/result2. Initial fixtures incorrectly assumed auto control lowering/selected a dead return; corrected to actual profiles/exact source offsets. Verify invalid project ID/missing boolean return исправлены; assertions не ослаблены.
+
+Логи `/tmp/ems-anchors-baseline-{tests,verify}.log`, `/tmp/ems-anchors-focused-last.log`, `/tmp/ems-anchors-tests.log`, `/tmp/ems-anchors-verify-final2.log`, `/tmp/ems-anchors-browser.log`, `/tmp/ems-anchors-browser-final-focused.log`. Publication pending exact gate/live anchor probe. EMS-033 IN_PROGRESS; global goal active. Next: durable Studio debugger sidecar across reopening/mode changes with project/library identity and explicit import/export scope, затем typed value/secret inspection policy и native/compiled/full parity.
+
 ## EMS-033 — source-owned UI event breakpoints, AC-071
 
 Предыдущая goal-итерация — progress: activation-aware Over/Out опубликованd2639e8, evidence commitd9dab60. Baseline **711/711 Node,135/135 verify PASS**. Реализована bounded per-handler debug policy с exact source/entry witness и fresh typed provenance address validation. Policy updates требуют active event ID/token и не освобождают паузу; следующий queued event получает свежую policy на своём первом runtime enter. Original permissions/FIFO/private state/commit/rollback/Over/Out сохранены. IDE source cursor/selected source-graph node/current pause points и clear/run-to-point размещены в дополнительных controls. Добавление idle точки сохраняет runtime state и требует явного нового debug launch; новая policy применяется live на текущей matching паузе. IR/export/saved program не содержат breakpoint metadata.

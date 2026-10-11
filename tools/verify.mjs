@@ -352,6 +352,11 @@ await check('Step Over/Out follows actual activation frames and original control
  const value=await runTextDraft(draft,new ProjectEditor(),{}, {onControlEnter:event=>gate.enter(event),onFrameExit:event=>{exits.push(event);gate.leave(event);}});
  return value===7&&events.length===2&&events[0].node==='/body/0'&&events[1].node==='/body/1'&&events[0].frames[0]===events[1].frames[0]&&exits.some(event=>event.frames.length===2);
 });
+await check('Source anchor resolves a shifted typed operation and refuses changed syntax',async()=>{
+ const {captureSourceBreakpoint,resolveSourceBreakpoint}=await import('../src/studio/source-anchors.mjs'),{breakpointAtTextOffset}=await import('../src/studio/breakpoints.mjs'),{compileTextDraft}=await import('../src/studio/text.mjs'),{ProjectEditor,newProject}=await import('../src/studio/project.mjs');
+ const editor=new ProjectEditor(newProject('anchorVerify')),source='fn main()->Number {let mut x=0;return x+1;}',compile=source=>compileTextDraft({source,entry:'main',lowering:'auto'},editor),before=compile(source),anchor=captureSourceBreakpoint(before,breakpointAtTextOffset(before,source.indexOf('return'))),after=compile(source.replace('return','core.add(1,2);return'));
+ assert.equal(resolveSourceBreakpoint(after,anchor).point.node,'/body/2');assert.equal(resolveSourceBreakpoint(compile(source.replace('x+1','x+2')),anchor).point,null);return true;
+});
 await check('UI source breakpoint pauses a private write and commits through the original host',async()=>{
  const {createUIWorkerHost}=await import('../src/ui/worker-host.mjs'),{parseUIWorkspace}=await import('../src/ui/project.mjs'),{compileUIHandler}=await import('../src/ui/source.mjs'),{breakpointAtTextOffset}=await import('../src/studio/breakpoints.mjs');
  const base=createCoreRegistry(),saved=parseUIWorkspace(await get('examples/ui-source-counter.ems-ui.json'),base),editor=new UIProjectEditor(saved.application,base,{sources:saved.sources});editor.applyHandler('change','fn update(delta:Number)->Number {state.count.write(state.count.read()+delta);return state.count.read();}','update');

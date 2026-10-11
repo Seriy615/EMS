@@ -153,3 +153,8 @@ Control statement/expression stepping и fresh source sidecar работают �
 ## После AC-067 — source-owned UI event debugger
 
 Реальная pause/Step/Continue связана с existing ReactorKernel draft transaction, persistent Worker и checked source witness. Confirmed state не меняется до commit; Stop/deadline не публикует pending writes. Actual Node/Chromium proofs в STATUS. EMS-033 IN_PROGRESS для breakpoints/Step Over/nested visual/source linkage/value policy/native/compiled debugging; startup transport stability проверять с bounded QA diagnostics, не утверждать root cause fix по зелёному повтору. Глобальная цель языка/runtime/compiler/platform/ecosystem сохраняется. Deploy только после strict clean-commit gates и live HTTPS/browser proof.
+
+
+## После AC-072 — checked operation anchors
+
+Следующий срез EMS-033: durable Studio debugger sidecar по project/library identity, fresh checked восстановление при reopening/mode changes и явный import/export scope. UI sidecar проверен отдельно; полный debugger остаётся IN_PROGRESS. Затем typed value/secret inspection и guarded transports. IR и интерпретированная/standalone семантика сохраняются.

@@ -1,3 +1,4 @@
+import {captureSourceBreakpoint,resolveSourceBreakpoint} from '/src/studio/source-anchors.mjs';
 import {breakpointForEvent} from '/src/studio/debugger.mjs';
 import {breakpointAtTextOffset,graphBreakpointIdentity} from '/src/studio/breakpoints.mjs';
 import {ProjectManager} from '/src/studio/manager.mjs';
@@ -16,22 +17,28 @@ const identity=()=> 'p'+crypto.randomUUID().replaceAll('-','');
 let store,editor,selected=null,pending=null,failedNode=null,textMode=false,textProjectId=null,textStorage;
 const managedId=new URLSearchParams(location.search).get('project'),manager=managedId?new ProjectManager(localStorage):null;
 let activeExecution=null,pausedOperation=null,executionBreakpointIdentity=null;
-let breakpointIdentity=null,breakpoints=[];
+let breakpointIdentity=null,breakpoints=[],sourceAnchors=[],anchorOwner=null;
 function currentBreakpointIdentity(){const program=textMode?JSON.stringify({profile:'text',source:$('text-source').value,entry:$('text-entry').value.trim(),lowering:$('text-lowering').value,library:graphBreakpointIdentity(editor.project)}):'graph:'+graphBreakpointIdentity(editor.project);return editor.project.id+':'+program;}
 function syncBreakpoints(){
- const identity=currentBreakpointIdentity();if(identity!==breakpointIdentity){breakpointIdentity=identity;breakpoints=[];}
- $('breakpoint-count').textContent=String(breakpoints.length);
- $('breakpoint-list').textContent=breakpoints.map(point=>(point.graph??point.function)+' / '+point.node).join('\n')||'Выберите блок в графе или операцию в тексте.';
+ const identity=currentBreakpointIdentity();if(identity!==breakpointIdentity){
+  breakpointIdentity=identity;breakpoints=[];
+  const owner=textMode?editor.project.id+':'+$('text-entry').value.trim()+':'+$('text-lowering').value+':'+graphBreakpointIdentity(editor.project):null;
+  if(owner!==anchorOwner){anchorOwner=owner;sourceAnchors=[];}
+  if(textMode&&sourceAnchors.length){try{const bundle=textAPI.compileTextDraft(draft(),editor);for(const item of sourceAnchors)Object.assign(item,resolveSourceBreakpoint(bundle,item.anchor));}catch(error){for(const item of sourceAnchors){item.point=null;item.reason=error.code??'invalid-draft';}}breakpoints=sourceAnchors.filter(item=>item.point).map(item=>item.point);}
+ }
+ $('breakpoint-count').textContent=String(textMode?sourceAnchors.length:breakpoints.length);
+ $('breakpoint-list').textContent=(textMode?sourceAnchors.map(item=>(item.anchor.point.graph??item.anchor.point.function)+' / '+(item.point?.node??('не привязана: '+item.reason))):breakpoints.map(point=>(point.graph??point.function)+' / '+point.node)).join('\n')||'Выберите блок в графе или операцию в тексте.';
  $('debug-breakpoint').disabled=!pausedOperation||executionBreakpointIdentity!==identity;
 }
 function toggleBreakpoint(point){
  syncBreakpoints();const key=JSON.stringify(point),index=breakpoints.findIndex(item=>JSON.stringify(item)===key);
- if(index>=0)breakpoints.splice(index,1);else{if(breakpoints.length>=64)throw Object.assign(new Error('Не более 64 точек'),{code:'INVALID_DEBUG_BREAKPOINT'});breakpoints.push(point);}
+ if(index>=0){breakpoints.splice(index,1);if(textMode)sourceAnchors=sourceAnchors.filter(item=>JSON.stringify(item.point)!==key);}
+ else{if((textMode?sourceAnchors.length:breakpoints.length)>=64)throw Object.assign(new Error('Не более 64 точек'),{code:'INVALID_DEBUG_BREAKPOINT'});if(textMode)sourceAnchors.push({anchor:captureSourceBreakpoint(textAPI.compileTextDraft(draft(),editor),point),point,reason:null});breakpoints.push(point);}
  if(activeExecution&&executionBreakpointIdentity===breakpointIdentity)activeExecution.setBreakpoints(breakpoints);
  syncBreakpoints();render();
 }
 $('debug-breakpoint').onclick=()=>{try{if(pausedOperation&&executionBreakpointIdentity===currentBreakpointIdentity())toggleBreakpoint(breakpointForEvent(pausedOperation));}catch(error){report(error);}};
-$('clear-breakpoints').onclick=()=>{syncBreakpoints();breakpoints=[];if(activeExecution&&executionBreakpointIdentity===breakpointIdentity)activeExecution.setBreakpoints([]);syncBreakpoints();render();};
+$('clear-breakpoints').onclick=()=>{syncBreakpoints();breakpoints=[];sourceAnchors=[];if(activeExecution&&executionBreakpointIdentity===breakpointIdentity)activeExecution.setBreakpoints([]);syncBreakpoints();render();};
 $('text-breakpoint').onclick=()=>{try{toggleBreakpoint(breakpointAtTextOffset(textAPI.compileTextDraft(draft(),editor),$('text-source').selectionStart));}catch(error){sourceError(error);}};
 
 async function executeStudio(action,draft,inputs,debug=false){
