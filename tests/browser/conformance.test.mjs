@@ -21,7 +21,7 @@ test('existing browser explorer loads the transitive EMS modules and executes it
   const server = await startStudioServer({port:0});
   let browser;
   try {
-    browser=await launchChromium();const page=await browser.page(server.origin);
+    browser=await launchChromium();const page=await browser.page(server.origin+'/web/explorer.html');
     const result=await page.evaluate(`(async()=>{await import('/web/app.mjs');document.querySelector('#execute').click();await new Promise(resolve=>setTimeout(resolve,0));return JSON.parse(document.querySelector('#output').textContent);})()`);
     assert.ok(Math.abs(result.result-12.566666666666666)<1e-9);
     assert.equal((await fetch(server.origin+'/AGENTS.md')).status,403);

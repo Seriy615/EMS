@@ -74,6 +74,10 @@ export async function launchChromium() {
       });
       await send('Page.navigate', { url }, sessionId); await loaded;
       return {
+        screenshot: () => send('Page.captureScreenshot', {format:'png'}, sessionId).then(result=>result.data),
+        viewport: (width,height) => send('Emulation.setDeviceMetricsOverride',{width,height,deviceScaleFactor:1,mobile:false},sessionId),
+        mouse: (type,params) => send('Input.dispatchMouseEvent',{type,...params},sessionId),
+        downloads: directory => send('Browser.setDownloadBehavior',{behavior:'allow',downloadPath:directory}),
         async evaluate(expression) {
           const result = await send('Runtime.evaluate', { expression, awaitPromise: true, returnByValue: true }, sessionId);
           if (result.exceptionDetails) throw new Error(JSON.stringify(result.exceptionDetails));

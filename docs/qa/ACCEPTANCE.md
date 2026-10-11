@@ -50,6 +50,8 @@ Each AC ID must link to executable test output / exact command / revision. The M
 | AC-043 | Common finite differential conformance gate | same fixtures through runtime, serialized IR and fresh standalone processes; exact values/signed zero/error details/typed throws, independent oracle and negative gate tests; `tests/conformance.test.mjs`, `npm run conformance` | M1 reference conformance |
 | AC-044 | Real Node/Web pure-core P1 with standalone application | 57 fixtures through 5 actual Node/Chromium executors, browser lock drift rejection, byte-identical exported application and actual form after runtime origin shutdown; `npm run browser:test`, `npm run browser:verify`, `tests/portable-export.test.mjs` | P1 initial pure-core proof |
 
+| AC-045 | Initial working typed visual editor and persistent project | real create/connect/Run=5, type/cycle rollback, canvas IR independence, actual mouse drag/undo/redo/zoom, project download/import-copy and original reload; `tests/studio.test.mjs`, `tests/browser/studio.test.mjs` | M2 finite editor slice |
+
 `AC-001` is NOT official WCA Average of Five. Real WCA rules are a separate contract acceptance test.
 
 ## Proof storage

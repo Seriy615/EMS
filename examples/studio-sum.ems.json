@@ -1,0 +1,79 @@
+{
+  "schemaVersion": "ems-studio-project/1",
+  "id": "main",
+  "name": "Новый проект",
+  "ir": {
+    "schemaVersion": "ems-ir/1",
+    "profile": "ems-core-finite/1",
+    "id": "project.main",
+    "version": "1.0.0",
+    "inputs": [
+      {
+        "name": "x",
+        "type": "Number"
+      },
+      {
+        "name": "y",
+        "type": "Number"
+      }
+    ],
+    "output": {
+      "type": "Number"
+    },
+    "operations": [
+      {
+        "id": "n1",
+        "contract": {
+          "id": "core.add",
+          "version": "1.0.0"
+        },
+        "arguments": [
+          {
+            "port": "a",
+            "value": {
+              "kind": "input",
+              "name": "x"
+            }
+          },
+          {
+            "port": "b",
+            "value": {
+              "kind": "input",
+              "name": "y"
+            }
+          }
+        ],
+        "type": "Number"
+      }
+    ],
+    "result": {
+      "kind": "node",
+      "id": "n1"
+    }
+  },
+  "inputs": {
+    "x": 2,
+    "y": 3
+  },
+  "canvas": {
+    "positions": {
+      "input:x": {
+        "x": 40,
+        "y": 170
+      },
+      "input:y": {
+        "x": 40,
+        "y": 290
+      },
+      "n1": {
+        "x": 280,
+        "y": 70
+      }
+    },
+    "view": {
+      "x": 0,
+      "y": 0,
+      "scale": 1
+    }
+  }
+}

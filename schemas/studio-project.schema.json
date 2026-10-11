@@ -1,0 +1,26 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ems.local/schemas/studio-project.schema.json",
+  "title": "EMS Studio project v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "id", "name", "ir", "inputs", "canvas"],
+  "properties": {
+    "schemaVersion": {"const": "ems-studio-project/1"},
+    "id": {"type": "string", "pattern": "^[A-Za-z_][A-Za-z0-9_]*$"},
+    "name": {"type": "string", "minLength": 1, "maxLength": 200},
+    "ir": {"$ref": "ir.schema.json"},
+    "inputs": {"type": "object", "maxProperties": 100},
+    "canvas": {
+      "type": "object", "additionalProperties": false, "required": ["positions", "view"],
+      "properties": {
+        "positions": {"type": "object", "additionalProperties": {
+          "type": "object", "additionalProperties": false, "required": ["x", "y"],
+          "properties": {"x": {"type": "number", "minimum": -100000, "maximum": 100000}, "y": {"type": "number", "minimum": -100000, "maximum": 100000}}
+        }},
+        "view": {"type": "object", "additionalProperties": false, "required": ["x", "y", "scale"],
+          "properties": {"x": {"type": "number"}, "y": {"type": "number"}, "scale": {"type": "number", "minimum": 0.25, "maximum": 2}}}
+      }
+    }
+  }
+}

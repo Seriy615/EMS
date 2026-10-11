@@ -382,12 +382,27 @@
       "objective": "Create interactive typed editor, undo and save/load",
       "deliverables": "UI editor",
       "acceptance": "Round-trip graph execution",
-      "status": "TODO",
+      "status": "DONE",
       "priority": "P1",
       "ownerModelPolicy": [
         "GPT-6.1 Sol",
         "GPT-6 Luna"
-      ]
+      ],
+      "progress": "Initial finite typed visual editor implemented (AC-045): actual root Studio UI, core arithmetic registry, input/output cards, click ports to connect, typed literal/input inspector, reject cycles/types transactionally, disconnect/delete, actual pointer drag/pan/zoom, undo/redo, bounded immutable graph edits and separate canvas sidecar. Existing graph→serialized IR→executeIR path used; no second executor. Atomic localStorage project/active selection, save/open/new/autosave, lossless signed-zero transport, actual JSON download/import to a copy prevent overwriting saved projects. Browser E2E creates sum=5, rejects wrong type, drags/undo/redo/zooms, downloads file, imports changed copy=11, opens original=5 and reopens page=5. 517/517 Node tests, 92/92 verify, 3/3 browser tests. DONE for initial EMS-030 acceptance only; composites/library expansion/text/control visual mapping/events/UI counter/full MVP/deployment remain open.",
+      "acceptanceEvidence": {
+        "docs": "docs/spec/STUDIO_PROJECT.md",
+        "tests": [
+          "tests/studio.test.mjs",
+          "tests/browser/studio.test.mjs"
+        ],
+        "commands": [
+          "npm test",
+          "npm run verify",
+          "npm run browser:test"
+        ],
+        "example": "examples/studio-sum.ems.json",
+        "scope": "Finite dataflow typed editor; full owner-approved WEB IDE MVP remains open."
+      }
     },
     {
       "id": "EMS-031",
