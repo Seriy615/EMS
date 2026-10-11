@@ -12,6 +12,7 @@ export async function executeGraph(graph, inputs, registry, options = {}) {
   if(options.onFrameExit!==undefined&&typeof options.onFrameExit!=='function')fail('INVALID_OPTION','Expected frame exit observer');
   if(options.onNodeFailure!==undefined&&typeof options.onNodeFailure!=='function')fail('INVALID_OPTION','Expected node failure observer');
   if(Object.hasOwn(options,'inspection')&&options.inspection!==undefined)fail('UNSUPPORTED_INSPECTION_PROFILE','Graph value inspection requires a separate checked adapter');
+  if(options.onNodeExit!==undefined&&typeof options.onNodeExit!=='function')fail('INVALID_OPTION','Expected node exit observer');
   if(options.onNodeEnter!==undefined&&typeof options.onNodeEnter!=='function')fail('INVALID_OPTION','Expected node entry observer');
   assertSignal(options.signal);
   checkCancellation(options.signal);
@@ -20,7 +21,7 @@ export async function executeGraph(graph, inputs, registry, options = {}) {
   checkGraphPolicy(graph, registry, options);
   validateEffectSequence(graph, registry);
   const hasGraphInspection=Object.hasOwn(options,'graphInspection')&&options.graphInspection!==undefined;
-  if(hasGraphInspection&&typeof options.onNodeEnter!=='function')fail('INVALID_INSPECTION_POLICY','Graph inspection needs a node observer');
+  if(hasGraphInspection&&typeof options.onNodeEnter!=='function'&&typeof options.onNodeExit!=='function')fail('INVALID_INSPECTION_POLICY','Graph inspection needs a node observer');
   const shared=Object.getOwnPropertyDescriptor(options,GRAPH_INSPECTOR);
   if(shared&&(!Object.hasOwn(shared,'value')||typeof shared.value!=='function'))fail('INVALID_INSPECTION_POLICY','Invalid graph inspector context');
   const inspect=shared?.value??(hasGraphInspection?createGraphInspector(graph,registry,options.graphInspection):null);
@@ -60,11 +61,16 @@ export async function executeGraph(graph, inputs, registry, options = {}) {
       checkCancellation(options.signal);
     }
     const result = contract.kind === 'composite'
-      ? await executeGraph(contract.graph, params, registry, { capabilities: [...allowed], allowedEffects: options.allowedEffects ?? [], callStack: nextStack, signal: options.signal, state: options.state, callPath, onNodeFailure: options.onNodeFailure, onNodeEnter: options.onNodeEnter,onFrameExit:options.onFrameExit,[DIAGNOSTIC_FRAMES]:childDiagnostics,...(inspect?{[GRAPH_INSPECTOR]:inspect}:{}) })
-      : await awaitCancellable(contract.execute(params, Object.freeze({ signal: options.signal, state: options.state, callPath, onNodeFailure: options.onNodeFailure, onNodeEnter: options.onNodeEnter,onFrameExit:options.onFrameExit,[DIAGNOSTIC_FRAMES]:childDiagnostics,...(inspect?{[GRAPH_INSPECTOR]:inspect}:{}) })), options.signal);
+      ? await executeGraph(contract.graph, params, registry, { capabilities: [...allowed], allowedEffects: options.allowedEffects ?? [], callStack: nextStack, signal: options.signal, state: options.state, callPath, onNodeFailure: options.onNodeFailure, onNodeEnter: options.onNodeEnter,onNodeExit:options.onNodeExit,onFrameExit:options.onFrameExit,[DIAGNOSTIC_FRAMES]:childDiagnostics,...(inspect?{[GRAPH_INSPECTOR]:inspect}:{}) })
+      : await awaitCancellable(contract.execute(params, Object.freeze({ signal: options.signal, state: options.state, callPath, onNodeFailure: options.onNodeFailure, onNodeEnter: options.onNodeEnter,onNodeExit:options.onNodeExit,onFrameExit:options.onFrameExit,[DIAGNOSTIC_FRAMES]:childDiagnostics,...(inspect?{[GRAPH_INSPECTOR]:inspect}:{}) })), options.signal);
     checkCancellation(options.signal);
     assertValueType(result, contract.output, `result of ${contract.id}`);
     memo.set(id, result);
+    if(options.onNodeExit){
+      const event=structuredClone({phase:'exit',callPath,frames,inputs:Object.fromEntries(Object.entries(contract.inputs).map(([name,type])=>[name,typeof type==='string'?type:type.type])),output:contract.output,effects:contract.effects,capabilities:contract.capabilities,...(inspect?{inspection:inspect(graph,inputs,memo)}:{})});
+      try{await awaitCancellable(options.onNodeExit(event),options.signal);}catch{/* Diagnostics cannot replace execution failures. */}
+      checkCancellation(options.signal);
+    }
     return result;
     } catch(error) { try { options.onNodeFailure?.(structuredClone(callPath)); } catch { /* Observers cannot change program failures. */ } throw error; }
   }

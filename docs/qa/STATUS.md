@@ -1,5 +1,12 @@
 # Current implementation status
 
+## EMS-033 — AC-082 графовый результат после операции (публикация ожидается)
+
+Предыдущая итерация дала progress: AC-081 checked5bf3b12/QA1de7dfd опубликован; authoritative worktree clean и baseline774/143 PASS. Сохранённый WIP восстановлен, reviewed, дополнен полноценной opt-in UI/closed witness v2/exit DTO и отрицательными проверками. Nested/repeated visual/source fixtures подтверждают separate frames/inputs. Core exits после проверки типа/memo, без повторного исполнения, с cancellation/protection/limits. Step/Over/Out и enter-only breakpoints согласованы.
+
+Первый новый focused8/9 Node /3/4 Chromium failed из-за неверного синтаксиса var в control fixture; исправлен fixture на нормативный let mut, поведение runtime не ослаблялось. Final focused24 Node,17 observer/old-graph Node и10 Chromium integration PASS. Полный локальный Node785/785 иverify144/144 PASS; минимальное последующее разрешение exit-only core observer отдельно17/17 проверено. Exact clean committed gates и public post-operation proof ещё ожидаются. Коллекции/control post-operation/native/compiled/full debugger/taint и глобальная цель открыты.
+
+
 ## EMS-036 — AC-081 понятный запуск Studio
 
 Входные данные доступны без выбора блока, типизированные формы и previews, целый граф через canvas fit, читаемая иерархия данных/редактора/результата и отдельная раскрываемая отладка. Final focused design4/4 и existing editor/inspection integration8/8 PASS. AC-081 опубликован: checked current `5bf3b12cbe91f4bf832f4c83068f42e0dc722511`, previous `dc46728d92c83edde5f9215545f60869c757c3c7`. Exact clean committed gate **774/774 Node,143/143 verify,53/53 Chromium PASS**, deploy/public HTTPS smoke terminal0. На live реальные вход8/result11 и complete graph fit, stable Graph/Code/mobile390px и все предыдущие runtime/inspection/UI/debugger proofs PASS. Six foreign nginx hashes/five services unchanged. Dedicated service active, MemoryCurrent17817600, MemoryMax134217728, TasksMax32, userems-language-dev, ProtectHomeyes/ProtectSystemstrict/NoNewPrivilegesyes, listener127.0.0.1:18877. Логи `/tmp/ems-redesign-deploy.log`, `/tmp/ems-redesign-live-smoke.log`, `/tmp/ems-redesign-vps-before.log`, `/tmp/ems-redesign-vps-after.log`. Evidence-only commit не меняет live artifact. Полный язык/IDE/global goal и EMS-033 active; intermittent Worker startup из прежних итераций не объявляется исправленным этим дизайном.

@@ -18,7 +18,7 @@ export function breakpointForEvent(event){
  const call=event.callPath?.at(-1);return call?{profile:'graph',graph:call.graph,node:call.node}:null;
 }
 function matches(event,points){
- const at=breakpointForEvent(event);return !!at&&points.some(point=>point.profile===at.profile&&point.node===at.node&&(at.profile==='graph'?point.graph===at.graph:point.function===at.function));
+ const at=breakpointForEvent(event);return event.phase!=='exit'&&!!at&&points.some(point=>point.profile===at.profile&&point.node===at.node&&(at.profile==='graph'?point.graph===at.graph:point.function===at.function));
 }
 function validFrames(value){return Array.isArray(value)&&value.length>0&&value.length<=64&&value.every(id=>Number.isSafeInteger(id)&&id>0)&&new Set(value).size===value.length;}
 /** Operation gate for the existing evaluator; values require a separately checked host grant. */

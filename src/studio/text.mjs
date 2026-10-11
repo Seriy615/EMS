@@ -23,7 +23,7 @@ export function compileTextDraft(draft,editor){
  bundle.ir=parseIR(serializeIR(bundle.ir,bundle.registry),bundle.registry);return bundle;
 }
 export async function runTextDraft(draft,editor,inputs,options={}){
- for(const key of ['onNodeEnter','onControlEnter','onFrameExit'])if(options[key]!==undefined&&typeof options[key]!=='function')fail('INVALID_OPTION','Expected diagnostic observer');
+ for(const key of ['onNodeEnter','onNodeExit','onControlEnter','onFrameExit'])if(options[key]!==undefined&&typeof options[key]!=='function')fail('INVALID_OPTION','Expected diagnostic observer');
  const bundle=compileTextDraft(draft,editor);
  const locate=event=>{
   const call=event.callPath?.at(-1),fn=event.function??call?.graph,node=event.node??call?.node;
@@ -31,6 +31,7 @@ export async function runTextDraft(draft,editor,inputs,options={}){
  };
  return executeIR(bundle.ir,inputs,bundle.registry,{...options,maxSteps:10000,maxDepth:32,
   onNodeEnter:options.onNodeEnter?event=>options.onNodeEnter(locate(event)):undefined,
+  onNodeExit:options.onNodeExit?event=>options.onNodeExit(locate(event)):undefined,
   onControlEnter:options.onControlEnter?event=>options.onControlEnter(locate(event)):undefined});
 }
 export function compileTextJS(draft,editor){const bundle=compileTextDraft(draft,editor);return compileIRToJS(bundle.ir,bundle.registry);}

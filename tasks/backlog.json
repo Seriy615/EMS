@@ -490,7 +490,7 @@
         "GPT-6.1 Sol",
         "GPT-6 Luna"
       ],
-      "progress": "AC-063..080 interpreted graph/control/UI debugger includes checked points, Over/Out, durable contexts, bounded opt-in control and graph/call values with declaration identities and exact source/canonical project/library/selected root witnesses. Independent client/Worker path/frame/location/type/status/current-output/replay guards; actual memo-only values, protection/clear/revoke and old v1/v2 compatibility. Checked release dc46728d92c83edde5f9215545f60869c757c3c7 passed774/143/51 and public visual memo5/result25/protection plus all previous proofs. First full50/51 native UI startup failure remains unproven/unresolved despite focused1/final51 passes; bounded metadata/HTTP evidence retained. Collections, effectful UI values, inferred taint, compiled/native transports/full debugger parity remain open.",
+      "progress": "AC-063..080 interpreted graph/control/UI debugger includes checked points, Over/Out, durable contexts, bounded opt-in control and graph/call values with declaration identities and exact source/canonical project/library/selected root witnesses. Independent client/Worker path/frame/location/type/status/current-output/replay guards; actual memo-only values, protection/clear/revoke and old v1/v2 compatibility. Checked release dc46728d92c83edde5f9215545f60869c757c3c7 passed774/143/51 and public visual memo5/result25/protection plus all previous proofs. First full50/51 native UI startup failure remains unproven/unresolved despite focused1/final51 passes; bounded metadata/HTTP evidence retained. Collections, effectful UI values, inferred taint, compiled/native transports/full debugger parity remain open. AC-082 post-operation graph/call pauses in progress: optional runtime exit after validated memo; explicit witness v2 permission, UI default off, independent DTO/current-output/client checks, detached protection/budget/cancel. Nested/repeated values and Over/Out/enter-only breakpoints passed; local785/144, focused24+17 Node/10 Chromium. Exact committed/public gate pending; no full debugger claim.",
       "evidence": {
         "scope": "Original interpreted graph/control/UI debugger; opt-in checked control/visual/call-IR value panel, declaration and closure/source/project identity, bounded QA native startup evidence. Full taint/effectful/collection/native/compiled profiles remain open.",
         "docs": "docs/spec/IDE_RUNTIME_DIAGNOSTICS.md",
@@ -513,7 +513,9 @@
           "tests/ui-breakpoints.test.mjs",
           "tests/browser/ui-breakpoints.test.mjs",
           "tests/step-frames.test.mjs",
-          "tests/breakpoints.test.mjs"
+          "tests/breakpoints.test.mjs",
+          "tests/graph-post-operation.test.mjs",
+          "tests/graph-inspection-nesting.test.mjs"
         ],
         "tests": "774/774 PASS",
         "verify": "143/143 PASS",
