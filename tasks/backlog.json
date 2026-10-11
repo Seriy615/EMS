@@ -1101,13 +1101,13 @@
       "objective": "Make existing graph/text/UI project workflows readable and discoverable without altering semantic IR or stored projects",
       "deliverables": "Shared design tokens, graph onboarding and hierarchy, accessible file menu, UI preview and labelled authoring forms, responsive layouts",
       "acceptance": "AC-068; real mouse file disclosure, example result5, populated handler source, three workspaces fit390px; full existing Node/verify/browser suite and live deployment smoke pass",
-      "status": "IN_PROGRESS",
+      "status": "DONE",
       "priority": "P0",
       "ownerModelPolicy": [
         "GPT-6.1 Sol",
         "GPT-6 Luna"
       ],
-      "progress": "Owner requested understandable design. Baseline694/133 PASS; implementation and visual Chromium review complete; final browser and dev publication gate pending."
+      "progress": "AC-068 accepted: shared graph/text/UI/project design, labelled forms/preview, advanced disclosures and onboarding. Baseline694/133; final and repeated exact gated release208c1773ec85b100099d937dcd2d053e8c8f222c:694/133/30 PASS. Public auth/TLS/access + actual graph/composite/reopen/AVG5/text/UI debugger smoke and published design/mobile390px/source checks PASS. Other vhost hashes/services preserved. Full language/native/touch/WCAG scope remains open. See docs/qa/STATUS.md and DEPLOYMENT.md."
     }
   ]
 }
