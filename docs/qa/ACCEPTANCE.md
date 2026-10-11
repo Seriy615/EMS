@@ -45,6 +45,7 @@ Each AC ID must link to executable test output / exact command / revision. The M
 | AC-039 | Separate versioned interface/binding IDL and finite adapter checks | strict canonical snapshots, exact pins/targets/types/policy and backward compatibility, actual runtime/standalone pre/post and error gates, CLI and independent export; `tests/contracts-idl.test.mjs` | M1 initial IDL slice |
 | AC-040 | Composite public interface preserves inspectable graph and execution guards | graph/IR/text runtime/standalone pre/post/error parity, nested ordering/memo scopes, edited graph/policy/version negatives, seal/reimport, independent export and event rollback; `tests/contracts-composite.test.mjs` | M1 composite IDL slice |
 | AC-041 | Typed public resource lifecycle IDL preserves execution ownership | per-phase pre/post/type/errors, factory post ownership-before-check, readonly/versions/policy, nested guards/single release, cancellation/late IO, real file fd closure and state rollback; `tests/contracts-resource.test.mjs` | M1 resource IDL slice |
+| AC-042 | Program lock verifies transitive contracts and actual source artifact provenance | program/target/graph/IDL/source drift, private intrinsic identities, verified SDK DAG/staging, no callback hashing, snapshots, actual file closure, CLI and independent export; `tests/program-lock.test.mjs` | M1 dependency lock slice |
 
 `AC-001` is NOT official WCA Average of Five. Real WCA rules are a separate contract acceptance test.
 

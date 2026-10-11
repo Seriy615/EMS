@@ -15,7 +15,7 @@ export function analyzeGraphEffects(graph, registry) {
   const summaries = new Map();
   function contractSummary(contract, stack) {
     if (summaries.has(contract.id)) return summaries.get(contract.id);
-    if (stack.includes(contract.id) || stack.length >= 32) fail('RECURSIVE_COMPOSITE', `Recursive effect analysis at ${contract.id}`);
+    if (contract.kind === 'composite' && (stack.includes(contract.id) || stack.length >= 32)) fail('RECURSIVE_COMPOSITE', `Recursive effect analysis at ${contract.id}`);
     const effects = new Set(contract.effects), capabilities = new Set(contract.capabilities);
     if (contract.kind === 'composite') {
       const nested = analyze(contract.graph, [...stack, contract.id]);

@@ -7,13 +7,13 @@ import { parseEMSModule } from '../src/frontend/index.mjs';
 import { typecheckModule } from '../src/frontend/check.mjs';
 import { lowerCheckedModule } from '../src/frontend/lower.mjs';
 import { createStateRegistry, ReactorSession, replayEvents } from '../src/runtime/reactor.mjs';
-import { validateContractInterface, compareContractInterfaces, registerContractBinding } from '../src/contracts/index.mjs';
+import { validateContractInterface, compareContractInterfaces, registerContractBinding, createProgramLock, executeLockedIR, compileLockedIRToJS } from '../src/contracts/index.mjs';
 const root=new URL('../',import.meta.url);
 const get=async p=>readFile(new URL(p,root),'utf8');
 const readJSON=async p=>JSON.parse(await get(p));
 let checks=0;
 async function check(desc, fn) { const x=await fn(); assert.ok(x,desc); checks++; console.log('✓',desc); }
-const required=['AGENTS.md','.agents/policy.json','PROJECT_GOAL.md','docs/spec/LANGUAGE_SEMANTICS.md','docs/spec/IR.md','schemas/ir.schema.json','docs/spec/STATE_EVENTS.md','schemas/reactor.schema.json','docs/spec/CONTROL_IR.md','schemas/control-ir.schema.json','schemas/control-finite-ir.schema.json','schemas/control-algebraic-ir.schema.json','docs/spec/CONTROL_ALGEBRAIC.md','docs/spec/CONTROL_FUTURES.md','schemas/control-futures-ir.schema.json','docs/spec/CONTROL_STREAMS.md','schemas/control-streams-ir.schema.json','docs/spec/RESOURCE_IDL.md','schemas/resource-interface.schema.json','docs/spec/CONTRACT_IDL.md','schemas/contract-interface.schema.json','schemas/contract-binding.schema.json','docs/spec/CONTROL_RESOURCES.md','schemas/control-resources-ir.schema.json','docs/qa/PROGRESS.md','docs/spec/EMS_FULL_SPEC.md','docs/plans/ROADMAP.md','docs/qa/ACCEPTANCE.md','tasks/backlog.json'];
+const required=['AGENTS.md','.agents/policy.json','PROJECT_GOAL.md','docs/spec/LANGUAGE_SEMANTICS.md','docs/spec/IR.md','schemas/ir.schema.json','docs/spec/STATE_EVENTS.md','schemas/reactor.schema.json','docs/spec/CONTROL_IR.md','schemas/control-ir.schema.json','schemas/control-finite-ir.schema.json','schemas/control-algebraic-ir.schema.json','docs/spec/CONTROL_ALGEBRAIC.md','docs/spec/CONTROL_FUTURES.md','schemas/control-futures-ir.schema.json','docs/spec/CONTROL_STREAMS.md','schemas/control-streams-ir.schema.json','docs/spec/PROGRAM_LOCK.md','schemas/program-lock.schema.json','docs/spec/RESOURCE_IDL.md','schemas/resource-interface.schema.json','docs/spec/CONTRACT_IDL.md','schemas/contract-interface.schema.json','schemas/contract-binding.schema.json','docs/spec/CONTROL_RESOURCES.md','schemas/control-resources-ir.schema.json','docs/qa/PROGRESS.md','docs/spec/EMS_FULL_SPEC.md','docs/plans/ROADMAP.md','docs/qa/ACCEPTANCE.md','tasks/backlog.json'];
 for(const f of required) { await stat(new URL(f,root)); await check(`found ${f}`,()=>true); }
 const policy=await readJSON('.agents/policy.json');
 await check('models exactly Sol 6.1 + Luna 6',()=>policy.agents.approvedDisplayNames.join(',')==='GPT-6.1 Sol,GPT-6 Luna');
@@ -206,4 +206,9 @@ const resourceIDLBundle=lowerCheckedModule(typecheckModule(parseEMSModule('fn re
 await check('public resource interface reads an actual file and completes owned release',async()=>{
   assert.equal(await executeIR(resourceIDLBundle.ir,{path:new URL('examples/resources.ems',root).pathname},resourceIDLBundle.registry,{allowedEffects:['fs.read'],capabilities:['fs.read']}),await get('examples/resources.ems'));return resourceIDLReleased===1;
 });
+const programLock=await createProgramLock(ir,registry,{target:'node'});
+await check('dependency lock executes exact core program',async()=>await executeLockedIR(programLock,ir,{times:[12.4,11.85,13.2,12.1,14]},registry,{target:'node'})===result);
+const lockedOutput=await import(`data:text/javascript,${encodeURIComponent(await compileLockedIRToJS(programLock,ir,registry,{target:'node'}))}`);
+await check('verified standalone retains arithmetic result',()=>lockedOutput.execute({times:[12.4,11.85,13.2,12.1,14]})===result);
+await check('locked execution rejects changed target before execution',async()=>{await assert.rejects(executeLockedIR(programLock,ir,{times:[]},registry,{target:'web'}),{code:'LOCK_MISMATCH'});return true;});
 console.log(`\nEMS foundation verification passed (${checks} checks). Not production readiness.`);

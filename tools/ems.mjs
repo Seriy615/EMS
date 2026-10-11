@@ -9,9 +9,13 @@ import { typecheckModule } from '../src/frontend/check.mjs';
 import { lowerCheckedModule } from '../src/frontend/lower.mjs';
 import { executeIR, compileIRToJS } from '../src/ir/index.mjs';
 import { validateContractInterface, compareContractInterfaces, checkContractBinding } from '../src/contracts/idl.mjs';
+import { createProgramLock,executeLockedIR,compileLockedIRToJS,serializeProgramLock,parseProgramLock } from '../src/contracts/lock.mjs';
 const [command, file, ...args] = process.argv.slice(2);
 function usage() {
   console.log(`EMS reference CLI (M0, NOT production)
+  node tools/ems.mjs lock <program.ir.json> --target <target> --out <lock.json>
+  node tools/ems.mjs locked-run <program.ir.json> --lock <lock.json> --target <target> '<inputs-json>'
+  node tools/ems.mjs locked-build <program.ir.json> --lock <lock.json> --target <target> --out <output.mjs>
   node tools/ems.mjs interface-check <interface.json>
   node tools/ems.mjs interface-compare <old.json> <new.json>
   node tools/ems.mjs binding-check <binding.json> --interface <interface.json> --target <target>
@@ -33,8 +37,23 @@ function usage() {
   node tools/ems.mjs module-build <source.ems> --entry <name> --out <output.mjs>`);
 }
 async function main() {
-  if (!file || !['interface-check', 'interface-compare', 'binding-check', 'validate', 'run', 'build', 'seal', 'text-parse', 'text-run', 'text-build', 'ir', 'text-ir', 'ir-run', 'ir-build', 'parse', 'check', 'module-run', 'module-build', 'module-ir'].includes(command)) { usage(); process.exitCode = 2; return; }
+  if (!file || !['lock','locked-run','locked-build','interface-check', 'interface-compare', 'binding-check', 'validate', 'run', 'build', 'seal', 'text-parse', 'text-run', 'text-build', 'ir', 'text-ir', 'ir-run', 'ir-build', 'parse', 'check', 'module-run', 'module-build', 'module-ir'].includes(command)) { usage(); process.exitCode = 2; return; }
   const content = await readFile(file, 'utf8');
+  if(['lock','locked-run','locked-build'].includes(command)){
+    const registry=createCoreRegistry(),ir=parseIR(content,registry);
+    if(command==='lock'){
+      if(args.length!==4||args[0]!=='--target'||args[2]!=='--out')throw new Error('Use lock <IR> --target <target> --out <lock.json>');
+      const dest=resolve(args[3]);const lock=await createProgramLock(ir,registry,{target:args[1]});await mkdir(dirname(dest),{recursive:true});await writeFile(dest,serializeProgramLock(lock));console.log(`Built dependency lock: ${dest}`);
+    }else{
+      if(args[0]!=='--lock'||args[2]!=='--target')throw new Error('Use --lock <lock.json> --target <target>');
+      const lock=parseProgramLock(await readFile(args[1],'utf8')),options={target:args[3]};
+      if(command==='locked-run'){
+        if(args.length>5)throw new Error('Use JSON inputs after --target');console.log(JSON.stringify({result:await executeLockedIR(lock,ir,JSON.parse(args[4]??'{}'),registry,options)},null,2));
+      }else{
+        if(args.length!==6||args[4]!=='--out')throw new Error('Use --out <module.mjs>');const generated=await compileLockedIRToJS(lock,ir,registry,options),dest=resolve(args[5]);await mkdir(dirname(dest),{recursive:true});await writeFile(dest,generated);console.log(`Built locked standalone: ${dest}`);
+      }
+    }return;
+  }
   if(command==='interface-check') { console.log(JSON.stringify(validateContractInterface(JSON.parse(content)),null,2));return; }
   if(command==='interface-compare') {
     if(args.length!==1)throw new Error('Use interface-compare <old.json> <new.json>');

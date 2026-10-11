@@ -2,6 +2,7 @@ import { fail } from '../reference/errors.mjs';
 import { assertValueType, PRIMITIVE_TYPES } from '../reference/types.mjs';
 import { parseControlType } from '../semantics/control-algebraic.mjs';
 import { assertPolicyNames, analyzeGraphEffects } from '../semantics/effects.mjs';
+import { rememberAtomicBinding } from './provenance.mjs';
 import { checkContractConditions, checkContractFailure, emitContractBoundary } from './conditions.mjs';
 
 function fields(value, keys) {
@@ -163,6 +164,7 @@ export function registerContractBinding(registry,spec,descriptor,{target}={}) {
     catch(error){checkContractFailure(error,contract.errors,contract.id);}
   }
   const emitJS=typeof implementation.emitJS==='function'?args=>emitContractBoundary(contract,args,params=>({statements:[],result:implementation.emitJS(params)})):null;
-  registry.registerAtomic({id:contract.id,version:contract.version,inputs,output:contract.output.type,effects:contract.semantics.effects,capabilities:contract.semantics.capabilities,execute,emitJS});
+  registry.registerAtomic({id:contract.id,version:contract.version,inputs,output:contract.output.type,effects:contract.semantics.effects,capabilities:contract.semantics.capabilities,execute,emitJS,interfaceBoundary:{interface:contract,binding}});
+  rememberAtomicBinding(registry.resolve(contract.id),implementation);
   return Object.freeze({interface:contract,binding});
 }

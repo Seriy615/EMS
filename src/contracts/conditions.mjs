@@ -20,7 +20,8 @@ export function checkContractFailure(error,errors,id) {
 /** Resolve a selected composite interface; direct graph/IR execution must not bypass its boundary. */
 export function resolveCompositeBoundary(graph,registry) {
   if(graph.schemaVersion!=='ems-contract-graph/1'){
-    if(Object.hasOwn(graph,'interfaceRef')||registry.items.get(graph.id)?.interfaceBoundary)fail('MISSING_INTERFACE_REF','Composite boundary requires explicit contract graph format');
+    const selected=registry.items.get(graph.id);
+    if(Object.hasOwn(graph,'interfaceRef')||selected?.kind==='composite'&&selected.interfaceBoundary)fail('MISSING_INTERFACE_REF','Composite boundary requires explicit contract graph format');
     return null;
   }
   const ref=graph.interfaceRef;

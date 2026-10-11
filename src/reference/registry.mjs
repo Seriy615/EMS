@@ -3,12 +3,19 @@ import { assertTypeName } from './types.mjs';
 import { validateContractInterface, validateContractBinding } from '../contracts/idl.mjs';
 import { assertPolicyNames } from '../semantics/effects.mjs';
 
+const coreImplementations=new WeakMap();
+export function coreIntrinsic(item) {
+  const expected=coreImplementations.get(item.execute);
+  if(item.kind!=='atomic'||!expected||item.emitJS!==expected.emitJS||JSON.stringify(Object.entries(item.inputs))!==expected.inputs||item.output!==expected.output||item.version!=='1.0.0'||item.effects.length||item.capabilities.length||item.id!==expected.id)return null;
+  return {abi:'ems-core-finite/1',operation:expected.id};
+}
+
 /** Trust boundary: registerAtomic accepts host-trusted implementations only. No plugin sandbox in M0. */
 export class Registry {
   constructor() { this.items = new Map(); }
-  registerAtomic({ id, version = '1.0.0', inputs, output, effects = [], capabilities = [], execute, emitJS = null }) {
+  registerAtomic({ id, version = '1.0.0', inputs, output, effects = [], capabilities = [], execute, emitJS = null, interfaceBoundary = null }) {
     if (typeof execute !== 'function') fail('INVALID_IMPL', `${id}: atomic executor must be a function`);
-    this.#register({ id, version, kind: 'atomic', inputs, output, effects, capabilities, execute, emitJS });
+    this.#register({ id, version, kind: 'atomic', inputs, output, effects, capabilities, execute, emitJS, interfaceBoundary });
     return this;
   }
   registerResource({id,version='1.0.0',inputs,valueType,effects=[],capabilities=[],acquire,read,write=null,release,resourceBoundaries=[]}) {
@@ -57,7 +64,7 @@ const numeric = { a: 'Number', b: 'Number' };
 const list = { values: 'NumberArray' };
 const emitMath = op => args => `(${args.a} ${op} ${args.b})`;
 export function createCoreRegistry() {
-  return new Registry()
+  const registry=new Registry()
     .registerAtomic({ id: 'core.add', inputs: numeric, output: 'Number', execute: ({ a, b }) => a + b, emitJS: emitMath('+') })
     .registerAtomic({ id: 'core.sub', inputs: numeric, output: 'Number', execute: ({ a, b }) => a - b, emitJS: emitMath('-') })
     .registerAtomic({ id: 'core.mul', inputs: numeric, output: 'Number', execute: ({ a, b }) => a * b, emitJS: emitMath('*') })
@@ -74,4 +81,6 @@ export function createCoreRegistry() {
       if (!values.length) fail('EMPTY_ARRAY', 'core.max: empty list');
       return values.reduce((a, b) => Math.max(a, b), -Infinity);
     }, emitJS: ({values}) => `__max(${values})` });
+  for(const item of registry.items.values())coreImplementations.set(item.execute,{id:item.id,emitJS:item.emitJS,inputs:JSON.stringify(Object.entries(item.inputs)),output:item.output});
+  return registry;
 }
