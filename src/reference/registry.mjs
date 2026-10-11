@@ -1,5 +1,6 @@
 import { fail } from './errors.mjs';
 import { assertTypeName } from './types.mjs';
+import { validateContractInterface, validateContractBinding } from '../contracts/idl.mjs';
 import { assertPolicyNames } from '../semantics/effects.mjs';
 
 /** Trust boundary: registerAtomic accepts host-trusted implementations only. No plugin sandbox in M0. */
@@ -16,9 +17,14 @@ export class Registry {
     if(write!==null && typeof write!=='function')fail('INVALID_IMPL',`${id}: write must be a function`);
     this.#register({id,version,kind:'resource',inputs,output:`ResourceHandle<${valueType}>`,valueType,effects,capabilities,acquire,read,write,release});return this;
   }
-  registerComposite({ id, version = '1.0.0', graph, effects = [], capabilities = [] }) {
+  registerComposite({ id, version = '1.0.0', graph, effects = [], capabilities = [], interfaceBoundary = null }) {
     if (!graph || graph.id !== id) fail('INVALID_IMPL', `${id}: composite graph id mismatch`);
-    this.#register({ id, version, kind: 'composite', inputs: graph.inputs, output: graph.output.type, effects, capabilities, graph });
+    if(interfaceBoundary!==null){
+      const spec=validateContractInterface(interfaceBoundary.interface),binding=validateContractBinding(interfaceBoundary.binding);
+      if(spec.id!==id||spec.version!==version||binding.interface.id!==id||binding.interface.version!==version)fail('CONTRACT_VERSION','Composite interface boundary mismatch');
+      interfaceBoundary=Object.freeze({interface:spec,binding});
+    }
+    this.#register({ id, version, kind: 'composite', inputs: graph.inputs, output: graph.output.type, effects, capabilities, graph, interfaceBoundary });
     return this;
   }
   #register(item) {

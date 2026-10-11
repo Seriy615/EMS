@@ -1,3 +1,4 @@
+import { resolveCompositeBoundary } from '../contracts/conditions.mjs';
 import { fail } from '../reference/errors.mjs';
 import { assertTypeName, assertValueType, typeOfValue } from '../reference/types.mjs';
 import { validateGraph } from '../reference/validate.mjs';
@@ -11,6 +12,8 @@ import { compileControlJS } from '../compiler/control.mjs';
 export const IR_VERSION = 'ems-ir/1';
 export const CORE_PROFILE = 'ems-core-finite/1';
 export const EFFECT_PROFILE = 'ems-effects-finite/1';
+export const CONTRACT_CORE_PROFILE = 'ems-contract-core-finite/1';
+export const CONTRACT_EFFECT_PROFILE = 'ems-contract-effects-finite/1';
 const namePattern = /^[A-Za-z_][A-Za-z0-9_]*$/;
 
 function object(value, fields, at) {
@@ -78,16 +81,19 @@ function toReference(ref) {
 /** Lower the checked initial graph/HIR profile into a typed, versioned semantic artifact. */
 export function lowerGraphToIR(graph, registry, { profile = CORE_PROFILE } = {}) {
   validateGraph(graph, registry);
-  if (![CORE_PROFILE, EFFECT_PROFILE].includes(profile)) fail('UNSUPPORTED_PROFILE', `Unknown profile ${profile}`);
-  if (profile === CORE_PROFILE && Object.hasOwn(graph, 'sequence') && (!Array.isArray(graph.sequence) || graph.sequence.length)) fail('UNSUPPORTED_PROFILE', 'Core IR cannot erase an explicit sequence');
-  if (profile === CORE_PROFILE) {
+  const boundary=resolveCompositeBoundary(graph,registry);
+  if(boundary)profile=[EFFECT_PROFILE,CONTRACT_EFFECT_PROFILE].includes(profile)?CONTRACT_EFFECT_PROFILE:profile===CORE_PROFILE?CONTRACT_CORE_PROFILE:profile;
+  if (![CORE_PROFILE, EFFECT_PROFILE, CONTRACT_CORE_PROFILE, CONTRACT_EFFECT_PROFILE].includes(profile)) fail('UNSUPPORTED_PROFILE', `Unknown profile ${profile}`);
+  if ([CORE_PROFILE,CONTRACT_CORE_PROFILE].includes(profile) && Object.hasOwn(graph, 'sequence') && (!Array.isArray(graph.sequence) || graph.sequence.length)) fail('UNSUPPORTED_PROFILE', 'Core IR cannot erase an explicit sequence');
+  if ([CORE_PROFILE,CONTRACT_CORE_PROFILE].includes(profile)) {
     const policy = analyzeGraphEffects(graph, registry);
     if (policy.effects.length || policy.capabilities.length) fail('UNSUPPORTED_PROFILE', 'Core IR cannot erase graph policy');
   }
-  const policy = profile === EFFECT_PROFILE ? validateEffectSequence(graph, registry, { required: true }) : null;
+  if(!boundary&&[CONTRACT_CORE_PROFILE,CONTRACT_EFFECT_PROFILE].includes(profile))fail('MISSING_INTERFACE_REF','Contract IR requires a composite interface');
+  const policy = [EFFECT_PROFILE,CONTRACT_EFFECT_PROFILE].includes(profile) ? validateEffectSequence(graph, registry, { required: true }) : null;
   const operations = [...graph.nodes].sort((a, b) => a.id < b.id ? -1 : a.id > b.id ? 1 : 0).map(node => {
     const contract = registry.resolve(node.uses);
-    if (profile === CORE_PROFILE) requirePure(contract, registry);
+    if ([CORE_PROFILE,CONTRACT_CORE_PROFILE].includes(profile)) requirePure(contract, registry);
     return {
       id: node.id, contract: { id: contract.id, version: contract.version },
       arguments: Object.keys(contract.inputs).map(port => ({ port, value: fromReference(node.args[port]) })),
@@ -96,7 +102,7 @@ export function lowerGraphToIR(graph, registry, { profile = CORE_PROFILE } = {})
     };
   });
   const ir = {
-    schemaVersion: IR_VERSION, profile, id: graph.id, version: graph.version,
+    schemaVersion: IR_VERSION, profile, ...(boundary?{interfaceRef:{id:boundary.id,version:boundary.version}}:{}), id: graph.id, version: graph.version,
     inputs: Object.entries(graph.inputs).map(([name, spec]) => ({ name, type: spec.type })),
     output: { type: graph.output.type }, operations, result: fromReference(graph.returns),
     ...(policy ? { policy: { effects: policy.effects, capabilities: policy.capabilities }, sequence: graph.sequence ?? [], requirements: { effects: [...(graph.effects ?? [])].sort(), capabilities: [...(graph.capabilities ?? [])].sort() } } : {})
@@ -109,10 +115,11 @@ export function lowerGraphToIR(graph, registry, { profile = CORE_PROFILE } = {})
 /** Validate a semantic artifact against the exact declared contract versions. */
 export function graphFromIR(ir, registry) {
   if (!ir || ir.schemaVersion !== IR_VERSION) fail('IR_VERSION', `Expected ${IR_VERSION}`);
-  if (![CORE_PROFILE, EFFECT_PROFILE].includes(ir.profile)) fail('UNSUPPORTED_PROFILE', 'Unknown IR profile');
-  const effectful = ir.profile === EFFECT_PROFILE;
-  object(ir, ['schemaVersion', 'profile', 'id', 'version', 'inputs', 'output', 'operations', 'result', ...(effectful ? ['policy', 'sequence', 'requirements'] : [])], 'IR');
+  if (![CORE_PROFILE, EFFECT_PROFILE, CONTRACT_CORE_PROFILE, CONTRACT_EFFECT_PROFILE].includes(ir.profile)) fail('UNSUPPORTED_PROFILE', 'Unknown IR profile');
+  const effectful = [EFFECT_PROFILE,CONTRACT_EFFECT_PROFILE].includes(ir.profile),bound=[CONTRACT_CORE_PROFILE,CONTRACT_EFFECT_PROFILE].includes(ir.profile);
+  object(ir, ['schemaVersion', 'profile', 'id', 'version', 'inputs', 'output', 'operations', 'result', ...(bound?['interfaceRef']:[]), ...(effectful ? ['policy', 'sequence', 'requirements'] : [])], 'IR');
   text(ir.id, 'IR.id'); text(ir.version, 'IR.version');
+  if(bound){object(ir.interfaceRef,['id','version'],'IR.interfaceRef');text(ir.interfaceRef.id,'interface id');text(ir.interfaceRef.version,'interface version');}
   if (!Array.isArray(ir.inputs) || !Array.isArray(ir.operations)) fail('INVALID_IR', 'Expected input/operation arrays');
   object(ir.output, ['type'], 'IR.output'); assertTypeName(ir.output.type, 'IR.output');
   const names = new Set();
@@ -142,7 +149,7 @@ export function graphFromIR(ir, registry) {
     }));
     return { id: operation.id, uses: contract.id, args };
   });
-  const graph = { schemaVersion: '0.1', id: ir.id, version: ir.version, inputs,
+  const graph = { schemaVersion: bound?'ems-contract-graph/1':'0.1', ...(bound?{interfaceRef:ir.interfaceRef}:{}), id: ir.id, version: ir.version, inputs,
     output: { type: ir.output.type }, nodes, returns: toReference(ir.result),
     ...(effectful ? { sequence: ir.sequence, effects: ir.requirements?.effects, capabilities: ir.requirements?.capabilities } : {}) };
   validateGraph(graph, registry);

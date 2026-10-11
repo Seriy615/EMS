@@ -1,7 +1,8 @@
 import { fail } from '../reference/errors.mjs';
 import { assertValueType, PRIMITIVE_TYPES } from '../reference/types.mjs';
-import { parseControlType, controlTypeName, controlVariants, assertControlValueType } from '../semantics/control-algebraic.mjs';
+import { parseControlType } from '../semantics/control-algebraic.mjs';
 import { assertPolicyNames, analyzeGraphEffects } from '../semantics/effects.mjs';
+import { checkContractConditions, checkContractFailure, emitContractBoundary } from './conditions.mjs';
 
 function fields(value, keys) {
   if (!value || typeof value !== 'object' || Array.isArray(value) ||
@@ -94,46 +95,30 @@ export function checkContractBinding(spec,descriptor,registry,target) {
   const actual=Object.entries(implementation.inputs).map(([name,t])=>canonical({name,type:typeof t==='string'?t:t.type}));
   if(JSON.stringify(actual)!==JSON.stringify(contract.inputs)||implementation.output!==contract.output.type)fail('INCOMPATIBLE_BINDING','Implementation signature mismatch');
   const policy=implementation.kind==='composite'?analyzeGraphEffects(implementation.graph,registry):implementation;
-  for(const field of ['effects','capabilities'])if(policy[field].some(name=>!contract.semantics[field].includes(name)))fail('INCOMPATIBLE_BINDING','Implementation exceeds interface policy',{field});
+  for(const field of ['effects','capabilities'])if([...policy[field],...implementation[field]].some(name=>!contract.semantics[field].includes(name)))fail('INCOMPATIBLE_BINDING','Implementation exceeds interface policy',{field});
   if(contract.semantics.determinism==='deterministic'&&binding.determinism!=='deterministic')fail('INCOMPATIBLE_BINDING','Implementation determinism mismatch');
   return {contract,binding,implementation};
 }
 
-/** Runtime predicates have no eval, host calls or free-text assertions. */
-export function checkContractConditions(conditions,params,result,phase,id) {
-  for(let index=0;index<conditions.length;index++){
-    const condition=conditions[index],value=Object.hasOwn(condition.subject,'input')?params[condition.subject.input]:result;
-    const accepted=condition.kind==='nonzero'?value!==0:condition.kind==='positive'?value>0:Array.isArray(value)&&value.length>0;
-    if(!accepted)fail(phase==='pre'?'PRECONDITION_FAILED':'POSTCONDITION_FAILED','Contract condition failed',{contract:id,condition:index});
-  }
-}
-export function checkContractFailure(error,errors,id) {
-  if(error?.name==='EmsError'&&['CANCELLED','STEP_LIMIT','CALL_DEPTH','EVALUATION_DEPTH','FUTURE_LIMIT','STREAM_LIMIT','STREAM_PENDING_LIMIT','RESOURCE_LIMIT','PRECONDITION_FAILED','POSTCONDITION_FAILED','TYPE_MISMATCH'].includes(error.code))throw error;
-  const declared=errors.find(item=>item.code===error?.code);
-  if(!declared)fail('UNDECLARED_CONTRACT_ERROR','Implementation threw an undeclared error',{contract:id});
-  if(declared.payloadType!==null){if(error.emsThrow!=='ems-user-throw/1'||error.valueType!==declared.payloadType)fail('CONTRACT_ERROR_TYPE','Incorrect declared error payload',{contract:id});assertControlValueType(error.value,declared.payloadType,'contract error');}
-  throw error;
-}
-
-/** Install a finite atomic interface adapter. Advanced signatures remain inspectable but are unsupported by this ABI. */
+/** Install a finite interface binding while preserving atomic/composite representation. */
 export function registerContractBinding(registry,spec,descriptor,{target}={}) {
   const {contract,binding,implementation}=checkContractBinding(spec,descriptor,registry,target);
-  if(implementation.kind!=='atomic'||!contract.inputs.every(input=>PRIMITIVE_TYPES.has(input.type))||!PRIMITIVE_TYPES.has(contract.output.type))
-    fail('UNSUPPORTED_BINDING','Interface adapter currently requires finite atomic ABI');
+  if(!['atomic','composite'].includes(implementation.kind)||!contract.inputs.every(input=>PRIMITIVE_TYPES.has(input.type))||!PRIMITIVE_TYPES.has(contract.output.type))
+    fail('UNSUPPORTED_BINDING','Interface adapter currently requires finite atomic/composite ABI');
   const inputs=Object.fromEntries(contract.inputs.map(input=>[input.name,input.type]));
+  if(implementation.kind==='composite'){
+    const graph=implementation.interfaceBoundary?{inputs:structuredClone(implementation.graph.inputs),output:structuredClone(implementation.graph.output),nodes:[{id:'implementation',uses:implementation.id,args:Object.fromEntries(contract.inputs.map(input=>[input.name,{input:input.name}]))}],returns:{node:'implementation'}}:structuredClone(implementation.graph);
+    graph.schemaVersion='ems-contract-graph/1';graph.interfaceRef={id:contract.id,version:contract.version};graph.id=contract.id;graph.version=contract.version;graph.effects=[...contract.semantics.effects];graph.capabilities=[...contract.semantics.capabilities];
+    registry.registerComposite({id:contract.id,version:contract.version,graph,effects:contract.semantics.effects,capabilities:contract.semantics.capabilities,interfaceBoundary:{interface:contract,binding}});
+    return Object.freeze({interface:contract,binding});
+  }
   async function execute(params,context){
     for(const input of contract.inputs)assertValueType(params[input.name],input.type,'contract input');
     checkContractConditions(contract.conditions.pre,params,undefined,'pre',contract.id);
     try{const result=await implementation.execute(params,context);assertValueType(result,contract.output.type,'contract output');checkContractConditions(contract.conditions.post,params,result,'post',contract.id);return result;}
     catch(error){checkContractFailure(error,contract.errors,contract.id);}
   }
-  const emitJS=typeof implementation.emitJS==='function'?args=>{
-    const params=Object.fromEntries(Object.keys(inputs).map((name,index)=>[name,`__a${index}`]));
-    const values=Object.keys(inputs).map(name=>args[name]);
-    const condition=checkContractConditions.toString(),failure=checkContractFailure.toString();
-    const validators=[parseControlType,controlTypeName,controlVariants,assertControlValueType].map(fn=>fn.toString()).join('\n');
-    return `((...__args)=>{const fail=__fail,assertPrimitiveValueType=__assertType;${validators}\n${condition}\n${failure}\nconst __params=Object.fromEntries(${JSON.stringify(Object.keys(inputs))}.map((key,index)=>[key,__args[index]]));${Object.entries(params).map(([name,local])=>`const ${local}=__params[${JSON.stringify(name)}];__assertType(${local},${JSON.stringify(inputs[name])},'contract input');`).join('')}checkContractConditions(${JSON.stringify(contract.conditions.pre)},__params,undefined,'pre',${JSON.stringify(contract.id)});try{const __result=${implementation.emitJS(params)};__assertType(__result,${JSON.stringify(contract.output.type)},'contract output');checkContractConditions(${JSON.stringify(contract.conditions.post)},__params,__result,'post',${JSON.stringify(contract.id)});return __result;}catch(error){checkContractFailure(error,${JSON.stringify(contract.errors)},${JSON.stringify(contract.id)});}})(${values.join(',')})`;
-  }:null;
+  const emitJS=typeof implementation.emitJS==='function'?args=>emitContractBoundary(contract,args,params=>({statements:[],result:implementation.emitJS(params)})):null;
   registry.registerAtomic({id:contract.id,version:contract.version,inputs,output:contract.output.type,effects:contract.semantics.effects,capabilities:contract.semantics.capabilities,execute,emitJS});
   return Object.freeze({interface:contract,binding});
 }

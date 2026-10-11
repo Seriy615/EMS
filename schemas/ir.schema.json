@@ -10,7 +10,9 @@
     "profile": {
       "enum": [
         "ems-core-finite/1",
-        "ems-effects-finite/1"
+        "ems-effects-finite/1",
+        "ems-contract-core-finite/1",
+        "ems-contract-effects-finite/1"
       ]
     },
     "id": {
@@ -216,6 +218,24 @@
         "capabilities"
       ],
       "additionalProperties": false
+    },
+    "interfaceRef": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "version": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "id",
+        "version"
+      ],
+      "additionalProperties": false
     }
   },
   "required": [
@@ -371,7 +391,10 @@
       "if": {
         "properties": {
           "profile": {
-            "const": "ems-effects-finite/1"
+            "enum": [
+              "ems-effects-finite/1",
+              "ems-contract-effects-finite/1"
+            ]
           }
         }
       },
@@ -421,6 +444,30 @@
               }
             }
           }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "profile": {
+            "enum": [
+              "ems-contract-core-finite/1",
+              "ems-contract-effects-finite/1"
+            ]
+          }
+        }
+      },
+      "then": {
+        "required": [
+          "interfaceRef"
+        ]
+      },
+      "else": {
+        "not": {
+          "required": [
+            "interfaceRef"
+          ]
         }
       }
     }

@@ -43,6 +43,7 @@ Each AC ID must link to executable test output / exact command / revision. The M
 | AC-037 | Stream snapshot/bounded channel and for await share IR/runtime/standalone | actual FIFO/backpressure/end, copied values/ownership, localEffects and grants, limits/cancel/terminal producer wakeup, actor rollback/replay, strict IR and independent CLI export; `tests/control-streams.test.mjs` | M1 Stream slice |
 | AC-038 | ResourceHandle/using lifecycle shares IR/runtime/standalone | copied typed cells, ownership/escape/LIFO/all exits, separate cleanup budget, actual file descriptor closure, native preflight/pinned versions, cancel/late IO/timeouts/errors, reactor rollback/replay and independent CLI export; `tests/control-resources.test.mjs` | M1 resource slice |
 | AC-039 | Separate versioned interface/binding IDL and finite adapter checks | strict canonical snapshots, exact pins/targets/types/policy and backward compatibility, actual runtime/standalone pre/post and error gates, CLI and independent export; `tests/contracts-idl.test.mjs` | M1 initial IDL slice |
+| AC-040 | Composite public interface preserves inspectable graph and execution guards | graph/IR/text runtime/standalone pre/post/error parity, nested ordering/memo scopes, edited graph/policy/version negatives, seal/reimport, independent export and event rollback; `tests/contracts-composite.test.mjs` | M1 composite IDL slice |
 
 `AC-001` is NOT official WCA Average of Five. Real WCA rules are a separate contract acceptance test.
 

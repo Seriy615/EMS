@@ -1,3 +1,4 @@
+import { resolveCompositeBoundary, emitContractBoundary } from '../contracts/conditions.mjs';
 import { fail } from './errors.mjs';
 import { validateGraph } from './validate.mjs';
 import { analyzeGraphEffects, validateEffectSequence } from '../semantics/effects.mjs';
@@ -14,7 +15,19 @@ export function compileStandaloneJS(graph, registry) {
   validateEffectSequence(graph, registry);
   const statements = [];
   let nextValue = 0;
-  function compileExpression(currentGraph, boundInputs, stack) {
+  function compileExpression(currentGraph,boundInputs,stack) {
+    const boundary=resolveCompositeBoundary(currentGraph,registry);
+    if(!boundary)return compileBody(currentGraph,boundInputs,stack);
+    const snippet=emitContractBoundary(boundary,boundInputs,params=>{
+      const start=statements.length;
+      const result=compileBody(currentGraph,params,stack);
+      return {statements:statements.splice(start),result};
+    });
+    const value=`__v${nextValue++}`;
+    statements.push(`  const ${value} = ${snippet};`);
+    return value;
+  }
+  function compileBody(currentGraph, boundInputs, stack) {
     if (stack.includes(currentGraph.id) || stack.length >= 32)
       fail('RECURSIVE_COMPOSITE', `Recursive composite in compiler: ${currentGraph.id}`);
     const nextStack = [...stack, currentGraph.id];

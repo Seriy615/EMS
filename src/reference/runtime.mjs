@@ -1,3 +1,4 @@
+import { resolveCompositeBoundary, checkContractConditions, checkContractFailure } from '../contracts/conditions.mjs';
 import { fail } from './errors.mjs';
 import { assertValueType } from './types.mjs';
 import { validateGraph, validateRuntimeInputs } from './validate.mjs';
@@ -12,6 +13,9 @@ export async function executeGraph(graph, inputs, registry, options = {}) {
   validateRuntimeInputs(graph, inputs);
   checkGraphPolicy(graph, registry, options);
   validateEffectSequence(graph, registry);
+  const boundary=resolveCompositeBoundary(graph,registry);
+  if(boundary)checkContractConditions(boundary.conditions.pre,inputs,undefined,'pre',boundary.id);
+  try {
   const allowed = new Set(options.capabilities ?? []);
   const callStack = options.callStack ?? [];
   if (callStack.includes(graph.id) || callStack.length >= 32) fail('RECURSIVE_COMPOSITE', `Recursive or too-deep composite ${graph.id}`);
@@ -46,5 +50,7 @@ export async function executeGraph(graph, inputs, registry, options = {}) {
   const result = await refValue(graph.returns);
   checkCancellation(options.signal);
   assertValueType(result, graph.output.type, 'graph result');
+  if(boundary)checkContractConditions(boundary.conditions.post,inputs,result,'post',boundary.id);
   return result;
+  }catch(error){if(boundary)checkContractFailure(error,boundary.errors,boundary.id);throw error;}
 }

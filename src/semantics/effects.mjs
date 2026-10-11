@@ -1,3 +1,4 @@
+import { resolveCompositeBoundary } from '../contracts/conditions.mjs';
 import { fail } from '../reference/errors.mjs';
 import { validateGraph } from '../reference/validate.mjs';
 
@@ -30,7 +31,8 @@ export function analyzeGraphEffects(graph, registry) {
     const declaredCapabilities = Object.hasOwn(current, 'capabilities') ? current.capabilities : [];
     assertPolicyNames(declaredEffects, 'effects');
     assertPolicyNames(declaredCapabilities, 'capabilities');
-    const effects = new Set(declaredEffects), capabilities = new Set(declaredCapabilities), nodes = {};
+    const boundary=resolveCompositeBoundary(current,registry);
+    const effects = new Set([...declaredEffects,...(boundary?.semantics.effects??[])]), capabilities = new Set([...declaredCapabilities,...(boundary?.semantics.capabilities??[])]), nodes = {};
     for (const node of current.nodes) {
       const summary = contractSummary(registry.resolve(node.uses), stack);
       Object.defineProperty(nodes, node.id, { value: summary, enumerable: true });

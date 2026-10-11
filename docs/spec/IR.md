@@ -61,3 +61,7 @@ Algebraic profile `ems-control-algebraic/1` добавляет canonical Option/
 Language async/Future реализованы отдельным профилем `ems-control-futures/1` (AC-036, CONTROL_FUTURES.md): explicit async markers, typed await, execution-owned handles, supervised join/abort, async standalone. Прежние profiles и primitive Registry/state ABI сохранены. Stream и гарантированный resource lifecycle остаются открыты.
 
 AC-037: Stream<T>, typed intrinsics/for await и обязательные computed localEffects реализованы в ems-control-streams/1 (CONTROL_STREAMS.md). Bounded channels/FIFO/backpressure/cancellation, terminal task wakeup, actor rollback/replay и standalone используют общий IR/helpers. ResourceHandle/using lifecycle и foreign Stream adapters ещё не реализованы.
+
+## Composite interface entry profiles — AC-040
+
+Прямой graph с выбранным public interface использует ems-contract-graph/1 и mandatory interfaceRef {id,version}. Lowering выбирает ems-contract-core-finite/1 или ems-contract-effects-finite/1 общего ems-ir/1; обычные call/control profiles для вызывающих программ сохраняются. Contract entry profiles содержат interfaceRef и требуют matching installed composite boundary перед validation/execution. Type/version/policy gates и serialize/parse сохраняют ссылку; missing binding или silent legacy downcast отвергаются. Новая версия graph/profile позволяет older consumers отвергнуть неизвестную семантику вместо потери conditions. Schemas graph.schema.json/ir.schema.json описывают оба профиля, executable validation остаётся обязательным. См. CONTRACT_IDL.md.

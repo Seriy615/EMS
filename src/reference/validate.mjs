@@ -1,14 +1,16 @@
+import { resolveCompositeBoundary } from '../contracts/conditions.mjs';
 import { fail } from './errors.mjs';
 import { assertTypeName, assertValueType, typeOfValue } from './types.mjs';
 
 function isPlainObject(v) { return !!v && typeof v === 'object' && !Array.isArray(v); }
 
 export function validateGraph(graph, registry) {
-  if (!isPlainObject(graph) || graph.schemaVersion !== '0.1') fail('SCHEMA_VERSION', 'Expected graph schemaVersion=0.1');
+  if (!isPlainObject(graph) || !['0.1','ems-contract-graph/1'].includes(graph.schemaVersion)) fail('SCHEMA_VERSION', 'Unsupported graph schemaVersion');
   if (!graph.id || !isPlainObject(graph.inputs) || !isPlainObject(graph.output) || !Array.isArray(graph.nodes)) fail('INVALID_GRAPH', 'Missing graph fields');
   if (!graph.output.type) fail('INVALID_GRAPH', 'Missing output.type');
   for (const [key, entry] of Object.entries(graph.inputs)) assertTypeName(entry.type, `graph.inputs.${key}`);
   assertTypeName(graph.output.type, 'graph.output.type');
+  resolveCompositeBoundary(graph,registry);
   const nodes = new Map();
   for (const node of graph.nodes) {
     if (!node.id || !node.uses || !isPlainObject(node.args)) fail('INVALID_NODE', `Malformed node ${node?.id}`);

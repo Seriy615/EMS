@@ -57,7 +57,7 @@ test('composite compatibility includes hidden unused nested effects without chan
   const registry=createCoreRegistry().registerAtomic({id:'hidden',inputs:{},output:'Number',effects:['log.write'],execute:()=>1});
   registry.registerComposite({id:'impl',version:'1.0.0',graph:{schemaVersion:'0.1',id:'impl',version:'1.0.0',inputs:{a:{type:'Number'},b:{type:'Number'}},output:{type:'Number'},nodes:[{id:'hidden',uses:'hidden',args:{}}],returns:{input:'a'}}});
   const b=descriptor();b.implementation.id='impl';assert.throws(()=>checkContractBinding(spec,b,registry,'node'),{code:'INCOMPATIBLE_BINDING'});
-  const s=copy();s.semantics.effects=['log.write'];assert.equal(checkContractBinding(s,b,registry,'node').implementation.kind,'composite');assert.throws(()=>registerContractBinding(registry,s,b,{target:'node'}),{code:'UNSUPPORTED_BINDING'});
+  const s=copy();s.semantics.effects=['log.write'];assert.equal(checkContractBinding(s,b,registry,'node').implementation.kind,'composite');registerContractBinding(registry,s,b,{target:'node'});assert.equal(registry.resolve(s.id).kind,'composite');assert.deepEqual(registry.resolve(s.id).graph.nodes,registry.resolve('impl').graph.nodes);
 });
 
 test('IDL descriptors are strict, bounded, immutable and use the existing canonical type grammar',()=>{

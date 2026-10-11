@@ -181,4 +181,20 @@ await check('IDL standalone preserves preconditions before implementation',async
 await check('IDL minor change cannot add undeclared capabilities',()=>{
   const next=structuredClone(publicInterface);next.version='1.1.0';next.semantics.capabilities=['network'];return !compareContractInterfaces(publicInterface,next).compatible;
 });
+const compositeRegistry=createCoreRegistry();
+const divideGraph={schemaVersion:'0.1',id:'demo.divide',version:'1.0.0',inputs:{a:{type:'Number'},b:{type:'Number'}},output:{type:'Number'},nodes:[{id:'divide',uses:'core.div',args:{a:{input:'a'},b:{input:'b'}}}],returns:{node:'divide'}};
+compositeRegistry.registerComposite({id:divideGraph.id,version:divideGraph.version,graph:divideGraph});
+const compositeBinding=structuredClone(publicBinding);compositeBinding.id='ems.composite.divide';compositeBinding.implementation.id=divideGraph.id;
+registerContractBinding(compositeRegistry,publicInterface,compositeBinding,{target:'node'});
+const selectedComposite=compositeRegistry.resolve(publicInterface.id);
+await check('public IDL binding preserves inspectable composite nodes',async()=>{
+  assert.equal(selectedComposite.kind,'composite');assert.deepEqual(selectedComposite.graph.nodes,divideGraph.nodes);
+  return await executeGraph(selectedComposite.graph,{a:6,b:2},compositeRegistry)===3;
+});
+const compositeIR=lowerGraphToIR(selectedComposite.graph,compositeRegistry);
+const compositeOutput=await import(`data:text/javascript,${encodeURIComponent(compileIRToJS(compositeIR,compositeRegistry))}`);
+await check('direct composite IR and standalone retain public precondition',async()=>{
+  await assert.rejects(executeIR(parseIR(serializeIR(compositeIR,compositeRegistry),compositeRegistry),{a:1,b:0},compositeRegistry),{code:'PRECONDITION_FAILED'});
+  assert.throws(()=>compositeOutput.execute({a:1,b:0}),{code:'PRECONDITION_FAILED'});return compositeOutput.execute({a:6,b:2})===3;
+});
 console.log(`\nEMS foundation verification passed (${checks} checks). Not production readiness.`);
