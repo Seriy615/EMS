@@ -78,3 +78,12 @@ Current release: `03ac6590d00203c3b1adf2da8c4daf556ef1f74f`, previous artifact �
 Actual live HTTPS/auth boundaries и Chromium: graph15/custom composite reuse/expand15/reopen15, AVG5 ordinary/debug Step/Continue, **text control source pause → Step с выделенным `x>0` → Continue6**, counter1 PASS. Проверены current/previous, dedicated restricted service active, шесть unchanged unrelated nginx config SHA256, nginx и четыре observed staging services active. TLS SAN/domain и credentials boundary сохранены; новые secrets в Git не добавлены.
 
 Логи: /tmp/ems-control-debug-deploy.log (остановленная попытка), /tmp/ems-control-debug-recheck-browser.log, /tmp/ems-control-debug-browser-serial.log, /tmp/ems-control-debug-deploy-serial.log, /tmp/ems-control-debug-live-smoke.log, /tmp/ems-control-debug-vps.log. Последующий evidence documentation commit не заменяет live artifact03ac659. Full UI event/state/source debugger и production/platform scope остаются открытыми.
+
+
+### UI event transaction debugger опубликован — f1b478a
+
+Current application release: `f1b478a4471490a61f8a1c928c45218fc5244c01`; previous —03ac6590d00203c3b1adf2da8c4daf556ef1f74f. Checked commit pushed origin/main, repeated gated deployment694/694 Node,133/133 verify,29/29 Chromium PASS, terminal exit0. Dedicated restricted service active; public certificate/domain/auth boundaries retained.
+
+Actual public authenticated Chromium UI event **pause with confirmed count0 → Step → Continue → committed count1**, terminal panel confirms event. Existing graph15/composite reuse-expand-reopen15/AVG5 debug/text source Step/Continue6/counter1/401/301/403/405 gates PASS. Other six nginx config hashes unchanged, nginx/four observed staging services active. Logs /tmp/ems-ui-debug-deploy.log, /tmp/ems-ui-debug-live-smoke.log, /tmp/ems-ui-debug-vps.log.
+
+Initial local full suite had one intermittent legacy UI startup Worker failure; five diagnostic UI probes, final full suite and exact deployment gate passed without runtime retries or weakened assertions. QA harness keeps bounded startup error/selected platform stderr diagnostics; exact original cause remains unproven and full production stability remains open. Evidence documentation commit after this proof does not replace live artifact f1b478a. Full debugger/native/compiled/value policy/platform goal is not closed.

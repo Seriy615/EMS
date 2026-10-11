@@ -506,7 +506,9 @@
           "npm test",
           "npm run verify",
           "npm run browser:test"
-        ]
+        ],
+        "deployedRevision": "f1b478a4471490a61f8a1c928c45218fc5244c01",
+        "live": "Actual public authenticated Chromium UI event pause confirmed0→Step→Continue commit1 PASS; graph/composite/AVG5/text source/counter/auth gates preserved. See docs/qa/DEPLOYMENT.md."
       }
     },
     {
