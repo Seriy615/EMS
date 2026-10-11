@@ -506,7 +506,7 @@
           "tests/step-frames.test.mjs",
           "tests/breakpoints.test.mjs"
         ],
-        "tests": "739 last full PASS; own-fields/prototype correction focused11 PASS, final740 gate pending",
+        "tests": "740/740 PASS",
         "verify": "139/139 PASS",
         "browserTests": "40/40 PASS",
         "commands": [
@@ -514,8 +514,8 @@
           "npm run verify",
           "npm run browser:test"
         ],
-        "deployedRevision": "a36a331f50ffc4bca996dedb36e8dad158d997e5",
-        "live": "Intermediate723e4c4 gated739/139/40; own-fields final gate/public proof pending."
+        "deployedRevision": "5bcd6abd41446073073db4e6e4f902a015488246",
+        "live": "Final exact740/139/40 PASS; trusted public HTTPS/auth/access and Chromium typed core snapshot x1/result1/default-empty/protected-program and ungranted sentinel absence PASS. Existing graph/composite/reopen15/AVG5/text6/points5-loop3/OverOut7/UI1/live-clear1-2-3/safe-anchor/durable-Studio preserved; six foreign hashes/five active services unchanged. Core API only, IDE value transport/panel remain open."
       },
       "nextSlice": "Source-owned checked pure control inspection grants, strict bounded Worker DTO validation and explicit owner opt-in IDE panel; default no values, protected/effect/handle refusal, exact source/frame identity, detached snapshots and real non-leakage cases. Formal secret taint/effectful UI/native/compiled inspection remain separate."
     },
