@@ -9,7 +9,7 @@ import { createStreamScope, executeStreamOperation, streamBudgetOptions } from '
 import { createFutureScope } from './futures.mjs';
 import { fail } from '../reference/errors.mjs';
 import { assertValueType } from '../reference/types.mjs';
-import { assertControlValueType, validateControlInputs, matchControlPattern } from '../semantics/control-algebraic.mjs';
+import { assertControlValueType, cloneControlValue, validateControlInputs, matchControlPattern } from '../semantics/control-algebraic.mjs';
 import { executeGraph } from '../reference/runtime.mjs';
 import { validateControlIR, decodeControlLiteral, CONTROL_FUTURE_PROFILE, CONTROL_STREAM_PROFILE,CONTROL_RESOURCE_PROFILE } from '../ir/control.mjs';
 import { assertPolicyNames } from '../semantics/effects.mjs';
@@ -93,8 +93,8 @@ export async function executeControlIR(ir, inputs, registry, options = {}) {
           const params = Object.fromEntries(Object.keys(target.inputs).map((key, index) => [key, args[index]]));
           const graphOptions={...options};delete graphOptions.inspection;
           const result = target.kind==='resource'?await resources.acquire(target,params):target.kind === 'composite' ? await executeGraph(target.graph, params, registry, {...graphOptions,signal:options.signal,[DIAGNOSTIC_FRAMES]:{allocator:diagnostics.allocator,stack:frame.frames}})
-            : await awaitCancellable(target.execute(params, Object.freeze({ signal: options.signal, state: options.state,workBudget })), options.signal);
-          if(target.kind!=='resource')assertValueType(result, target.output, 'result of ' + node.target.id); return result;
+            : await awaitCancellable(target.execute(target.valueProfile==='ems-algebraic/1'?Object.fromEntries(Object.entries(params).map(([name,value])=>[name,cloneControlValue(value)])):params, Object.freeze({ signal: options.signal, state: options.state,workBudget })), options.signal);
+          if(target.kind!=='resource')assertControlValueType(result, target.output, 'result of ' + node.target.id); return target.valueProfile==='ems-algebraic/1'?cloneControlValue(result):result;
         };
         value = (node.target.kind === 'function' ? target.async : node.target.async)
           ? futures.start(node.type.slice(7,-1), () => operation({ depth: frame.depth, evaluationDepth: 0,callStack:frame.callStack,frames:frame.frames })) : await operation();

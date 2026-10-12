@@ -13,7 +13,7 @@ test('package preserves negative zero and typed errors without executing during 
 });
 test('unsupported target/public ABI/async/local effects/unknown host compilation are refused before export',async()=>{
  const b=compile('fn main()->Number {return 1;}');await assert.rejects(buildAtomicPackage(b.ir,b.registry,{id:'sealed.Test',target:'ios'}),{code:'UNSUPPORTED_TARGET'});
- for(const text of ['async fn main()->Number {return 1;}','fn main(value:Option<Number>)->Number {match value {Some(n)=>{return n;},None=>{return 0;}}}','fn main()->Number {using h=resource.cell(1);return resource.read(h);}']){const c=compile(text);await assert.rejects(buildAtomicPackage(c.ir,c.registry,{id:'sealed.Test'}),{code:'UNSUPPORTED_TARGET'});}
+ for(const text of ['async fn main()->Number {return 1;}','fn main()->Number {using h=resource.cell(1);return resource.read(h);}']){const c=compile(text);await assert.rejects(buildAtomicPackage(c.ir,c.registry,{id:'sealed.Test'}),{code:'UNSUPPORTED_TARGET'});}
  let calls=0;const r=createCoreRegistry().registerAtomic({id:'host.unknown',inputs:{},output:'Number',execute:()=>{calls++;return 1;},emitJS:()=>{calls++;return '1';}}),c=compile('fn main()->Number {return host.unknown();}',r);await assert.rejects(buildAtomicPackage(c.ir,c.registry,{id:'sealed.Test'}),{code:'UNPINNED_IMPLEMENTATION'});assert.equal(calls,0);
 });
 test('trusted loader verifies bytes and closed manifest before evaluating module code or modifying registry',async()=>{

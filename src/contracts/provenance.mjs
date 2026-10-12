@@ -1,8 +1,8 @@
 import { Registry } from '../reference/registry.mjs';
 import { fail } from '../reference/errors.mjs';
 const origins=new WeakMap(),atomicBindings=new WeakMap();
-export function rememberAtomicBinding(item,implementation){atomicBindings.set(item.execute,{emitJS:item.emitJS,implementation,metadata:JSON.stringify([item.id,item.version,Object.entries(item.inputs),item.output,item.effects,item.capabilities,item.interfaceBoundary])});}
-export function atomicBindingSource(item){const record=atomicBindings.get(item.execute);return record?.emitJS===item.emitJS&&record.metadata===JSON.stringify([item.id,item.version,Object.entries(item.inputs),item.output,item.effects,item.capabilities,item.interfaceBoundary])?record.implementation:null;}
+export function rememberAtomicBinding(item,implementation){atomicBindings.set(item.execute,{emitJS:item.emitJS,implementation,metadata:JSON.stringify([item.id,item.version,Object.entries(item.inputs),item.output,item.effects,item.capabilities,item.interfaceBoundary,item.valueProfile])});}
+export function atomicBindingSource(item){const record=atomicBindings.get(item.execute);return record?.emitJS===item.emitJS&&record.metadata===JSON.stringify([item.id,item.version,Object.entries(item.inputs),item.output,item.effects,item.capabilities,item.interfaceBoundary,item.valueProfile])?record.implementation:null;}
 const slots=item=>item.kind==='resource'?['acquire','read','write','release']:['execute','emitJS'];
 export function verifiedOrigin(item){
   const key=item.kind==='resource'?item.acquire:item.execute;

@@ -1,3 +1,4 @@
+import {parseControlType,controlTypeName} from '../semantics/control-algebraic.mjs';
 import {installFiniteStandardLibrary} from '../stdlib/finite.mjs';
 import { fail } from './errors.mjs';
 import { assertTypeName } from './types.mjs';
@@ -7,16 +8,17 @@ import { assertPolicyNames } from '../semantics/effects.mjs';
 const coreImplementations=new WeakMap();
 export function coreIntrinsic(item) {
   const expected=coreImplementations.get(item.execute);
-  if(item.kind!=='atomic'||!expected||item.emitJS!==expected.emitJS||JSON.stringify(Object.entries(item.inputs))!==expected.inputs||item.output!==expected.output||item.version!=='1.0.0'||item.effects.length||item.capabilities.length||item.id!==expected.id)return null;
+  if(item.valueProfile!==undefined||item.kind!=='atomic'||!expected||item.emitJS!==expected.emitJS||JSON.stringify(Object.entries(item.inputs))!==expected.inputs||item.output!==expected.output||item.version!=='1.0.0'||item.effects.length||item.capabilities.length||item.id!==expected.id)return null;
   return {abi:expected.abi,operation:expected.id};
 }
 
 /** Trust boundary: registerAtomic accepts host-trusted implementations only. No plugin sandbox in M0. */
 export class Registry {
   constructor() { this.items = new Map(); }
-  registerAtomic({ id, version = '1.0.0', inputs, output, effects = [], capabilities = [], execute, emitJS = null, interfaceBoundary = null }) {
+  /** Optional ems-algebraic/1 signatures use structured control IR; the default reference graph profile stays finite. */
+  registerAtomic({ id, version = '1.0.0', inputs, output, effects = [], capabilities = [], execute, emitJS = null, interfaceBoundary = null, valueProfile }) {
     if (typeof execute !== 'function') fail('INVALID_IMPL', `${id}: atomic executor must be a function`);
-    this.#register({ id, version, kind: 'atomic', inputs, output, effects, capabilities, execute, emitJS, interfaceBoundary });
+    this.#register({ id, version, kind: 'atomic', inputs, output, effects, capabilities, execute, emitJS, interfaceBoundary,...(valueProfile===undefined?{}:{valueProfile}) });
     return this;
   }
   registerResource({id,version='1.0.0',inputs,valueType,effects=[],capabilities=[],acquire,read,write=null,release,resourceBoundaries=[]}) {
@@ -49,8 +51,10 @@ export class Registry {
     if (!item.id || !/^[-a-zA-Z0-9_.]+$/.test(item.id)) fail('INVALID_ID', `Invalid contract id ${item.id}`);
     if (this.items.has(item.id)) fail('DUPLICATE_CONTRACT', `Duplicate contract ${item.id}`);
     if (!item.inputs || typeof item.inputs !== 'object') fail('INVALID_CONTRACT', `Missing inputs for ${item.id}`);
-    for (const [key, v] of Object.entries(item.inputs)) assertTypeName(typeof v === 'string' ? v : v.type, `${item.id}.${key}`);
-    assertTypeName(item.kind==='resource'?item.valueType:item.output, `${item.id}.output`);
+    if(item.valueProfile!==undefined&&(item.kind!=='atomic'||item.valueProfile!=='ems-algebraic/1'||item.interfaceBoundary!==null))fail('UNSUPPORTED_PROFILE','Algebraic atomic contracts require an explicit value profile without finite IDL boundary');
+    const assertSignature=(type,context)=>{if(item.valueProfile===undefined)return assertTypeName(type,context);if(controlTypeName(parseControlType(type))!==type)fail('UNKNOWN_TYPE','Noncanonical algebraic contract type');};
+    for (const [key, v] of Object.entries(item.inputs)) assertSignature(typeof v === 'string' ? v : v.type, `${item.id}.${key}`);
+    assertSignature(item.kind==='resource'?item.valueType:item.output, `${item.id}.output`);
     assertPolicyNames(item.effects, 'effects');
     assertPolicyNames(item.capabilities, 'capabilities');
     this.items.set(item.id, Object.freeze({ ...item, effects: Object.freeze([...item.effects]), capabilities: Object.freeze([...item.capabilities]) }));

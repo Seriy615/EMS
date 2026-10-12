@@ -1,0 +1,6 @@
+fn main(value: Option<Number>) -> Result<Number, String> {
+  match value {
+    Some(number) => { return Ok(number * 2); },
+    None => { return Err("missing value"); }
+  }
+}

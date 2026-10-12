@@ -27,6 +27,8 @@ node tools/ems.mjs text-run examples/avg5.ems '{"times":[12.4,11.85,13.2,12.1,14
 node tools/ems.mjs seal examples/avg5.graph.json --out dist/avg5-atomic
 ```
 
+Synchronous structured programs can export typed atomic packages with nested `Option`/`Result` inputs and outputs. The reference JS backend validates and copies these values, preserves typed errors and shares execution budgets across reviewed package calls. Try `node tools/ems.mjs module-seal examples/option-result.ems --entry main --id sealed.Tagged --out dist/tagged`. See [the versioned package ABI](docs/spec/ATOMIC_PACKAGE.md); rich legacy dataflow/IDL, async package interfaces and native targets remain separate work.
+
 The avg5 arithmetic demo computes `(sum - min - max)/3 = 12.566666…`, **not** an official WCA Ao5 implementation. The current textual syntax is a tiny draft and does **not** yet constitute the full EMS language. Generated standalone JS is a pure-operation target proof of concept; native/mobile compilers remain planned work.
 
 ## Read in order

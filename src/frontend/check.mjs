@@ -1,3 +1,4 @@
+import {parseControlType} from '../semantics/control-algebraic.mjs';
 import {expandCollectionApplications} from './collections.mjs';
 import { fail } from '../reference/errors.mjs';
 import { normalizeType, resolveType, unifyTypes, typeName } from './types.mjs';
@@ -77,7 +78,7 @@ export function typecheckModule(ast, registry, { imports = new Map(), maxTypeNod
     const id = ['add','sub','mul','div','sum','min','max'].includes(resolved) ? `core.${resolved}` : resolved;
     let contract;
     try { contract = registry.resolve(id); } catch { diagnostic('UNKNOWN_SYMBOL', `Unknown callable ${name}`, at); }
-    const syntax = typeName_ => ({ kind: 'NamedType', name: typeName_, arguments: [], location: at.location });
+    const syntax = typeName_ => {const located=parsed=>({kind:'NamedType',name:parsed.name,arguments:parsed.arguments.map(located),location:at.location});return located(parseControlType(typeName_));};
     return { name: id, parameters: [], inputs: Object.entries(contract.inputs).map(([name, spec]) => ({ name, type: type(syntax(typeof spec === 'string' ? spec : spec.type)) })),
       output: contract.kind==='resource'?term('ResourceHandle',[type(syntax(contract.valueType))]):type(syntax(contract.output)), async: false, contract };
   }

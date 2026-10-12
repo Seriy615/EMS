@@ -29,6 +29,13 @@ export function compileControlJS(ir, registry,{stateful=false}={}) {
     const contract = registry.resolve(id);if(contract.kind==='resource')fail('UNSUPPORTED_TARGET','Native resource binding has no standalone backend');
     const wrapper = `__host${hosts.size}`,state=stateful?stateIntrinsic(contract):null;
     if(state){hosts.set(id,wrapper);wrappers.push(`function ${wrapper}(params,options){if(!options.state)fail('STATE_CONTEXT','State contracts require an active event transaction');return options.state.${state.action}(${quote(state.slot)}${state.action==='write'?',params.value':''});}`);return wrapper;}
+    if(contract.valueProfile==='ems-algebraic/1'){
+      if(typeof contract.emitJS!=='function')fail('UNSUPPORTED_TARGET','Algebraic atomic contract requires a trusted emitter');
+      const inputs=Object.entries(contract.inputs).map(([name,type])=>({name,type:typeof type==='string'?type:type.type}));
+      const args=Object.fromEntries(inputs.map(p=>[p.name,`__args[${quote(p.name)}]`]));
+      const snippet=contract.emitJS(args,{options:'({workBudget:options.workBudget,signal:options.signal,state:options.state})'});
+      wrappers.push(`function ${wrapper}(params,options){validateControlInputs(${quote({inputs})},params);const __args=Object.fromEntries(${quote(inputs.map(p=>p.name))}.map(name=>[name,cloneControlValue(params[name])]));const result=${snippet};assertControlValueType(result,${quote(contract.output)},${quote('result of '+id)});return cloneControlValue(result);}`);hosts.set(id,wrapper);return wrapper;
+    }
     const graph = { schemaVersion: '0.1', id: `control:compiled:${id}`, version: contract.version,
       inputs: Object.fromEntries(Object.entries(contract.inputs).map(([name, type]) => [name, { type: typeof type === 'string' ? type : type.type }])),
       output: { type: contract.output }, nodes: [{ id: 'call', uses: id, args: Object.fromEntries(Object.keys(contract.inputs).map(name => [name, { input: name }])) }], returns: { node: 'call' } };
