@@ -4,6 +4,8 @@
 
 Постоянная цель и измеримые G-01..18: [`PROJECT_GOAL.md`](../../PROJECT_GOAL.md). Факты проверок: `docs/qa/STATUS.md`; точка продолжения: `docs/qa/PROGRESS.md`. Каждая фаза ниже закрывает часть общей цели, а не заменяет её списком задач.
 
+AC-097: package limits v3/control+graph counting, direct/imported/compiled/resealed enforcement; focused17 Node/3 Chromium PASS, финальные gate pending. Далее shared-budget protocol и async/rich ABI/maps; EMS-060 остаётся IN_PROGRESS.
+
 AC-096 — повторный запрос владельца: понятная иерархия рабочего редактора и навигация; checked eb537f4: exact855/156/69 PASS, dev опубликован, public HTTPS workflow и отдельная навигация/non-overlap/mobile PASS. Компиляторный следующий этап EMS-060 сохранён.
 
 AC-095 расширил package ABI v2: conservative typed user error set/dependency union/module-bound descriptor, signature/error/schema-downgrade refusal and legacy load. Interpreter/compiled caller String/Number/-0/Option catches preserved, terminal limits bypass catch; checked27ef642 gates855/156/69 и ordinary HTTPS consumer42/standalone42 PASS. Следующий compiler gate — explicit per-package budgets and async/rich public ABI/source maps; full production EMS-060/062/native/FFI/ecosystem still open.

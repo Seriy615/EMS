@@ -1,5 +1,6 @@
 import { resolveCompositeBoundary, emitContractBoundary } from '../contracts/conditions.mjs';
 import { fail } from './errors.mjs';
+import {controlBudgetOptions} from '../semantics/control-values.mjs';
 import { validateGraph } from './validate.mjs';
 import { analyzeGraphEffects, validateEffectSequence } from '../semantics/effects.mjs';
 
@@ -8,7 +9,7 @@ import { analyzeGraphEffects, validateEffectSequence } from '../semantics/effect
  * preserving checked intermediate values, port order and structured error codes.
  * Atomic emitJS hooks are trusted compiler plugins, not sandboxed extensions.
  */
-export function compileStandaloneJS(graph, registry) {
+export function compileStandaloneJS(graph, registry, {budgeted=false}={}) {
   const policy = analyzeGraphEffects(graph, registry);
   if (policy.effects.length || policy.capabilities.length)
     fail('UNSUPPORTED_TARGET', 'Effects or capabilities cannot be erased during standalone compilation');
@@ -16,6 +17,16 @@ export function compileStandaloneJS(graph, registry) {
   const statements = [];
   let nextValue = 0;
   function compileExpression(currentGraph,boundInputs,stack) {
+    if(budgeted){
+      const start=statements.length;
+      const result=compileGraphExpression(currentGraph,boundInputs,stack);
+      const body=statements.splice(start),value=`__v${nextValue++}`;
+      statements.push(`  const ${value}=(()=>{__tick();if(++__depth>__budget.maxDepth){__depth--;__fail('CALL_DEPTH','Graph call depth exhausted');}try{${body.join('\n')}return ${result};}finally{__depth--;}})();`);
+      return value;
+    }
+    return compileGraphExpression(currentGraph,boundInputs,stack);
+  }
+  function compileGraphExpression(currentGraph,boundInputs,stack) {
     const boundary=resolveCompositeBoundary(currentGraph,registry);
     if(!boundary)return compileBody(currentGraph,boundInputs,stack);
     const snippet=emitContractBoundary(boundary,boundInputs,params=>{
@@ -49,6 +60,7 @@ export function compileStandaloneJS(graph, registry) {
       const node = nodes.get(id);
       const contract = registry.resolve(node.uses);
       const args = Object.fromEntries(Object.keys(contract.inputs).map(key => [key, expression(node.args[key])]));
+      if(budgeted)statements.push(`  __tick();`);
       let snippet;
       if (contract.kind === 'composite') {
         snippet = compileExpression(contract.graph, args, nextStack);
@@ -78,7 +90,9 @@ export function compileStandaloneJS(graph, registry) {
   return `// EMS reference output. Standalone JavaScript, NO EMS runtime dependency.
 // Pure finite-number profile; trusted implementations only.
 ${standaloneHelpersJS()}
-export function execute(inputs) {
+${budgeted?controlBudgetOptions.toString().replace(/\bfail\(/g,'__fail('):''}
+export function execute(inputs${budgeted?',options={}':''}) {
+${budgeted?`  const __budget=controlBudgetOptions(options);let __steps=0,__depth=0;function __tick(){if(++__steps>__budget.maxSteps)__fail('STEP_LIMIT','Graph execution step budget exhausted');}`:''}
   if (!inputs || typeof inputs !== 'object' || Array.isArray(inputs)) __fail('INVALID_INPUT', 'Input values must be an object');
 ${checks.join('\n')}
   for (const key of Object.keys(inputs)) if (!${inputNames}.includes(key)) __fail('EXTRA_INPUT', 'Unexpected input ' + key);

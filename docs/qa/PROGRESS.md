@@ -1,3 +1,7 @@
+# Текущая итерация — EMS-060 package execution limits (AC-097)
+
+V3 module-bound limits/control+graph models, compiler opt-in graph ticks, per-invocation counters, direct lower/raise refusal, import/compile/reseal preservation. Legacy v1/v2 load kept; v2 without budget cannot link into v3. Baseline855/156 PASS; focused17 Node/3 Chromium PASS, independent file browser/fresh Node budget/depth proof. Финальный gate/public smoke ожидаются. Shared cross-package counters/time/memory bounds/native/async/rich public ABI/maps не объявлены реализованными; следующий compiler gate — shared-budget protocol. Глобальная цель активна.
+
 # Текущая итерация — EMS-036 понятная иерархия Studio (AC-096)
 
 По запросу владельца обновлён редактор программы: явная навигация «Проекты / Программа / Интерфейс», основной акцент на запуске, три зоны «Соберите логику / Задайте значения / Результат запуска», компактные карточки входов, заметный блок ошибок, стартовый пример 2+3 и его цветовая легенда. Примерные входы разнесены по вертикали, результат суммы приближен: блоки не перекрываются. Семантика/IR/хранение не изменены. Baseline855 Node/156 verify PASS; focused Chromium design+studio7/7 PASS, визуально просмотрены1440×900 и390×844. Checked eb537f4b1159fa7eb9c9797654f5a6ebde037131: полный gate855/156/69 PASS; dev опубликован, ordinary HTTPS полный smoke и отдельная проверка новой навигации/non-overlap/result5/mobile PASS; foreign6 hashes/5 services неизменны. Далее EMS-060: бюджеты атомарного пакета; глобальная цель активна.
