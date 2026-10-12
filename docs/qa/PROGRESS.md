@@ -1,6 +1,6 @@
 # Текущая итерация — EMS-060 atomic package/compiler slice (AC-094)
 
-Global audit выбрал G-06/G-12 compiler/linker progression после серии inspector slices. EMS-060 dependencies completed; EMS-062 remains blocked on full EMS-060 scope, not falsely DONE. Pure sync IR1/IR2 compilation into graphless package, manifest ABI, trusted reimport/recompile/reseal, CLI and IDE download. Focused7 Node/4 Chromium PASS, full gate/public pending. Далее extend public ABI/async linkage, explicit budgets/error interfaces/source maps and reviewed artifact/package import; FFI dependencies and native target acceptance separate. Global goal active.
+Global audit выбрал G-06/G-12 compiler/linker progression после серии inspector slices. EMS-060 dependencies completed; EMS-062 remains blocked on full EMS-060 scope, not falsely DONE. Pure sync IR1/IR2 compilation into graphless package, manifest ABI, trusted reimport/recompile/reseal, CLI and IDE download. Focused7 Node/4 Chromium PASS, initial406bad4 clean851/155/68 passed/deployed; public smoke incorrectly evaluated data URLs inside IDE CSP. Correct fixture builds via HTTPS and imports in trusted Node outside IDE; no CSP weakening. Actual file/browser independent proof passed. Corrected gate/public pending. Далее extend public ABI/async linkage, explicit budgets/error interfaces/source maps and reviewed artifact/package import; FFI dependencies and native target acceptance separate. Global goal active.
 
 # Текущая итерация — verified intrinsics и opaque mutation (AC-093)
 
