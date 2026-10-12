@@ -490,9 +490,9 @@
         "GPT-6.1 Sol",
         "GPT-6 Luna"
       ],
-      "progress": "AC-063..085 interpreted debugger: graph/control/collection post-operation plus metadata-only UI precommit exits on original ReactorKernel. Actual source/IR/handler/path/type/location/frame/caller validation, per-event token replay/overlap/injected state denial. Default enter-only; fixed session afterOperations; pending operation vs acknowledged event banner. Real worker FIFO/abort/later-failure rollback and source-free graph checked. Release a2ced875145e8b2518abe49f4c308a8327a33889 passed805/147/61 with isolated local browser QA; ordinary corrected public post-write0→ACK1→next Stop1 and all prior proofs PASS. Initial remote native graph startup artifactz6yL53 and UI CDP fixture timeout retained; UI fixture clears persistent points, opaque startup cause unproven. Next transitive effect/taint/value permissions and native/compiled actual transport acceptance. Global goal/full debugger open. AC-086 entry effect barrier in progress: actual pre-fix pure-helper host secret disclosure reproduced; validated entry effects/capabilities/localEffects now block all activation values before getters, independent DTO check aligned. Unreachable pure/Future behavior retained. Local811/148 and focused33 Node/7 Chromium PASS; exact/public gate pending. No dynamic taint/declassification claimed.",
+      "progress": "AC-063..086 interpreted debugger with graph/control/collection exits and checked metadata-only UI precommit checkpoints. Actual pure-helper disclosure via effectful caller reproduced and fixed: validated entry effects/capabilities/localEffects block values in every frame before getters; independent DTO check rejects wrong pure-helper value. Protected priority/owner guard and pure/unreachable/Future behavior retained; cleanup/once-only/runtime-standalone parity covered. Release 624df95c3886324200c2d8d64e13566f3472a439 passed811/148/62, isolated local browser QA and ordinary HTTPS pure helper closed/result7/clear plus all prior proofs. Dynamic taint/declassification, effectful actor/UI data capture and native/compiled full debugger remain open; old opaque startup cause unproven.",
       "evidence": {
-        "scope": "AC-063..085 interpreted diagnostics; checked UI metadata-only precommit exits with unchanged commit/rollback. Full taint/effectful data capture/native/compiled open.",
+        "scope": "AC-063..086 interpreted diagnostics; transitive conservative entry effect barrier prevents pure-helper capture bypass. Full dynamic taint/declassification/actor-UI/native/compiled values open.",
         "docs": "docs/spec/IDE_RUNTIME_DIAGNOSTICS.md",
         "testFiles": [
           "tests/graph-inspection-transport.test.mjs",
@@ -525,9 +525,9 @@
           "tests/control-inspection-effects.test.mjs",
           "tests/browser/control-inspection-effects.test.mjs"
         ],
-        "tests": "805/805 PASS",
-        "verify": "147/147 PASS",
-        "browserTests": "61/61 PASS (explicit isolated Linux network namespace)",
+        "tests": "811/811 PASS",
+        "verify": "148/148 PASS",
+        "browserTests": "62/62 PASS (explicit isolated Linux network namespace)",
         "commands": [
           "npm test",
           "npm run verify",
@@ -536,8 +536,8 @@
         ],
         "deployedRevision": "5bcd6abd41446073073db4e6e4f902a015488246",
         "live": "Final exact740/139/40 PASS; trusted public HTTPS/auth/access and Chromium typed core snapshot x1/result1/default-empty/protected-program and ungranted sentinel absence PASS. Existing graph/composite/reopen15/AVG5/text6/points5-loop3/OverOut7/UI1/live-clear1-2-3/safe-anchor/durable-Studio preserved; six foreign hashes/five active services unchanged. Core API only, IDE value transport/panel remain open.",
-        "liveRevision": "a2ced875145e8b2518abe49f4c308a8327a33889",
-        "publicSmoke": "PASS in ordinary network after fixture point isolation; UI precommit0/Continue ACK1/next Stop1 plus all prior proofs. Initial failures retained in PROGRESS."
+        "liveRevision": "624df95c3886324200c2d8d64e13566f3472a439",
+        "publicSmoke": "PASS in ordinary network; pure helper primitive closed under entry resource effects, ordinary result7/clear and all previous proofs"
       },
       "nextSlice": "Source-owned checked pure control inspection grants, strict bounded Worker DTO validation and explicit owner opt-in IDE panel; default no values, protected/effect/handle refusal, exact source/frame identity, detached snapshots and real non-leakage cases. Formal secret taint/effectful UI/native/compiled inspection remain separate."
     },
