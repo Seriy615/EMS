@@ -4,9 +4,9 @@ import {graphFromIR} from '../ir/index.mjs';
 import {createGraphInspector,graphInspectionDeclarations} from '../runtime/graph-inspection.mjs';
 import {analyzeGraphEffects} from '../semantics/effects.mjs';
 import {studioDebuggerContext} from './debugger-storage.mjs';
-import {hasCollections} from './collections.mjs';
+import {hasCollections,lowerCollectionGraph} from './collections.mjs';
 import {compileTextDraft} from './text.mjs';
-import {normalizeInspectionPolicy,createControlInspector,inspectionGrantBindings} from '../runtime/inspection.mjs';
+import {normalizeInspectionPolicy,createControlInspector,inspectionGrantBindings,controlInspectionDeclarations} from '../runtime/inspection.mjs';
 import {controlNodeEntries} from '../ir/control-addresses.mjs';
 import {parseControlType,controlVariants} from '../semantics/control-algebraic.mjs';
 
@@ -33,7 +33,7 @@ export function prepareStudioInspection(request,editor=null){
  if(request.action==='graph'){
   fields(witness,['schemaVersion','project','selected','library','policy',...extra]);
   if(witness.schemaVersion!==(after?'ems-graph-inspection/2':'ems-graph-inspection/1')||witness.project!==editor.project.id||witness.selected!==editor.workspace.graph.id||typeof witness.library!=='string'||witness.library.length>1048576||witness.library!==graphInspectionLibrary(editor))fail('STALE_INSPECTION_SOURCE','Graph witness disagrees with execution');
-  return prepareGraphInspection(editor,editor.workspace.graph,editor.registry,null,witness);
+  return hasCollections(editor.workspace.graph,editor.registry)?prepareCollectionInspection(editor,witness):prepareGraphInspection(editor,editor.workspace.graph,editor.registry,null,witness);
  }
  fields(witness,['schemaVersion','source','entry','lowering','policy',...extra]);
  if(witness.schemaVersion!==(after?'ems-source-inspection/2':'ems-source-inspection/1')||typeof witness.source!=='string'||witness.source.length>262144||new TextEncoder().encode(witness.source).length>262144||witness.source!==request.draft?.source||witness.entry!==request.draft?.entry||witness.lowering!==request.draft?.lowering)fail('STALE_INSPECTION_SOURCE','Inspection source witness disagrees with execution');
@@ -53,6 +53,23 @@ function prepareGraphInspection(editor,root,registry,bundle,witness){
  function visit(graph){if(graphs.has(graph.id))return;const catalog=graphInspectionDeclarations(graph,registry),grant=policy.allow.find(g=>g.function===graph.id);graphs.set(graph.id,{graph,grants:(grant?.declarations??[]).map(path=>catalog.find(d=>d.declaration===path))});for(const node of graph.nodes){const contract=registry.resolve(node.uses);if(contract.kind==='composite')visit(contract.graph);}}
  visit(root);const summary=analyzeGraphEffects(root,registry);
  return {editor,root,registry,bundle,policy,afterOperations:own(witness,'afterOperations'),graphs,functions:new Map(),impure:summary.effects.length>0||summary.capabilities.length>0,witness:{...witness,policy}};
+}
+
+/** Visual collections use the existing checked control IR, with an ephemeral presentation mapping. */
+function prepareCollectionInspection(editor,witness){
+ if(own(witness,'afterOperations'))fail('UNSUPPORTED_INSPECTION_PROFILE','Collection post-operation pauses require a separate adapter');
+ const bundle=lowerCollectionGraph(editor.workspace.graph,editor.registry),policy=normalizeInspectionPolicy(witness.policy),presentation=new Map();
+ for(const item of bundle.presentation){
+  const fn=bundle.ir.functions.find(fn=>fn.id===item.function);if(!fn)error();const catalog=controlInspectionDeclarations(fn),bindings=[];
+  for(const [kind,entries]of [['input',item.inputs],['node',item.nodes]])for(const entry of entries){const binding=catalog.find(d=>d.name===entry.binding);if(!binding)error();bindings.push({...binding,displayName:entry.name,kind});}
+  presentation.set(fn.id,{graph:item.graph,bindings});
+ }
+ // Generated source locations are not positions on the user's canvas.
+ bundle.provenance={functions:{}};
+ createControlInspector(bundle.ir,policy);
+ for(const grant of policy.allow){const view=presentation.get(grant.function);if(!view||!own(grant,'declarations')||grant.declarations.some(path=>!view.bindings.some(b=>b.declaration===path)))error();}
+ const functions=new Map(bundle.ir.functions.map(fn=>[fn.id,{fn,nodes:new Map(controlNodeEntries(fn)),grants:policy.allow.find(grant=>grant.function===fn.id)?inspectionGrantBindings(fn,policy.allow.find(grant=>grant.function===fn.id)):[]}]));
+ return {editor,bundle,registry:bundle.registry,policy,presentation,functions,witness:{...witness,policy}};
 }
 
 /** Closed finite DTO copier. It never invokes accessors and never echoes malformed payloads in errors. */
@@ -95,6 +112,7 @@ export function validateInspectionPause(pause,prepared){
   fields(pause,['phase','profile','function','node','kind','type','callStack','frames','step','location','inspection','token']);
   const owner=prepared.functions.get(pause.function),node=owner?.nodes.get(pause.node);if(!node||pause.kind!==node.kind||pause.type!==(node.type??null)||!Number.isSafeInteger(pause.step)||pause.step<1)error();
   const stack=array(pause.callStack,64);if(!stack.length||stack.at(-1)!==pause.function||stack.some(id=>!prepared.functions.has(id)))error();
+  if(prepared.presentation){if(stack[0]!==prepared.bundle.ir.entry||stack.length!==frames.length)error();for(let i=1;i<stack.length;i++){const caller=prepared.functions.get(stack[i-1]);if(![...caller.nodes.values()].some(node=>node.kind==='call'&&node.target.kind==='function'&&node.target.id===stack[i]))error();}}
   const location=prepared.bundle.provenance.functions[pause.function]?.nodes?.[pause.node]??null;if(!same(pause.location,location))error();
   const inspection=validateInspectionSnapshot(pause.inspection,pause.function,prepared);
   return {phase:'enter',profile:'control',function:pause.function,node:pause.node,kind:pause.kind,type:pause.type,callStack:[...stack],frames:[...frames],step:pause.step,location:structuredClone(location),inspection,token:pause.token};

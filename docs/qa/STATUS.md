@@ -1,5 +1,12 @@
 # Current implementation status
 
+## EMS-033 — AC-083 коллекции через общий control IR (публикация ожидается)
+
+Предыдущая итерация дала progress: AC-082 checked a1b7219/evidence159c43b опубликованы. Clean worktree и baseline785/144 PASS. Collection lowering теперь возвращает отдельную ephemeral presentation mapping input/node→generated binding, без изменения source/IR/standalone или project schema. Checked visual witness восстанавливает control IR и разрешает только mapped объявления, helper grants отвергаются. Values берутся из original control cells, не из повторного вычисления. Root/caller/frame adjacency проверяется против реальных typed calls. IDE показывает original graph/node labels, highlights mapped blocks; helper values не предлагаются. Default graph collection debug использует allow[] и не передаёт значений; post-operation mode отключён для этого профиля. Готовый example MapDouble открыт из списка.
+
+Первый Node fixture не добавлял visual location:null; исправлено boundary DTO нормализование, raw runtime не изменялся. Первая Chromium проверка наткнулась на retained UNSUPPORTED_DEBUG_PROFILE; gate теперь допускает только checked collection presentation profile. После этих конкретных исправлений focused17 collection/compat Node, final6 core и2 actual Chromium PASS. Общий локальный790/145 и10 integration PASS до последнего metadata-only default slice; exact committed full791/145/57 и public example/callback proof ещё ожидаются. Full debugger/global language/taint/effectful/native/compiled и post-operation collection остаются открытыми.
+
+
 ## EMS-033 — AC-082 результат после графовой операции
 
 Core optional onNodeExit наблюдает только validated memo. Explicit closed v2 witness разрешает afterOperations; default/v1 enter-only, protection/budgets/cancellation/source checks сохранены. Over достигает completed composite, Out пропускает same-frame exit, breakpoints только enter. Nested/repeated call child2→3/5→6/result9 и точная source location подтверждены actual Chromium. Focused24 Node,17 observer compatibility и10 Chromium PASS. Первый fixture failure из-за var исправлен на нормативный let mut без изменения семантики.

@@ -202,3 +202,13 @@ Studio принимает exits только при witness `ems-graph-inspectio
 В «Переменные на паузе» сначала выбираются разрешённые значения, затем включается «Останавливаться также после операции графа». По умолчанию выключено. «Шаг» проходит enter/exit; «Через операцию» с enter пропускает внутренние кадры и останавливается на результате, «Из функции» пропускает exits того же кадра. Точки останова продолжают срабатывать на enter. Resume/Stop/finish/edit очищают значения; flags/grants не сохраняются в проекте.
 
 Exit означает успешную конкретную операцию, а не успешное завершение всей программы: последующие операции или postconditions внешнего составного контракта ещё могут отказать. Полный debugger/taint/effectful/collection/native/compiled scope остаётся открытым.
+
+## AC-083: визуальные коллекции через существующий control IR
+
+Map/Filter authoring по-прежнему lower→typed control IR→original runtime/compiler. `lowerCollectionGraph` теперь возвращает presentation sidecar `{function,graph,inputs:[{name,binding}],nodes:[{name,binding}]}` отдельно от IR. Только materialized dependency/sequence nodes имеют такие объявления; unused nodes не исполняются ради инспектора. Обычный `collectionSource` shape сохраняется; metadata запрашивается через includePresentation. Sidecar не сохраняется в проекте или standalone.
+
+Visual witness того же exact project/selected/library format при collection closure локально восстанавливает checked IR и mapping. Policy относится к typed control function/declaration addresses; host UI предлагает только mapped inputs/node outputs под исходными именами. Client/Worker проверяют original control DTO/types/status/limits, root entry, frame depth и каждое ребро callStack по actual IR target. Generated helpers остаются metadata-only и не принимают grants. Visual location:null; generated-source line numbers не выдаются за canvas positions.
+
+«Отладка» работает и без выбора значений: checked witness содержит allow[], snapshot0 values. Просмотр значений требует выбора. Callback activations имеют отдельные original runtime frames; при return виден completed local, parent map/filter result доступен при следующей instruction/return. Панель показывает original graph/block labels, без служебных identifiers. Source/project/library edits снимают разрешения, resume/Stop/finish очищают values. Whole-program protection/finite-copy limits сохраняются. Пример «Коллекция: удвоение» доступен в списке.
+
+Это control IR interpreted profile, а не расширение onNodeExit для collection или новая реализация вычислителя. afterOperations request явно unsupported; native/compiled/control-exit/full taint остаются будущими профилями. Исходные standalone exports и step/depth/cancellation domain сохраняются.

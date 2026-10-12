@@ -1,0 +1,334 @@
+{
+  "schemaVersion": "ems-studio-project/3",
+  "id": "main",
+  "name": "Коллекция: удвоение",
+  "graph": {
+    "schemaVersion": "0.1",
+    "id": "project.main",
+    "version": "1.0.0",
+    "inputs": {
+      "values": {
+        "type": "NumberArray"
+      }
+    },
+    "output": {
+      "type": "NumberArray"
+    },
+    "nodes": [
+      {
+        "id": "map",
+        "uses": "user.MapDouble",
+        "args": {
+          "values": {
+            "input": "values"
+          }
+        }
+      }
+    ],
+    "returns": {
+      "node": "map"
+    }
+  },
+  "inputs": {
+    "values": [
+      2,
+      3
+    ]
+  },
+  "canvas": {
+    "positions": {},
+    "view": {
+      "x": 0,
+      "y": 0,
+      "scale": 1
+    }
+  },
+  "references": [
+    {
+      "id": "user.MapDouble",
+      "version": "1.0.0"
+    }
+  ],
+  "contracts": [
+    {
+      "graph": {
+        "schemaVersion": "0.1",
+        "id": "user.Double",
+        "version": "1.0.0",
+        "inputs": {
+          "x": {
+            "type": "Number"
+          }
+        },
+        "output": {
+          "type": "Number"
+        },
+        "nodes": [
+          {
+            "id": "n1",
+            "uses": "core.mul",
+            "args": {
+              "a": {
+                "input": "x"
+              },
+              "b": {
+                "literal": {
+                  "type": "Number",
+                  "value": 2
+                }
+              }
+            }
+          }
+        ],
+        "returns": {
+          "node": "n1"
+        }
+      },
+      "inputs": {
+        "x": 0
+      },
+      "canvas": {
+        "positions": {
+          "input:x": {
+            "x": 40,
+            "y": 170
+          },
+          "n1": {
+            "x": 280,
+            "y": 70
+          }
+        },
+        "view": {
+          "x": 0,
+          "y": 0,
+          "scale": 1
+        }
+      },
+      "references": [
+        {
+          "id": "core.mul",
+          "version": "1.0.0"
+        }
+      ]
+    }
+  ],
+  "collections": [
+    {
+      "id": "user.MapDouble",
+      "version": "1.0.0",
+      "operation": "map",
+      "callback": {
+        "id": "user.Double",
+        "version": "1.0.0"
+      }
+    }
+  ],
+  "ir": {
+    "entry": "__ems_visual_0_g00007000007200006f00006a00006500006300007400002e00006d00006100006900006e_v00003100002e00003000002e000030_c00003100002e00003000002e000030",
+    "functions": [
+      {
+        "body": [
+          {
+            "kind": "let",
+            "mutable": true,
+            "name": "__ems_collection_0_result",
+            "type": "NumberArray",
+            "value": {
+              "elements": [],
+              "kind": "array",
+              "type": "NumberArray"
+            }
+          },
+          {
+            "binding": "__ems_collection_0_item",
+            "body": [
+              {
+                "kind": "expression",
+                "value": {
+                  "kind": "assign",
+                  "name": "__ems_collection_0_result",
+                  "type": "NumberArray",
+                  "value": {
+                    "arguments": [
+                      {
+                        "kind": "local",
+                        "name": "__ems_collection_0_result",
+                        "type": "NumberArray"
+                      },
+                      {
+                        "arguments": [
+                          {
+                            "kind": "local",
+                            "name": "__ems_collection_0_item",
+                            "type": "Number"
+                          }
+                        ],
+                        "kind": "call",
+                        "target": {
+                          "id": "__ems_visual_1_g00007500007300006500007200002e00004400006f00007500006200006c000065_v00003100002e00003000002e000030_c00003100002e00003000002e000030",
+                          "kind": "function"
+                        },
+                        "type": "Number"
+                      }
+                    ],
+                    "kind": "call",
+                    "target": {
+                      "id": "std.array.append",
+                      "kind": "contract",
+                      "version": "1.0.0"
+                    },
+                    "type": "NumberArray"
+                  }
+                }
+              }
+            ],
+            "iterable": {
+              "kind": "local",
+              "name": "__ems_collection_0_values",
+              "type": "NumberArray"
+            },
+            "kind": "for"
+          },
+          {
+            "kind": "return",
+            "value": {
+              "kind": "local",
+              "name": "__ems_collection_0_result",
+              "type": "NumberArray"
+            }
+          }
+        ],
+        "id": "__ems_collection_0",
+        "inputs": [
+          {
+            "name": "__ems_collection_0_values",
+            "type": "NumberArray"
+          }
+        ],
+        "output": {
+          "type": "NumberArray"
+        },
+        "policy": {
+          "capabilities": [],
+          "effects": []
+        },
+        "requirements": {
+          "capabilities": [],
+          "effects": []
+        }
+      },
+      {
+        "body": [
+          {
+            "kind": "let",
+            "mutable": false,
+            "name": "__ems_node_2",
+            "type": "NumberArray",
+            "value": {
+              "arguments": [
+                {
+                  "kind": "local",
+                  "name": "values",
+                  "type": "NumberArray"
+                }
+              ],
+              "kind": "call",
+              "target": {
+                "id": "__ems_collection_0",
+                "kind": "function"
+              },
+              "type": "NumberArray"
+            }
+          },
+          {
+            "kind": "return",
+            "value": {
+              "kind": "local",
+              "name": "__ems_node_2",
+              "type": "NumberArray"
+            }
+          }
+        ],
+        "id": "__ems_visual_0_g00007000007200006f00006a00006500006300007400002e00006d00006100006900006e_v00003100002e00003000002e000030_c00003100002e00003000002e000030",
+        "inputs": [
+          {
+            "name": "values",
+            "type": "NumberArray"
+          }
+        ],
+        "output": {
+          "type": "NumberArray"
+        },
+        "policy": {
+          "capabilities": [],
+          "effects": []
+        },
+        "requirements": {
+          "capabilities": [],
+          "effects": []
+        }
+      },
+      {
+        "body": [
+          {
+            "kind": "let",
+            "mutable": false,
+            "name": "__ems_node_4",
+            "type": "Number",
+            "value": {
+              "arguments": [
+                {
+                  "kind": "local",
+                  "name": "__ems_input_3",
+                  "type": "Number"
+                },
+                {
+                  "kind": "literal",
+                  "type": "Number",
+                  "value": 2
+                }
+              ],
+              "kind": "call",
+              "target": {
+                "id": "core.mul",
+                "kind": "contract",
+                "version": "1.0.0"
+              },
+              "type": "Number"
+            }
+          },
+          {
+            "kind": "return",
+            "value": {
+              "kind": "local",
+              "name": "__ems_node_4",
+              "type": "Number"
+            }
+          }
+        ],
+        "id": "__ems_visual_1_g00007500007300006500007200002e00004400006f00007500006200006c000065_v00003100002e00003000002e000030_c00003100002e00003000002e000030",
+        "inputs": [
+          {
+            "name": "__ems_input_3",
+            "type": "Number"
+          }
+        ],
+        "output": {
+          "type": "Number"
+        },
+        "policy": {
+          "capabilities": [],
+          "effects": []
+        },
+        "requirements": {
+          "capabilities": [],
+          "effects": []
+        }
+      }
+    ],
+    "id": "__ems_visual_0_g00007000007200006f00006a00006500006300007400002e00006d00006100006900006e_v00003100002e00003000002e000030_c00003100002e00003000002e000030",
+    "profile": "ems-control-finite/1",
+    "schemaVersion": "ems-ir/2",
+    "version": "1.0.0"
+  }
+}

@@ -24,7 +24,7 @@ export function hasCollections(graph,registry,seen=new Set()){
  return false;
 }
 /** Graph frontend: preserve demand order/memoization and explicit sequences, then use the existing control backend. */
-export function collectionSource(graph,registry){
+export function collectionSource(graph,registry,{includePresentation=false}={}){
  const graphs=new Map(),names=new Map(),used=new Set(registry.items.keys());let next=0;
  function fresh(prefix,suffix=''){let name;do{name=prefix+next++ +suffix;}while(used.has(name));used.add(name);return name;}
  const identity=value=>[...String(value)].map(char=>char.codePointAt(0).toString(16).padStart(6,'0')).join('');
@@ -40,6 +40,7 @@ export function collectionSource(graph,registry){
  const callable=id=>{if(names.has(id))return names.get(id);if(!/^[A-Za-z_][A-Za-z0-9_]*(?:\.[A-Za-z_][A-Za-z0-9_]*)*$/.test(id))fail('UNSUPPORTED_PROFILE','External contract id cannot be expressed by this frontend');return id;};
  const type=value=>value==='NumberArray'?'Number[]':value;
  const literal=value=>Object.is(value,-0)?'-0':Array.isArray(value)?'['+value.map(literal).join(',')+']':JSON.stringify(value);
+ const presentation=[];
  const lines=[`package studio.collections @ ${JSON.stringify(graph.version)};`];
  for(const [key,current] of graphs){
   const args=new Map(Object.keys(current.inputs).map(name=>[name,key===root?name:fresh('__ems_input_')])),memo=new Map(),nodes=new Map(current.nodes.map(node=>[node.id,node])),statements=[];
@@ -50,11 +51,12 @@ export function collectionSource(graph,registry){
    const local=fresh('__ems_node_');memo.set(id,local);statements.push(`let ${local}=${call};`);return local;
   }
   for(const id of current.sequence??[])node(id);const result=ref(current.returns);
+  presentation.push({function:names.get(key),graph:current.id,inputs:[...args].map(([name,binding])=>({name,binding})),nodes:[...memo].map(([name,binding])=>({name,binding}))});
   lines.push(`fn ${names.get(key)}(${Object.entries(current.inputs).map(([name,spec])=>args.get(name)+':'+type(spec.type)).join(',')})->${type(current.output.type)} {`,...statements,`return ${result};`,'}');
  }
- return {source:lines.join('\n')+'\n',entry:names.get(root)};
+ return {source:lines.join('\n')+'\n',entry:names.get(root),...(includePresentation?{presentation}:{})};
 }
 
 export function lowerCollectionGraph(graph,registry){
- const text=collectionSource(graph,registry);return lowerCheckedModule(typecheckModule(parseEMSModule(text.source,{maxTokens:200000}),registry),text.entry,registry,{profile:'control'});
+ const text=collectionSource(graph,registry,{includePresentation:true});return {...lowerCheckedModule(typecheckModule(parseEMSModule(text.source,{maxTokens:200000}),registry),text.entry,registry,{profile:'control'}),presentation:text.presentation};
 }

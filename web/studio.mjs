@@ -1,3 +1,4 @@
+import {hasCollections} from '/src/studio/collections.mjs';
 import {prepareStudioInspection,graphInspectionWitness} from '/src/studio/inspection-transport.mjs';
 import {graphInspectionDeclarations} from '/src/runtime/graph-inspection.mjs';
 import {controlInspectionDeclarations} from '/src/runtime/inspection.mjs';
@@ -55,9 +56,10 @@ async function executeStudio(action,draft,inputs,debug=false){
  const witness=inspectionWitness(debug);activeInspection=!!witness;$('inspection-options').disabled=activeInspection;
  const job=startStudioExecution({...(witness?{inspection:witness}:{}),action,project:editor.serialize(),selected:editor.selectedContract,draft,inputs,debug,...(debug?{debugOptions:{breakpoints,start:$('debug-run-to-breakpoint').checked?'continue':'step'}}:{})},{timeout:debug?60000:5000,onPause:pause=>{
  showInspection(pause);document.querySelector('.debug-tools').open=true;pausedOperation=pause;$('output').textContent='Пауза. Нажмите «Шаг» или «Продолжить».';syncBreakpoints();$('debug-over').disabled=false;$('debug-out').disabled=false;$('debug-step').disabled=false;$('debug-continue').disabled=false;
- const where=pause.profile==='control'?pause.callStack.join(' → ')+' / '+pause.node+' ('+pause.kind+') → '+(pause.type??'statement'):pause.callPath.map(call=>call.graph+' / '+call.node+' → '+call.contract).join('\n')+'\nВходы: '+JSON.stringify(pause.inputs)+' → '+pause.output;
+ const where=pause.profile==='control'?pause.callStack.map(inspectionFunctionLabel).join(' → ')+' / '+pause.node+' ('+pause.kind+') → '+(pause.type??'statement'):pause.callPath.map(call=>call.graph+' / '+call.node+' → '+call.contract).join('\n')+'\nВходы: '+JSON.stringify(pause.inputs)+' → '+pause.output;
  $('debug-location').textContent=(pause.phase==='exit'?'Пауза после операции (выход вычислен)\n':'Пауза перед операцией (снимок программы)\n')+where+(pause.location?'\nСтрока '+pause.location.start.line+', столбец '+pause.location.start.column:'');
  if(action==='text'&&pause.location&&$('text-source').value===draft.source){$('text-source').focus();$('text-source').setSelectionRange(pause.location.start.offset,pause.location.end.offset);}
+ if(action==='graph'&&pause.profile==='control'&&inspectionState?.prepared.presentation){const item=inspectionState.prepared.presentation.get(pause.function),binding=item?.bindings.find(b=>b.kind==='node'&&(pause.node===b.declaration||pause.node.startsWith(b.declaration+'/')));if(item?.graph===editor.workspace.graph.id&&binding){selected=binding.displayName;render();}}
  const at=pause.callPath?.find(call=>call.graph===editor.workspace.graph.id);if(action==='graph'&&at){selected=at.node;render();}
  },onLog:record=>{if(['finished','failed'].includes(record.type))clearInspectionValues();if(debug&&['finished','failed'].includes(record.type))$('debug-location').textContent=(record.type==='finished'?'Отладка завершена':'Отладка остановлена: '+record.code)+'\n'+$('debug-location').textContent.replace(/Пауза (?:перед операцией \(снимок программы\)|после операции \(выход вычислен\))/,'Последняя операция (снимок программы)');const message=record.type==='started'?'Запуск '+record.action:record.type==='validated'?'Проект проверен: '+record.id:record.type==='finished'?'Выполнение завершено':'Выполнение остановлено: '+record.code;$('execution-log').textContent+=message+'\n';}});activeExecution=job;$('stop').disabled=false;
  try{return await job.promise;}finally{activeInspection=false;$('inspection-options').disabled=false;clearInspectionValues();if(activeExecution===job)activeExecution=null;pausedOperation=null;syncBreakpoints();$('stop').disabled=true;$('debug').disabled=false;$('debug-over').disabled=true;$('debug-out').disabled=true;$('debug-step').disabled=true;$('debug-continue').disabled=true;}
@@ -208,7 +210,8 @@ $('export').onclick=()=>{try{const url=URL.createObjectURL(new Blob([editor.seri
 $('import').onclick=()=> $('file').click();$('file').onchange=async()=>{const file=$('file').files[0];if(!file)return;try{if(file.size>4*1024*1024)throw new Error('Файл слишком большой');const source=await file.text();change(()=>{const project=parseProject(source);project.id=identity();project.name=project.name.slice(0,180)+' (импорт)';editor=new ProjectEditor(project);selected=null;});}catch(error){report(error);}$('file').value='';};
 $('examples').onchange=async()=>{
  const choice=$('examples').value;if(!choice)return;try{const project=newProject(identity(),choice==='avg'?'Среднее пяти — арифметика':'Сумма двух чисел');
- if(choice==='avg'){const saved=parseProject(await fetch('/examples/studio-avg5.ems.json').then(response=>response.text()));saved.id=project.id;Object.assign(project,saved);}
+ if(choice==='map'){const saved=parseProject(await fetch('/examples/studio-map-double.ems.json').then(response=>response.text()));saved.id=project.id;Object.assign(project,saved);}
+ else if(choice==='avg'){const saved=parseProject(await fetch('/examples/studio-avg5.ems.json').then(response=>response.text()));saved.id=project.id;Object.assign(project,saved);}
  else if(choice==='library'){const saved=parseProject(await fetch('/examples/studio-library.ems.json').then(response=>response.text()));saved.id=project.id;saved.name='Массив → текст';Object.assign(project,saved);}
  else{project.graph.inputs={a:{type:'Number'},b:{type:'Number'}};project.inputs={a:2,b:3};project.graph.nodes=[{id:'sum',uses:'core.add',args:{a:{input:'a'},b:{input:'b'}}}];project.graph.returns={node:'sum'};}
  Object.keys(project.graph.inputs).forEach((name,index)=>{project.canvas.positions[`input:${name}`]={x:30,y:100+index*130};});project.graph.nodes.forEach((node,index)=>{project.canvas.positions[node.id]={x:300+(index%2)*270,y:60+Math.floor(index/2)*200};});project.canvas.positions.output={x:850,y:150};change(()=>{editor=new ProjectEditor(project);selected=null;});fitGraph();
@@ -266,9 +269,10 @@ function syncInspection(identity){
 }
 function currentInspectionIdentity(){return currentBreakpointIdentity()+(!textMode?':'+editor.workspace.graph.id:'');}
 function inspectionWitness(debug){
+ if(debug&&!textMode&&!inspectionState&&hasCollections(editor.workspace.graph,editor.registry)){const witness=graphInspectionWitness(editor,{allow:[]}),prepared=prepareStudioInspection({action:'graph',debug:true,project:editor.serialize(),selected:editor.selectedContract,inspection:witness},editor);inspectionState={identity:currentInspectionIdentity(),bundle:prepared.bundle,prepared,grants:new Map()};}
  if(!debug||!inspectionState||inspectionState.identity!==currentInspectionIdentity())return null;
  const allow=[...inspectionState.grants].filter(([,names])=>names.size).map(([fn,names])=>({function:fn,declarations:[...names]}));
- if(!allow.length)return null;
+ if(!allow.length&&!inspectionState.prepared.presentation)return null;
  const policy={allow,protectedFunctions:$('inspection-protected').checked?[inspectionState.prepared.root?.id??inspectionState.bundle.ir.entry]:[]};
  const afterOperations=!!inspectionState.prepared.graphs&&$('inspection-after').checked;
  return textMode?{schemaVersion:afterOperations?'ems-source-inspection/2':'ems-source-inspection/1',...(afterOperations?{afterOperations:true}:{}),source:draft().source,entry:draft().entry,lowering:draft().lowering,policy}:graphInspectionWitness(editor,policy,{afterOperations});
@@ -285,15 +289,16 @@ function inspectionChoices(){
  for(const item of inspectionCatalog(fn)){
   const label=el('label'),input=el('input');input.type='checkbox';input.dataset.inspectionName=item.name;input.dataset.inspectionDeclaration=item.declaration;input.disabled=item.declaration.length>1024;input.checked=inspectionState.grants.get(fn.id)?.has(item.declaration)??false;
   input.onchange=()=>{const count=[...inspectionState.grants.values()].reduce((n,names)=>n+names.size,0);if(input.checked&&count>=32){input.checked=false;$('inspection-status').textContent='Можно выбрать не более 32 переменных.';return;}const names=inspectionState.grants.get(fn.id)??new Set();input.checked?names.add(item.declaration):names.delete(item.declaration);inspectionState.grants.set(fn.id,names);clearInspectionValues();$('inspection-status').textContent='Разрешение применится при следующем запуске отладки.';};
-  label.append(input,document.createTextNode(item.name+' · '+item.type+' · '+inspectionDeclarationLabel(fn,item)));$('inspection-bindings').append(label);
+  label.append(input,document.createTextNode((item.displayName??item.name)+' · '+item.type+' · '+inspectionDeclarationLabel(fn,item)));$('inspection-bindings').append(label);
  }
 }
-function inspectionFunctions(){return inspectionState?.prepared.graphs?[...inspectionState.prepared.graphs.values()].map(item=>item.graph):inspectionState?.bundle.ir.functions??[];}
-function inspectionCatalog(fn){return inspectionState.prepared.graphs?graphInspectionDeclarations(fn,inspectionState.prepared.registry):controlInspectionDeclarations(fn);}
+function inspectionFunctionLabel(id){return inspectionState?.prepared.presentation?inspectionState.prepared.presentation.get(id)?.graph??'Выполнение коллекции':id;}
+function inspectionFunctions(){if(inspectionState?.prepared.presentation)return inspectionState.bundle.ir.functions.filter(fn=>inspectionState.prepared.presentation.has(fn.id));return inspectionState?.prepared.graphs?[...inspectionState.prepared.graphs.values()].map(item=>item.graph):inspectionState?.bundle.ir.functions??[];}
+function inspectionCatalog(fn){if(!fn)return [];if(inspectionState.prepared.presentation)return inspectionState.prepared.presentation.get(fn.id)?.bindings??[];return inspectionState.prepared.graphs?graphInspectionDeclarations(fn,inspectionState.prepared.registry):controlInspectionDeclarations(fn);}
 $('inspection-choose').onclick=()=>{try{
  const policy={allow:[]},witness=textMode?{schemaVersion:'ems-source-inspection/1',source:draft().source,entry:draft().entry,lowering:draft().lowering,policy}:graphInspectionWitness(editor,policy);
  const prepared=prepareStudioInspection({action:textMode?'text':'graph',debug:true,project:editor.serialize(),selected:editor.selectedContract,draft:textMode?draft():undefined,inspection:witness});
- inspectionState={identity:currentInspectionIdentity(),bundle:prepared.bundle,prepared,grants:new Map()};$('inspection-after').disabled=!prepared.graphs;if(!prepared.graphs)$('inspection-after').checked=false;$('inspection-function').replaceChildren(...inspectionFunctions().map(fn=>{const option=el('option',fn.id);option.value=fn.id;return option;}));$('inspection-function').value=prepared.root?.id??prepared.bundle.ir.entry;inspectionChoices();clearInspectionValues();$('inspection-status').textContent='Отметьте разрешённые значения, затем начните отладку.';
+ inspectionState={identity:currentInspectionIdentity(),bundle:prepared.bundle,prepared,grants:new Map()};$('inspection-after').disabled=!prepared.graphs;if(!prepared.graphs)$('inspection-after').checked=false;$('inspection-function').replaceChildren(...inspectionFunctions().map(fn=>{const option=el('option',inspectionFunctionLabel(fn.id));option.value=fn.id;return option;}));$('inspection-function').value=prepared.root?.id??prepared.bundle.ir.entry;inspectionChoices();clearInspectionValues();$('inspection-status').textContent='Отметьте разрешённые значения, затем начните отладку.';
  }catch(error){sourceError(error);}};
 $('inspection-function').onchange=inspectionChoices;
 $('inspection-protected').onchange=clearInspectionValues;$('inspection-after').onchange=clearInspectionValues;
@@ -302,6 +307,6 @@ function showInspection(pause){
  if(!pause.inspection){$('inspection-status').textContent='В этом графовом кадре просмотр значений недоступен.';return;}
  const statuses={'not-evaluated':'ещё не вычислено','not-in-scope':'ещё не в области видимости','protected-program':'защищённая программа','protected-effects':'функция с эффектами','excluded-type':'непрозрачный тип','limit':'превышен лимит','unavailable':'недоступно'};
  const functionId=pause.function??pause.callPath.at(-1).graph,fn=inspectionFunctions().find(fn=>fn.id===functionId);
- $('inspection-status').textContent=functionId+' · кадр '+pause.frames.at(-1)+(pause.inspection.truncated?' · достигнут лимит снимка':'');
- $('inspection-values').textContent=pause.inspection.variables.map(v=>v.name+(inspectionCatalog(fn).filter(item=>item.name===v.name).length>1?' ['+inspectionDeclarationLabel(fn,{declaration:v.declaration})+']':'')+(v.type?' · '+v.type:'')+' = '+(v.status==='value'?json(v.value):statuses[v.status])).join('\n');
+ $('inspection-status').textContent=inspectionFunctionLabel(functionId)+' · кадр '+pause.frames.at(-1)+(pause.inspection.truncated?' · достигнут лимит снимка':'');
+ $('inspection-values').textContent=pause.inspection.variables.map(v=>(inspectionCatalog(fn).find(item=>item.declaration===v.declaration)?.displayName??v.name)+(inspectionCatalog(fn).filter(item=>item.name===v.name).length>1?' ['+inspectionDeclarationLabel(fn,{declaration:v.declaration})+']':'')+(v.type?' · '+v.type:'')+' = '+(v.status==='value'?json(v.value):statuses[v.status])).join('\n');
 }

@@ -490,7 +490,7 @@
         "GPT-6.1 Sol",
         "GPT-6 Luna"
       ],
-      "progress": "AC-063..082 interpreted graph/control/UI debugger includes checked points, Over/Out, durable contexts, bounded opt-in control and graph/call values with declaration identities and exact semantic/source witnesses. New optional graph exit follows validated memo, explicit v2 afterOperations permission and independent DTO/client checks. Nested/repeated input2/5→output3/6/result9, phase-aware Over/Out, enter-only breakpoints, failure/no-exit/cancellation/protection/limits tested. Checked release a1b72192f834d7cf85624bc6172148b624a9c496 passed785/144/55 and public last-output5/Continue clear/result5 plus all previous proofs. Prior intermittent native startup risk remains unresolved, not claimed fixed. Next collection callback frames/paths inspection; control post-operation, effectful UI, full taint, native/compiled transports/full debugger parity remain open.",
+      "progress": "AC-063..082 interpreted graph/control/UI debugger includes checked points, Over/Out, durable contexts, bounded opt-in control and graph/call values with declaration identities and exact semantic/source witnesses. New optional graph exit follows validated memo, explicit v2 afterOperations permission and independent DTO/client checks. Nested/repeated input2/5→output3/6/result9, phase-aware Over/Out, enter-only breakpoints, failure/no-exit/cancellation/protection/limits tested. Checked release a1b72192f834d7cf85624bc6172148b624a9c496 passed785/144/55 and public last-output5/Continue clear/result5 plus all previous proofs. Prior intermittent native startup risk remains unresolved, not claimed fixed. Next collection callback frames/paths inspection; control post-operation, effectful UI, full taint, native/compiled transports/full debugger parity remain open. AC-083 checked collection projection in progress: existing control IR with ephemeral original graph bindings, mapped grants only, checked frame/caller edges, readable aliases, default zero values, new MapDouble example. Final6 Node/2 Chromium PASS; exact committed/public release gate pending.",
       "evidence": {
         "scope": "AC-063..082 interpreted debugger and checked opt-in control/visual/call values, optional graph post-operation memo snapshots; full collection/taint/effectful/native/compiled profiles remain open.",
         "docs": "docs/spec/IDE_RUNTIME_DIAGNOSTICS.md",
@@ -515,7 +515,9 @@
           "tests/step-frames.test.mjs",
           "tests/breakpoints.test.mjs",
           "tests/graph-post-operation.test.mjs",
-          "tests/graph-inspection-nesting.test.mjs"
+          "tests/graph-inspection-nesting.test.mjs",
+          "tests/collection-inspection.test.mjs",
+          "tests/browser/collection-inspection.test.mjs"
         ],
         "tests": "785/785 PASS",
         "verify": "144/144 PASS",
