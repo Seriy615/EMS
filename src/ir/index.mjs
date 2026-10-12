@@ -206,3 +206,5 @@ export function checkIRPolicy(ir, registry, options = {}) {
   if (ir?.schemaVersion === CONTROL_VERSION) return checkControlPolicy(validateControlIR(ir, registry).policy, options);
   return checkGraphPolicy(graphFromIR(ir, registry), registry, options);
 }
+
+export {analyzeControlOrigins} from '../semantics/control-origins.mjs';

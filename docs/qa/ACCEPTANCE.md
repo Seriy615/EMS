@@ -144,3 +144,7 @@ AC-077 дополнительная приёмка при AC-078: complete metad
 ## AC-087 — Читаемая схема Studio
 
 Русские типы и порты результата, пояснения базовых арифметических операций, различимые входы/операции/ответ, раскрываемая справка с порядком соединения портов; справка открывается и закрывается реальной мышью, затем Graph/Code/debug продолжают работать. Существующие вход8→ответ11, fit и viewport390px без горизонтального переполнения сохраняются. `tests/browser/design.test.mjs`, `tools/deploy-smoke.mjs`; полные gate и public HTTPS обязательны. Это улучшение IDE, не новый языковой milestone.
+
+## AC-088 — Статическое происхождение control IR
+
+Validated IR2→non-executing versioned sidecar и CLI `module-origins`; inputs/literals(no payload)/assignment/control/recursive calls/container/pattern/await/catch/resource alias/stream dependencies. Nested early exit controls retained, shared-state/opaque/exception uncertainty explicit, declaration occurrences distinct, deterministic output. Origin overflow absorbing and seed-safe; nodes/edges/steps/bytes refusal; malformed IR/options refused. `tests/control-origins.test.mjs` и executable verification. Existing debugger barrier and execution remain unchanged. Full static/dynamic confidentiality policy is not accepted by this gate.

@@ -1,3 +1,7 @@
+# Текущая итерация — ядро и происхождение (AC-088)
+
+Черновик из /tmp восстановлен в tracked source `src/semantics/control-origins.mjs`, экспорт/CLI, пример и8 focused tests. См. docs/spec/CONTROL_ORIGINS.md; pending full gate/public evidence. Полная taint/declassification policy не выполнена; AC-086 barrier сохранять. Далее определить формальную classification/grants policy и conformance по per-value labels, межсобытийному состоянию, foreign/unknown boundaries; затем реально проверять native/compiled transports. Глобальная цель активна.
+
 # Текущая итерация — дизайн Studio (AC-087)
 
 Владелец попросил сделать понятный дизайн. AC-087 опубликован: checked8b5410e, gates811/148/62 PASS; public HTTPS smoke PASS, посторонние сервисы/config не изменены. Подробности в STATUS.md. Незавершённая статическая provenance-работа сохранена вне tracked repository: `/tmp/ems-origins-wip/control-origins.mjs`, `control-origins.test.mjs`, `index.mjs`; не проверена как готовая функция и не экспортируется. После дизайна вернуться к core: проверить absorbing unknown, implicit exit/control flow, resource alias/state uncertainty; сохранить действующий AC-086 barrier. Эта временная копия не является постоянным источником проекта. Глобальная цель остаётся активна.

@@ -1,0 +1,9 @@
+fn adjust(value:Number,enabled:Boolean)->Number {
+  if enabled { return value+1; }
+  return value;
+}
+fn main(values:Number[],enabled:Boolean)->Number {
+  let mut total=0;
+  for value in values { total=total+adjust(value,enabled); }
+  return total;
+}

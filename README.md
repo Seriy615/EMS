@@ -121,3 +121,5 @@ Development IDE is available at [dev-ems.d-mash.ru](https://dev-ems.d-mash.ru), 
 
 
 UI preview поддерживает «Отладка событий (новый запуск)»: нажмите реальный элемент приложения, затем Step/Continue. Подтверждённое состояние сохраняется до завершения транзакции; Stop прекращает Worker preview и оставляет последнее подтверждённое отображение. Источники обработчиков проверяются как witness executable IR, значения draft/аргументов в pause metadata не передаются. См. AC-067 и документацию отладки.
+
+Статический анализ происхождения control IR: `node tools/ems.mjs module-origins examples/origins.ems --entry main --out origins.json`. Создаёт зависимости без исполнения программы и содержимого литералов. Это аналитический sidecar, не разрешение раскрывать значения; [профиль и ограничения](docs/spec/CONTROL_ORIGINS.md).
