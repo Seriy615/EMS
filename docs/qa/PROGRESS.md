@@ -1,3 +1,7 @@
+# Текущая итерация — verified intrinsics и opaque mutation (AC-093)
+
+Negative before fix reproduced array sentinel leak; mutable aggregate state barrier closes it. Genuine implementation proof preserves operand classes, local registry guards substitution; graph sum5 visible with public roots. Focused20 Node/2 Chromium PASS; full gate/public pending. Далее межсобытийная mutable-state policy/conformance, затем checked native/compiled transports; host realm/sandbox/full noninterference не доказаны, global goal active.
+
 # Текущая итерация — visual semantic root mapping (AC-092)
 
 Original graph roots projected to existing control lowering and bound classifier, Node/runtime/memo/sequence/compiler and actual UI Worker verified. Canvas/inputs stay outside identity; operand changes invalidate. Graph breakpoints mapped to actual materialized declarations; synthetic helpers not saved as original blocks. Empty array source supported in common analysis. Focused19 Node/final18 integration/4 Chromium PASS, first553ffec gate840/153 PASS,64/66 browser FAIL before upload due legacy null bundle access; corrected guard, old/new graph+collection7/7 PASS. Correctedefebf47 published:840/153/66 PASS, ordinary HTTPS original visual point/public inputs/private+opaque closed/result5/clear and prior proofs PASS; foreign services/config unchanged. Evidence in STATUS.md. Далее межсобытийная policy/conformance и прозрачность verified intrinsics, затем реально проверенные native/compiled transports; полный goal не завершён.

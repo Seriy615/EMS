@@ -1,3 +1,4 @@
+import {Registry} from '../reference/registry.mjs';
 import {verifyBoundOriginPolicy} from '../semantics/origin-policy.mjs';
 import {createControlInspector,inspectionPatternTypes,normalizeInspectionPolicy} from './inspection.mjs';
 import {DIAGNOSTIC_FRAMES,diagnosticFrames,nextDiagnosticFrame,notifyDiagnosticExit} from './diagnostic-frames.mjs';
@@ -36,6 +37,7 @@ export async function executeControlIR(ir, inputs, registry, options = {}) {
   const hasInspection=Object.hasOwn(options,'inspection')&&options.inspection!==undefined;
   if(hasInspection&&typeof options.onControlEnter!=='function'&&typeof options.onControlExit!=='function')fail('INVALID_INSPECTION_POLICY','Inspection requires a control diagnostic observer');
   const inspectionPolicy=hasInspection?normalizeInspectionPolicy(options.inspection):null;
+  if(inspectionPolicy?.originPolicy){const pinned=new Registry();for(const item of registry.items.values())pinned.items.set(item.id,Object.freeze({...item,inputs:structuredClone(item.inputs),effects:Object.freeze([...item.effects]),capabilities:Object.freeze([...item.capabilities]),...(item.graph?{graph:structuredClone(item.graph)}:{}),...(item.interfaceBoundary?{interfaceBoundary:structuredClone(item.interfaceBoundary)}:{}),...(item.resourceBoundaries?{resourceBoundaries:structuredClone(item.resourceBoundaries)}:{})}));registry=pinned;checked=validateControlIR(ir,registry);checkControlPolicy(checked.policy,options);}
   if(inspectionPolicy?.originPolicy?.schemaVersion==='ems-origin-policy/2')inspectionPolicy.originPolicy=await verifyBoundOriginPolicy(ir,registry,inspectionPolicy.originPolicy);
   checkCancellation(options.signal);
   const inspect=hasInspection?createControlInspector(ir,inspectionPolicy,registry):null;

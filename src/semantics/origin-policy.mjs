@@ -40,8 +40,8 @@ export function classifyControlOrigins(ir,registry,value){
  const labels=new Map(policy.sources.map(source=>[sourceKey(source),source.classification]));
  const nodes=analysis.nodes.map(node=>{
   const reasons=node.origins.map(origin=>{
-   const classification=['input','literal'].includes(origin.kind)?labels.get(sourceKey(origin))??'unknown':'unknown';
-   return {origin,classification,reason:classification==='unknown'?(['input','literal'].includes(origin.kind)?'unclassified-source':'unresolved-boundary'):'host-annotation'};
+   const classification=['input','literal'].includes(origin.kind)?labels.get(sourceKey(origin))??'unknown':origin.kind==='intrinsic'?'public':'unknown';
+   return {origin,classification,reason:classification==='unknown'?(['input','literal'].includes(origin.kind)?'unclassified-source':'unresolved-boundary'):origin.kind==='intrinsic'?'verified-intrinsic':'host-annotation'};
   });
   const classification=!reasons.length||reasons.some(r=>r.classification==='unknown')?'unknown':reasons.some(r=>r.classification==='private')?'private':'public';
   return {id:node.id,function:node.function,path:node.path,kind:node.kind,type:node.type,...(node.name?{name:node.name}:{}),classification,reasons};

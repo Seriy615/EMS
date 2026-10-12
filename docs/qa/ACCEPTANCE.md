@@ -164,3 +164,7 @@ Actual root catalog without values, explicit public/private/unknown selection/ap
 ## AC-092 — Visual source roots и shared-IR bound diagnostics
 
 Original inputs/operand-return literals→actual semantic roots, arrays/signed-zero/empty array, nested composite identity; derived output and ambiguous/missing source refusal. Demand/memo/sequence matches original runtime, independent compiler same8. Async actual graph client/Worker reconstruct and validate v2; UI public inputs/private+opaque outputs masked/result5/clear, original operation breakpoint projected to control declaration. Canvas/input changes keep binding; literal edit stale; source/text/collection previous workflows preserved. Full gate/public proof required; pure/frontend limits and opacity retained.
+
+## AC-093 — Verified intrinsic propagation и mutable opaque refusal
+
+Existing coreIntrinsic certificate exact callback/emitter/signature/version/flags, no interface facade; public/private/unknown operand joins preserved. Name/emitter replacement refused. Execution-local registry prevents callback substitution; opaque array mutation initially leaks sentinel then fixed before capture. Node/browser aggregate arithmetic and graph sum5 visible with grants/private input closed; old barriers unchanged. Full gate/public required; trusted host realm/no sandbox/noninterference claim.

@@ -1,3 +1,4 @@
+import {coreIntrinsic} from '../reference/registry.mjs';
 import {validateControlIR} from '../ir/control.mjs';
 import {fail} from '../reference/errors.mjs';
 
@@ -5,7 +6,7 @@ import {fail} from '../reference/errors.mjs';
 export function analyzeControlOrigins(ir,registry,{maxNodes=2048,maxOrigins=64,maxBytes=1048576,maxDependencies=32768,maxSteps=100000}={}){
  for(const [value,min,max]of [[maxNodes,1,8192],[maxOrigins,1,256],[maxBytes,128,4194304],[maxDependencies,1,262144],[maxSteps,1,1000000]])if(!Number.isSafeInteger(value)||value<min||value>max)fail('INVALID_ANALYSIS_OPTION','Invalid origin analysis limit');
  const checked=validateControlIR(ir,registry),nodes=new Map(),summaries=new Map();
- let dependencyCount=0;
+ let dependencyCount=0,hasOpaqueBoundary=false;
  const unknown=JSON.stringify({kind:'unknown',reason:'origin-budget'});
  function add(fn,path,kind,type=null,name=null){const id=JSON.stringify([fn,path]);if(nodes.has(id))return id;if(nodes.size>=maxNodes)fail('ANALYSIS_LIMIT','Origin node budget exceeded');nodes.set(id,{id,function:fn,path,kind,type,...(name?{name}:{}),dependencies:new Set(),origins:new Set()});return id;}
  function edge(to,...from){for(const id of from.flat())if(id&&!nodes.get(to).dependencies.has(id)){if(++dependencyCount>maxDependencies)fail('ANALYSIS_LIMIT','Origin dependency budget exceeded');nodes.get(to).dependencies.add(id);}}
@@ -31,7 +32,7 @@ export function analyzeControlOrigins(ir,registry,{maxNodes=2048,maxOrigins=64,m
      args=node.arguments.map((n,i)=>expr(n,path+'/arguments/'+i,env,control));edge(id,args);
      if(node.kind==='call'){
       if(node.target.kind==='function'){const target=summaries.get(node.target.id);target.inputs.forEach((input,i)=>edge(input,args[i],control));edge(id,target.output);edge(summary.outcome,target.outcome);}
-      else{const target=registry.resolve(node.target.id);seed(id,{kind:'boundary',contract:target.id});seed(id,{kind:'unknown',reason:'opaque-boundary'});for(const name of target.effects??[])seed(id,{kind:'effect',name});for(const name of target.capabilities??[])seed(id,{kind:'capability',name});if(target.kind==='composite')seed(id,{kind:'unknown',reason:'composite-boundary'});if(target.kind==='resource')seed(id,{kind:'local-effect',name:'resource.create'});if(target.kind==='composite'||target.kind==='resource'||target.effects?.length||target.capabilities?.length){edge(state,args,control);edge(id,state);}edge(summary.outcome,id);}
+      else{const target=registry.resolve(node.target.id),intrinsic=!target.interfaceBoundary?coreIntrinsic(target):null;if(intrinsic){seed(id,{kind:'intrinsic',...intrinsic});edge(summary.outcome,id);}else{hasOpaqueBoundary=true;seed(id,{kind:'boundary',contract:target.id});seed(id,{kind:'unknown',reason:'opaque-boundary'});for(const name of target.effects??[])seed(id,{kind:'effect',name});for(const name of target.capabilities??[])seed(id,{kind:'capability',name});if(target.kind==='composite')seed(id,{kind:'unknown',reason:'composite-boundary'});if(target.kind==='resource')seed(id,{kind:'local-effect',name:'resource.create'});if(target.kind==='composite'||target.kind==='resource'||target.effects?.length||target.capabilities?.length){edge(state,args,control);edge(id,state);}edge(summary.outcome,id);}}
      }else if(node.kind==='resource'||node.kind==='stream'){seed(id,{kind:'local-effect',name:node.kind+'.'+node.operation});edge(state,args,control);edge(id,state);edge(summary.outcome,id);}
      break;
     }
@@ -63,6 +64,8 @@ export function analyzeControlOrigins(ir,registry,{maxNodes=2048,maxOrigins=64,m
    }
   }return control;}block(fn.body,'/body',scope);
  }
+ // Mutable aggregates may alias arguments modified by opaque implementations.
+ if(hasOpaqueBoundary){seed(state,{kind:'unknown',reason:'opaque-mutation'});for(const node of nodes.values())if(typeof node.type==='string'&&node.type.includes('NumberArray'))edge(node.id,state);}
  // Origins form a finite union lattice; budget overflow is an absorbing top.
  const consumers=new Map([...nodes.keys()].map(id=>[id,new Set()]));for(const node of nodes.values())for(const dep of node.dependencies)consumers.get(dep).add(node.id);
  const queue=[...nodes.keys()],queued=new Set(queue);let head=0;
