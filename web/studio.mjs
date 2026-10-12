@@ -76,11 +76,14 @@ function save(){try{if(!store)throw new Error('Хранилище недосту
 function change(action,errorNode=null){try{action();$('error').textContent='';pending=null;failedNode=null;save();render();}catch(error){if(errorNode){failedNode=errorNode;selected=errorNode;render();}report(error);}}
 function position(id,index=0){return editor.workspace.canvas.positions[id]??(id==='output'?{x:760,y:100}:{x:330,y:50+index*150});}
 function view(){const v=editor.workspace.canvas.view;$('world').style.transform=`translate(${v.x}px,${v.y}px) scale(${v.scale})`;$('zoom').textContent=Math.round(v.scale*100)+'%';}
+const typeLabels={Number:'Число',String:'Текст',Boolean:'Да / нет',NumberArray:'Список чисел'};
+const friendlyType=type=>typeLabels[type]??type;
+const operationHints={'core.add':'Складывает два числа','core.sub':'Вычитает второе число из первого','core.mul':'Умножает два числа','core.div':'Делит первое число на второе','core.sum':'Складывает все числа в списке','core.min':'Находит наименьшее число','core.max':'Находит наибольшее число'};
 function port(ref,destination,title,type){
- const row=el('div',undefined,'port-row'),button=el('button',undefined,'port');button.type='button';button.title=`${title}: ${type}`;button.setAttribute('aria-label',`${ref?'Выход':'Вход'} ${title}`);
+ const row=el('div',undefined,'port-row'),button=el('button',undefined,'port');button.type='button';button.title=`${title}: ${friendlyType(type)}`;button.setAttribute('aria-label',`${ref?'Выход':'Вход'} ${title}`);
  button.dataset.port=ref?'out':destination.port;button.dataset.node=ref?(ref.node??`input:${ref.input}`):destination.id;
- if(ref){row.append(el('span',title,'port-label'),el('span',type,'type'),button);if(pending&&JSON.stringify(pending)===JSON.stringify(ref))button.classList.add('pending');button.onclick=event=>{event.stopPropagation();pending=ref;render();};}
- else{row.append(button,el('span',title,'port-label'),el('span',type,'type'));button.onclick=event=>{event.stopPropagation();if(!pending){$('connection-status').textContent='Сначала выберите выход.';return;}change(()=>editor.connect(pending,destination.id,destination.port),destination.id);};}
+ if(ref){row.append(el('span',title,'port-label'),el('span',friendlyType(type),'type'),button);if(pending&&JSON.stringify(pending)===JSON.stringify(ref))button.classList.add('pending');button.onclick=event=>{event.stopPropagation();pending=ref;render();};}
+ else{row.append(button,el('span',title,'port-label'),el('span',friendlyType(type),'type'));button.onclick=event=>{event.stopPropagation();if(!pending){$('connection-status').textContent='Сначала выберите выход.';return;}change(()=>editor.connect(pending,destination.id,destination.port),destination.id);};}
  return row;
 }
 function card(id,title,kind,index){
@@ -110,8 +113,8 @@ function render(){
  syncBreakpoints();
  $('canvas-guide').hidden=graph.nodes.length>0||Object.keys(graph.inputs).length>0;
  for(const [name,input]of Object.entries(graph.inputs)){const node=card(`input:${name}`,name,'Входные данные');node.append(el('div',json(editor.workspace.inputs[name]),'input-preview'));node.append(port({input:name},null,name,input.type));$('nodes').append(node);}
- graph.nodes.forEach((definition,index)=>{const contract=editor.registry.resolve(definition.uses),node=card(definition.id,titles[contract.id]??contract.id,contract.kind==='composite'?'Составной':contract.kind==='collection'?'Коллекция':'Операция',index);for(const [name,type]of Object.entries(contract.inputs))node.append(port(null,{id:definition.id,port:name},name,typeof type==='string'?type:type.type));node.append(port({node:definition.id},null,definition.id,contract.output));$('nodes').append(node);});
- const output=card('output','Результат функции','выход');output.append(port(null,{id:'output',port:'return'},'return',graph.output.type));$('nodes').append(output);
+ graph.nodes.forEach((definition,index)=>{const contract=editor.registry.resolve(definition.uses),node=card(definition.id,titles[contract.id]??contract.id,contract.kind==='composite'?'Составной':contract.kind==='collection'?'Коллекция':'Операция',index);if(operationHints[contract.id])node.append(el('p',operationHints[contract.id],'operation-hint'));for(const [name,type]of Object.entries(contract.inputs))node.append(port(null,{id:definition.id,port:name},name,typeof type==='string'?type:type.type));node.append(port({node:definition.id},null,'Результат',contract.output));$('nodes').append(node);});
+ const output=card('output','Ответ программы','выход');output.append(port(null,{id:'output',port:'return'},'Ответ',graph.output.type));$('nodes').append(output);
  $('project-name').value=editor.project.name;$('undo').disabled=!editor.history.length;$('redo').disabled=!editor.future.length;$('connection-status').textContent=pending?'Выберите вход. Esc — отменить.':'';view();catalog();collectionChoices();runInputs();inspector();$('scope').textContent=editor.selectedContract??'Основная программа';$('collapse').disabled=!editor.navigation.length;requestAnimationFrame(wires);
 }
 function json(value){if(Object.is(value,-0))return '-0';if(Array.isArray(value))return '['+value.map(json).join(',')+']';if(value&&typeof value==='object')return '{'+Object.entries(value).map(([key,item])=>JSON.stringify(key)+':'+json(item)).join(',')+'}';return JSON.stringify(value);}
@@ -126,7 +129,7 @@ function runInputs(){
   field.value=input.type==='String'?editor.workspace.inputs[name]:json(editor.workspace.inputs[name]);field.setAttribute('aria-label','Вход '+name);field.spellcheck=false;
   if(input.type==='Number')field.inputMode='decimal';
   const apply=el('button','Применить');apply.type='submit';
-  form.append(label,el('small',input.type,'input-type'),field,apply);
+  form.append(label,el('small',friendlyType(input.type),'input-type'),field,apply);
   if(input.type==='NumberArray')form.append(el('small','Список чисел: [1, 2, 3]','hint'));
   form.onsubmit=event=>{event.preventDefault();change(()=>{editor.setInput(name,input.type==='String'?field.value:JSON.parse(field.value));$('output').textContent='Данные изменены. Нажмите «Запустить».';});};panel.append(form);
  }
@@ -178,7 +181,7 @@ function catalog(){
     const remove=el('button','Удалить');remove.dataset.deleteContract=contract.id;remove.onclick=()=>change(()=>{editor.removeComposite(contract.id);selected=null;});row.append(open,remove);
    }
    if(contract.kind==='collection'){const remove=el('button','Удалить');remove.dataset.deleteCollection=contract.id;remove.onclick=()=>change(()=>editor.removeCollection(contract.id));row.append(remove);}
-   row.append(el('small',signature+(contract.kind==='collection'?' · '+contract.collection.callback.id:''),'signature'));$('catalog').append(row);count++;
+   row.append(el('small',operationHints[contract.id]??Object.values(contract.inputs).map(type=>friendlyType(typeof type==='string'?type:type.type)).join(' + ')+' → '+friendlyType(contract.output),'signature'));$('catalog').append(row);count++;
   }
  }
  if(!count)$('catalog').append(el('p','Контракты не найдены.','hint'));

@@ -36,6 +36,12 @@ test('Studio exposes distinct stable views, a real first-run button and compact 
   assert.equal(await page.evaluate(`document.querySelector('.debug-tools').open`),false);
   await click('#start-example');await click('#run');
   assert.equal(await page.evaluate(`(async()=>{const end=Date.now()+5000;while(document.querySelector('#run').disabled){if(Date.now()>end)throw Error('Example execution timeout');await new Promise(r=>setTimeout(r,10));}return document.querySelector('#output').textContent;})()`),'5');
+  assert.equal(await page.evaluate(`document.querySelector('[data-card="output"] header strong').textContent`),'Ответ программы');
+  assert.equal(await page.evaluate(`document.querySelector('[data-card="sum"] .operation-hint').textContent`),'Складывает два числа');
+  assert.equal(await page.evaluate(`document.querySelector('.run-input-row .input-type').textContent`),'Число');
+  await click('.canvas-help summary');
+  assert.equal(await page.evaluate(`document.querySelector('.canvas-help').open&&document.querySelector('.canvas-help-content').textContent.includes('кружок справа')`),true);
+  await click('.canvas-help summary');
   await click('#text-mode');await click('#text-mode');
   assert.equal(await page.evaluate(`document.body.classList.contains('text-mode')&&document.querySelector('#text-mode').getAttribute('aria-pressed')==='true'`),true);
   await click('#graph-view');await click('#graph-view');
