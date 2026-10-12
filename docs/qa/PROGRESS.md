@@ -1,6 +1,6 @@
 # Текущая итерация — visual semantic root mapping (AC-092)
 
-Original graph roots projected to existing control lowering and bound classifier, Node/runtime/memo/sequence/compiler and actual UI Worker verified. Canvas/inputs stay outside identity; operand changes invalidate. Graph breakpoints mapped to actual materialized declarations; synthetic helpers not saved as original blocks. Empty array source supported in common analysis. Focused19 Node/final18 integration/4 Chromium PASS, full gate/public pending. Далее межсобытийная policy/conformance и прозрачность verified intrinsics, затем реально проверенные native/compiled transports; полный goal не завершён.
+Original graph roots projected to existing control lowering and bound classifier, Node/runtime/memo/sequence/compiler and actual UI Worker verified. Canvas/inputs stay outside identity; operand changes invalidate. Graph breakpoints mapped to actual materialized declarations; synthetic helpers not saved as original blocks. Empty array source supported in common analysis. Focused19 Node/final18 integration/4 Chromium PASS, first553ffec gate840/153 PASS,64/66 browser FAIL before upload due legacy null bundle access; corrected guard, old/new graph+collection7/7 PASS. Corrected full gate/public pending. Далее межсобытийная policy/conformance и прозрачность verified intrinsics, затем реально проверенные native/compiled transports; полный goal не завершён.
 
 # Текущая итерация — IDE root label review/storage (AC-091)
 

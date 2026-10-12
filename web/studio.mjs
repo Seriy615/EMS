@@ -283,7 +283,7 @@ function inspectionWitness(debug){
  const allow=[...inspectionState.grants].filter(([,names])=>names.size).map(([fn,names])=>({function:fn,declarations:[...names]}));
  if(!allow.length&&!inspectionState.prepared.presentation)return null;
  if($('origin-enabled').checked&&(!originState?.bound||originState.identity!==currentInspectionIdentity()))throw new Error('Пересмотрите и примените метки данных перед просмотром значений.');
- const policy={allow,...($('origin-enabled').checked?{originPolicy:originState.bound}:inspectionState.bundle.visualSources?{originPolicy:{schemaVersion:'ems-origin-policy/1',sources:[]}}:{}),protectedFunctions:$('inspection-protected').checked?[inspectionState.prepared.root?.id??inspectionState.bundle.ir.entry]:[]};
+ const policy={allow,...($('origin-enabled').checked?{originPolicy:originState.bound}:inspectionState.bundle?.visualSources?{originPolicy:{schemaVersion:'ems-origin-policy/1',sources:[]}}:{}),protectedFunctions:$('inspection-protected').checked?[inspectionState.prepared.root?.id??inspectionState.bundle.ir.entry]:[]};
  const afterOperations=$('inspection-after').checked;
  return textMode?{schemaVersion:afterOperations?'ems-source-inspection/2':'ems-source-inspection/1',...(afterOperations?{afterOperations:true}:{}),source:draft().source,entry:draft().entry,lowering:draft().lowering,policy}:graphInspectionWitness(editor,policy,{afterOperations});
 }
