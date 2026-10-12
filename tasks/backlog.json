@@ -490,9 +490,9 @@
         "GPT-6.1 Sol",
         "GPT-6 Luna"
       ],
-      "progress": "AC-063..084 interpreted debugger: graph/control/UI gates, durable points, Over/Out, bounded opt-in snapshots with exact semantic/source/declaration identity. Graph and control/visual collection post-operation now share original runtime semantics: actual initialized cells/assignments/loops/materialized outputs, successful-only exits, no extra ticks/compute; return/try/for/forAwait cleanup and cancellation preserve standalone parity. Explicit v2 survives client/Worker validation, v1 exits denied/current-let absent rejected. Checked release 4350ef881f0314b91c2cd50e29cc6f4313d3a6b6 passed799/146/60 with isolated local browser gate and ordinary public control0→2/result2/collection let output[4,6] before return/clear plus all previous proofs. Root startup opaque cause remains unproven. Next actor/UI effect/transaction scope audit and separately proven native/compiled transports/full taint; full debugger/global goal open. AC-085 UI metadata-only post-operation and transaction boundary in progress: original kernel hooks and unchanged commit order, checked source/IR/handler metadata, token replay/overlap denial, explicit fixed afterOperations mode, pending-vs-confirmed banner. Full local805/147, focused24 Node/3 Chromium PASS. Exact committed/public proof pending; no effectful data capture enabled.",
+      "progress": "AC-063..085 interpreted debugger: graph/control/collection post-operation plus metadata-only UI precommit exits on original ReactorKernel. Actual source/IR/handler/path/type/location/frame/caller validation, per-event token replay/overlap/injected state denial. Default enter-only; fixed session afterOperations; pending operation vs acknowledged event banner. Real worker FIFO/abort/later-failure rollback and source-free graph checked. Release a2ced875145e8b2518abe49f4c308a8327a33889 passed805/147/61 with isolated local browser QA; ordinary corrected public post-write0→ACK1→next Stop1 and all prior proofs PASS. Initial remote native graph startup artifactz6yL53 and UI CDP fixture timeout retained; UI fixture clears persistent points, opaque startup cause unproven. Next transitive effect/taint/value permissions and native/compiled actual transport acceptance. Global goal/full debugger open.",
       "evidence": {
-        "scope": "AC-063..084 interpreted debugger; bounded checked graph/control/collection post-operation snapshots. Original runtime/compiler parity and cleanup/cancel; local browser QA isolated, ordinary HTTPS smoke. Full taint/effectful UI/native/compiled open.",
+        "scope": "AC-063..085 interpreted diagnostics; checked UI metadata-only precommit exits with unchanged commit/rollback. Full taint/effectful data capture/native/compiled open.",
         "docs": "docs/spec/IDE_RUNTIME_DIAGNOSTICS.md",
         "testFiles": [
           "tests/graph-inspection-transport.test.mjs",
@@ -523,9 +523,9 @@
           "tests/ui-post-operation.test.mjs",
           "tests/browser/ui-post-operation.test.mjs"
         ],
-        "tests": "799/799 PASS",
-        "verify": "146/146 PASS",
-        "browserTests": "60/60 PASS (explicit isolated Linux network namespace)",
+        "tests": "805/805 PASS",
+        "verify": "147/147 PASS",
+        "browserTests": "61/61 PASS (explicit isolated Linux network namespace)",
         "commands": [
           "npm test",
           "npm run verify",
@@ -534,8 +534,8 @@
         ],
         "deployedRevision": "5bcd6abd41446073073db4e6e4f902a015488246",
         "live": "Final exact740/139/40 PASS; trusted public HTTPS/auth/access and Chromium typed core snapshot x1/result1/default-empty/protected-program and ungranted sentinel absence PASS. Existing graph/composite/reopen15/AVG5/text6/points5-loop3/OverOut7/UI1/live-clear1-2-3/safe-anchor/durable-Studio preserved; six foreign hashes/five active services unchanged. Core API only, IDE value transport/panel remain open.",
-        "liveRevision": "4350ef881f0314b91c2cd50e29cc6f4313d3a6b6",
-        "publicSmoke": "PASS in ordinary network: control initialized0/loop2/result2, actual collection let exit[4,6] before return, clear and all prior proofs"
+        "liveRevision": "a2ced875145e8b2518abe49f4c308a8327a33889",
+        "publicSmoke": "PASS in ordinary network after fixture point isolation; UI precommit0/Continue ACK1/next Stop1 plus all prior proofs. Initial failures retained in PROGRESS."
       },
       "nextSlice": "Source-owned checked pure control inspection grants, strict bounded Worker DTO validation and explicit owner opt-in IDE panel; default no values, protected/effect/handle refusal, exact source/frame identity, detached snapshots and real non-leakage cases. Formal secret taint/effectful UI/native/compiled inspection remain separate."
     },
