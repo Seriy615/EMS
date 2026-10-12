@@ -4,6 +4,8 @@
 
 Постоянная цель и измеримые G-01..18: [`PROJECT_GOAL.md`](../../PROJECT_GOAL.md). Факты проверок: `docs/qa/STATUS.md`; точка продолжения: `docs/qa/PROGRESS.md`. Каждая фаза ниже закрывает часть общей цели, а не заменяет её списком задач.
 
+AC-090 связал сохраняемые root annotations с canonical semantic IR SHA-256 и добавил independent async runtime/client/Worker checks. Найден и исправлен raw -0 serialization collision; первый gate24ae1ce остановлен143 до upload, corrected8c56135 gates834/151/64 и ordinary HTTPS bound13/private closed/stale0-started PASS. Следующий этап — IDE root label authoring/storage с явным пересмотром при semantic edits и review before rebinding. Host authenticity, foreign byte locks, full confidentiality/native/compiled/visual mappings остаются отдельными требованиями.
+
 AC-089 добавил closed host source classification и restrict-only runtime/source-client enforcement; checked a27d2c8, gates827/150/63 и ordinary public HTTPS Worker13/private closed PASS. Следующий этап — source-owned semantic identity и пересмотр root labels при изменении программы, затем IDE authoring и межсобытийная conformance; public report сам не создаёт grant. Полные confidentiality/native/compiled/visual mappings остаются открытыми.
 
 AC-088 добавил non-executing control IR origin sidecar/API/CLI с bounded fixed point, nested exit dependencies и explicit shared/opaque/exception uncertainty. Checked e9ce3fc, gates819/149/62 и ordinary public HTTPS PASS. Следующий core gate — формальная classification/grants policy, per-value conformance и межсобытийная модель; аналитический sidecar сам не разрешает disclosure. AC-086 barrier сохранять.
