@@ -156,3 +156,7 @@ Closed host input/literal annotations, real checked root validation, public<priv
 ## AC-090 — Semantic binding сохранённых root labels
 
 V2 closed SHA-256 domain/canonical IR binding, actual source roots, literal/signed-zero/input order changes rejected; canonical object/function ordering accepted. No literal payloads in policy; no weak hash fallback or implicit v2 rebind/downgrade. Runtime rejects before callbacks, detached IR stable during await; source preparation pins request, real client and Worker independently verify. CLI bind/classify, Node/browser digest parity, stale source causes0 started jobs. Existing barriers/grants and normal result13 remain. Trusted host annotation authenticity, foreign bytes/package locks, persisted IDE authoring/native/compiled/visual/taint remain separate. Full gate/public proof required.
+
+## AC-091 — IDE root-label authoring и отдельное storage
+
+Actual root catalog without values, explicit public/private/unknown selection/apply, checked bound client/Worker, public shown13/private mask/result13/Continue clear. Project-owned bounded sidecar stores bound policy only; stale source review defaults unknown, reopen restores no grants/values/enabled flag, real mouse apply accessible. Source/label changes during hash refuse stale save. Storage owner/extra fields/v1 rejection; nonenumerable own binding data fields copy correctly. Existing diagnostics and graph/code flows preserved; metadata storage guarantee does not extend to pre-existing saved JSON input draft. Full gate/public proof required.

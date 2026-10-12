@@ -20,7 +20,7 @@ export function normalizeOriginPolicy(value){
  fields(value,version==='ems-origin-policy/2'?['schemaVersion','program','sources']:['schemaVersion','sources']);
  if(!['ems-origin-policy/1','ems-origin-policy/2'].includes(value.schemaVersion))fail('INVALID_ORIGIN_POLICY','Unsupported origin policy version');
  let program;
- if(version==='ems-origin-policy/2'){fields(value.program,['domain','sha256']);if(value.program.domain!=='ems-control-origin-binding/1'||typeof value.program.sha256!=='string'||!/^[a-f0-9]{64}$/.test(value.program.sha256))fail('INVALID_ORIGIN_POLICY','Invalid program binding');program={...value.program};}
+ if(version==='ems-origin-policy/2'){fields(value.program,['domain','sha256']);if(value.program.domain!=='ems-control-origin-binding/1'||typeof value.program.sha256!=='string'||!/^[a-f0-9]{64}$/.test(value.program.sha256))fail('INVALID_ORIGIN_POLICY','Invalid program binding');program={domain:value.program.domain,sha256:value.program.sha256};}
  const seen=new Set(),sources=sourceArray(value.sources).map(source=>{
   fields(source,['kind','function','path','classification']);
   if(!['input','literal'].includes(source.kind)||!['public','private'].includes(source.classification)||typeof source.function!=='string'||!source.function.length||source.function.length>1024||typeof source.path!=='string'||!source.path.startsWith('/')||source.path.length>1024)fail('INVALID_ORIGIN_POLICY','Invalid source annotation');

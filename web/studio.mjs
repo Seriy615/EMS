@@ -1,3 +1,5 @@
+import {StudioOriginStorage} from '/src/studio/origin-storage.mjs';
+import {analyzeControlOrigins,createBoundOriginPolicy,verifyBoundOriginPolicy} from '/src/ir/index.mjs';
 import {hasCollections} from '/src/studio/collections.mjs';
 import {prepareStudioInspection,graphInspectionWitness} from '/src/studio/inspection-transport.mjs';
 import {graphInspectionDeclarations} from '/src/runtime/graph-inspection.mjs';
@@ -9,7 +11,7 @@ import {breakpointAtTextOffset} from '/src/studio/breakpoints.mjs';
 import {ProjectManager} from '/src/studio/manager.mjs';
 import {STANDARD_CONTRACTS} from '/src/stdlib/finite.mjs';
 import {ProjectEditor,newProject,parseProject} from '/src/studio/project.mjs';
-import {startStudioExecution} from '/src/studio/execution-client.mjs';
+import {startStudioExecution,startBoundStudioExecution} from '/src/studio/execution-client.mjs';
 import {ProjectStorage} from '/src/studio/storage.mjs';
 const $=id=>document.getElementById(id);
 const titles={'core.add':'Сложение','core.sub':'Вычитание','core.mul':'Умножение','core.div':'Деление','core.sum':'Сумма массива','core.min':'Минимум','core.max':'Максимум'};
@@ -23,7 +25,7 @@ let store,editor,selected=null,pending=null,failedNode=null,textMode=false,textP
 const managedId=new URLSearchParams(location.search).get('project'),manager=managedId?new ProjectManager(localStorage):null;
 let activeExecution=null,pausedOperation=null,executionBreakpointIdentity=null;
 let breakpointIdentity=null,breakpoints=[],debuggerOwner=null,debuggerStorage=null,debuggerRecords=[],debuggerPoints=[];
-let inspectionState=null,activeInspection=false;
+let inspectionState=null,activeInspection=false,originState=null;
 function currentBreakpointIdentity(){const library=studioDebuggerContext(editor).library,program=textMode?JSON.stringify({profile:'text',source:$('text-source').value,entry:$('text-entry').value.trim(),lowering:$('text-lowering').value,library}):'graph:'+library;return editor.project.id+':'+program;}
 function syncBreakpoints(){
  const identity=currentBreakpointIdentity();syncInspection(identity);
@@ -52,17 +54,19 @@ $('text-breakpoint').onclick=()=>{try{toggleBreakpoint(breakpointAtTextOffset(te
 
 async function executeStudio(action,draft,inputs,debug=false){
  syncBreakpoints();executionBreakpointIdentity=breakpointIdentity;pausedOperation=null;syncBreakpoints();
+ const witness=inspectionWitness(debug),startedIdentity=currentInspectionIdentity();
  $('output').textContent=debug?'Отладка: выполняется…':'Выполняется…';$('execution-log').textContent='';$('debug-location').textContent='';$('debug').disabled=true;
- const witness=inspectionWitness(debug);activeInspection=!!witness;$('inspection-options').disabled=activeInspection;
- const job=startStudioExecution({...(witness?{inspection:witness}:{}),action,project:editor.serialize(),selected:editor.selectedContract,draft,inputs,debug,...(debug?{debugOptions:{breakpoints,start:$('debug-run-to-breakpoint').checked?'continue':'step'}}:{})},{timeout:debug?60000:5000,onPause:pause=>{
+ activeInspection=!!witness;$('inspection-options').disabled=activeInspection;
+ let job;try{
+ job=await (witness?.policy.originPolicy?.schemaVersion==='ems-origin-policy/2'?startBoundStudioExecution:startStudioExecution)({...(witness?{inspection:witness}:{}),action,project:editor.serialize(),selected:editor.selectedContract,draft,inputs,debug,...(debug?{debugOptions:{breakpoints,start:$('debug-run-to-breakpoint').checked?'continue':'step'}}:{})},{timeout:debug?60000:5000,onPause:pause=>{
  showInspection(pause);document.querySelector('.debug-tools').open=true;pausedOperation=pause;$('output').textContent='Пауза. Нажмите «Шаг» или «Продолжить».';syncBreakpoints();$('debug-over').disabled=false;$('debug-out').disabled=false;$('debug-step').disabled=false;$('debug-continue').disabled=false;
  const where=pause.profile==='control'?pause.callStack.map(inspectionFunctionLabel).join(' → ')+' / '+pause.node+' ('+pause.kind+') → '+(pause.type??'statement'):pause.callPath.map(call=>call.graph+' / '+call.node+' → '+call.contract).join('\n')+'\nВходы: '+JSON.stringify(pause.inputs)+' → '+pause.output;
  $('debug-location').textContent=(pause.phase==='exit'?'Пауза после операции (выход вычислен)\n':'Пауза перед операцией (снимок программы)\n')+where+(pause.location?'\nСтрока '+pause.location.start.line+', столбец '+pause.location.start.column:'');
  if(action==='text'&&pause.location&&$('text-source').value===draft.source){$('text-source').focus();$('text-source').setSelectionRange(pause.location.start.offset,pause.location.end.offset);}
  if(action==='graph'&&pause.profile==='control'&&inspectionState?.prepared.presentation){const item=inspectionState.prepared.presentation.get(pause.function),binding=item?.bindings.find(b=>b.kind==='node'&&(pause.node===b.declaration||pause.node.startsWith(b.declaration+'/')));if(item?.graph===editor.workspace.graph.id&&binding){selected=binding.displayName;render();}}
  const at=pause.callPath?.find(call=>call.graph===editor.workspace.graph.id);if(action==='graph'&&at){selected=at.node;render();}
- },onLog:record=>{if(['finished','failed'].includes(record.type))clearInspectionValues();if(debug&&['finished','failed'].includes(record.type))$('debug-location').textContent=(record.type==='finished'?'Отладка завершена':'Отладка остановлена: '+record.code)+'\n'+$('debug-location').textContent.replace(/Пауза (?:перед операцией \(снимок программы\)|после операции \(выход вычислен\))/,'Последняя операция (снимок программы)');const message=record.type==='started'?'Запуск '+record.action:record.type==='validated'?'Проект проверен: '+record.id:record.type==='finished'?'Выполнение завершено':'Выполнение остановлено: '+record.code;$('execution-log').textContent+=message+'\n';}});activeExecution=job;$('stop').disabled=false;
- try{return await job.promise;}finally{activeInspection=false;$('inspection-options').disabled=false;clearInspectionValues();if(activeExecution===job)activeExecution=null;pausedOperation=null;syncBreakpoints();$('stop').disabled=true;$('debug').disabled=false;$('debug-over').disabled=true;$('debug-out').disabled=true;$('debug-step').disabled=true;$('debug-continue').disabled=true;}
+ },onLog:record=>{if(['finished','failed'].includes(record.type))clearInspectionValues();if(debug&&['finished','failed'].includes(record.type))$('debug-location').textContent=(record.type==='finished'?'Отладка завершена':'Отладка остановлена: '+record.code)+'\n'+$('debug-location').textContent.replace(/Пауза (?:перед операцией \(снимок программы\)|после операции \(выход вычислен\))/,'Последняя операция (снимок программы)');const message=record.type==='started'?'Запуск '+record.action:record.type==='validated'?'Проект проверен: '+record.id:record.type==='finished'?'Выполнение завершено':'Выполнение остановлено: '+record.code;$('execution-log').textContent+=message+'\n';}});if(witness&&startedIdentity!==currentInspectionIdentity())job.cancel();activeExecution=job;$('stop').disabled=false;
+ return await job.promise;}finally{activeInspection=false;$('inspection-options').disabled=false;clearInspectionValues();if(activeExecution===job)activeExecution=null;pausedOperation=null;syncBreakpoints();$('stop').disabled=true;$('debug').disabled=false;$('debug-over').disabled=true;$('debug-out').disabled=true;$('debug-step').disabled=true;$('debug-continue').disabled=true;}
 }
 for(const [id,mode] of [['debug-step','step'],['debug-over','over'],['debug-out','out'],['debug-continue','continue']])$(id).onclick=()=>{if(activeExecution?.resume(mode)){clearInspectionValues();$('output').textContent='Отладка: выполняется…';pausedOperation=null;syncBreakpoints();$('debug-over').disabled=true;$('debug-out').disabled=true;$('debug-step').disabled=true;$('debug-continue').disabled=true;}};
 $('stop').onclick=()=>activeExecution?.cancel();
@@ -267,7 +271,7 @@ compactLibrary.addEventListener('change',syncLibraryLayout);syncLibraryLayout();
 
 function clearInspectionValues(){ $('inspection-values').textContent=''; }
 function syncInspection(identity){
- if(inspectionState&&inspectionState.identity!==currentInspectionIdentity()){inspectionState=null;$('inspection-bindings').replaceChildren();$('inspection-function').replaceChildren();clearInspectionValues();$('inspection-status').textContent='Программа изменилась. Выберите переменные заново.';if(activeInspection)activeExecution?.cancel();}
+ if(inspectionState&&inspectionState.identity!==currentInspectionIdentity()){inspectionState=null;originState=null;$('origin-sources').replaceChildren();$('origin-apply').disabled=true;$('origin-status').textContent='Программа изменилась. Пересмотрите метки перед просмотром значений.';$('inspection-bindings').replaceChildren();$('inspection-function').replaceChildren();clearInspectionValues();$('inspection-status').textContent='Программа изменилась. Выберите переменные заново.';if(activeInspection)activeExecution?.cancel();}
  $('inspection-choose').disabled=false;$('inspection-after').disabled=!inspectionState;if(!inspectionState)$('inspection-after').checked=false;
 }
 function currentInspectionIdentity(){return currentBreakpointIdentity()+(!textMode?':'+editor.workspace.graph.id:'');}
@@ -276,7 +280,8 @@ function inspectionWitness(debug){
  if(!debug||!inspectionState||inspectionState.identity!==currentInspectionIdentity())return null;
  const allow=[...inspectionState.grants].filter(([,names])=>names.size).map(([fn,names])=>({function:fn,declarations:[...names]}));
  if(!allow.length&&!inspectionState.prepared.presentation)return null;
- const policy={allow,protectedFunctions:$('inspection-protected').checked?[inspectionState.prepared.root?.id??inspectionState.bundle.ir.entry]:[]};
+ if($('origin-enabled').checked&&(!originState?.bound||originState.identity!==currentInspectionIdentity()))throw new Error('Пересмотрите и примените метки данных перед просмотром значений.');
+ const policy={allow,...($('origin-enabled').checked?{originPolicy:originState.bound}:{}),protectedFunctions:$('inspection-protected').checked?[inspectionState.prepared.root?.id??inspectionState.bundle.ir.entry]:[]};
  const afterOperations=$('inspection-after').checked;
  return textMode?{schemaVersion:afterOperations?'ems-source-inspection/2':'ems-source-inspection/1',...(afterOperations?{afterOperations:true}:{}),source:draft().source,entry:draft().entry,lowering:draft().lowering,policy}:graphInspectionWitness(editor,policy,{afterOperations});
 }
@@ -318,3 +323,28 @@ function showInspection(pause){
   return name+(duplicate?' ['+inspectionDeclarationLabel(fn,binding??{declaration:v.declaration})+']':'')+(v.type?' · '+v.type:'')+' = '+(v.status==='value'?json(v.value):statuses[v.status]);
  }).join('\n');
 }
+
+$('origin-review').onclick=async()=>{try{
+ if(!inspectionState)$('inspection-choose').click();
+ if(!textMode||!inspectionState||inspectionState.bundle.ir.schemaVersion!=='ems-ir/2')throw new Error('Для меток выберите «Последовательные» в настройках кода EMS.');
+ const identity=currentInspectionIdentity(),bundle=inspectionState.bundle,analysis=analyzeControlOrigins(bundle.ir,bundle.registry),storage=new StudioOriginStorage(localStorage,editor.project.id),saved=storage.load();let usable=null;
+ if(saved){try{await verifyBoundOriginPolicy(bundle.ir,bundle.registry,saved);usable=saved;}catch(error){if(error.code!=='STALE_ORIGIN_POLICY')throw error;}}
+ if(identity!==currentInspectionIdentity())return;
+ const roots=analysis.nodes.filter(n=>['input','literal','pattern-literal'].includes(n.kind));originState={identity,bundle,storage,bound:usable,revision:0};$('origin-sources').replaceChildren();
+ for(const root of roots){const kind=root.kind==='input'?'input':'literal',row=el('label',undefined,'origin-row'),select=el('select');select.dataset.originFunction=root.function;select.dataset.originPath=root.path;select.dataset.originKind=kind;
+  for(const [value,title]of [['unknown','Не назначено — скрывать'],['private','Закрытые данные'],['public','Можно показывать']]){const option=el('option',title);option.value=value;select.append(option);}
+  select.value=usable?.sources.find(s=>s.kind===kind&&s.function===root.function&&s.path===root.path)?.classification??'unknown';
+  const at=bundle.provenance.functions[root.function]?.nodes[root.path]?.start;row.append(el('span',root.function+' · '+(kind==='input'?'Вход '+root.name:'Литерал')+(at?' · строка '+at.line:'')+' · '+friendlyType(root.type??'')),select);select.onchange=()=>{originState.revision++;originState.bound=null;clearInspectionValues();$('origin-status').textContent='Метки изменены. Примените их перед отладкой.';};$('origin-sources').append(row);
+ }
+ $('origin-apply').disabled=false;$('origin-status').textContent=usable?'Сохранённые метки проверены. Разрешения просмотра переменных не восстанавливаются.':saved?'Сохранённые метки устарели. Назначьте и примените их заново.':'Назначьте метки источникам и примените их. Значения здесь не показываются.';
+ }catch(error){sourceError(error);}};
+$('origin-apply').onclick=async()=>{try{
+ const state=originState;if(!state||state.identity!==currentInspectionIdentity())throw new Error('Сначала проверьте источники текущей программы.');
+ const revision=state.revision;
+ const sources=[...$('origin-sources').querySelectorAll('select')].filter(s=>s.value!=='unknown').map(s=>({kind:s.dataset.originKind,function:s.dataset.originFunction,path:s.dataset.originPath,classification:s.value}));
+ const bound=await createBoundOriginPolicy(state.bundle.ir,state.bundle.registry,{schemaVersion:'ems-origin-policy/1',sources});
+ if(state!==originState||state.identity!==currentInspectionIdentity()||revision!==state.revision)throw new Error('Код или метки изменились во время проверки. Примените их заново.');
+ if(!store||!textStorage)throw new Error('Хранилище проекта недоступно.');store.save(editor.project);textStorage.save(editor.project.id,draft());projectList();state.storage.save(bound);state.bound=bound;$('origin-enabled').checked=true;clearInspectionValues();$('origin-status').textContent='Метки проверены и сохранены. Отметьте разрешённые переменные и начните отладку.';
+ }catch(error){sourceError(error);}};
+$('origin-clear').onclick=()=>{try{new StudioOriginStorage(localStorage,editor.project.id).clear();if(originState){originState.revision++;originState.bound=null;}$('origin-sources').querySelectorAll('select').forEach(s=>s.value='unknown');clearInspectionValues();$('origin-status').textContent='Сохранённые метки удалены. Пересмотрите источники перед новым разрешением.';}catch(error){report(error);}};
+$('origin-enabled').onchange=()=>{clearInspectionValues();$('origin-status').textContent=$('origin-enabled').checked?'Метки будут ограничивать выбранные переменные. Перед запуском нужна проверенная политика.':'Метки выключены. Действуют обычные разрешения просмотра переменных.';};

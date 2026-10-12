@@ -1,0 +1,12 @@
+import test from 'node:test';import assert from 'node:assert/strict';
+import {StudioOriginStorage} from '../src/studio/origin-storage.mjs';import {createBoundOriginPolicy,normalizeOriginPolicy} from '../src/semantics/origin-policy.mjs';
+import {createCoreRegistry} from '../src/reference/registry.mjs';import {parseEMSModule} from '../src/frontend/index.mjs';import {typecheckModule} from '../src/frontend/check.mjs';import {lowerCheckedModule} from '../src/frontend/lower.mjs';
+const compile=text=>{const r=createCoreRegistry();return lowerCheckedModule(typecheckModule(parseEMSModule(text),r),'main',r,{profile:'control'});};
+test('project label metadata persists only bound roots, verifies current semantic program and rejects stale/foreign/extra records',async()=>{
+ const map=new Map(),storage={getItem:k=>map.get(k)??null,setItem:(k,v)=>map.set(k,v),removeItem:k=>map.delete(k)},s=new StudioOriginStorage(storage,'project'),b=compile('fn main()->String {let mut x="STORAGE_PRIVATE_LITERAL";return x;}'),p=await createBoundOriginPolicy(b.ir,b.registry,{schemaVersion:'ems-origin-policy/1',sources:[{kind:'literal',function:'main',path:'/body/0/value',classification:'private'}]});s.save(p);assert.deepEqual(await s.checked(b.ir,b.registry),p);assert.ok(!map.get(s.key).includes('STORAGE_PRIVATE_LITERAL'));
+ const changed=compile('fn main()->String {let mut x="OTHER";return x;}');await assert.rejects(s.checked(changed.ir,changed.registry),{code:'STALE_ORIGIN_POLICY'});assert.deepEqual(s.load(),p);
+ const original=map.get(s.key);for(const extra of [{schemaVersion:'ems-studio-origins/1',project:'other',policy:p},{schemaVersion:'ems-studio-origins/1',project:'project',policy:p,values:['SECRET']},{schemaVersion:'ems-studio-origins/1',project:'project',policy:{schemaVersion:'ems-origin-policy/1',sources:[]}}])assert.throws(()=>s.check(JSON.stringify(extra)),{code:'INVALID_ORIGIN_STORAGE'});assert.equal(map.get(s.key),original);s.clear();assert.equal(s.load(),null);
+});
+test('bound program metadata copies nonenumerable own data fields without losing the digest',async()=>{
+ const b=compile('fn main()->Number {let mut x=1;return x;}'),p=await createBoundOriginPolicy(b.ir,b.registry,{schemaVersion:'ems-origin-policy/1',sources:[]}),program=Object.create(null);for(const [key,value]of Object.entries(p.program))Object.defineProperty(program,key,{value});assert.deepEqual(normalizeOriginPolicy({...p,program}).program,p.program);
+});
