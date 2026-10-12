@@ -1,11 +1,10 @@
 # Current implementation status
 
-## EMS-033 — AC-082 графовый результат после операции (публикация ожидается)
+## EMS-033 — AC-082 результат после графовой операции
 
-Предыдущая итерация дала progress: AC-081 checked5bf3b12/QA1de7dfd опубликован; authoritative worktree clean и baseline774/143 PASS. Сохранённый WIP восстановлен, reviewed, дополнен полноценной opt-in UI/closed witness v2/exit DTO и отрицательными проверками. Nested/repeated visual/source fixtures подтверждают separate frames/inputs. Core exits после проверки типа/memo, без повторного исполнения, с cancellation/protection/limits. Step/Over/Out и enter-only breakpoints согласованы.
+Core optional onNodeExit наблюдает только validated memo. Explicit closed v2 witness разрешает afterOperations; default/v1 enter-only, protection/budgets/cancellation/source checks сохранены. Over достигает completed composite, Out пропускает same-frame exit, breakpoints только enter. Nested/repeated call child2→3/5→6/result9 и точная source location подтверждены actual Chromium. Focused24 Node,17 observer compatibility и10 Chromium PASS. Первый fixture failure из-за var исправлен на нормативный let mut без изменения семантики.
 
-Первый новый focused8/9 Node /3/4 Chromium failed из-за неверного синтаксиса var в control fixture; исправлен fixture на нормативный let mut, поведение runtime не ослаблялось. Final focused24 Node,17 observer/old-graph Node и10 Chromium integration PASS. Полный локальный Node785/785 иverify144/144 PASS; минимальное последующее разрешение exit-only core observer отдельно17/17 проверено. Exact clean committed gates и public post-operation proof ещё ожидаются. Коллекции/control post-operation/native/compiled/full debugger/taint и глобальная цель открыты.
-
+AC-082 опубликован: checked current `a1b72192f834d7cf85624bc6172148b624a9c496`, previous `5bf3b12cbe91f4bf832f4c83068f42e0dc722511`. Exact clean committed gate **785/785 Node,144/144 verify,55/55 Chromium PASS**, deploy/public HTTPS smoke terminal0. Live explicit post-operation grant: последний output5 виден до завершения, Continue clear/result5; все прежние graph/call/control/declaration/UI/debugger/storage/design/mobile proofs PASS. Six foreign nginx hashes/five services unchanged. Dedicated service active, MemoryCurrent17100800, MemoryMax134217728, TasksMax32, userems-language-dev, ProtectHomeyes/ProtectSystemstrict/NoNewPrivilegesyes, listener127.0.0.1:18877. Логи `/tmp/ems-exit-deploy.log`, `/tmp/ems-exit-live-smoke.log`, `/tmp/ems-exit-vps-before.log`, `/tmp/ems-exit-vps-after.log`. Evidence-only commit не заменяет live artifact. EMS-033/M2/global goal active; control post-operation/collection/effectful/native/compiled/full taint открыты. Прежний intermittent Worker startup не объявляется исправленным.
 
 ## EMS-036 — AC-081 понятный запуск Studio
 

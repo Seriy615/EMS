@@ -4,7 +4,7 @@
 
 Постоянная цель и измеримые G-01..18: [`PROJECT_GOAL.md`](../../PROJECT_GOAL.md). Факты проверок: `docs/qa/STATUS.md`; точка продолжения: `docs/qa/PROGRESS.md`. Каждая фаза ниже закрывает часть общей цели, а не заменяет её списком задач.
 
-Последний запрос владельца по удобству IDE выполнен в AC-081: видимые типизированные входы, полный граф и отдельный результат; checked Web release5bf3b12, gates774/143/53 и HTTPS smoke PASS. Следующий основной этап сохраняется: EMS-033 вложенные/повторные вызовы и семантическая отладка, затем оставшиеся профили по зависимостям. Полный M2 не объявляется завершённым.
+Последний запрос владельца по удобству IDE выполнен в AC-081: видимые типизированные входы, полный граф и отдельный результат; checked Web release5bf3b12, gates774/143/53 и HTTPS smoke PASS. AC-082 добавил validated post-operation graph/call values и доказал nested/repeated frames/source; checked a1b7219, gates785/144/55 и HTTPS smoke PASS. Следующий основной этап: EMS-033 collection callback inspection, затем remaining effectful/native/compiled профили по зависимостям. Полный M2 не объявляется завершённым.
 
 | Phase | Definition of done | Demo |
 |---|---|---|
