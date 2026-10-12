@@ -232,3 +232,13 @@ UI debugOptions допускает optional own-data afterOperations:true. Omitt
 prepareUIDebugTransport independently reconstructs saved UI application, source witness/IR, handler bindings and registries before Worker creation. validateUIDebugPause reuses shared metadata-only validateDiagnosticPause: exact known handler/root/path/kind/type/source/frame/caller/contract links, closed own-data DTO. Graph programs without source remain supported with location:null. Values, inspection and speculative snapshots are forbidden fields. Per-dispatch token grows; replay/overlapping pauses terminate session before onPause. Points source policy remains checked in host; metadata fields never grant private data capture.
 
 Этот этап добавляет actual interpreted effect/transaction checkpoints, не effectful value inspection и не atomic rollback of external APIs. Полные taint/value permissions и native/compiled debugger transports остаются отдельными критериями.
+
+## AC-086: транзитивные эффекты точки входа
+
+Control inspection ранее классифицировал каждый текущий fn отдельно. Чистая helper могла получить String из effectful caller и передать его в разрешённый snapshot, несмотря на запрет effectful values. Negative host.secret→helper fixture подтвердил этот обход.
+
+controlInspectionEffectBarrier теперь после semantic validation использует entry.policy.effects/capabilities и entry.localEffects — их транзитивность проверяет сам control IR validator. Если любой набор непустой, все разрешённые declaration/name slots во всех activations этой программы получают protected-effects/type:null/no value. ProtectedFunctions по-прежнему имеет приоритет protected-program; собственные эффекты owner-function также остаются защитой. Scope/cell/value не читаются при барьере.
+
+Studio самостоятельно reconstructs entry classification из exact source/IR для DTO validation. Полученный scalar value из pure helper под effectful entry отвергается даже при правильных function/declaration/type/path. UI показывает «эффекты программы — значения закрыты». Barrier applies both enter and exit. Resource/Stream opaque helper slots теперь тоже masked protected-effects; чистый Future profile без таких эффектов сохраняет excluded-type.
+
+Unused unreachable effect declarations не делают чистый entry эффектным; ordinary output, execution permissions, cleanup, effect ordering и compiler output не меняются. Это статическая conservative entry closure, не dynamic taint tracking и не declassification API. В effectful entry даже независимые публичные константы закрыты. Контрактам, ошибочно объявленным pure сторонним host-кодом, эта metadata-классификация не предоставляет sandbox. Будущий per-value/actor/UI/native/compiled профиль требует отдельного анализа происхождения и явной политики.

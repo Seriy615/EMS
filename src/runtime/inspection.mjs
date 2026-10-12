@@ -52,14 +52,21 @@ export function copyFiniteInspectionValue(value,type,policy,depth=0){
  const payload=Object.getOwnPropertyDescriptor(value,'value');if(!payload||!Object.hasOwn(payload,'value'))throw 'unavailable';return {tag:tag.value,value:copyFiniteInspectionValue(payload.value,variant[0],policy,depth+1)};
 }
 
-/** Initial confidentiality boundary: pure functions only; any marked protected function blocks the whole program.
+/** Static conservative classification after semantic IR validation. No declassification is implied. */
+export function controlInspectionFunctionIsEffectful(fn){return (fn.policy?.effects.length??0)>0||(fn.policy?.capabilities.length??0)>0||(fn.localEffects?.length??0)>0;}
+export function controlInspectionEffectBarrier(ir){
+ const entry=ir.functions.find(fn=>fn.id===ir.entry);if(!entry)fail('INVALID_INSPECTION_POLICY','Control inspection needs a known entry function');
+ return controlInspectionFunctionIsEffectful(entry);
+}
+
+/** Entry effects close every activation; marked protected functions also block the whole program.
  * This is conservative host classification, not inferred taint tracking or declassification. */
 export function createControlInspector(ir,value){
- const policy=normalizeInspectionPolicy(value),functions=new Map(ir.functions.map(fn=>[fn.id,fn])),grants=new Map(),version=policy.allow.some(record=>Object.hasOwn(record,'declarations'))?'ems-inspection/2':'ems-inspection/1';
+ const entryImpure=controlInspectionEffectBarrier(ir),policy=normalizeInspectionPolicy(value),functions=new Map(ir.functions.map(fn=>[fn.id,fn])),grants=new Map(),version=policy.allow.some(record=>Object.hasOwn(record,'declarations'))?'ems-inspection/2':'ems-inspection/1';
  for(const id of policy.protectedFunctions)if(!functions.has(id))fail('INVALID_INSPECTION_POLICY','Unknown protected function');
  for(const grant of policy.allow){const fn=functions.get(grant.function);if(!fn)fail('INVALID_INSPECTION_POLICY','Unknown inspected function');grants.set(fn.id,inspectionGrantBindings(fn,grant));}
  return (id,scope)=>{
-  const variables=[],fn=functions.get(id),bindings=grants.get(id)??[],protectedProgram=policy.protectedFunctions.length>0,impure=(fn.policy?.effects.length??0)>0||(fn.policy?.capabilities.length??0)>0||(fn.localEffects?.length??0)>0;let truncated=false;
+  const variables=[],fn=functions.get(id),bindings=grants.get(id)??[],protectedProgram=policy.protectedFunctions.length>0,impure=entryImpure||controlInspectionFunctionIsEffectful(fn);let truncated=false;
   for(const binding of bindings){
    const {name,declaration}=binding;const identity=version==='ems-inspection/2'?{name,declaration}:{name};
    let record={...identity,type:null,status:protectedProgram?'protected-program':impure?'protected-effects':'not-in-scope'};

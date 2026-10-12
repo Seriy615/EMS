@@ -6,7 +6,7 @@ import {analyzeGraphEffects} from '../semantics/effects.mjs';
 import {studioDebuggerContext} from './debugger-storage.mjs';
 import {hasCollections,lowerCollectionGraph} from './collections.mjs';
 import {compileTextDraft} from './text.mjs';
-import {normalizeInspectionPolicy,createControlInspector,inspectionGrantBindings,controlInspectionDeclarations} from '../runtime/inspection.mjs';
+import {normalizeInspectionPolicy,createControlInspector,inspectionGrantBindings,controlInspectionDeclarations,controlInspectionEffectBarrier,controlInspectionFunctionIsEffectful} from '../runtime/inspection.mjs';
 import {controlNodeEntries} from '../ir/control-addresses.mjs';
 import {parseControlType,controlVariants} from '../semantics/control-algebraic.mjs';
 
@@ -40,7 +40,7 @@ export function prepareStudioInspection(request,editor=null){
  const bundle=compileTextDraft(request.draft,editor);if(bundle.ir.schemaVersion==='ems-ir/1')return prepareGraphInspection(editor,graphFromIR(bundle.ir,bundle.registry),bundle.registry,bundle,witness);
  const policy=normalizeInspectionPolicy(witness.policy);createControlInspector(bundle.ir,policy);
  const functions=new Map(bundle.ir.functions.map(fn=>[fn.id,{fn,nodes:new Map(controlNodeEntries(fn)),grants:policy.allow.find(grant=>grant.function===fn.id)?inspectionGrantBindings(fn,policy.allow.find(grant=>grant.function===fn.id)):[]}]));
- return {editor,bundle,registry:bundle.registry,policy,afterOperations:!!after,functions,witness:{...witness,policy}};
+ return {editor,bundle,registry:bundle.registry,policy,impure:controlInspectionEffectBarrier(bundle.ir),afterOperations:!!after,functions,witness:{...witness,policy}};
 }
 
 /** Ephemeral visual grant identity excludes runtime inputs, canvas layout and project names. */
@@ -67,7 +67,7 @@ function prepareCollectionInspection(editor,witness){
  createControlInspector(bundle.ir,policy);
  for(const grant of policy.allow){const view=presentation.get(grant.function);if(!view||!own(grant,'declarations')||grant.declarations.some(path=>!view.bindings.some(b=>b.declaration===path)))error();}
  const functions=new Map(bundle.ir.functions.map(fn=>[fn.id,{fn,nodes:new Map(controlNodeEntries(fn)),grants:policy.allow.find(grant=>grant.function===fn.id)?inspectionGrantBindings(fn,policy.allow.find(grant=>grant.function===fn.id)):[]}]));
- return {editor,bundle,registry:bundle.registry,policy,afterOperations:own(witness,'afterOperations'),presentation,functions,witness:{...witness,policy}};
+ return {editor,bundle,registry:bundle.registry,policy,impure:controlInspectionEffectBarrier(bundle.ir),afterOperations:own(witness,'afterOperations'),presentation,functions,witness:{...witness,policy}};
 }
 
 /** Closed finite DTO copier. It never invokes accessors and never echoes malformed payloads in errors. */
@@ -86,7 +86,7 @@ export function validateInspectionSnapshot(snapshot,fnId,prepared,currentNode=nu
  fields(snapshot,['schemaVersion','variables','truncated']);if(!['ems-inspection/1','ems-inspection/2'].includes(snapshot.schemaVersion)||typeof snapshot.truncated!=='boolean')error();
  const owner=(prepared.graphs??prepared.functions).get(fnId);if(!owner)error();const bindings=owner.grants,variables=array(snapshot.variables,32),version=prepared.graphs?'ems-inspection/2':prepared.policy.allow.some(item=>own(item,'declarations'))?'ems-inspection/2':'ems-inspection/1';if(snapshot.schemaVersion!==version)error();
  if(variables.length>bindings.length||!snapshot.truncated&&variables.length!==bindings.length||snapshot.truncated&&variables.length>=bindings.length)error();
- const protectedProgram=prepared.policy.protectedFunctions.length>0,impure=prepared.graphs?prepared.impure:owner.fn.policy.effects.length>0||owner.fn.policy.capabilities.length>0||(owner.fn.localEffects?.length??0)>0;
+ const protectedProgram=prepared.policy.protectedFunctions.length>0,impure=prepared.impure||!prepared.graphs&&controlInspectionFunctionIsEffectful(owner.fn);
  const copied=variables.map((record,index)=>{
   const hasValue=record&&typeof record==='object'&&own(record,'value'),keys=['name','type','status',...(version==='ems-inspection/2'?['declaration']:[]),...(hasValue?['value']:[])];fields(record,keys);const binding=bindings[index];if(record.name!==binding.name||version==='ems-inspection/2'&&record.declaration!==binding.declaration)error();const identity=version==='ems-inspection/2'?{name:record.name,declaration:record.declaration}:{name:record.name};
   if(protectedProgram||impure){if(hasValue||record.type!==null||record.status!==(protectedProgram?'protected-program':'protected-effects'))error();return {...identity,type:null,status:record.status};}

@@ -490,7 +490,7 @@
         "GPT-6.1 Sol",
         "GPT-6 Luna"
       ],
-      "progress": "AC-063..085 interpreted debugger: graph/control/collection post-operation plus metadata-only UI precommit exits on original ReactorKernel. Actual source/IR/handler/path/type/location/frame/caller validation, per-event token replay/overlap/injected state denial. Default enter-only; fixed session afterOperations; pending operation vs acknowledged event banner. Real worker FIFO/abort/later-failure rollback and source-free graph checked. Release a2ced875145e8b2518abe49f4c308a8327a33889 passed805/147/61 with isolated local browser QA; ordinary corrected public post-write0→ACK1→next Stop1 and all prior proofs PASS. Initial remote native graph startup artifactz6yL53 and UI CDP fixture timeout retained; UI fixture clears persistent points, opaque startup cause unproven. Next transitive effect/taint/value permissions and native/compiled actual transport acceptance. Global goal/full debugger open.",
+      "progress": "AC-063..085 interpreted debugger: graph/control/collection post-operation plus metadata-only UI precommit exits on original ReactorKernel. Actual source/IR/handler/path/type/location/frame/caller validation, per-event token replay/overlap/injected state denial. Default enter-only; fixed session afterOperations; pending operation vs acknowledged event banner. Real worker FIFO/abort/later-failure rollback and source-free graph checked. Release a2ced875145e8b2518abe49f4c308a8327a33889 passed805/147/61 with isolated local browser QA; ordinary corrected public post-write0→ACK1→next Stop1 and all prior proofs PASS. Initial remote native graph startup artifactz6yL53 and UI CDP fixture timeout retained; UI fixture clears persistent points, opaque startup cause unproven. Next transitive effect/taint/value permissions and native/compiled actual transport acceptance. Global goal/full debugger open. AC-086 entry effect barrier in progress: actual pre-fix pure-helper host secret disclosure reproduced; validated entry effects/capabilities/localEffects now block all activation values before getters, independent DTO check aligned. Unreachable pure/Future behavior retained. Local811/148 and focused33 Node/7 Chromium PASS; exact/public gate pending. No dynamic taint/declassification claimed.",
       "evidence": {
         "scope": "AC-063..085 interpreted diagnostics; checked UI metadata-only precommit exits with unchanged commit/rollback. Full taint/effectful data capture/native/compiled open.",
         "docs": "docs/spec/IDE_RUNTIME_DIAGNOSTICS.md",
@@ -521,7 +521,9 @@
           "tests/control-post-operation.test.mjs",
           "tests/browser/control-post-operation.test.mjs",
           "tests/ui-post-operation.test.mjs",
-          "tests/browser/ui-post-operation.test.mjs"
+          "tests/browser/ui-post-operation.test.mjs",
+          "tests/control-inspection-effects.test.mjs",
+          "tests/browser/control-inspection-effects.test.mjs"
         ],
         "tests": "805/805 PASS",
         "verify": "147/147 PASS",

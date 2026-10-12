@@ -1,5 +1,14 @@
 # Current implementation status
 
+## EMS-033 — AC-086 entry effect confidentiality barrier (публикация ожидается)
+
+Предыдущая goal-итерация дала progress: checked a2ced87/evidenceaa2a912 опубликованы. Clean worktree; baseline805/147 PASS. Новый negative test до исправления реально воспроизвёл disclosure EFFECT_PRIVATE_SENTINEL: effectful main→pure helper параметр. Caller entry policy уже имела transitive secret.read/credentials, однако inspector смотрел только helper policy. Это подтверждённый обход прежней conservative effect классификации, не hypothetical native startup issue.
+
+Core controlInspectionEffectBarrier после validated IR берёт effects/capabilities/localEffects точки входа и закрывает значения во всех её activations, сохраняя additional owner-function guard и protected-program priority. Before any scope/cell/value getter. Independent Studio source/collection transport использует тот же static classification; formerly accepted typed pure-helper payload теперь отвергается. Ordinary result/host invocation count/cleanup/runtime/standalone сохранены. Unreachable effect function не закрывает pure entry; pure Future remains excluded-type. Resource/Stream entry closure masks even opaque helper slots as protected-effects/type:null: updated four previous expectations retain no-value guarantees, not weakened capture.
+
+Final33 Node focused и7 Chromium integration PASS; full811/811/verify148/148 PASS. Host secret flow, mutually recursive helpers, capability-only, local Resource/Stream, getter non-access, DTO forgery и pure/unreachable cases covered. Exact clean committed62/public pure-helper closed/result7 evidence pending. This is conservative transitive entry policy, NOT dynamic per-value taint or declassification; explicit actor/UI/native/compiled value policies remain open. Global goal active.
+
+
 ## EMS-033 — AC-085 UI операция до подтверждения события
 
 Original ReactorKernel forwards interpreted graph/control exit hooks, commit/rollback order unchanged. Client reconstructs actual saved handler/IR/source and checks metadata-only closure/path/kind/type/location/frame/caller edges; replay/overlap/disabled-mode/injected state refusal before callbacks. Explicit afterOperations fixed per session. Banner distinguishes operation success from event ACK. Focused24 Node/3 Chromium and source-free graph profile passed.
