@@ -25,7 +25,7 @@ test('post-operation witness and DTO require explicit v2 opt-in and a completed 
  const pending=structuredClone(pause);pending.inspection.variables[1]={name:'square',declaration:'/graph/nodes/square',type:null,status:'not-evaluated'};assert.throws(()=>validateInspectionPause(pending,prepared),{code:'INVALID_INSPECTION_SNAPSHOT'});
  for(const option of [false,'true',1])assert.throws(()=>prepareStudioInspection({...request,inspection:{...request.inspection,afterOperations:option}}),{code:'INVALID_INSPECTION_SNAPSHOT'});
  let reads=0;const accessor={...request.inspection};Object.defineProperty(accessor,'afterOperations',{get(){reads++;return true;},enumerable:true});assert.throws(()=>prepareStudioInspection({...request,inspection:accessor}),{code:'INVALID_INSPECTION_SNAPSHOT'});assert.equal(reads,0);
- const draft={source:'fn main()->Number {let mut n=0;while n<1 {n=n+1;} return n;}',entry:'main',lowering:'auto'};assert.throws(()=>prepareStudioInspection({action:'text',debug:true,project:editor.serialize(),draft,inspection:{schemaVersion:'ems-source-inspection/2',...draft,policy:{allow:[]},afterOperations:true}}),{code:'UNSUPPORTED_INSPECTION_PROFILE'});
+ const draft={source:'fn main()->Number {let mut n=0;while n<1 {n=n+1;} return n;}',entry:'main',lowering:'auto'};assert.equal(prepareStudioInspection({action:'text',debug:true,project:editor.serialize(),draft,inspection:{schemaVersion:'ems-source-inspection/2',...draft,policy:{allow:[]},afterOperations:true}}).afterOperations,true);
 });
 
 test('failed nodes have no exit event; observer failure is isolated and cancellation still stops execution',async()=>{

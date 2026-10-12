@@ -1,5 +1,14 @@
 # Current implementation status
 
+## EMS-033 — AC-084 control/collection post-operation observation (публикация ожидается)
+
+Предыдущая итерация дала progress: checked0b6dd5b/evidence2a6d68f опубликованы, baseline791/145 PASS. Core optional onControlExit наблюдает типизированные выражения после вычисления и statements после выполнения; uniform return/break/continue propagation сохраняет cleanup/finally/loop semantics. No added semantic ticks or re-evaluation. Scope snapshots detached, observers cannot replace errors; cancellation while post-using pause closes its resource once. Exit-only observer supported with canonical unfolded diagnostic addresses.
+
+Source/visual v2 afterOperations теперь допускает control и collection profiles; exact witness flag переживает client reconstruction. Current let/using cannot be falsely not-in-scope on exit; old v1 still rejects exits. Worker/UI opt-in, phase-aware Over/Out, enter-only breakpoints preserved; Map result observed on completed materialized let before return. Подписи используют actual declaration binding metadata. Ordinary graph input/node name collision already forbidden; initial alleged executable graph collision rejected by fixture validator. Nested lexical shadowing also forbidden; corrected browser fixture tests lawful repeated sibling declarations. Нормативные запреты не ослаблялись.
+
+Initial focused18/20 failures were fixtures: immutable n lowered to call IR and sync standalone error required async assertion wrapper; corrected without weakening behavior. Invalid graph/shadow fixtures corrected to sibling-scope test, exact status wording retained. Final8 new Node/33 combined before extra2,43 old resource/control/step compatibility и9 Chromium integration PASS. Full local799/799/146/146 PASS. Exact clean committed browser60/public control/collection exit proof pending. Full debugger/taint/effectful/native/compiled remains open.
+
+
 ## EMS-033 — AC-083 визуальные коллекции и реальная общая семантика
 
 Existing control IR/runtime/compiler unchanged; ephemeral original graph input/node→typed control declaration mapping. Strict mapped grants/helper denial, root/caller/frame adjacency и closed value DTO. UI aliases/highlight, default metadata-only debug и пример MapDouble. Node Map callback-2/0/3→-4/0/6, Filter Boolean/signed-zero/order/duplicates, protected/source/forged chain refusal; final6 core/2 Chromium и earlier17 Node/10 integration PASS.

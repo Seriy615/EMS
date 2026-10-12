@@ -265,7 +265,7 @@ compactLibrary.addEventListener('change',syncLibraryLayout);syncLibraryLayout();
 function clearInspectionValues(){ $('inspection-values').textContent=''; }
 function syncInspection(identity){
  if(inspectionState&&inspectionState.identity!==currentInspectionIdentity()){inspectionState=null;$('inspection-bindings').replaceChildren();$('inspection-function').replaceChildren();clearInspectionValues();$('inspection-status').textContent='Программа изменилась. Выберите переменные заново.';if(activeInspection)activeExecution?.cancel();}
- $('inspection-choose').disabled=false;$('inspection-after').disabled=!inspectionState?.prepared.graphs;if(!inspectionState?.prepared.graphs)$('inspection-after').checked=false;
+ $('inspection-choose').disabled=false;$('inspection-after').disabled=!inspectionState;if(!inspectionState)$('inspection-after').checked=false;
 }
 function currentInspectionIdentity(){return currentBreakpointIdentity()+(!textMode?':'+editor.workspace.graph.id:'');}
 function inspectionWitness(debug){
@@ -274,7 +274,7 @@ function inspectionWitness(debug){
  const allow=[...inspectionState.grants].filter(([,names])=>names.size).map(([fn,names])=>({function:fn,declarations:[...names]}));
  if(!allow.length&&!inspectionState.prepared.presentation)return null;
  const policy={allow,protectedFunctions:$('inspection-protected').checked?[inspectionState.prepared.root?.id??inspectionState.bundle.ir.entry]:[]};
- const afterOperations=!!inspectionState.prepared.graphs&&$('inspection-after').checked;
+ const afterOperations=$('inspection-after').checked;
  return textMode?{schemaVersion:afterOperations?'ems-source-inspection/2':'ems-source-inspection/1',...(afterOperations?{afterOperations:true}:{}),source:draft().source,entry:draft().entry,lowering:draft().lowering,policy}:graphInspectionWitness(editor,policy,{afterOperations});
 }
 function inspectionDeclarationLabel(fn,item){
@@ -298,7 +298,7 @@ function inspectionCatalog(fn){if(!fn)return [];if(inspectionState.prepared.pres
 $('inspection-choose').onclick=()=>{try{
  const policy={allow:[]},witness=textMode?{schemaVersion:'ems-source-inspection/1',source:draft().source,entry:draft().entry,lowering:draft().lowering,policy}:graphInspectionWitness(editor,policy);
  const prepared=prepareStudioInspection({action:textMode?'text':'graph',debug:true,project:editor.serialize(),selected:editor.selectedContract,draft:textMode?draft():undefined,inspection:witness});
- inspectionState={identity:currentInspectionIdentity(),bundle:prepared.bundle,prepared,grants:new Map()};$('inspection-after').disabled=!prepared.graphs;if(!prepared.graphs)$('inspection-after').checked=false;$('inspection-function').replaceChildren(...inspectionFunctions().map(fn=>{const option=el('option',inspectionFunctionLabel(fn.id));option.value=fn.id;return option;}));$('inspection-function').value=prepared.root?.id??prepared.bundle.ir.entry;inspectionChoices();clearInspectionValues();$('inspection-status').textContent='Отметьте разрешённые значения, затем начните отладку.';
+ inspectionState={identity:currentInspectionIdentity(),bundle:prepared.bundle,prepared,grants:new Map()};$('inspection-after').disabled=false;$('inspection-function').replaceChildren(...inspectionFunctions().map(fn=>{const option=el('option',inspectionFunctionLabel(fn.id));option.value=fn.id;return option;}));$('inspection-function').value=prepared.root?.id??prepared.bundle.ir.entry;inspectionChoices();clearInspectionValues();$('inspection-status').textContent='Отметьте разрешённые значения, затем начните отладку.';
  }catch(error){sourceError(error);}};
 $('inspection-function').onchange=inspectionChoices;
 $('inspection-protected').onchange=clearInspectionValues;$('inspection-after').onchange=clearInspectionValues;
@@ -308,5 +308,10 @@ function showInspection(pause){
  const statuses={'not-evaluated':'ещё не вычислено','not-in-scope':'ещё не в области видимости','protected-program':'защищённая программа','protected-effects':'функция с эффектами','excluded-type':'непрозрачный тип','limit':'превышен лимит','unavailable':'недоступно'};
  const functionId=pause.function??pause.callPath.at(-1).graph,fn=inspectionFunctions().find(fn=>fn.id===functionId);
  $('inspection-status').textContent=inspectionFunctionLabel(functionId)+' · кадр '+pause.frames.at(-1)+(pause.inspection.truncated?' · достигнут лимит снимка':'');
- $('inspection-values').textContent=pause.inspection.variables.map(v=>(inspectionCatalog(fn).find(item=>item.declaration===v.declaration)?.displayName??v.name)+(inspectionCatalog(fn).filter(item=>item.name===v.name).length>1?' ['+inspectionDeclarationLabel(fn,{declaration:v.declaration})+']':'')+(v.type?' · '+v.type:'')+' = '+(v.status==='value'?json(v.value):statuses[v.status])).join('\n');
+ const catalog=inspectionCatalog(fn);
+ $('inspection-values').textContent=pause.inspection.variables.map(v=>{
+  const binding=catalog.find(item=>v.declaration?item.declaration===v.declaration:item.name===v.name),name=binding?.displayName??v.name;
+  const duplicate=catalog.filter(item=>(item.displayName??item.name)===name).length>1;
+  return name+(duplicate?' ['+inspectionDeclarationLabel(fn,binding??{declaration:v.declaration})+']':'')+(v.type?' · '+v.type:'')+' = '+(v.status==='value'?json(v.value):statuses[v.status]);
+ }).join('\n');
 }

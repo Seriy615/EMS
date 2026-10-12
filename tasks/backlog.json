@@ -490,7 +490,7 @@
         "GPT-6.1 Sol",
         "GPT-6 Luna"
       ],
-      "progress": "AC-063..083 interpreted debugger: graph/control/UI steps, Over/Out, durable checked points and bounded opt-in values. Graph post-operation uses v2 permission and validated memo. Visual collections now project original input/node names into existing typed control IR, with mapped declaration grants, helper denial, caller/frame edges, readable aliases and metadata-only default; Map and Filter values/signed-zero/parity covered. Checked release 0b6dd5b8ab4c694726ab0e5bf49c5948177c5501 passed791/145/57 with isolated local loopback browser QA and public ordinary-network callback2→4/3→6/result[4,6]/clear plus all previous proofs. First ordinary56/57 native UI startup failure retained; separate explicit ERR_NETWORK_CHANGED proved environmental interference, isolation is opt-in QA scope, original blank cause unproven. Next control/collection completed-operation hook and alias/collision cases. Full taint/effectful/native/compiled/full debugger remain open.",
+      "progress": "AC-063..083 interpreted debugger: graph/control/UI steps, Over/Out, durable checked points and bounded opt-in values. Graph post-operation uses v2 permission and validated memo. Visual collections now project original input/node names into existing typed control IR, with mapped declaration grants, helper denial, caller/frame edges, readable aliases and metadata-only default; Map and Filter values/signed-zero/parity covered. Checked release 0b6dd5b8ab4c694726ab0e5bf49c5948177c5501 passed791/145/57 with isolated local loopback browser QA and public ordinary-network callback2→4/3→6/result[4,6]/clear plus all previous proofs. First ordinary56/57 native UI startup failure retained; separate explicit ERR_NETWORK_CHANGED proved environmental interference, isolation is opt-in QA scope, original blank cause unproven. Next control/collection completed-operation hook and alias/collision cases. Full taint/effectful/native/compiled/full debugger remain open. AC-084 in progress: real control expression/statement exits, explicit v2 control/collection permission and current-let guard, Worker/UI phase-aware gates, cleanup/return/loop/stream parity and cancellation. Full local799/146, focused8 core/9 browser integration PASS; exact committed/public gate pending.",
       "evidence": {
         "scope": "AC-063..083 interpreted debugger; checked control/visual/call values and collection projection on actual control IR. Local browser gate explicitly isolated from host network changes; public HTTPS remains ordinary network. Full taint/effectful/native/compiled/control-exit remain open.",
         "docs": "docs/spec/IDE_RUNTIME_DIAGNOSTICS.md",
@@ -517,7 +517,9 @@
           "tests/graph-post-operation.test.mjs",
           "tests/graph-inspection-nesting.test.mjs",
           "tests/collection-inspection.test.mjs",
-          "tests/browser/collection-inspection.test.mjs"
+          "tests/browser/collection-inspection.test.mjs",
+          "tests/control-post-operation.test.mjs",
+          "tests/browser/control-post-operation.test.mjs"
         ],
         "tests": "791/791 PASS",
         "verify": "145/145 PASS",

@@ -38,10 +38,9 @@ export function prepareStudioInspection(request,editor=null){
  fields(witness,['schemaVersion','source','entry','lowering','policy',...extra]);
  if(witness.schemaVersion!==(after?'ems-source-inspection/2':'ems-source-inspection/1')||typeof witness.source!=='string'||witness.source.length>262144||new TextEncoder().encode(witness.source).length>262144||witness.source!==request.draft?.source||witness.entry!==request.draft?.entry||witness.lowering!==request.draft?.lowering)fail('STALE_INSPECTION_SOURCE','Inspection source witness disagrees with execution');
  const bundle=compileTextDraft(request.draft,editor);if(bundle.ir.schemaVersion==='ems-ir/1')return prepareGraphInspection(editor,graphFromIR(bundle.ir,bundle.registry),bundle.registry,bundle,witness);
- if(after)fail('UNSUPPORTED_INSPECTION_PROFILE','Post-operation value pauses require graph execution');
  const policy=normalizeInspectionPolicy(witness.policy);createControlInspector(bundle.ir,policy);
  const functions=new Map(bundle.ir.functions.map(fn=>[fn.id,{fn,nodes:new Map(controlNodeEntries(fn)),grants:policy.allow.find(grant=>grant.function===fn.id)?inspectionGrantBindings(fn,policy.allow.find(grant=>grant.function===fn.id)):[]}]));
- return {editor,bundle,registry:bundle.registry,policy,functions,witness:{schemaVersion:witness.schemaVersion,source:witness.source,entry:witness.entry,lowering:witness.lowering,policy}};
+ return {editor,bundle,registry:bundle.registry,policy,afterOperations:!!after,functions,witness:{...witness,policy}};
 }
 
 /** Ephemeral visual grant identity excludes runtime inputs, canvas layout and project names. */
@@ -57,7 +56,6 @@ function prepareGraphInspection(editor,root,registry,bundle,witness){
 
 /** Visual collections use the existing checked control IR, with an ephemeral presentation mapping. */
 function prepareCollectionInspection(editor,witness){
- if(own(witness,'afterOperations'))fail('UNSUPPORTED_INSPECTION_PROFILE','Collection post-operation pauses require a separate adapter');
  const bundle=lowerCollectionGraph(editor.workspace.graph,editor.registry),policy=normalizeInspectionPolicy(witness.policy),presentation=new Map();
  for(const item of bundle.presentation){
   const fn=bundle.ir.functions.find(fn=>fn.id===item.function);if(!fn)error();const catalog=controlInspectionDeclarations(fn),bindings=[];
@@ -69,7 +67,7 @@ function prepareCollectionInspection(editor,witness){
  createControlInspector(bundle.ir,policy);
  for(const grant of policy.allow){const view=presentation.get(grant.function);if(!view||!own(grant,'declarations')||grant.declarations.some(path=>!view.bindings.some(b=>b.declaration===path)))error();}
  const functions=new Map(bundle.ir.functions.map(fn=>[fn.id,{fn,nodes:new Map(controlNodeEntries(fn)),grants:policy.allow.find(grant=>grant.function===fn.id)?inspectionGrantBindings(fn,policy.allow.find(grant=>grant.function===fn.id)):[]}]));
- return {editor,bundle,registry:bundle.registry,policy,presentation,functions,witness:{...witness,policy}};
+ return {editor,bundle,registry:bundle.registry,policy,afterOperations:own(witness,'afterOperations'),presentation,functions,witness:{...witness,policy}};
 }
 
 /** Closed finite DTO copier. It never invokes accessors and never echoes malformed payloads in errors. */
@@ -84,7 +82,7 @@ function valueCopy(value,type,policy){
  fields(value,variant.length?['tag','value']:['tag']);return variant.length?{tag,value:valueCopy(value.value,variant[0],policy)}:{tag};
 }
 export function validateInspectionSnapshot(snapshot,fnId,prepared,currentNode=null,phase='enter'){
- if(!['enter',...(prepared.graphs&&prepared.afterOperations?['exit']:[])].includes(phase))error();
+ if(!['enter',...(prepared.afterOperations?['exit']:[])].includes(phase))error();
  fields(snapshot,['schemaVersion','variables','truncated']);if(!['ems-inspection/1','ems-inspection/2'].includes(snapshot.schemaVersion)||typeof snapshot.truncated!=='boolean')error();
  const owner=(prepared.graphs??prepared.functions).get(fnId);if(!owner)error();const bindings=owner.grants,variables=array(snapshot.variables,32),version=prepared.graphs?'ems-inspection/2':prepared.policy.allow.some(item=>own(item,'declarations'))?'ems-inspection/2':'ems-inspection/1';if(snapshot.schemaVersion!==version)error();
  if(variables.length>bindings.length||!snapshot.truncated&&variables.length!==bindings.length||snapshot.truncated&&variables.length>=bindings.length)error();
@@ -92,6 +90,7 @@ export function validateInspectionSnapshot(snapshot,fnId,prepared,currentNode=nu
  const copied=variables.map((record,index)=>{
   const hasValue=record&&typeof record==='object'&&own(record,'value'),keys=['name','type','status',...(version==='ems-inspection/2'?['declaration']:[]),...(hasValue?['value']:[])];fields(record,keys);const binding=bindings[index];if(record.name!==binding.name||version==='ems-inspection/2'&&record.declaration!==binding.declaration)error();const identity=version==='ems-inspection/2'?{name:record.name,declaration:record.declaration}:{name:record.name};
   if(protectedProgram||impure){if(hasValue||record.type!==null||record.status!==(protectedProgram?'protected-program':'protected-effects'))error();return {...identity,type:null,status:record.status};}
+  if(!prepared.graphs&&phase==='exit'&&binding.declaration===currentNode&&['let','using'].includes(owner.nodes.get(currentNode)?.kind)&&record.status==='not-in-scope')error();
   if(record.status===(prepared.graphs?'not-evaluated':'not-in-scope')){if(hasValue||record.type!==null||prepared.graphs&&(binding.kind!=='node'||phase==='exit'&&binding.key===currentNode))error();return {...identity,type:null,status:record.status};}
   if(prepared.graphs&&phase==='enter'&&binding.kind==='node'&&binding.key===currentNode&&!['protected-program','protected-effects'].includes(record.status))error();
   const type=binding.type;if(record.type!==type)error();const parsed=parseControlType(type,true,true,true),supported=finiteType(parsed);
@@ -108,14 +107,14 @@ export function validateInspectionPause(pause,prepared){
  const profile=pause&&Object.getOwnPropertyDescriptor(pause,'profile');if(profile&&!own(profile,'value'))error();
  fields(pause,profile?.value==='control'?['phase','profile','function','node','kind','type','callStack','frames','step','location','inspection','token']:['phase','callPath','frames','inputs','output','effects','capabilities','location','token',...(prepared.graphs?['inspection']:[])]);
  const frames=array(pause?.frames,64);if(!frames.length||frames.some(id=>!Number.isSafeInteger(id)||id<1)||new Set(frames).size!==frames.length||!Number.isSafeInteger(pause.token)||pause.token<1||!['enter',...(prepared.afterOperations?['exit']:[])].includes(pause.phase))error();
- if(pause.profile==='control'){if(pause.phase!=='enter')error();
+ if(pause.profile==='control'){
   fields(pause,['phase','profile','function','node','kind','type','callStack','frames','step','location','inspection','token']);
   const owner=prepared.functions.get(pause.function),node=owner?.nodes.get(pause.node);if(!node||pause.kind!==node.kind||pause.type!==(node.type??null)||!Number.isSafeInteger(pause.step)||pause.step<1)error();
   const stack=array(pause.callStack,64);if(!stack.length||stack.at(-1)!==pause.function||stack.some(id=>!prepared.functions.has(id)))error();
   if(prepared.presentation){if(stack[0]!==prepared.bundle.ir.entry||stack.length!==frames.length)error();for(let i=1;i<stack.length;i++){const caller=prepared.functions.get(stack[i-1]);if(![...caller.nodes.values()].some(node=>node.kind==='call'&&node.target.kind==='function'&&node.target.id===stack[i]))error();}}
   const location=prepared.bundle.provenance.functions[pause.function]?.nodes?.[pause.node]??null;if(!same(pause.location,location))error();
-  const inspection=validateInspectionSnapshot(pause.inspection,pause.function,prepared);
-  return {phase:'enter',profile:'control',function:pause.function,node:pause.node,kind:pause.kind,type:pause.type,callStack:[...stack],frames:[...frames],step:pause.step,location:structuredClone(location),inspection,token:pause.token};
+  const inspection=validateInspectionSnapshot(pause.inspection,pause.function,prepared,pause.node,pause.phase);
+  return {phase:pause.phase,profile:'control',function:pause.function,node:pause.node,kind:pause.kind,type:pause.type,callStack:[...stack],frames:[...frames],step:pause.step,location:structuredClone(location),inspection,token:pause.token};
  }
  fields(pause,['phase','callPath','frames','inputs','output','effects','capabilities','location','token',...(prepared.graphs?['inspection']:[])]);
  const calls=array(pause.callPath,32);if(!calls.length)error();let previous=null,leaf;
