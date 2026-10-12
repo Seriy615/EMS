@@ -1,6 +1,6 @@
 # Текущая итерация — IDE root label review/storage (AC-091)
 
-Панель назначает public/private/unknown реальным источникам без значений. Apply сохраняет owner/project draft и bound-only label sidecar, включает дополнительное ограничение. Reopen не восстанавливает grants/enabled/values; stale source требует review, selectors unknown. Revision guard защищает edits во время hash, client async preparation/source changes закрыты. Focused2 Node/4 Chromium иrace1 PASS, full gate/public pending. Далее общий visual semantic root mapping и межсобытийная conformance, затем native/compiled parity; полноценный язык/platform ecosystems/global goal открыты.
+Панель назначает public/private/unknown реальным источникам без значений. Apply сохраняет owner/project draft и bound-only label sidecar, включает дополнительное ограничение. Reopen не восстанавливает grants/enabled/values; stale source требует review, selectors unknown. Revision guard защищает edits во время hash, client async preparation/source changes закрыты. Focused2 Node/4 Chromium иrace1 PASS, first gatea7047dc836/152 PASS,64/65 browser fail before upload: unconditional await delayed ordinary Stop handle. Fixed await only for bound API; targeted4/4 PASS, corrected full gate/public pending. Далее общий visual semantic root mapping и межсобытийная conformance, затем native/compiled parity; полноценный язык/platform ecosystems/global goal открыты.
 
 # Текущая итерация — source-owned bound labels (AC-090)
 
