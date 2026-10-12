@@ -490,9 +490,9 @@
         "GPT-6.1 Sol",
         "GPT-6 Luna"
       ],
-      "progress": "AC-063..082 interpreted graph/control/UI debugger includes checked points, Over/Out, durable contexts, bounded opt-in control and graph/call values with declaration identities and exact semantic/source witnesses. New optional graph exit follows validated memo, explicit v2 afterOperations permission and independent DTO/client checks. Nested/repeated input2/5→output3/6/result9, phase-aware Over/Out, enter-only breakpoints, failure/no-exit/cancellation/protection/limits tested. Checked release a1b72192f834d7cf85624bc6172148b624a9c496 passed785/144/55 and public last-output5/Continue clear/result5 plus all previous proofs. Prior intermittent native startup risk remains unresolved, not claimed fixed. Next collection callback frames/paths inspection; control post-operation, effectful UI, full taint, native/compiled transports/full debugger parity remain open. AC-083 checked collection projection in progress: existing control IR with ephemeral original graph bindings, mapped grants only, checked frame/caller edges, readable aliases, default zero values, new MapDouble example. Final6 Node/2 Chromium PASS; exact committed/public release gate pending.",
+      "progress": "AC-063..083 interpreted debugger: graph/control/UI steps, Over/Out, durable checked points and bounded opt-in values. Graph post-operation uses v2 permission and validated memo. Visual collections now project original input/node names into existing typed control IR, with mapped declaration grants, helper denial, caller/frame edges, readable aliases and metadata-only default; Map and Filter values/signed-zero/parity covered. Checked release 0b6dd5b8ab4c694726ab0e5bf49c5948177c5501 passed791/145/57 with isolated local loopback browser QA and public ordinary-network callback2→4/3→6/result[4,6]/clear plus all previous proofs. First ordinary56/57 native UI startup failure retained; separate explicit ERR_NETWORK_CHANGED proved environmental interference, isolation is opt-in QA scope, original blank cause unproven. Next control/collection completed-operation hook and alias/collision cases. Full taint/effectful/native/compiled/full debugger remain open.",
       "evidence": {
-        "scope": "AC-063..082 interpreted debugger and checked opt-in control/visual/call values, optional graph post-operation memo snapshots; full collection/taint/effectful/native/compiled profiles remain open.",
+        "scope": "AC-063..083 interpreted debugger; checked control/visual/call values and collection projection on actual control IR. Local browser gate explicitly isolated from host network changes; public HTTPS remains ordinary network. Full taint/effectful/native/compiled/control-exit remain open.",
         "docs": "docs/spec/IDE_RUNTIME_DIAGNOSTICS.md",
         "testFiles": [
           "tests/graph-inspection-transport.test.mjs",
@@ -519,18 +519,19 @@
           "tests/collection-inspection.test.mjs",
           "tests/browser/collection-inspection.test.mjs"
         ],
-        "tests": "785/785 PASS",
-        "verify": "144/144 PASS",
-        "browserTests": "55/55 PASS",
+        "tests": "791/791 PASS",
+        "verify": "145/145 PASS",
+        "browserTests": "57/57 PASS (explicit isolated Linux network namespace)",
         "commands": [
           "npm test",
           "npm run verify",
-          "npm run browser:test"
+          "node tools/deploy.mjs --isolated-browser-network",
+          "node tools/deploy-smoke.mjs"
         ],
         "deployedRevision": "5bcd6abd41446073073db4e6e4f902a015488246",
         "live": "Final exact740/139/40 PASS; trusted public HTTPS/auth/access and Chromium typed core snapshot x1/result1/default-empty/protected-program and ungranted sentinel absence PASS. Existing graph/composite/reopen15/AVG5/text6/points5-loop3/OverOut7/UI1/live-clear1-2-3/safe-anchor/durable-Studio preserved; six foreign hashes/five active services unchanged. Core API only, IDE value transport/panel remain open.",
-        "liveRevision": "a1b72192f834d7cf85624bc6172148b624a9c496",
-        "publicSmoke": "PASS; explicit post-operation last output5 before completion, Continue clear/result5 and all prior proofs"
+        "liveRevision": "0b6dd5b8ab4c694726ab0e5bf49c5948177c5501",
+        "publicSmoke": "PASS in ordinary network; callback2→4/3→6, separate frames, map[4,6], clear and all prior proofs"
       },
       "nextSlice": "Source-owned checked pure control inspection grants, strict bounded Worker DTO validation and explicit owner opt-in IDE panel; default no values, protected/effect/handle refusal, exact source/frame identity, detached snapshots and real non-leakage cases. Formal secret taint/effectful UI/native/compiled inspection remain separate."
     },
