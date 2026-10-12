@@ -1,3 +1,7 @@
+# Текущая итерация — EMS-036 понятная иерархия Studio (AC-096)
+
+По запросу владельца обновлён редактор программы: явная навигация «Проекты / Программа / Интерфейс», основной акцент на запуске, три зоны «Соберите логику / Задайте значения / Результат запуска», компактные карточки входов, заметный блок ошибок, стартовый пример 2+3 и его цветовая легенда. Примерные входы разнесены по вертикали, результат суммы приближен: блоки не перекрываются. Семантика/IR/хранение не изменены. Baseline855 Node/156 verify PASS; focused Chromium design+studio7/7 PASS, визуально просмотрены1440×900 и390×844. Финальный gate и dev-публикация ожидаются. Далее EMS-060: бюджеты атомарного пакета; глобальная цель активна.
+
 # Текущая итерация — EMS-060 typed error package ABI (AC-095)
 
 New v2 public error set/module descriptor check, union dependencies, no schema downgrade, legacy v1 explicit load/no fake error completeness. Existing user-value throw envelope works across sealed boundaries without changing runtime; Node/compiler/String/Number/-0/Option and independent browser7/3 validated. Focused11 Node/2 Chromium PASS; checked27ef642 published:855/156/69 PASS, ordinary HTTPS actual String-error package→consumer runtime42/standalone42 and prior proofs PASS; foreign services/config unchanged. Evidence in STATUS.md. Далее explicit package limits/shared budgeting and async/public algebraic ABI, source maps and reviewed package linking; full platform/ecosystem goal active.

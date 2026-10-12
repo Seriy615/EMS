@@ -9,10 +9,10 @@
 </head>
 <body>
 <header class="app-header">
-<a class="brand" href="/web/projects.html">EMS <span>Studio</span></a> <span class="header-divider"></span><span class="editor-label">Редактор программы</span>
+<a class="brand" href="/web/projects.html">EMS <span>Studio</span></a> <span class="header-divider"></span><nav class="studio-nav" aria-label="Разделы Studio"><a href="/web/projects.html">Проекты</a><a href="/" aria-current="page">Программа</a><a href="/web/ui-demo.html">Интерфейс</a></nav>
 <input id="project-name" aria-label="Название проекта">
 <select id="projects" aria-label="Открыть проект"></select>
-<a class="ui-link" href="/web/ui-demo.html">Редактор интерфейса ↗</a>
+<span class="header-spacer"></span>
 <button id="new">Новый</button>
 <button id="save" class="primary">Сохранить</button>
 <details class="file-actions"><summary>Файл</summary><button id="export" title="Скачать резервную копию проекта">Экспорт</button>
@@ -29,8 +29,8 @@
 </div>
 <main>
 <aside>
-<details class="library-section" open><summary>Библиотека операций</summary><div class="panel-label">Инструменты</div><h2>Операции</h2>
-<p class="hint">Выберите действие — оно появится на схеме.</p>
+<details class="library-section" open><summary>Библиотека операций</summary><div class="panel-label">01 / Соберите логику</div><h2>Добавить операцию</h2>
+<p class="hint">Нажмите на операцию, затем соедините её с данными.</p>
 <input id="catalog-search" type="search" aria-label="Поиск контрактов" placeholder="Найти операцию…">
 <select id="catalog-category" aria-label="Категория контрактов">
 <option value="">Все категории</option>
@@ -70,7 +70,7 @@
 <p class="hint">Select, And и Or вычисляют все входы. Ленивые if / && / || доступны в тексте.</p>
 </details></aside>
 <section class="workspace" aria-label="Редактор программы">
-<div class="workflow-bar"><span><b>1</b> <span class="desktop-direction">Данные справа</span><span class="mobile-direction">Данные ниже</span></span><span><b>2</b> Операции на схеме</span><span><b>3</b> Результат внизу</span></div>
+<div class="workflow-bar"><span><b>1</b> Соберите схему</span><span><b>2</b> <span class="desktop-direction">Данные справа</span><span class="mobile-direction">Данные ниже</span></span><span><b>3</b> Запустите → результат</span></div>
 <div class="scope-bar"><span class="panel-label">Граф программы</span>
 <button id="main-graph">Основная</button>
 <button id="collapse">← Назад</button>
@@ -98,7 +98,7 @@
 <label class="text-inputs">Аргументы (JSON)<textarea id="text-inputs" spellcheck="false" aria-label="Аргументы текстовой программы"></textarea>
 </label>
 </section>
-<div id="canvas-guide" class="canvas-guide"><span class="guide-icon">◈</span><span class="panel-label">Ваша первая программа</span><h2>Соберите программу из блоков</h2><p>Попробуйте сложить два числа: откройте пример, измените данные справа и запустите программу.</p><button id="start-example" class="primary">Открыть сумму двух чисел →</button><div class="guide-steps"><span>1. Откройте пример</span><span>2. Измените значения</span><span>3. Нажмите «Запустить»</span></div></div><div id="viewport">
+<div id="canvas-guide" class="canvas-guide"><span class="guide-icon">◈</span><span class="panel-label">Начните с работающего примера</span><h2>Два числа → сумма</h2><p>Откройте готовую схему: 2 + 3 = 5. Затем измените числа справа и посмотрите, как меняется ответ.</p><button id="start-example" class="primary">Попробовать: сложить два числа →</button><div class="guide-steps"><span><b>Зелёный</b> — данные</span><span><b>Синий</b> — операция</span><span><b>Фиолетовый</b> — ответ</span></div></div><div id="viewport">
 <div id="world">
 <svg id="wires" width="4000" height="4000" aria-label="Соединения">
 </svg>
@@ -107,18 +107,18 @@
 </div>
 </section>
 <aside class="inspector" aria-label="Данные и свойства">
-<section class="run-inputs"><div class="panel-label">Перед запуском</div><h2>Входные данные</h2><p class="hint">Это значения для запуска. Измените число и нажмите «Применить».</p><div id="run-inputs"></div></section>
-<section class="selection-properties"><div class="panel-label">Выбранный блок</div><h2>Настройки блока</h2>
+<section class="run-inputs"><div class="panel-label">02 / Задайте значения</div><h2>Данные для запуска</h2><p class="hint">Измените значение → «Применить» → «Запустить».</p><div id="run-inputs"></div></section>
+<section class="selection-properties"><div class="panel-label">Свойства</div><h2>Выбранный блок</h2>
 <div id="inspector"></div></section>
 </aside>
 </main>
 <section class="execution">
 <div>
-<strong><span class="result-dot"></span> Ответ программы</strong>
+<strong><span class="result-dot"></span> 03 / Результат запуска</strong>
 <span id="duration"></span>
 <span id="connection-status"></span>
 </div>
-<pre id="output" aria-live="polite">Пока нет результата. Нажмите «Запустить» сверху.</pre>
+<pre id="output" aria-live="polite">Здесь появится результат. Откройте пример и нажмите «Запустить».</pre>
 <div id="error" role="alert"></div>
 <pre id="debug-location" aria-live="polite"></pre>
 <details class="inspection-settings"><summary>Переменные на паузе</summary><p class="hint">Выберите только переменные, которые можно показывать. Значения видны на паузе и не сохраняются в проектах. Изменение программы снимает разрешение.</p><fieldset id="inspection-options"><button id="inspection-choose">Выбрать значения программы</button><select id="inspection-function" aria-label="Функция для просмотра переменных"></select><div id="inspection-bindings"></div><label><input id="inspection-after" type="checkbox" disabled> Останавливаться также после операции</label><p class="hint">Включите, чтобы увидеть значения после вычисления блока или инструкции.</p><label><input id="inspection-protected" type="checkbox"> Программа содержит защищённые данные — закрыть значения</label><details class="origin-settings"><summary>Какие данные можно показывать?</summary><p class="hint">Метки ограничивают просмотр в отладчике и хранятся отдельно от значений. «Можно показывать» дополнительно требует разрешения просмотра переменной. Неизвестные и закрытые данные скрываются.</p><button id="origin-review">Проверить источники данных</button><div id="origin-sources"></div><button id="origin-apply" disabled>Применить и сохранить метки</button><button id="origin-clear">Удалить сохранённые метки</button><label><input id="origin-enabled" type="checkbox"> Ограничивать просмотр этими метками</label><p id="origin-status" role="status">Метки ещё не назначены. Просмотр переменных требует отдельного разрешения.</p></details></fieldset><p id="inspection-status" role="status">Просмотр выключен. По умолчанию значения не передаются.</p><pre id="inspection-values" aria-live="polite"></pre></details>
