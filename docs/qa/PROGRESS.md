@@ -1,3 +1,7 @@
+# Текущая итерация — EMS-060 shared work budget (AC-098)
+
+V4 protocol-bound package interface, frozen execution ledger/child scopes, aggregate control+graph tick parity, shared host context, per-package subtree ceilings. Old v1/v2/v3 explicit load retained, v3 cannot claim reviewed shared linkage. Baseline861/157 PASS; focused22 Node/35 parity/4 Chromium PASS (standalone files and fresh Node). Final clean gate/public smoke pending. Общий cross-package depth/distributed ownership/Worker methods transport/native CPU/memory and async/rich public package ABI/maps remain open; следующий этап — публичный algebraic ABI через existing type/clone semantics. Глобальная цель активна.
+
 # Текущая итерация — EMS-060 package execution limits (AC-097)
 
 V3 module-bound limits/control+graph models, compiler opt-in graph ticks, per-invocation counters, direct lower/raise refusal, import/compile/reseal preservation. Legacy v1/v2 load kept; v2 without budget cannot link into v3. Baseline855/156 PASS; focused17 Node/3 Chromium PASS, independent file browser/fresh Node budget/depth proof. Checked 366f90b58dfc415fa6b4bcfb5b8672697d503a65: exact clean861 Node/157 verify/70 Chromium PASS; dev опубликован, ordinary HTTPS package budget40/depth3→external executor1/STEP_LIMIT и все прежние smoke PASS; foreign6 hashes/5 services unchanged. Shared cross-package counters/time/memory bounds/native/async/rich public ABI/maps не объявлены реализованными; следующий compiler gate — shared-budget protocol. Глобальная цель активна.

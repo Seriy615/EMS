@@ -1,3 +1,4 @@
+import {createWorkBudget,assertWorkBudget} from '../semantics/work-budget.mjs';
 import {stateIntrinsic} from '../runtime/state-bindings.mjs';
 import {checkControlPolicy} from '../runtime/control.mjs';
 import {assertPolicyNames} from '../semantics/effects.mjs';
@@ -31,7 +32,7 @@ export function compileControlJS(ir, registry,{stateful=false}={}) {
     const graph = { schemaVersion: '0.1', id: `control:compiled:${id}`, version: contract.version,
       inputs: Object.fromEntries(Object.entries(contract.inputs).map(([name, type]) => [name, { type: typeof type === 'string' ? type : type.type }])),
       output: { type: contract.output }, nodes: [{ id: 'call', uses: id, args: Object.fromEntries(Object.keys(contract.inputs).map(name => [name, { input: name }])) }], returns: { node: 'call' } };
-    const module = compileStandaloneJS(graph, registry).replace('export function execute(inputs)', 'function execute(inputs)');
+    const module = compileStandaloneJS(graph, registry,{hostWrapper:true}).replace('export function execute(', 'function execute(');
     wrappers.push(`const ${wrapper}=(()=>{\n${module}\nreturn execute;})();`); hosts.set(id, wrapper); return wrapper;
   }
   function expression(node, scope) {
@@ -134,15 +135,15 @@ async function __value(type,fn,frame){__tick();if(++frame.evaluationDepth>256){f
   return `// EMS control IR standalone output. Finite typed values; no EMS dependency.\n${standaloneHelpersJS()}
 ${stateful?[assertPolicyNames,checkControlPolicy].map(fn=>fn.toString()).join('\n'):''}
 const fail=__fail,assertPrimitiveValueType=__assertType,assertValueType=assertControlValueType;
-${[parseControlType, controlTypeName, controlVariants, assertControlValueType, cloneControlValue, matchControlPattern, validateControlInputs, equalControlValues, binaryControlValue, unaryControlValue, indexControlValue, controlBudgetOptions, assertSignal, checkCancellation, ...(futures ? [awaitCancellable,createFutureScope] : []), ...(streams ? [streamBudgetOptions,createStreamScope,executeStreamOperation] : []),resourceCleanupOutcome,...(resources?[resourceBudgetOptions,runResourcePhase,checkResourceAcquired,checkContractConditions,checkContractFailure,createResourceScope,executeResourceOperation]:[]), makeControlThrow, matchesControlCatch, controlCatchValue, terminalControlError].map(fn => fn.toString()).join('\n')}
+${[createWorkBudget,assertWorkBudget,parseControlType, controlTypeName, controlVariants, assertControlValueType, cloneControlValue, matchControlPattern, validateControlInputs, equalControlValues, binaryControlValue, unaryControlValue, indexControlValue, controlBudgetOptions, assertSignal, checkCancellation, ...(futures ? [awaitCancellable,createFutureScope] : []), ...(streams ? [streamBudgetOptions,createStreamScope,executeStreamOperation] : []),resourceCleanupOutcome,...(resources?[resourceBudgetOptions,runResourcePhase,checkResourceAcquired,checkContractConditions,checkContractFailure,createResourceScope,executeResourceOperation]:[]), makeControlThrow, matchesControlCatch, controlCatchValue, terminalControlError].map(fn => fn.toString()).join('\n')}
 const __params=(names,values)=>Object.fromEntries(names.map((name,index)=>[name,values[index]]));
 ${wrappers.join('\n')}
 export ${futures ? 'async ' : ''}function execute(inputs,options={}){
 assertSignal(options.signal);checkCancellation(options.signal);
 ${stateful?`checkControlPolicy(${quote(checked.policy)},options);`:''}
 validateControlInputs(${quote({inputs:entry.inputs})},inputs);
-const __budget=controlBudgetOptions(options);let __steps=0,__depth=0,__evaluationDepth=0;
-function __tick(){checkCancellation(options.signal);if(++__steps>__budget.maxSteps)fail('STEP_LIMIT','Control execution step budget exhausted',{maxSteps:__budget.maxSteps});}
+const __budget=controlBudgetOptions(options),__workBudget=assertWorkBudget(options.workBudget??createWorkBudget(__budget.maxSteps));options={...options,workBudget:__workBudget};let __steps=0,__depth=0,__evaluationDepth=0;
+function __tick(){checkCancellation(options.signal);__workBudget.charge();if(++__steps>__budget.maxSteps)fail('STEP_LIMIT','Control execution step budget exhausted',{maxSteps:__budget.maxSteps});}
 ${futureSetup}
 ${definitions.join('\n')}
 ${executeEntry}

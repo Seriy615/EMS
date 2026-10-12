@@ -1,3 +1,4 @@
+import {createWorkBudget,assertWorkBudget} from '../semantics/work-budget.mjs';
 import {createGraphInspector,GRAPH_INSPECTOR} from '../runtime/graph-inspection.mjs';
 import {DIAGNOSTIC_FRAMES,diagnosticFrames,nextDiagnosticFrame,notifyDiagnosticExit} from '../runtime/diagnostic-frames.mjs';
 import { resolveCompositeBoundary, checkContractConditions, checkContractFailure } from '../contracts/conditions.mjs';
@@ -20,6 +21,7 @@ export async function executeGraph(graph, inputs, registry, options = {}) {
   validateRuntimeInputs(graph, inputs);
   checkGraphPolicy(graph, registry, options);
   validateEffectSequence(graph, registry);
+  const workBudget=assertWorkBudget(options.workBudget??createWorkBudget(options.maxSteps??100000));options={...options,workBudget};workBudget.charge();
   const hasGraphInspection=Object.hasOwn(options,'graphInspection')&&options.graphInspection!==undefined;
   if(hasGraphInspection&&typeof options.onNodeEnter!=='function'&&typeof options.onNodeExit!=='function')fail('INVALID_INSPECTION_POLICY','Graph inspection needs a node observer');
   const shared=Object.getOwnPropertyDescriptor(options,GRAPH_INSPECTOR);
@@ -53,6 +55,7 @@ export async function executeGraph(graph, inputs, registry, options = {}) {
     const params = Object.create(null);
     for (const key of Object.keys(contract.inputs)) params[key] = await refValue(node.args[key]);
     checkCancellation(options.signal);
+    workBudget.charge();
     const callPath=[...(options.callPath??[]),{graph:graph.id,node:id,contract:contract.id}];
     try {
     if(options.onNodeEnter){
@@ -61,8 +64,8 @@ export async function executeGraph(graph, inputs, registry, options = {}) {
       checkCancellation(options.signal);
     }
     const result = contract.kind === 'composite'
-      ? await executeGraph(contract.graph, params, registry, { capabilities: [...allowed], allowedEffects: options.allowedEffects ?? [], callStack: nextStack, signal: options.signal, state: options.state, callPath, onNodeFailure: options.onNodeFailure, onNodeEnter: options.onNodeEnter,onNodeExit:options.onNodeExit,onFrameExit:options.onFrameExit,[DIAGNOSTIC_FRAMES]:childDiagnostics,...(inspect?{[GRAPH_INSPECTOR]:inspect}:{}) })
-      : await awaitCancellable(contract.execute(params, Object.freeze({ signal: options.signal, state: options.state, callPath, onNodeFailure: options.onNodeFailure, onNodeEnter: options.onNodeEnter,onNodeExit:options.onNodeExit,onFrameExit:options.onFrameExit,[DIAGNOSTIC_FRAMES]:childDiagnostics,...(inspect?{[GRAPH_INSPECTOR]:inspect}:{}) })), options.signal);
+      ? await executeGraph(contract.graph, params, registry, { capabilities: [...allowed], allowedEffects: options.allowedEffects ?? [], callStack: nextStack, signal: options.signal, state: options.state,workBudget, callPath, onNodeFailure: options.onNodeFailure, onNodeEnter: options.onNodeEnter,onNodeExit:options.onNodeExit,onFrameExit:options.onFrameExit,[DIAGNOSTIC_FRAMES]:childDiagnostics,...(inspect?{[GRAPH_INSPECTOR]:inspect}:{}) })
+      : await awaitCancellable(contract.execute(params, Object.freeze({ signal: options.signal, state: options.state,workBudget, callPath, onNodeFailure: options.onNodeFailure, onNodeEnter: options.onNodeEnter,onNodeExit:options.onNodeExit,onFrameExit:options.onFrameExit,[DIAGNOSTIC_FRAMES]:childDiagnostics,...(inspect?{[GRAPH_INSPECTOR]:inspect}:{}) })), options.signal);
     checkCancellation(options.signal);
     assertValueType(result, contract.output, `result of ${contract.id}`);
     memo.set(id, result);

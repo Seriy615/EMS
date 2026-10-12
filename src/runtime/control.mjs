@@ -1,3 +1,4 @@
+import {createWorkBudget,assertWorkBudget} from '../semantics/work-budget.mjs';
 import {Registry} from '../reference/registry.mjs';
 import {verifyBoundOriginPolicy} from '../semantics/origin-policy.mjs';
 import {createControlInspector,inspectionPatternTypes,normalizeInspectionPolicy} from './inspection.mjs';
@@ -41,7 +42,7 @@ export async function executeControlIR(ir, inputs, registry, options = {}) {
   if(inspectionPolicy?.originPolicy?.schemaVersion==='ems-origin-policy/2')inspectionPolicy.originPolicy=await verifyBoundOriginPolicy(ir,registry,inspectionPolicy.originPolicy);
   checkCancellation(options.signal);
   const inspect=hasInspection?createControlInspector(ir,inspectionPolicy,registry):null;
-  const budget = controlBudgetOptions(options); let steps = 0;
+  const budget = controlBudgetOptions(options),workBudget=assertWorkBudget(options.workBudget??createWorkBudget(budget.maxSteps));options={...options,workBudget}; let steps = 0;
   const diagnostics=diagnosticFrames(options);
   const addresses=new WeakMap();
   if(options.onControlEnter||options.onControlExit)for(const fn of ir.functions)for(const [path,node] of controlNodeEntries(fn))addresses.set(node,path);
@@ -59,7 +60,7 @@ export async function executeControlIR(ir, inputs, registry, options = {}) {
   const streams = [CONTROL_STREAM_PROFILE,CONTROL_RESOURCE_PROFILE].includes(ir.profile) ? createStreamScope(options) : null;
   const resources=resourceProfile?createResourceScope(options):null;
   function validateValue(value, type, context) { assertControlValueType(value, type, context, futures?.check, streams?.check,resources?.check); }
-  function tick() { checkCancellation(options.signal); if (++steps > budget.maxSteps) fail('STEP_LIMIT', 'Control execution step budget exhausted', { maxSteps: budget.maxSteps }); }
+  function tick() { checkCancellation(options.signal);workBudget.charge(); if (++steps > budget.maxSteps) fail('STEP_LIMIT', 'Control execution step budget exhausted', { maxSteps: budget.maxSteps }); }
   async function expression(node, scope, frame) {
     tick();
     if (++frame.evaluationDepth > 256) { frame.evaluationDepth--; fail('EVALUATION_DEPTH', 'Control expression depth exhausted', { maxEvaluationDepth: 256 }); }
@@ -92,7 +93,7 @@ export async function executeControlIR(ir, inputs, registry, options = {}) {
           const params = Object.fromEntries(Object.keys(target.inputs).map((key, index) => [key, args[index]]));
           const graphOptions={...options};delete graphOptions.inspection;
           const result = target.kind==='resource'?await resources.acquire(target,params):target.kind === 'composite' ? await executeGraph(target.graph, params, registry, {...graphOptions,signal:options.signal,[DIAGNOSTIC_FRAMES]:{allocator:diagnostics.allocator,stack:frame.frames}})
-            : await awaitCancellable(target.execute(params, Object.freeze({ signal: options.signal, state: options.state })), options.signal);
+            : await awaitCancellable(target.execute(params, Object.freeze({ signal: options.signal, state: options.state,workBudget })), options.signal);
           if(target.kind!=='resource')assertValueType(result, target.output, 'result of ' + node.target.id); return result;
         };
         value = (node.target.kind === 'function' ? target.async : node.target.async)
