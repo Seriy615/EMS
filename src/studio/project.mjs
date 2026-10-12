@@ -214,7 +214,7 @@ export class ProjectEditor {
   viewport(view) { this.editWorkspace(project => { project.canvas.view = view; }); }
   serialize() { return serializeProject(this.project, this.baseRegistry); }
   async run(options={}) {
-    const project = clone(this.workspace), ir = parseIR(serializeIR(lowerWorkspace(project.graph,this.registry), this.registry), this.registry);
+    const project = clone(this.workspace), ir = parseIR(serializeIR(options.inspection?.originPolicy?lowerCollectionGraph(project.graph,this.registry).ir:lowerWorkspace(project.graph,this.registry), this.registry), this.registry);
     return executeIR(ir, project.inputs, this.registry,options);
   }
 }

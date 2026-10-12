@@ -160,3 +160,7 @@ V2 closed SHA-256 domain/canonical IR binding, actual source roots, literal/sign
 ## AC-091 — IDE root-label authoring и отдельное storage
 
 Actual root catalog without values, explicit public/private/unknown selection/apply, checked bound client/Worker, public shown13/private mask/result13/Continue clear. Project-owned bounded sidecar stores bound policy only; stale source review defaults unknown, reopen restores no grants/values/enabled flag, real mouse apply accessible. Source/label changes during hash refuse stale save. Storage owner/extra fields/v1 rejection; nonenumerable own binding data fields copy correctly. Existing diagnostics and graph/code flows preserved; metadata storage guarantee does not extend to pre-existing saved JSON input draft. Full gate/public proof required.
+
+## AC-092 — Visual source roots и shared-IR bound diagnostics
+
+Original inputs/operand-return literals→actual semantic roots, arrays/signed-zero/empty array, nested composite identity; derived output and ambiguous/missing source refusal. Demand/memo/sequence matches original runtime, independent compiler same8. Async actual graph client/Worker reconstruct and validate v2; UI public inputs/private+opaque outputs masked/result5/clear, original operation breakpoint projected to control declaration. Canvas/input changes keep binding; literal edit stale; source/text/collection previous workflows preserved. Full gate/public proof required; pure/frontend limits and opacity retained.

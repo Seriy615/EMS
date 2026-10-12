@@ -1,3 +1,5 @@
+import {validateBreakpoints} from './debugger.mjs';
+import {lowerVisualOrigins} from './visual-origins.mjs';
 import {classifyControlOrigins,verifyBoundOriginPolicy} from '../semantics/origin-policy.mjs';
 import {fail} from '../reference/errors.mjs';
 import {ProjectEditor,parseProject} from './project.mjs';
@@ -34,7 +36,7 @@ export function prepareStudioInspection(request,editor=null){
  if(request.action==='graph'){
   fields(witness,['schemaVersion','project','selected','library','policy',...extra]);
   if(witness.schemaVersion!==(after?'ems-graph-inspection/2':'ems-graph-inspection/1')||witness.project!==editor.project.id||witness.selected!==editor.workspace.graph.id||typeof witness.library!=='string'||witness.library.length>1048576||witness.library!==graphInspectionLibrary(editor))fail('STALE_INSPECTION_SOURCE','Graph witness disagrees with execution');
-  return hasCollections(editor.workspace.graph,editor.registry)?prepareCollectionInspection(editor,witness):prepareGraphInspection(editor,editor.workspace.graph,editor.registry,null,witness);
+  return hasCollections(editor.workspace.graph,editor.registry)||witness.policy?.originPolicy?prepareCollectionInspection(editor,witness):prepareGraphInspection(editor,editor.workspace.graph,editor.registry,null,witness);
  }
  fields(witness,['schemaVersion','source','entry','lowering','policy',...extra]);
  if(witness.schemaVersion!==(after?'ems-source-inspection/2':'ems-source-inspection/1')||typeof witness.source!=='string'||witness.source.length>262144||new TextEncoder().encode(witness.source).length>262144||witness.source!==request.draft?.source||witness.entry!==request.draft?.entry||witness.lowering!==request.draft?.lowering)fail('STALE_INSPECTION_SOURCE','Inspection source witness disagrees with execution');
@@ -57,8 +59,8 @@ function prepareGraphInspection(editor,root,registry,bundle,witness){
 
 /** Visual collections use the existing checked control IR, with an ephemeral presentation mapping. */
 function prepareCollectionInspection(editor,witness){
- const bundle=lowerCollectionGraph(editor.workspace.graph,editor.registry),policy=normalizeInspectionPolicy(witness.policy),presentation=new Map();
- if(policy.originPolicy)fail('UNSUPPORTED_PROFILE','Origin policy for visual collection addresses is not supported');
+ const bundle=witness.policy?.originPolicy?lowerVisualOrigins(editor.workspace.graph,editor.registry):lowerCollectionGraph(editor.workspace.graph,editor.registry),policy=normalizeInspectionPolicy(witness.policy),presentation=new Map();
+
  for(const item of bundle.presentation){
   const fn=bundle.ir.functions.find(fn=>fn.id===item.function);if(!fn)error();const catalog=controlInspectionDeclarations(fn),bindings=[];
   for(const [kind,entries]of [['input',item.inputs],['node',item.nodes]])for(const entry of entries){const binding=catalog.find(d=>d.name===entry.binding);if(!binding)error();bindings.push({...binding,displayName:entry.name,kind});}
@@ -136,11 +138,21 @@ export function validateDiagnosticPause(pause,prepared,includeInspection=false){
 export async function prepareBoundStudioInspection(request,editor){
  const descriptor=Object.getOwnPropertyDescriptor(request,'inspection');if(!descriptor||!own(descriptor,'value'))error();
  const witness=descriptor.value,after=Object.getOwnPropertyDescriptor(witness??{},'afterOperations');if(after&&!own(after,'value'))error();
- fields(witness,['schemaVersion','source','entry','lowering','policy',...(after?['afterOperations']:[])]);
+ fields(witness,request.action==='graph'?['schemaVersion','project','selected','library','policy',...(after?['afterOperations']:[])]:['schemaVersion','source','entry','lowering','policy',...(after?['afterOperations']:[])]);
  const copied=normalizeInspectionPolicy(witness.policy),bound=copied.originPolicy;
  if(bound?.schemaVersion!=='ems-origin-policy/2')fail('INVALID_ORIGIN_POLICY','Expected bound source annotations');
  const prepared=prepareStudioInspection({...request,inspection:{...witness,policy:{...copied,originPolicy:{schemaVersion:'ems-origin-policy/1',sources:bound.sources}}}},editor);
  const pinned=structuredClone({...request,inspection:{...prepared.witness,policy:{...prepared.policy,originPolicy:bound}}});
  await verifyBoundOriginPolicy(prepared.bundle.ir,prepared.registry,bound);
  return {...prepared,witness:pinned.inspection,request:pinned};
+}
+
+/** Preserve original graph breakpoint addresses while executing their checked control declarations. */
+export function mappedVisualBreakpoints(prepared,points){
+ const checked=validateBreakpoints(points);if(!prepared?.presentation)return checked;
+ return checked.map(point=>{if(point.profile==='control')return point;for(const [fn,view]of prepared.presentation){if(view.graph!==point.graph)continue;const binding=view.bindings.find(b=>b.kind==='node'&&b.displayName===point.node);if(binding)return {profile:'control',function:fn,node:binding.declaration};}fail('INVALID_DEBUG_BREAKPOINT','Visual point has no materialized semantic operation');});
+}
+export function originalVisualBreakpoint(prepared,event){
+ const view=prepared?.presentation?.get(event.function),binding=view?.bindings.find(b=>b.kind==='node'&&(event.node===b.declaration||event.node.startsWith(b.declaration+'/')));
+ return binding?{profile:'graph',graph:view.graph,node:binding.displayName}:null;
 }

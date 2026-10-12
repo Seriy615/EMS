@@ -23,7 +23,7 @@ export function analyzeControlOrigins(ir,registry,{maxNodes=2048,maxOrigins=64,m
     case 'literal':seed(id,{kind:'literal',function:fn.id,path});break;
     case 'local':edge(id,env.get(node.name));break;
     case 'assign':edge(id,expr(node.value,path+'/value',env,control));edge(env.get(node.name),id);break;
-    case 'array':args=node.elements.map((n,i)=>expr(n,path+'/elements/'+i,env,control));edge(id,args);break;
+    case 'array':if(!node.elements.length)seed(id,{kind:'literal',function:fn.id,path});args=node.elements.map((n,i)=>expr(n,path+'/elements/'+i,env,control));edge(id,args);break;
     case 'unary':case 'await':edge(id,expr(node.value,path+'/value',env,control));edge(summary.outcome,id);break;
     case 'binary':edge(id,expr(node.left,path+'/left',env,control),expr(node.right,path+'/right',env,control));edge(summary.outcome,id);break;
     case 'index':edge(id,expr(node.value,path+'/value',env,control),expr(node.index,path+'/index',env,control));edge(summary.outcome,id);break;

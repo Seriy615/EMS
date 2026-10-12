@@ -1,3 +1,4 @@
+import {controlNodeEntries} from '../ir/control-addresses.mjs';
 import {analyzeControlOrigins} from './control-origins.mjs';
 import {serializeControlIR} from '../ir/control.mjs';
 import {sha256} from '../contracts/provenance.mjs';
@@ -34,6 +35,7 @@ export function normalizeOriginPolicy(value){
 export function classifyControlOrigins(ir,registry,value){
  const policy=normalizeOriginPolicy(value);if(policy.schemaVersion==='ems-origin-policy/2')fail('BOUND_ORIGIN_POLICY','Bound policy requires asynchronous verification');const analysis=analyzeControlOrigins(ir,registry),roots=new Set();
  for(const node of analysis.nodes)if(['input','literal','pattern-literal'].includes(node.kind))roots.add(sourceKey({kind:node.kind==='input'?'input':'literal',function:node.function,path:node.path}));
+ for(const fn of ir.functions)for(const [path,node]of controlNodeEntries(fn))if(node.kind==='array'&&!node.elements.length)roots.add(sourceKey({kind:'literal',function:fn.id,path}));
  for(const source of policy.sources)if(!roots.has(sourceKey(source)))fail('INVALID_ORIGIN_POLICY','Annotation must address an existing semantic source');
  const labels=new Map(policy.sources.map(source=>[sourceKey(source),source.classification]));
  const nodes=analysis.nodes.map(node=>{

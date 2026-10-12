@@ -1,7 +1,9 @@
+import {controlNodeEntries} from '/src/ir/control-addresses.mjs';
+import {lowerVisualOrigins,visualOriginAnnotations} from '/src/studio/visual-origins.mjs';
 import {StudioOriginStorage} from '/src/studio/origin-storage.mjs';
 import {analyzeControlOrigins,createBoundOriginPolicy,verifyBoundOriginPolicy} from '/src/ir/index.mjs';
 import {hasCollections} from '/src/studio/collections.mjs';
-import {prepareStudioInspection,graphInspectionWitness} from '/src/studio/inspection-transport.mjs';
+import {prepareStudioInspection,graphInspectionWitness,originalVisualBreakpoint} from '/src/studio/inspection-transport.mjs';
 import {graphInspectionDeclarations} from '/src/runtime/graph-inspection.mjs';
 import {controlInspectionDeclarations} from '/src/runtime/inspection.mjs';
 import {captureSourceBreakpoint} from '/src/studio/source-anchors.mjs';
@@ -38,7 +40,7 @@ function syncBreakpoints(){
  }
  $('breakpoint-count').textContent=String(debuggerPoints.length);
  $('breakpoint-list').textContent=debuggerPoints.map(item=>(item.record.point.graph??item.record.point.function)+' / '+(item.point?.node??('не привязана: '+item.reason))).join('\n')||'Выберите блок в графе или операцию в тексте.';
- $('debug-breakpoint').disabled=!pausedOperation||executionBreakpointIdentity!==identity;
+ $('debug-breakpoint').disabled=!pausedOperation||executionBreakpointIdentity!==identity||!textMode&&inspectionState?.prepared.presentation&&!originalVisualBreakpoint(inspectionState.prepared,pausedOperation);
 }
 function toggleBreakpoint(point){
  syncBreakpoints();const key=JSON.stringify(point),active=debuggerPoints.find(item=>JSON.stringify(item.point)===key);let next;
@@ -48,7 +50,7 @@ function toggleBreakpoint(point){
  if(activeExecution&&executionBreakpointIdentity===breakpointIdentity)activeExecution.setBreakpoints(breakpoints);
  render();
 }
-$('debug-breakpoint').onclick=()=>{try{if(pausedOperation&&executionBreakpointIdentity===currentBreakpointIdentity())toggleBreakpoint(breakpointForEvent(pausedOperation));}catch(error){report(error);}};
+$('debug-breakpoint').onclick=()=>{try{if(pausedOperation&&executionBreakpointIdentity===currentBreakpointIdentity())toggleBreakpoint(!textMode&&inspectionState?.prepared.presentation?originalVisualBreakpoint(inspectionState.prepared,pausedOperation):breakpointForEvent(pausedOperation));}catch(error){report(error);}};
 $('clear-breakpoints').onclick=()=>{try{syncBreakpoints();debuggerStorage.save([]);debuggerRecords=[];breakpointIdentity=null;syncBreakpoints();if(activeExecution&&executionBreakpointIdentity===breakpointIdentity)activeExecution.setBreakpoints([]);render();}catch(error){report(error);}};
 $('text-breakpoint').onclick=()=>{try{toggleBreakpoint(breakpointAtTextOffset(textAPI.compileTextDraft(draft(),editor),$('text-source').selectionStart));}catch(error){sourceError(error);}};
 
@@ -281,7 +283,7 @@ function inspectionWitness(debug){
  const allow=[...inspectionState.grants].filter(([,names])=>names.size).map(([fn,names])=>({function:fn,declarations:[...names]}));
  if(!allow.length&&!inspectionState.prepared.presentation)return null;
  if($('origin-enabled').checked&&(!originState?.bound||originState.identity!==currentInspectionIdentity()))throw new Error('Пересмотрите и примените метки данных перед просмотром значений.');
- const policy={allow,...($('origin-enabled').checked?{originPolicy:originState.bound}:{}),protectedFunctions:$('inspection-protected').checked?[inspectionState.prepared.root?.id??inspectionState.bundle.ir.entry]:[]};
+ const policy={allow,...($('origin-enabled').checked?{originPolicy:originState.bound}:inspectionState.bundle.visualSources?{originPolicy:{schemaVersion:'ems-origin-policy/1',sources:[]}}:{}),protectedFunctions:$('inspection-protected').checked?[inspectionState.prepared.root?.id??inspectionState.bundle.ir.entry]:[]};
  const afterOperations=$('inspection-after').checked;
  return textMode?{schemaVersion:afterOperations?'ems-source-inspection/2':'ems-source-inspection/1',...(afterOperations?{afterOperations:true}:{}),source:draft().source,entry:draft().entry,lowering:draft().lowering,policy}:graphInspectionWitness(editor,policy,{afterOperations});
 }
@@ -304,6 +306,7 @@ function inspectionFunctionLabel(id){return inspectionState?.prepared.presentati
 function inspectionFunctions(){if(inspectionState?.prepared.presentation)return inspectionState.bundle.ir.functions.filter(fn=>inspectionState.prepared.presentation.has(fn.id));return inspectionState?.prepared.graphs?[...inspectionState.prepared.graphs.values()].map(item=>item.graph):inspectionState?.bundle.ir.functions??[];}
 function inspectionCatalog(fn){if(!fn)return [];if(inspectionState.prepared.presentation)return inspectionState.prepared.presentation.get(fn.id)?.bindings??[];return inspectionState.prepared.graphs?graphInspectionDeclarations(fn,inspectionState.prepared.registry):controlInspectionDeclarations(fn);}
 $('inspection-choose').onclick=()=>{try{
+ if(!textMode){originState=null;$('origin-enabled').checked=false;$('origin-sources').replaceChildren();$('origin-apply').disabled=true;$('origin-status').textContent='Обычные разрешения просмотра. Для меток проверьте источники данных.';}
  const policy={allow:[]},witness=textMode?{schemaVersion:'ems-source-inspection/1',source:draft().source,entry:draft().entry,lowering:draft().lowering,policy}:graphInspectionWitness(editor,policy);
  const prepared=prepareStudioInspection({action:textMode?'text':'graph',debug:true,project:editor.serialize(),selected:editor.selectedContract,draft:textMode?draft():undefined,inspection:witness});
  inspectionState={identity:currentInspectionIdentity(),bundle:prepared.bundle,prepared,grants:new Map()};$('inspection-after').disabled=false;$('inspection-function').replaceChildren(...inspectionFunctions().map(fn=>{const option=el('option',inspectionFunctionLabel(fn.id));option.value=fn.id;return option;}));$('inspection-function').value=prepared.root?.id??prepared.bundle.ir.entry;inspectionChoices();clearInspectionValues();$('inspection-status').textContent='Отметьте разрешённые значения, затем начните отладку.';
@@ -326,25 +329,27 @@ function showInspection(pause){
 
 $('origin-review').onclick=async()=>{try{
  if(!inspectionState)$('inspection-choose').click();
- if(!textMode||!inspectionState||inspectionState.bundle.ir.schemaVersion!=='ems-ir/2')throw new Error('Для меток выберите «Последовательные» в настройках кода EMS.');
+ if(!textMode){const witness=graphInspectionWitness(editor,{allow:[],originPolicy:{schemaVersion:'ems-origin-policy/1',sources:[]}}),prepared=prepareStudioInspection({action:'graph',debug:true,project:editor.serialize(),selected:editor.selectedContract,inspection:witness});inspectionState={identity:currentInspectionIdentity(),bundle:prepared.bundle,prepared,grants:new Map()};$('inspection-function').replaceChildren(...inspectionFunctions().map(fn=>{const option=el('option',inspectionFunctionLabel(fn.id));option.value=fn.id;return option;}));$('inspection-function').value=prepared.bundle.ir.entry;inspectionChoices();}
+ if(!inspectionState||inspectionState.bundle.ir.schemaVersion!=='ems-ir/2')throw new Error('Для меток выберите «Последовательные» в настройках кода EMS.');
  const identity=currentInspectionIdentity(),bundle=inspectionState.bundle,analysis=analyzeControlOrigins(bundle.ir,bundle.registry),storage=new StudioOriginStorage(localStorage,editor.project.id),saved=storage.load();let usable=null;
  if(saved){try{await verifyBoundOriginPolicy(bundle.ir,bundle.registry,saved);usable=saved;}catch(error){if(error.code!=='STALE_ORIGIN_POLICY')throw error;}}
  if(identity!==currentInspectionIdentity())return;
- const roots=analysis.nodes.filter(n=>['input','literal','pattern-literal'].includes(n.kind));originState={identity,bundle,storage,bound:usable,revision:0};$('origin-sources').replaceChildren();
- for(const root of roots){const kind=root.kind==='input'?'input':'literal',row=el('label',undefined,'origin-row'),select=el('select');select.dataset.originFunction=root.function;select.dataset.originPath=root.path;select.dataset.originKind=kind;
+ const emptyArrays=new Set(bundle.ir.functions.flatMap(fn=>[...controlNodeEntries(fn)].filter(([,n])=>n.kind==='array'&&!n.elements.length).map(([path])=>JSON.stringify([fn.id,path]))));
+ const roots=bundle.visualSources??analysis.nodes.filter(n=>['input','literal','pattern-literal'].includes(n.kind)||emptyArrays.has(n.id));originState={identity,bundle,storage,bound:usable,revision:0};$('origin-sources').replaceChildren();
+ for(const root of roots){const kind=root.kind==='input'?'input':'literal',row=el('label',undefined,'origin-row'),select=el('select');select.dataset.originFunction=root.function;select.dataset.originPath=root.path;select.dataset.originKind=kind;if(bundle.visualSources)select.dataset.originGraph=root.graph;
   for(const [value,title]of [['unknown','Не назначено — скрывать'],['private','Закрытые данные'],['public','Можно показывать']]){const option=el('option',title);option.value=value;select.append(option);}
-  select.value=usable?.sources.find(s=>s.kind===kind&&s.function===root.function&&s.path===root.path)?.classification??'unknown';
-  const at=bundle.provenance.functions[root.function]?.nodes[root.path]?.start;row.append(el('span',root.function+' · '+(kind==='input'?'Вход '+root.name:'Литерал')+(at?' · строка '+at.line:'')+' · '+friendlyType(root.type??'')),select);select.onchange=()=>{originState.revision++;originState.bound=null;clearInspectionValues();$('origin-status').textContent='Метки изменены. Примените их перед отладкой.';};$('origin-sources').append(row);
+  select.value=bundle.visualSources?(root.roots.length&&root.roots.every(r=>usable?.sources.find(s=>s.kind===r.kind&&s.function===r.function&&s.path===r.path)?.classification==='public')?'public':root.roots.length&&root.roots.every(r=>usable?.sources.find(s=>s.kind===r.kind&&s.function===r.function&&s.path===r.path)?.classification==='private')?'private':'unknown'):usable?.sources.find(s=>s.kind===kind&&s.function===root.function&&s.path===root.path)?.classification??'unknown';
+  const at=bundle.provenance.functions[root.function]?.nodes[root.path]?.start;row.append(el('span',(root.graph??root.function)+' · '+(kind==='input'?'Вход '+root.name:'Литерал'+(bundle.visualSources?' '+root.name:''))+(at?' · строка '+at.line:'')+' · '+friendlyType(root.type??'')),select);select.onchange=()=>{originState.revision++;originState.bound=null;clearInspectionValues();$('origin-status').textContent='Метки изменены. Примените их перед отладкой.';};$('origin-sources').append(row);
  }
  $('origin-apply').disabled=false;$('origin-status').textContent=usable?'Сохранённые метки проверены. Разрешения просмотра переменных не восстанавливаются.':saved?'Сохранённые метки устарели. Назначьте и примените их заново.':'Назначьте метки источникам и примените их. Значения здесь не показываются.';
  }catch(error){sourceError(error);}};
 $('origin-apply').onclick=async()=>{try{
  const state=originState;if(!state||state.identity!==currentInspectionIdentity())throw new Error('Сначала проверьте источники текущей программы.');
  const revision=state.revision;
- const sources=[...$('origin-sources').querySelectorAll('select')].filter(s=>s.value!=='unknown').map(s=>({kind:s.dataset.originKind,function:s.dataset.originFunction,path:s.dataset.originPath,classification:s.value}));
+ const selections=[...$('origin-sources').querySelectorAll('select')].filter(s=>s.value!=='unknown'),sources=state.bundle.visualSources?visualOriginAnnotations(state.bundle,selections.map(s=>({graph:s.dataset.originGraph,path:s.dataset.originPath,classification:s.value}))).sources:selections.map(s=>({kind:s.dataset.originKind,function:s.dataset.originFunction,path:s.dataset.originPath,classification:s.value}));
  const bound=await createBoundOriginPolicy(state.bundle.ir,state.bundle.registry,{schemaVersion:'ems-origin-policy/1',sources});
  if(state!==originState||state.identity!==currentInspectionIdentity()||revision!==state.revision)throw new Error('Код или метки изменились во время проверки. Примените их заново.');
- if(!store||!textStorage)throw new Error('Хранилище проекта недоступно.');store.save(editor.project);textStorage.save(editor.project.id,draft());projectList();state.storage.save(bound);state.bound=bound;$('origin-enabled').checked=true;clearInspectionValues();$('origin-status').textContent='Метки проверены и сохранены. Отметьте разрешённые переменные и начните отладку.';
+ if(!store||textMode&&!textStorage)throw new Error('Хранилище проекта недоступно.');store.save(editor.project);if(textMode)textStorage.save(editor.project.id,draft());projectList();state.storage.save(bound);state.bound=bound;$('origin-enabled').checked=true;clearInspectionValues();$('origin-status').textContent='Метки проверены и сохранены. Отметьте разрешённые переменные и начните отладку.';
  }catch(error){sourceError(error);}};
 $('origin-clear').onclick=()=>{try{new StudioOriginStorage(localStorage,editor.project.id).clear();if(originState){originState.revision++;originState.bound=null;}$('origin-sources').querySelectorAll('select').forEach(s=>s.value='unknown');clearInspectionValues();$('origin-status').textContent='Сохранённые метки удалены. Пересмотрите источники перед новым разрешением.';}catch(error){report(error);}};
 $('origin-enabled').onchange=()=>{clearInspectionValues();$('origin-status').textContent=$('origin-enabled').checked?'Метки будут ограничивать выбранные переменные. Перед запуском нужна проверенная политика.':'Метки выключены. Действуют обычные разрешения просмотра переменных.';};
