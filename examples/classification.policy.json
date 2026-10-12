@@ -1,0 +1,7 @@
+{
+  "schemaVersion": "ems-origin-policy/1",
+  "sources": [
+    {"kind": "input", "function": "main", "path": "/inputs/0", "classification": "public"},
+    {"kind": "input", "function": "main", "path": "/inputs/1", "classification": "private"}
+  ]
+}

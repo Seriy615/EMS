@@ -1,3 +1,7 @@
+# Текущая итерация — classification/grants restriction (AC-089)
+
+Закрытая host policy input/literal→public/private; остальные источники/неописанные→unknown. Контрольный IR reanalysis вместо доверия к imported artifact. Runtime+fresh source client дополнительно закрывают private/unknown до чтения scope. API/CLI и actual Worker проверены focused33 Node/1 Chromium, pending full gate/public evidence. См. ORIGIN_POLICY.md. Далее нужен source-owned/persisted semantic identity для root labels, IDE label authoring и conformance межсобытийного состояния; сохранять AC-086 barrier и не превращать public advisory report в standalone grant. Dynamic taint/declassification/native/compiled требуют отдельной проверки. Глобальная цель активна.
+
 # Текущая итерация — ядро и происхождение (AC-088)
 
 Черновик из /tmp восстановлен в tracked source `src/semantics/control-origins.mjs`, экспорт/CLI, пример и8 focused tests. См. docs/spec/CONTROL_ORIGINS.md; Checked e9ce3fc published:819/149/62 PASS, ordinary public HTTPS actual static sidecar and prior workflows PASS; unrelated config/service state unchanged. See STATUS.md for exact evidence. Полная taint/declassification policy не выполнена; AC-086 barrier сохранять. Далее определить формальную classification/grants policy и conformance по per-value labels, межсобытийному состоянию, foreign/unknown boundaries; затем реально проверять native/compiled transports. Глобальная цель активна.

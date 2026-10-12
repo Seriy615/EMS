@@ -148,3 +148,7 @@ AC-077 дополнительная приёмка при AC-078: complete metad
 ## AC-088 — Статическое происхождение control IR
 
 Validated IR2→non-executing versioned sidecar и CLI `module-origins`; inputs/literals(no payload)/assignment/control/recursive calls/container/pattern/await/catch/resource alias/stream dependencies. Nested early exit controls retained, shared-state/opaque/exception uncertainty explicit, declaration occurrences distinct, deterministic output. Origin overflow absorbing and seed-safe; nodes/edges/steps/bytes refusal; malformed IR/options refused. `tests/control-origins.test.mjs` и executable verification. Existing debugger barrier and execution remain unchanged. Full static/dynamic confidentiality policy is not accepted by this gate.
+
+## AC-089 — Классификация источников и дополнительный запрет диагностики
+
+Closed host input/literal annotations, real checked root validation, public<private<unknown join, unclassified/foreign/unknown refusal, no literal/runtime payloads in reports. Private/unknown runtime mask before scope/cell reads; existing allow/effects/protected/type/budgets unchanged. Fresh source client refuses forged private payload/status downgrade; real Worker shows public13, masks secret/hidden and returns13 without leakage. Graph/collection mapping explicitly unsupported. API/CLI + negative schema/roots/getters/control/calls/assignment/barrier tests; full gate/public proof mandatory. Dynamic taint/declassification/noninterference/actor/native/compiled policy not accepted by this gate.

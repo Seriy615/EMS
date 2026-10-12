@@ -308,7 +308,7 @@ $('inspection-protected').onchange=clearInspectionValues;$('inspection-after').o
 function showInspection(pause){
  clearInspectionValues();if(!activeInspection||!inspectionState)return;document.querySelector('.inspection-settings').open=true;
  if(!pause.inspection){$('inspection-status').textContent='В этом графовом кадре просмотр значений недоступен.';return;}
- const statuses={'not-evaluated':'ещё не вычислено','not-in-scope':'ещё не в области видимости','protected-program':'защищённая программа','protected-effects':'эффекты программы — значения закрыты','excluded-type':'непрозрачный тип','limit':'превышен лимит','unavailable':'недоступно'};
+ const statuses={'not-evaluated':'ещё не вычислено','not-in-scope':'ещё не в области видимости','protected-program':'защищённая программа','protected-effects':'эффекты программы — значения закрыты','protected-origins':'происхождение данных — значения закрыты','excluded-type':'непрозрачный тип','limit':'превышен лимит','unavailable':'недоступно'};
  const functionId=pause.function??pause.callPath.at(-1).graph,fn=inspectionFunctions().find(fn=>fn.id===functionId);
  $('inspection-status').textContent=inspectionFunctionLabel(functionId)+' · кадр '+pause.frames.at(-1)+(pause.inspection.truncated?' · достигнут лимит снимка':'');
  const catalog=inspectionCatalog(fn);

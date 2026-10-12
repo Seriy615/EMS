@@ -17,7 +17,7 @@ export function graphInspectionDeclarations(graph,registry){
 
 /** Explicit address grants observe inputs and already memoized outputs in the original evaluator. */
 export function createGraphInspector(root,registry,value){
- const policy=normalizeInspectionPolicy(value),graphs=new Map(),catalogs=new Map(),grants=new Map();
+ const policy=normalizeInspectionPolicy(value);if(policy.originPolicy)fail('UNSUPPORTED_PROFILE','Origin classification requires control IR');const graphs=new Map(),catalogs=new Map(),grants=new Map();
  function visit(graph,stack=[]){
   if(stack.includes(graph.id)||stack.length>=32)fail('RECURSIVE_COMPOSITE','Recursive graph inspection closure');
   if(graphs.has(graph.id)){if(graphs.get(graph.id)!==graph)fail('INVALID_INSPECTION_POLICY','Ambiguous graph identity');return;}

@@ -1,3 +1,4 @@
+import {classifyControlOrigins} from '../semantics/origin-policy.mjs';
 import {fail} from '../reference/errors.mjs';
 import {ProjectEditor,parseProject} from './project.mjs';
 import {graphFromIR} from '../ir/index.mjs';
@@ -38,9 +39,9 @@ export function prepareStudioInspection(request,editor=null){
  fields(witness,['schemaVersion','source','entry','lowering','policy',...extra]);
  if(witness.schemaVersion!==(after?'ems-source-inspection/2':'ems-source-inspection/1')||typeof witness.source!=='string'||witness.source.length>262144||new TextEncoder().encode(witness.source).length>262144||witness.source!==request.draft?.source||witness.entry!==request.draft?.entry||witness.lowering!==request.draft?.lowering)fail('STALE_INSPECTION_SOURCE','Inspection source witness disagrees with execution');
  const bundle=compileTextDraft(request.draft,editor);if(bundle.ir.schemaVersion==='ems-ir/1')return prepareGraphInspection(editor,graphFromIR(bundle.ir,bundle.registry),bundle.registry,bundle,witness);
- const policy=normalizeInspectionPolicy(witness.policy);createControlInspector(bundle.ir,policy);
+ const policy=normalizeInspectionPolicy(witness.policy);createControlInspector(bundle.ir,policy,bundle.registry);
  const functions=new Map(bundle.ir.functions.map(fn=>[fn.id,{fn,nodes:new Map(controlNodeEntries(fn)),grants:policy.allow.find(grant=>grant.function===fn.id)?inspectionGrantBindings(fn,policy.allow.find(grant=>grant.function===fn.id)):[]}]));
- return {editor,bundle,registry:bundle.registry,policy,impure:controlInspectionEffectBarrier(bundle.ir),afterOperations:!!after,functions,witness:{...witness,policy}};
+ return {editor,bundle,registry:bundle.registry,policy,originClasses:policy.originPolicy?new Map(classifyControlOrigins(bundle.ir,bundle.registry,policy.originPolicy).nodes.map(node=>[node.id,node.classification])):null,impure:controlInspectionEffectBarrier(bundle.ir),afterOperations:!!after,functions,witness:{...witness,policy}};
 }
 
 /** Ephemeral visual grant identity excludes runtime inputs, canvas layout and project names. */
@@ -57,6 +58,7 @@ function prepareGraphInspection(editor,root,registry,bundle,witness){
 /** Visual collections use the existing checked control IR, with an ephemeral presentation mapping. */
 function prepareCollectionInspection(editor,witness){
  const bundle=lowerCollectionGraph(editor.workspace.graph,editor.registry),policy=normalizeInspectionPolicy(witness.policy),presentation=new Map();
+ if(policy.originPolicy)fail('UNSUPPORTED_PROFILE','Origin policy for visual collection addresses is not supported');
  for(const item of bundle.presentation){
   const fn=bundle.ir.functions.find(fn=>fn.id===item.function);if(!fn)error();const catalog=controlInspectionDeclarations(fn),bindings=[];
   for(const [kind,entries]of [['input',item.inputs],['node',item.nodes]])for(const entry of entries){const binding=catalog.find(d=>d.name===entry.binding);if(!binding)error();bindings.push({...binding,displayName:entry.name,kind});}
@@ -64,10 +66,10 @@ function prepareCollectionInspection(editor,witness){
  }
  // Generated source locations are not positions on the user's canvas.
  bundle.provenance={functions:{}};
- createControlInspector(bundle.ir,policy);
+ createControlInspector(bundle.ir,policy,bundle.registry);
  for(const grant of policy.allow){const view=presentation.get(grant.function);if(!view||!own(grant,'declarations')||grant.declarations.some(path=>!view.bindings.some(b=>b.declaration===path)))error();}
  const functions=new Map(bundle.ir.functions.map(fn=>[fn.id,{fn,nodes:new Map(controlNodeEntries(fn)),grants:policy.allow.find(grant=>grant.function===fn.id)?inspectionGrantBindings(fn,policy.allow.find(grant=>grant.function===fn.id)):[]}]));
- return {editor,bundle,registry:bundle.registry,policy,impure:controlInspectionEffectBarrier(bundle.ir),afterOperations:own(witness,'afterOperations'),presentation,functions,witness:{...witness,policy}};
+ return {editor,bundle,registry:bundle.registry,policy,originClasses:policy.originPolicy?new Map(classifyControlOrigins(bundle.ir,bundle.registry,policy.originPolicy).nodes.map(node=>[node.id,node.classification])):null,impure:controlInspectionEffectBarrier(bundle.ir),afterOperations:own(witness,'afterOperations'),presentation,functions,witness:{...witness,policy}};
 }
 
 /** Closed finite DTO copier. It never invokes accessors and never echoes malformed payloads in errors. */
@@ -89,6 +91,8 @@ export function validateInspectionSnapshot(snapshot,fnId,prepared,currentNode=nu
  const protectedProgram=prepared.policy.protectedFunctions.length>0,impure=prepared.impure||!prepared.graphs&&controlInspectionFunctionIsEffectful(owner.fn);
  const copied=variables.map((record,index)=>{
   const hasValue=record&&typeof record==='object'&&own(record,'value'),keys=['name','type','status',...(version==='ems-inspection/2'?['declaration']:[]),...(hasValue?['value']:[])];fields(record,keys);const binding=bindings[index];if(record.name!==binding.name||version==='ems-inspection/2'&&record.declaration!==binding.declaration)error();const identity=version==='ems-inspection/2'?{name:record.name,declaration:record.declaration}:{name:record.name};
+  const originBlocked=prepared.originClasses&&prepared.originClasses.get(JSON.stringify([fnId,binding.declaration]))!=='public';
+  if(originBlocked&&!protectedProgram&&!impure){if(hasValue||record.type!==null||record.status!=='protected-origins')error();return {...identity,type:null,status:record.status};}
   if(protectedProgram||impure){if(hasValue||record.type!==null||record.status!==(protectedProgram?'protected-program':'protected-effects'))error();return {...identity,type:null,status:record.status};}
   if(!prepared.graphs&&phase==='exit'&&binding.declaration===currentNode&&['let','using'].includes(owner.nodes.get(currentNode)?.kind)&&record.status==='not-in-scope')error();
   if(record.status===(prepared.graphs?'not-evaluated':'not-in-scope')){if(hasValue||record.type!==null||prepared.graphs&&(binding.kind!=='node'||phase==='exit'&&binding.key===currentNode))error();return {...identity,type:null,status:record.status};}

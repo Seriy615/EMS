@@ -1,3 +1,4 @@
+import {normalizeOriginPolicy,classifyControlOrigins} from '../semantics/origin-policy.mjs';
 import {fail} from '../reference/errors.mjs';
 import {controlNodeEntries} from '../ir/control-addresses.mjs';
 import {parseControlType,controlVariants,controlTypeName} from '../semantics/control-algebraic.mjs';
@@ -14,7 +15,7 @@ const functionId=value=>typeof value==='string'&&value.length<=1024&&/^[-A-Za-z0
 
 /** Explicit host grant, copied before execution. No policy means no value-bearing diagnostics. */
 export function normalizeInspectionPolicy(value){
- fields(value,['allow','protectedFunctions','maxBytes','maxStringBytes','maxArrayItems']);
+ fields(value,['allow','protectedFunctions','maxBytes','maxStringBytes','maxArrayItems','originPolicy']);
  const own=(key,fallback)=>Object.hasOwn(value,key)?Object.getOwnPropertyDescriptor(value,key).value:fallback;
  const allow=list(own('allow',[]),32),protectedFunctions=list(own('protectedFunctions',[]),64),maxBytes=own('maxBytes',8192),maxStringBytes=own('maxStringBytes',4096),maxArrayItems=own('maxArrayItems',128);
  if(!Array.isArray(allow)||allow.length>32||!Array.isArray(protectedFunctions)||protectedFunctions.length>64||protectedFunctions.some(id=>!functionId(id))||new Set(protectedFunctions).size!==protectedFunctions.length)fail('INVALID_INSPECTION_POLICY','Invalid inspection grants/protection');
@@ -29,7 +30,7 @@ export function normalizeInspectionPolicy(value){
   functions.add(record.function);slots+=entries.length;if(slots>32)fail('INVALID_INSPECTION_POLICY','At most 32 inspection slots');
   return {function:record.function,[key]:entries};
  });
- return {allow:grants,protectedFunctions:[...protectedFunctions],maxBytes,maxStringBytes,maxArrayItems};
+ return {allow:grants,protectedFunctions:[...protectedFunctions],maxBytes,maxStringBytes,maxArrayItems,...(Object.hasOwn(value,'originPolicy')?{originPolicy:normalizeOriginPolicy(own('originPolicy'))}:{})};
 }
 
 const supported=type=>['Number','Boolean','String','NumberArray','Option','Result'].includes(type.name)&&type.arguments.every(supported);
@@ -61,16 +62,17 @@ export function controlInspectionEffectBarrier(ir){
 
 /** Entry effects close every activation; marked protected functions also block the whole program.
  * This is conservative host classification, not inferred taint tracking or declassification. */
-export function createControlInspector(ir,value){
+export function createControlInspector(ir,value,registry){
  const entryImpure=controlInspectionEffectBarrier(ir),policy=normalizeInspectionPolicy(value),functions=new Map(ir.functions.map(fn=>[fn.id,fn])),grants=new Map(),version=policy.allow.some(record=>Object.hasOwn(record,'declarations'))?'ems-inspection/2':'ems-inspection/1';
+ const originClasses=policy.originPolicy?new Map(classifyControlOrigins(ir,registry,policy.originPolicy).nodes.map(node=>[node.id,node.classification])):null;
  for(const id of policy.protectedFunctions)if(!functions.has(id))fail('INVALID_INSPECTION_POLICY','Unknown protected function');
  for(const grant of policy.allow){const fn=functions.get(grant.function);if(!fn)fail('INVALID_INSPECTION_POLICY','Unknown inspected function');grants.set(fn.id,inspectionGrantBindings(fn,grant));}
  return (id,scope)=>{
   const variables=[],fn=functions.get(id),bindings=grants.get(id)??[],protectedProgram=policy.protectedFunctions.length>0,impure=entryImpure||controlInspectionFunctionIsEffectful(fn);let truncated=false;
   for(const binding of bindings){
-   const {name,declaration}=binding;const identity=version==='ems-inspection/2'?{name,declaration}:{name};
-   let record={...identity,type:null,status:protectedProgram?'protected-program':impure?'protected-effects':'not-in-scope'};
-   if(!protectedProgram&&!impure&&scope.has(name)&&(!binding.addressed||scope.get(name).declaration===declaration)){
+   const {name,declaration}=binding,originBlocked=originClasses&&originClasses.get(JSON.stringify([id,declaration]))!=='public';const identity=version==='ems-inspection/2'?{name,declaration}:{name};
+   let record={...identity,type:null,status:protectedProgram?'protected-program':impure?'protected-effects':originBlocked?'protected-origins':'not-in-scope'};
+   if(!protectedProgram&&!impure&&!originBlocked&&scope.has(name)&&(!binding.addressed||scope.get(name).declaration===declaration)){
     const cell=scope.get(name);record.type=cell.type??null;
     try{const type=parseControlType(cell.type,true,true,true);if(!supported(type))record.status='excluded-type';else{record={...identity,type:cell.type,status:'value',value:copyFiniteInspectionValue(cell.value,type,policy)};}}
     catch(reason){record.status=['limit','unavailable'].includes(reason)?reason:'unavailable';}

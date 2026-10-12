@@ -1,0 +1,5 @@
+fn main(open:Number,secret:String)->Number {
+  let mut shown=open;
+  let hidden=secret;
+  return shown;
+}
