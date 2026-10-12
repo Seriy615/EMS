@@ -4,6 +4,8 @@
 
 Постоянная цель и измеримые G-01..18: [`PROJECT_GOAL.md`](../../PROJECT_GOAL.md). Факты проверок: `docs/qa/STATUS.md`; точка продолжения: `docs/qa/PROGRESS.md`. Каждая фаза ниже закрывает часть общей цели, а не заменяет её списком задач.
 
+AC-089 добавил closed host source classification и restrict-only runtime/source-client enforcement; checked a27d2c8, gates827/150/63 и ordinary public HTTPS Worker13/private closed PASS. Следующий этап — source-owned semantic identity и пересмотр root labels при изменении программы, затем IDE authoring и межсобытийная conformance; public report сам не создаёт grant. Полные confidentiality/native/compiled/visual mappings остаются открытыми.
+
 AC-088 добавил non-executing control IR origin sidecar/API/CLI с bounded fixed point, nested exit dependencies и explicit shared/opaque/exception uncertainty. Checked e9ce3fc, gates819/149/62 и ordinary public HTTPS PASS. Следующий core gate — формальная classification/grants policy, per-value conformance и межсобытийная модель; аналитический sidecar сам не разрешает disclosure. AC-086 barrier сохранять.
 
 Повторный запрос владельца по дизайну выполнен в AC-087: русские порты/типы, пояснения операций, цветовые роли и раскрываемая справка; checked8b5410e, gates811/148/62 и public HTTPS smoke PASS. Ядро продолжать по формальной per-value provenance policy; текущий effect barrier сохраняется.
