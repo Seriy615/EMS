@@ -1,0 +1,16 @@
+import test from 'node:test';import assert from 'node:assert/strict';
+import {startStudioServer} from '../../tools/serve.mjs';import {launchChromium} from '../../tools/lib/chromium.mjs';
+import {createCoreRegistry} from '../../src/reference/registry.mjs';import {parseEMSModule} from '../../src/frontend/index.mjs';import {typecheckModule} from '../../src/frontend/check.mjs';import {lowerCheckedModule} from '../../src/frontend/lower.mjs';import {createBoundOriginPolicy} from '../../src/ir/index.mjs';
+const source='fn main(open:Number,secret:String)->Number {let mut value=open;let hidden=secret;return value;}',annotations={schemaVersion:'ems-origin-policy/1',sources:[{kind:'input',function:'main',path:'/inputs/0',classification:'public'},{kind:'input',function:'main',path:'/inputs/1',classification:'private'}]};
+test('Node/browser semantic binding agrees; actual bound Worker keeps private inputs closed and rejects stale source before execution',async()=>{
+ const registry=createCoreRegistry(),bundle=lowerCheckedModule(typecheckModule(parseEMSModule(source),registry),'main',registry,{profile:'control'}),bound=await createBoundOriginPolicy(bundle.ir,bundle.registry,annotations),server=await startStudioServer({port:0,recordModules:true});let browser;
+ try{
+  browser=await launchChromium();const page=await browser.page(server.origin,{httpDiagnostics:()=>server.moduleDiagnostics()});
+  const result=await page.evaluate(`(async()=>{
+   await import('/web/studio.mjs');const {ProjectEditor}=await import('/src/studio/project.mjs'),{startBoundStudioExecution}=await import('/src/studio/execution-client.mjs'),{createBoundOriginPolicy}=await import('/src/ir/index.mjs'),{compileTextDraft}=await import('/src/studio/text.mjs'),editor=new ProjectEditor(),draft={source:${JSON.stringify(source)},entry:'main',lowering:'auto'},p=${JSON.stringify(bound)},bundle=compileTextDraft(draft,editor),browserBound=await createBoundOriginPolicy(bundle.ir,bundle.registry,${JSON.stringify(annotations)}),pauses=[],request={action:'text',debug:true,project:editor.serialize(),draft,inputs:{open:13,secret:'BOUND_WORKER_PRIVATE'},inspection:{schemaVersion:'ems-source-inspection/2',...draft,afterOperations:true,policy:{allow:[{function:'main',names:['value','hidden','secret']}],originPolicy:p}}};
+   const job=await startBoundStudioExecution(request,{onPause:e=>{pauses.push(e);job.resume('step');}}),value=await job.promise,last=pauses.findLast(e=>e.kind==='return');
+   const changed={...draft,source:draft.source.replace('open:Number,secret:String','secret:String,open:Number')};let code,started=0;try{await startBoundStudioExecution({...request,draft:changed,inspection:{...request.inspection,source:changed.source}},{onLog:e=>{if(e.type==='started')started++;}});}catch(e){code=e.code;}
+   return {same:browserBound.program.sha256===p.program.sha256,value,shown:last.inspection.variables[0].value,hidden:last.inspection.variables[1].status,secret:last.inspection.variables[2].status,leak:JSON.stringify(pauses).includes('BOUND_WORKER_PRIVATE'),code,started};
+  })()`);assert.deepEqual(result,{same:true,value:13,shown:13,hidden:'protected-origins',secret:'protected-origins',leak:false,code:'STALE_ORIGIN_POLICY',started:0});await page.close();
+ }finally{await browser?.close();await server.close();}
+});

@@ -1,3 +1,7 @@
+# Текущая итерация — source-owned bound labels (AC-090)
+
+V2 SHA-256 semantic IR binding, explicit create/verify/classify APIs и CLI bind/classify. Core runtime проверяет перед diagnostics; async source SDK pins request, Worker independently verifies fresh IR. Focused23 Node/2 Chromium PASS; full gate/public pending. После проверки — IDE root-label authoring/storage с явным review/rebind при изменениях, source/semantic identity и межсобытийная conformance; сохранить current barriers/restrict-only status. Cryptographic program identity не доказывает owner annotation authenticity или pinning foreign bytes. Глобальная цель активна.
+
 # Текущая итерация — classification/grants restriction (AC-089)
 
 Закрытая host policy input/literal→public/private; остальные источники/неописанные→unknown. Контрольный IR reanalysis вместо доверия к imported artifact. Runtime+fresh source client дополнительно закрывают private/unknown до чтения scope. API/CLI и actual Worker проверены focused33 Node/1 Chromium, checked a27d2c8 published:827/150/63 PASS, ordinary HTTPS classified Worker/public13/private closed/result13 and all prior proofs PASS; unrelated configs/services unchanged. Evidence in STATUS.md. См. ORIGIN_POLICY.md. Далее нужен source-owned/persisted semantic identity для root labels, IDE label authoring и conformance межсобытийного состояния; сохранять AC-086 barrier и не превращать public advisory report в standalone grant. Dynamic taint/declassification/native/compiled требуют отдельной проверки. Глобальная цель активна.

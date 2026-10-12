@@ -125,3 +125,5 @@ UI preview поддерживает «Отладка событий (новый 
 Статический анализ происхождения control IR: `node tools/ems.mjs module-origins examples/origins.ems --entry main --out origins.json`. Создаёт зависимости без исполнения программы и содержимого литералов. Это аналитический sidecar, не разрешение раскрывать значения; [профиль и ограничения](docs/spec/CONTROL_ORIGINS.md).
 
 Классификация действительных корней и дополнительное ограничение диагностики: `node tools/ems.mjs module-classify examples/classification.ems --entry main --policy examples/classification.policy.json --out classification.json`. [Формат, алгебра и границы политики](docs/spec/ORIGIN_POLICY.md). Public label сам не даёт разрешения просмотра.
+
+Для сохранённых меток используйте `module-bind-origins … --policy annotations.json --out bound-policy.json`, затем `module-classify … --policy bound-policy.json`: изменённый semantic IR отвергается до диагностики. Source Worker API: `await startBoundStudioExecution(request, options)`. Подробности v2 в ORIGIN_POLICY.md.

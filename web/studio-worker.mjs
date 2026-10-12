@@ -1,7 +1,7 @@
 import {ProjectEditor,parseProject} from '/src/studio/project.mjs';
 import {hasCollections} from '/src/studio/collections.mjs';
 import {GraphStepper} from '/src/studio/debugger.mjs';
-import {prepareStudioInspection,validateInspectionPause} from '/src/studio/inspection-transport.mjs';
+import {prepareStudioInspection,prepareBoundStudioInspection,validateInspectionPause} from '/src/studio/inspection-transport.mjs';
 import {runTextDraft} from '/src/studio/text.mjs';
 
 let stepper=null,started=false;
@@ -14,7 +14,7 @@ self.onmessage=async event=>{
   const request=event.data;
   const editor=new ProjectEditor(parseProject(request.project));
   if(request.selected)editor.openContract(request.selected);
-  const inspection=prepareStudioInspection(request,editor);
+  const inspection=request.inspection?.policy?.originPolicy?.schemaVersion==='ems-origin-policy/2'?await prepareBoundStudioInspection(request,editor):prepareStudioInspection(request,editor);
   self.postMessage({type:'validated',id:editor.workspace.graph.id});
   if(Object.hasOwn(request,'debugOptions')&&!request.debug)throw Object.assign(new Error('Debug options need debug mode'),{code:'INVALID_DEBUG_OPTION'});
   if(request.debug){

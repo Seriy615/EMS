@@ -1,4 +1,5 @@
-import {createControlInspector,inspectionPatternTypes} from './inspection.mjs';
+import {verifyBoundOriginPolicy} from '../semantics/origin-policy.mjs';
+import {createControlInspector,inspectionPatternTypes,normalizeInspectionPolicy} from './inspection.mjs';
 import {DIAGNOSTIC_FRAMES,diagnosticFrames,nextDiagnosticFrame,notifyDiagnosticExit} from './diagnostic-frames.mjs';
 import {controlNodeEntries,copyControlDiagnosticTree} from '../ir/control-addresses.mjs';
 import { createResourceScope,resourceBudgetOptions,executeResourceOperation,resourceCleanupOutcome } from './resources.mjs';
@@ -34,7 +35,10 @@ export async function executeControlIR(ir, inputs, registry, options = {}) {
   validateControlInputs(checked.entry, inputs);
   const hasInspection=Object.hasOwn(options,'inspection')&&options.inspection!==undefined;
   if(hasInspection&&typeof options.onControlEnter!=='function'&&typeof options.onControlExit!=='function')fail('INVALID_INSPECTION_POLICY','Inspection requires a control diagnostic observer');
-  const inspect=hasInspection?createControlInspector(ir,options.inspection,registry):null;
+  const inspectionPolicy=hasInspection?normalizeInspectionPolicy(options.inspection):null;
+  if(inspectionPolicy?.originPolicy?.schemaVersion==='ems-origin-policy/2')inspectionPolicy.originPolicy=await verifyBoundOriginPolicy(ir,registry,inspectionPolicy.originPolicy);
+  checkCancellation(options.signal);
+  const inspect=hasInspection?createControlInspector(ir,inspectionPolicy,registry):null;
   const budget = controlBudgetOptions(options); let steps = 0;
   const diagnostics=diagnosticFrames(options);
   const addresses=new WeakMap();

@@ -3,7 +3,7 @@ import { readFile, writeFile, mkdir } from 'node:fs/promises';
 import { dirname, resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { createCoreRegistry, validateGraph, executeGraph, compileStandaloneJS, compiledAtomicManifest, parseTextEMS } from '../src/reference/index.mjs';
-import { lowerGraphToIR, serializeIR, parseIR, graphFromIR, analyzeControlOrigins, classifyControlOrigins } from '../src/ir/index.mjs';
+import { lowerGraphToIR, serializeIR, parseIR, graphFromIR, analyzeControlOrigins, classifyControlOrigins, createBoundOriginPolicy, classifyBoundControlOrigins } from '../src/ir/index.mjs';
 import { parseEMSModule } from '../src/frontend/index.mjs';
 import { typecheckModule } from '../src/frontend/check.mjs';
 import { lowerCheckedModule } from '../src/frontend/lower.mjs';
@@ -36,10 +36,11 @@ function usage() {
   node tools/ems.mjs module-ir <source.ems> --entry <name> --out <program.ir.json>
   node tools/ems.mjs module-origins <source.ems> --entry <name> --out <origins.json>
   node tools/ems.mjs module-classify <source.ems> --entry <name> --policy <origin-policy.json> --out <classification.json>
+  node tools/ems.mjs module-bind-origins <source.ems> --entry <name> --policy <annotations.json> --out <bound-policy.json>
   node tools/ems.mjs module-build <source.ems> --entry <name> --out <output.mjs>`);
 }
 async function main() {
-  if (!file || !['lock','locked-run','locked-build','interface-check', 'interface-compare', 'binding-check', 'validate', 'run', 'build', 'seal', 'text-parse', 'text-run', 'text-build', 'ir', 'text-ir', 'ir-run', 'ir-build', 'parse', 'check', 'module-run', 'module-build', 'module-ir', 'module-origins', 'module-classify'].includes(command)) { usage(); process.exitCode = 2; return; }
+  if (!file || !['lock','locked-run','locked-build','interface-check', 'interface-compare', 'binding-check', 'validate', 'run', 'build', 'seal', 'text-parse', 'text-run', 'text-build', 'ir', 'text-ir', 'ir-run', 'ir-build', 'parse', 'check', 'module-run', 'module-build', 'module-ir', 'module-origins', 'module-classify', 'module-bind-origins'].includes(command)) { usage(); process.exitCode = 2; return; }
   const content = await readFile(file, 'utf8');
   if(['lock','locked-run','locked-build'].includes(command)){
     const registry=createCoreRegistry(),ir=parseIR(content,registry);
@@ -73,14 +74,14 @@ async function main() {
     const checked = typecheckModule(parseEMSModule(content), base);
     if (command === 'check') { console.log(`PASS: ${checked.signatures.size} typed callable declarations; linking and target support are separate checks`); return; }
     if (args[0] !== '--entry' || !args[1]) throw new Error('Use --entry <name>');
-    const bundle = lowerCheckedModule(checked, args[1], base,['module-origins','module-classify'].includes(command)?{profile:'control'}:{});
+    const bundle = lowerCheckedModule(checked, args[1], base,['module-origins','module-classify', 'module-bind-origins'].includes(command)?{profile:'control'}:{});
     if(command==='module-origins'){
       if(args.length!==4||args[2]!=='--out'||!args[3])throw new Error('Use module-origins <source> --entry <name> --out <origins.json>');
       const artifact=analyzeControlOrigins(bundle.ir,bundle.registry),dest=resolve(args[3]);await mkdir(dirname(dest),{recursive:true});await writeFile(dest,JSON.stringify(artifact,null,2)+'\n');console.log(`Built static origins (not a security decision): ${dest}`);return;
     }
-    if(command==='module-classify'){
+    if(['module-classify','module-bind-origins'].includes(command)){
       if(args.length!==6||args[2]!=='--policy'||!args[3]||args[4]!=='--out'||!args[5])throw new Error('Use module-classify <source> --entry <name> --policy <origin-policy.json> --out <classification.json>');
-      const policy=JSON.parse(await readFile(args[3],'utf8')),artifact=classifyControlOrigins(bundle.ir,bundle.registry,policy),dest=resolve(args[5]);await mkdir(dirname(dest),{recursive:true});await writeFile(dest,JSON.stringify(artifact,null,2)+'\n');console.log(`Built origin classification (diagnostic restriction only): ${dest}`);return;
+      const policy=JSON.parse(await readFile(args[3],'utf8')),artifact=command==='module-bind-origins'?await createBoundOriginPolicy(bundle.ir,bundle.registry,policy):policy.schemaVersion==='ems-origin-policy/2'?await classifyBoundControlOrigins(bundle.ir,bundle.registry,policy):classifyControlOrigins(bundle.ir,bundle.registry,policy),dest=resolve(args[5]);await mkdir(dirname(dest),{recursive:true});await writeFile(dest,JSON.stringify(artifact,null,2)+'\n');console.log(`Built origin classification (diagnostic restriction only): ${dest}`);return;
     }
     if (command === 'module-run') {
       let policy = {};

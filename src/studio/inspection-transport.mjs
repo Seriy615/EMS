@@ -1,4 +1,4 @@
-import {classifyControlOrigins} from '../semantics/origin-policy.mjs';
+import {classifyControlOrigins,verifyBoundOriginPolicy} from '../semantics/origin-policy.mjs';
 import {fail} from '../reference/errors.mjs';
 import {ProjectEditor,parseProject} from './project.mjs';
 import {graphFromIR} from '../ir/index.mjs';
@@ -130,4 +130,17 @@ export function validateDiagnosticPause(pause,prepared,includeInspection=false){
  const location=prepared.bundle?.provenance.functions[calls.at(-1).graph]?.nodes?.[calls.at(-1).node]??null;
  if(!same(pause.inputs,expectedInputs)||pause.output!==leaf.output||!same(pause.effects,leaf.effects)||!same(pause.capabilities,leaf.capabilities)||!same(pause.location,location))error();
  return {phase:pause.phase,callPath:structuredClone(calls),frames:[...frames],inputs:expectedInputs,output:leaf.output,effects:[...leaf.effects],capabilities:[...leaf.capabilities],location:structuredClone(location),token:pause.token,...(includeInspection&&prepared.graphs?{inspection:validateInspectionSnapshot(pause.inspection,calls.at(-1).graph,prepared,calls.at(-1).node,pause.phase)}:{})};
+}
+
+/** Pin a source request before hashing; no executable or value-bearing diagnostics run here. */
+export async function prepareBoundStudioInspection(request,editor){
+ const descriptor=Object.getOwnPropertyDescriptor(request,'inspection');if(!descriptor||!own(descriptor,'value'))error();
+ const witness=descriptor.value,after=Object.getOwnPropertyDescriptor(witness??{},'afterOperations');if(after&&!own(after,'value'))error();
+ fields(witness,['schemaVersion','source','entry','lowering','policy',...(after?['afterOperations']:[])]);
+ const copied=normalizeInspectionPolicy(witness.policy),bound=copied.originPolicy;
+ if(bound?.schemaVersion!=='ems-origin-policy/2')fail('INVALID_ORIGIN_POLICY','Expected bound source annotations');
+ const prepared=prepareStudioInspection({...request,inspection:{...witness,policy:{...copied,originPolicy:{schemaVersion:'ems-origin-policy/1',sources:bound.sources}}}},editor);
+ const pinned=structuredClone({...request,inspection:{...prepared.witness,policy:{...prepared.policy,originPolicy:bound}}});
+ await verifyBoundOriginPolicy(prepared.bundle.ir,prepared.registry,bound);
+ return {...prepared,witness:pinned.inspection,request:pinned};
 }

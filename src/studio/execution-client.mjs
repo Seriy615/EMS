@@ -1,10 +1,19 @@
 import {EmsError} from '../reference/errors.mjs';
-import {prepareStudioInspection,validateInspectionPause} from './inspection-transport.mjs';
+import {prepareStudioInspection,prepareBoundStudioInspection,validateInspectionPause} from './inspection-transport.mjs';
 import {validateBreakpoints} from './debugger.mjs';
 
 /** A worker transports an ordinary EMS execution; terminating it bounds CPU and pending async tasks. */
 export function startStudioExecution(request,{timeout=5000,onLog=()=>{},onPause=()=>{}}={}){
  let inspection;try{inspection=prepareStudioInspection(request);}catch(error){return {promise:Promise.reject(error),setBreakpoints:()=>false,resume:()=>false,cancel:()=>{}};}
+ return startPreparedStudioExecution(request,inspection,{timeout,onLog,onPause});
+}
+
+/** Persisted origin annotations are checked asynchronously before creating a Worker. */
+export async function startBoundStudioExecution(request,options={}){
+ const inspection=await prepareBoundStudioInspection(request);return startPreparedStudioExecution(inspection.request,inspection,options);
+}
+
+function startPreparedStudioExecution(request,inspection,{timeout=5000,onLog=()=>{},onPause=()=>{}}={}){
  if(inspection)request={...request,inspection:inspection.witness};
  let lastInspectionToken=0;
  const worker=new Worker('/web/studio-worker.mjs',{type:'module'});let settled=false,resolve,reject,pauseToken=null;

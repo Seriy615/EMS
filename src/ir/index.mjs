@@ -209,4 +209,4 @@ export function checkIRPolicy(ir, registry, options = {}) {
 
 export {analyzeControlOrigins} from '../semantics/control-origins.mjs';
 
-export {normalizeOriginPolicy,classifyControlOrigins} from '../semantics/origin-policy.mjs';
+export {normalizeOriginPolicy,classifyControlOrigins,createBoundOriginPolicy,verifyBoundOriginPolicy,classifyBoundControlOrigins} from '../semantics/origin-policy.mjs';
