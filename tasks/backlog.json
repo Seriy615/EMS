@@ -490,7 +490,7 @@
         "GPT-6.1 Sol",
         "GPT-6 Luna"
       ],
-      "progress": "AC-063..084 interpreted debugger: graph/control/UI gates, durable points, Over/Out, bounded opt-in snapshots with exact semantic/source/declaration identity. Graph and control/visual collection post-operation now share original runtime semantics: actual initialized cells/assignments/loops/materialized outputs, successful-only exits, no extra ticks/compute; return/try/for/forAwait cleanup and cancellation preserve standalone parity. Explicit v2 survives client/Worker validation, v1 exits denied/current-let absent rejected. Checked release 4350ef881f0314b91c2cd50e29cc6f4313d3a6b6 passed799/146/60 with isolated local browser gate and ordinary public control0→2/result2/collection let output[4,6] before return/clear plus all previous proofs. Root startup opaque cause remains unproven. Next actor/UI effect/transaction scope audit and separately proven native/compiled transports/full taint; full debugger/global goal open.",
+      "progress": "AC-063..084 interpreted debugger: graph/control/UI gates, durable points, Over/Out, bounded opt-in snapshots with exact semantic/source/declaration identity. Graph and control/visual collection post-operation now share original runtime semantics: actual initialized cells/assignments/loops/materialized outputs, successful-only exits, no extra ticks/compute; return/try/for/forAwait cleanup and cancellation preserve standalone parity. Explicit v2 survives client/Worker validation, v1 exits denied/current-let absent rejected. Checked release 4350ef881f0314b91c2cd50e29cc6f4313d3a6b6 passed799/146/60 with isolated local browser gate and ordinary public control0→2/result2/collection let output[4,6] before return/clear plus all previous proofs. Root startup opaque cause remains unproven. Next actor/UI effect/transaction scope audit and separately proven native/compiled transports/full taint; full debugger/global goal open. AC-085 UI metadata-only post-operation and transaction boundary in progress: original kernel hooks and unchanged commit order, checked source/IR/handler metadata, token replay/overlap denial, explicit fixed afterOperations mode, pending-vs-confirmed banner. Full local805/147, focused24 Node/3 Chromium PASS. Exact committed/public proof pending; no effectful data capture enabled.",
       "evidence": {
         "scope": "AC-063..084 interpreted debugger; bounded checked graph/control/collection post-operation snapshots. Original runtime/compiler parity and cleanup/cancel; local browser QA isolated, ordinary HTTPS smoke. Full taint/effectful UI/native/compiled open.",
         "docs": "docs/spec/IDE_RUNTIME_DIAGNOSTICS.md",
@@ -519,7 +519,9 @@
           "tests/collection-inspection.test.mjs",
           "tests/browser/collection-inspection.test.mjs",
           "tests/control-post-operation.test.mjs",
-          "tests/browser/control-post-operation.test.mjs"
+          "tests/browser/control-post-operation.test.mjs",
+          "tests/ui-post-operation.test.mjs",
+          "tests/browser/ui-post-operation.test.mjs"
         ],
         "tests": "799/799 PASS",
         "verify": "146/146 PASS",

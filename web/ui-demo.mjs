@@ -33,7 +33,7 @@ function syncUIPoints(){
  document.querySelector('#ui-point-count').textContent=String(uiAnchors.length);document.querySelector('#ui-point-list').textContent=uiAnchors.map(item=>item.handler+' / '+((item.point??item.anchor.point).function??(item.point??item.anchor.point).graph)+' / '+(item.point?.node??('не привязана: '+item.reason))).join('\n')||'Выберите операцию в обработчике или его графе.';
  document.querySelector('#ui-point-current').disabled=!pausedOperation||previewIdentity!==identity;
 }
-function uiDebugOptions(){syncUIPoints();return {start:document.querySelector('#ui-run-to-point').checked?'continue':'step',breakpoints:uiPoints,sources:Object.fromEntries([...new Set(uiPoints.map(item=>item.handler))].map(handler=>[handler,editor.sources[handler]]))};}
+function uiDebugOptions(){syncUIPoints();return {...(document.querySelector('#ui-debug-after').checked?{afterOperations:true}:{}),start:document.querySelector('#ui-run-to-point').checked?'continue':'step',breakpoints:uiPoints,sources:Object.fromEntries([...new Set(uiPoints.map(item=>item.handler))].map(handler=>[handler,editor.sources[handler]]))};}
 function updateUIPolicy(){
  const options=uiDebugOptions();if(debugMode&&previewIdentity===pointIdentity&&applicationController?.runtime.setDebugOptions(options))document.querySelector('#ui-point-status').textContent='Точки применены к текущей паузе и следующим событиям.';
  else document.querySelector('#ui-point-status').textContent='Точки применятся при новом запуске отладки.';
@@ -54,7 +54,7 @@ function render(){syncUIPoints();authoring?.refresh();source.value=editor.source
 function debugPause(pause){
  pausedEvent=pause.eventId;pausedOperation=pause;syncUIPoints();
  const field=document.querySelector('#handler-source'),draft=editor.sources[pause.handler];
- document.querySelector('#ui-debug-location').textContent='Пауза события '+pause.handler+' / '+pause.eventId+'\n'+(pause.profile==='control'?pause.callStack.join(' → ')+' / '+pause.node+' ('+pause.kind+')':pause.callPath.map(call=>call.graph+' / '+call.node).join(' → '));
+ document.querySelector('#ui-debug-location').textContent='Пауза события '+pause.handler+' / '+pause.eventId+'\n'+(pause.phase==='exit'?'После операции. ':'Перед операцией. ')+'Состояние ещё не подтверждено.\n'+(pause.profile==='control'?pause.callStack.join(' → ')+' / '+pause.node+' ('+pause.kind+')':pause.callPath.map(call=>call.graph+' / '+call.node).join(' → '));
  document.querySelector('#ui-debug-over').disabled=document.querySelector('#ui-debug-out').disabled=document.querySelector('#ui-debug-step').disabled=false;document.querySelector('#ui-debug-continue').disabled=false;
  if(draft&&pause.location&&document.querySelector('#handler-event').value===pause.handler&&field.value===draft.source){field.focus();field.setSelectionRange(pause.location.start.offset,pause.location.end.offset);}
 }

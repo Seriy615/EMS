@@ -1,3 +1,4 @@
+import {prepareUIDebugTransport,validateUIDebugPause} from './debug-transport.mjs';
 import {normalizeUIDebugOptions} from './debug-policy.mjs';
 import {EmsError,fail} from '../reference/errors.mjs';
 import {assertSignal} from '../runtime/cancellation.mjs';
@@ -7,6 +8,7 @@ export async function createUIWorkerRuntime(project,{policy={},timeout=5000,init
  if(!Number.isSafeInteger(timeout)||timeout<1||timeout>60000||!Number.isSafeInteger(initTimeout)||initTimeout<1||initTimeout>60000||!Number.isSafeInteger(maxQueue)||maxQueue<1||maxQueue>64||typeof recordTrace!=='boolean'||typeof debug!=='boolean'||typeof onPause!=='function'||typeof onDebugEnd!=='function'||typeof workerFactory!=='function')fail('INVALID_UI_WORKER','Invalid bounded worker options');
  if(debugOptions!==undefined&&!debug)fail('INVALID_DEBUG_OPTION','UI policy requires debug mode');
  const checkedDebugOptions=debugOptions===undefined?undefined:normalizeUIDebugOptions(debugOptions);
+ const preparedDebug=debug?prepareUIDebugTransport(project,checkedDebugOptions):null;
  let worker;try{worker=workerFactory();}catch{fail('EXECUTION_WORKER','Cannot create UI worker');}
  if(!worker||typeof worker.postMessage!=='function'||typeof worker.terminate!=='function')fail('EXECUTION_WORKER','Invalid UI worker transport');
  const pending=new Map();let next=0,closed=false,closing,snapshot,view,trace=[],pause=null;
@@ -22,16 +24,16 @@ export async function createUIWorkerRuntime(project,{policy={},timeout=5000,init
   return new Promise((resolve,reject)=>{
    const abort=()=>stop(new EmsError('CANCELLED','UI preview stopped'));
    const timer=setTimeout(()=>stop(new EmsError('EXECUTION_TIMEOUT','UI preview exceeded its execution deadline')),duration);
-   pending.set(id,{resolve,reject,timer,signal,abort,action:payload.action});signal?.addEventListener('abort',abort,{once:true});
+   pending.set(id,{resolve,reject,timer,signal,abort,action:payload.action,handler:preparedDebug?.nodes.get(payload.node)?.events[payload.event]?.handler,lastPauseToken:0});signal?.addEventListener('abort',abort,{once:true});
    try{worker.postMessage({id,...payload});}catch{stop(new EmsError('INVALID_EXECUTION','UI request cannot be transferred'));}
   });
  }
  worker.onmessage=event=>{
   if(closed)return;const data=event.data,item=pending.get(data?.id);if(!item)return;
   if(data.type==='paused'){
-   const control=data.pause?.profile==='control',keys=control?['phase','profile','function','node','kind','type','callStack','frames','step','location','token','handler']:['phase','callPath','frames','inputs','output','effects','capabilities','location','token','handler'];
-   if(!debug||Object.keys(data).sort().join(',')!=='id,pause,type'||!data.pause||Reflect.ownKeys(data.pause).length!==keys.length||keys.some(key=>!Object.hasOwn(data.pause,key))||(!Array.isArray(data.pause.frames)||!data.pause.frames.length||data.pause.frames.length>64||data.pause.frames.some(frame=>!Number.isSafeInteger(frame)||frame<1)||new Set(data.pause.frames).size!==data.pause.frames.length)||data.pause.phase!=='enter'||!Number.isSafeInteger(data.pause.token)||data.pause.token<1||typeof data.pause.handler!=='string'){stop(new EmsError('EXECUTION_WORKER','Malformed UI debug pause'));return;}
-   pause={id:data.id,token:data.pause.token};try{onPause(copy({...data.pause,eventId:data.id}));}catch{}return;
+   let checked;
+   try{if(!debug||item.action!=='dispatch'||Object.keys(data).sort().join(',')!=='id,pause,type'||Reflect.ownKeys(data).length!==3||Reflect.ownKeys(data).some(key=>!Object.hasOwn(Object.getOwnPropertyDescriptor(data,key),'value'))||pause!==null)throw Error();checked=validateUIDebugPause(data.pause,preparedDebug,item.handler);if(checked.token<=item.lastPauseToken)throw Error();}catch{stop(new EmsError('EXECUTION_WORKER','Malformed UI debug pause'));return;}
+   item.lastPauseToken=checked.token;pause={id:data.id,token:checked.token};try{onPause(copy({...checked,eventId:data.id}));}catch{}return;
   }
   if(pause?.id===data.id)pause=null;
   if(typeof data.ok!=='boolean'||data.ok&&(!Object.hasOwn(data,'value')||data.snapshot===undefined||data.view===undefined)||!data.ok&&typeof data.error?.code!=='string'){stop(new EmsError('EXECUTION_WORKER','Malformed UI worker reply'));return;}
@@ -43,5 +45,5 @@ export async function createUIWorkerRuntime(project,{policy={},timeout=5000,init
  };
  worker.onerror=()=>stop(new EmsError('EXECUTION_WORKER','UI worker failed'));
  try{await request({action:'init',project,policy,maxQueue,recordTrace,...(debug?{debug:true,...(checkedDebugOptions?{debugOptions:checkedDebugOptions}:{})}:{})},undefined,initTimeout);if(snapshot===undefined||view===undefined)throw new EmsError('EXECUTION_WORKER','Missing UI worker initialization snapshot');}catch(error){await stop(error);throw error;}
- return Object.freeze({setDebugOptions:options=>{if(closed||!debug||!pause)return false;const checked=normalizeUIDebugOptions(options);try{worker.postMessage({action:'debug-policy',id:pause.id,token:pause.token,options:checked});}catch{stop(new EmsError('INVALID_EXECUTION','UI debug policy cannot be transferred'));return false;}return true;},snapshot:()=>copy(snapshot),view:()=>copy(view),trace:()=>copy(trace),resume:(mode='step')=>{if(closed||!pause||!['step','continue','over','out'].includes(mode))return false;const current=pause;pause=null;try{worker.postMessage({action:'resume',id:current.id,token:current.token,mode});}catch{stop(new EmsError('INVALID_EXECUTION','UI debug command cannot be transferred'));return false;}return true;},dispatch:async(node,event,value,{signal}={})=>request({action:'dispatch',node,event,value},signal),close:()=>stop(new EmsError('CANCELLED','UI preview closed')),get closed(){return closed;}});
+ return Object.freeze({setDebugOptions:options=>{if(closed||!debug||!pause)return false;const checked=normalizeUIDebugOptions(options);if((checked.afterOperations===true)!==(preparedDebug.options.afterOperations===true))return false;try{worker.postMessage({action:'debug-policy',id:pause.id,token:pause.token,options:checked});}catch{stop(new EmsError('INVALID_EXECUTION','UI debug policy cannot be transferred'));return false;}return true;},snapshot:()=>copy(snapshot),view:()=>copy(view),trace:()=>copy(trace),resume:(mode='step')=>{if(closed||!pause||!['step','continue','over','out'].includes(mode))return false;const current=pause;pause=null;try{worker.postMessage({action:'resume',id:current.id,token:current.token,mode});}catch{stop(new EmsError('INVALID_EXECUTION','UI debug command cannot be transferred'));return false;}return true;},dispatch:async(node,event,value,{signal}={})=>request({action:'dispatch',node,event,value},signal),close:()=>stop(new EmsError('CANCELLED','UI preview closed')),get closed(){return closed;}});
 }

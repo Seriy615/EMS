@@ -1,5 +1,14 @@
 # Current implementation status
 
+## EMS-033 — AC-085 UI post-operation / transaction boundary (публикация ожидается)
+
+Предыдущая итерация дала progress: checked4350ef8/evidence473e360 опубликованы; authoritative baseline799/146 PASS. Аудит подтвердил existing ReactorKernel commit после successful execution, cancellation/cleanup/value checks; exit operation не является commit. Kernel теперь передаёт optional control/graph exit observers через original UI/Reactor pipeline. UI explicit afterOperations:true зарегистрирован для session, default off, mutation mode requires restart; points can still change.
+
+Новый metadata-only UI transport локально reconstructs saved program/source/IR and verifies actual handler binding, operation kind/type/path/source, graph closure и control caller/frame chain. Shared validateDiagnosticPause отделён от value inspection; raw values/snapshot/inspection не принимаются. Per-event tokens reject replay/overlap before callback, unchanged last confirmed snapshot. UI banner различает post-operation и unconfirmed event; ACK success подтверждает состояние, abort/later error preserves prior commit. Full value capture for effects/native/compiled not enabled.
+
+Focused24 Node (real workers/UI/compiler/points),3 Chromium integration PASS; full local805/805/verify147 PASS. Actual two queued events preserve0→ACK1→speculative2/Stop1; local controller abort cancels actual transaction/trace, later DIV_BY_ZERO does not commit; source-free graph profile tested. Exact committed61 Chromium gate/public proof pending. Global goal/M2/full taint/effectful values/native/compiled open.
+
+
 ## EMS-033 — AC-084 control/collection результат после операции
 
 Real onControlExit после successful typed expression/statement; declared cell уже установлена, assignment обновлён. Original interpreter/IR/compiler semantics, ticks, resource cleanup/finally и early returns сохранены. v2 afterOperations source/visual witness flag survives client; old v1 exit denial и absent-current-let guard. IDE Over let/while/materialized Map, Out/cancel/clear/points enter-only. Final8 new Node/9 Chromium integration PASS; lawful sibling declaration labels verified. Original graph collision/nested-shadow запреты сохраняются; initial invalid fixtures corrected, not a newly demonstrated graph bug.

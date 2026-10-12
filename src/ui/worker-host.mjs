@@ -13,7 +13,7 @@ export function createUIWorkerHost(send){
   let id=request?.id;
   if(request?.action==='debug-policy'){
    if(!debug)return;
-   try{fields(request,['action','id','token','options']);const options=checkUIDebugOptions(request.options,workspace,bundles),active=gates.get(id);if(active?.gate.update(request.token,handlerBreakpoints(options,active.handler)))debugOptions=options;}catch{}return;
+   try{fields(request,['action','id','token','options']);const options=checkUIDebugOptions(request.options,workspace,bundles),active=gates.get(id);if((options.afterOperations===true)!==(debugOptions.afterOperations===true))return;if(active?.gate.update(request.token,handlerBreakpoints(options,active.handler)))debugOptions=options;}catch{}return;
   }
   if(request?.action==='resume'){
    if(!debug)return;
@@ -35,7 +35,7 @@ export function createUIWorkerHost(send){
     let gate;exit=event=>gate?.leave(event);
     observe=event=>{if(!gate){gate=new GraphStepper(pause=>send({id,type:'paused',pause:{...pause,handler}}),{start:debugOptions.start,breakpoints:handlerBreakpoints(debugOptions,handler)});gates.set(id,{gate,handler});}const call=event.callPath?.at(-1),fn=event.function??call?.graph,node=event.node??call?.node;return gate.enter({...event,location:structuredClone(maps.get(handler)?.functions[fn]?.nodes?.[node]??null)});};
    }
-   const value=await runtime.dispatch(request.node,request.event,request.value,{onControlEnter:observe,onNodeEnter:observe,onFrameExit:exit});
+   const value=await runtime.dispatch(request.node,request.event,request.value,{onControlEnter:observe,onControlExit:debugOptions.afterOperations?observe:undefined,onNodeEnter:observe,onNodeExit:debugOptions.afterOperations?observe:undefined,onFrameExit:exit});
    gates.delete(id);
    send({id,ok:true,value,snapshot:runtime.snapshot(),view:runtime.view(),trace:runtime.trace()});
   }catch(error){

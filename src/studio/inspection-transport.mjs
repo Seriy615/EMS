@@ -102,26 +102,28 @@ export function validateInspectionSnapshot(snapshot,fnId,prepared,currentNode=nu
 }
 
 /** A pause carries exact checked operation metadata; values are allowed only under the current source grant. */
-export function validateInspectionPause(pause,prepared){
+export function validateInspectionPause(pause,prepared){return validateDiagnosticPause(pause,prepared,true);}
+/** Validate operation metadata without granting or accepting any values. */
+export function validateDiagnosticPause(pause,prepared,includeInspection=false){
  if(!prepared)error();
  const profile=pause&&Object.getOwnPropertyDescriptor(pause,'profile');if(profile&&!own(profile,'value'))error();
- fields(pause,profile?.value==='control'?['phase','profile','function','node','kind','type','callStack','frames','step','location','inspection','token']:['phase','callPath','frames','inputs','output','effects','capabilities','location','token',...(prepared.graphs?['inspection']:[])]);
+ fields(pause,profile?.value==='control'?['phase','profile','function','node','kind','type','callStack','frames','step','location',...(includeInspection?['inspection']:[]),'token']:['phase','callPath','frames','inputs','output','effects','capabilities','location','token',...(includeInspection&&prepared.graphs?['inspection']:[])]);
  const frames=array(pause?.frames,64);if(!frames.length||frames.some(id=>!Number.isSafeInteger(id)||id<1)||new Set(frames).size!==frames.length||!Number.isSafeInteger(pause.token)||pause.token<1||!['enter',...(prepared.afterOperations?['exit']:[])].includes(pause.phase))error();
  if(pause.profile==='control'){
-  fields(pause,['phase','profile','function','node','kind','type','callStack','frames','step','location','inspection','token']);
+  fields(pause,['phase','profile','function','node','kind','type','callStack','frames','step','location',...(includeInspection?['inspection']:[]),'token']);
   const owner=prepared.functions.get(pause.function),node=owner?.nodes.get(pause.node);if(!node||pause.kind!==node.kind||pause.type!==(node.type??null)||!Number.isSafeInteger(pause.step)||pause.step<1)error();
   const stack=array(pause.callStack,64);if(!stack.length||stack.at(-1)!==pause.function||stack.some(id=>!prepared.functions.has(id)))error();
   if(prepared.presentation){if(stack[0]!==prepared.bundle.ir.entry||stack.length!==frames.length)error();for(let i=1;i<stack.length;i++){const caller=prepared.functions.get(stack[i-1]);if(![...caller.nodes.values()].some(node=>node.kind==='call'&&node.target.kind==='function'&&node.target.id===stack[i]))error();}}
   const location=prepared.bundle.provenance.functions[pause.function]?.nodes?.[pause.node]??null;if(!same(pause.location,location))error();
-  const inspection=validateInspectionSnapshot(pause.inspection,pause.function,prepared,pause.node,pause.phase);
-  return {phase:pause.phase,profile:'control',function:pause.function,node:pause.node,kind:pause.kind,type:pause.type,callStack:[...stack],frames:[...frames],step:pause.step,location:structuredClone(location),inspection,token:pause.token};
+  const inspection=includeInspection?validateInspectionSnapshot(pause.inspection,pause.function,prepared,pause.node,pause.phase):null;
+  return {phase:pause.phase,profile:'control',function:pause.function,node:pause.node,kind:pause.kind,type:pause.type,callStack:[...stack],frames:[...frames],step:pause.step,location:structuredClone(location),...(includeInspection?{inspection}:{}),token:pause.token};
  }
- fields(pause,['phase','callPath','frames','inputs','output','effects','capabilities','location','token',...(prepared.graphs?['inspection']:[])]);
+ fields(pause,['phase','callPath','frames','inputs','output','effects','capabilities','location','token',...(includeInspection&&prepared.graphs?['inspection']:[])]);
  const calls=array(pause.callPath,32);if(!calls.length)error();let previous=null,leaf;
  for(const call of calls){fields(call,['graph','node','contract']);const graph=prepared.graphs?prepared.graphs.get(call.graph)?.graph:prepared.registry.items.get(call.graph)?.graph;const node=graph?.nodes.find(node=>node.id===call.node);if(!node||node.uses!==call.contract||previous&&previous.kind!=='composite'||previous&&previous.graph.id!==call.graph)error();leaf=prepared.registry.resolve(call.contract);previous=leaf;}
  const expectedInputs=Object.fromEntries(Object.entries(leaf.inputs).map(([name,type])=>[name,typeof type==='string'?type:type.type]));
  if(prepared.graphs&&(calls[0].graph!==prepared.root.id||frames.length!==calls.length))error();
  const location=prepared.bundle?.provenance.functions[calls.at(-1).graph]?.nodes?.[calls.at(-1).node]??null;
  if(!same(pause.inputs,expectedInputs)||pause.output!==leaf.output||!same(pause.effects,leaf.effects)||!same(pause.capabilities,leaf.capabilities)||!same(pause.location,location))error();
- return {phase:pause.phase,callPath:structuredClone(calls),frames:[...frames],inputs:expectedInputs,output:leaf.output,effects:[...leaf.effects],capabilities:[...leaf.capabilities],location:structuredClone(location),token:pause.token,...(prepared.graphs?{inspection:validateInspectionSnapshot(pause.inspection,calls.at(-1).graph,prepared,calls.at(-1).node,pause.phase)}:{})};
+ return {phase:pause.phase,callPath:structuredClone(calls),frames:[...frames],inputs:expectedInputs,output:leaf.output,effects:[...leaf.effects],capabilities:[...leaf.capabilities],location:structuredClone(location),token:pause.token,...(includeInspection&&prepared.graphs?{inspection:validateInspectionSnapshot(pause.inspection,calls.at(-1).graph,prepared,calls.at(-1).node,pause.phase)}:{})};
 }
