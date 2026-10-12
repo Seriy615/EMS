@@ -4,7 +4,7 @@
 
 Постоянная цель и измеримые G-01..18: [`PROJECT_GOAL.md`](../../PROJECT_GOAL.md). Факты проверок: `docs/qa/STATUS.md`; точка продолжения: `docs/qa/PROGRESS.md`. Каждая фаза ниже закрывает часть общей цели, а не заменяет её списком задач.
 
-AC-097: package limits v3/control+graph counting, direct/imported/compiled/resealed enforcement; focused17 Node/3 Chromium PASS, финальные gate pending. Далее shared-budget protocol и async/rich ABI/maps; EMS-060 остаётся IN_PROGRESS.
+AC-097: package limits v3/control+graph counting, direct/imported/compiled/resealed enforcement; focused17 Node/3 Chromium PASS, checked366f90b:861/157/70 PASS, dev опубликован, ordinary HTTPS budget40/depth3 external execution1/raise refusal и prior smoke PASS. Далее shared-budget protocol и async/rich ABI/maps; EMS-060 остаётся IN_PROGRESS.
 
 AC-096 — повторный запрос владельца: понятная иерархия рабочего редактора и навигация; checked eb537f4: exact855/156/69 PASS, dev опубликован, public HTTPS workflow и отдельная навигация/non-overlap/mobile PASS. Компиляторный следующий этап EMS-060 сохранён.
 
