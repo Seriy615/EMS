@@ -1,6 +1,6 @@
 # Текущая итерация — source-owned bound labels (AC-090)
 
-V2 SHA-256 semantic IR binding, explicit create/verify/classify APIs и CLI bind/classify. Core runtime проверяет перед diagnostics; async source SDK pins request, Worker independently verifies fresh IR. Focused23 Node/2 Chromium PASS; full gate/public pending. После проверки — IDE root-label authoring/storage с явным review/rebind при изменениях, source/semantic identity и межсобытийная conformance; сохранить current barriers/restrict-only status. Cryptographic program identity не доказывает owner annotation authenticity или pinning foreign bytes. Глобальная цель активна.
+V2 SHA-256 semantic IR binding, explicit create/verify/classify APIs и CLI bind/classify. Core runtime проверяет перед diagnostics; async source SDK pins request, Worker independently verifies fresh IR. Focused23 Node/2 Chromium PASS; Первый gate24ae1ce остановлен143 до upload из-за доказанной raw -0 canonical collision; serializer corrected, scalar/array roundtrip+binding tests added, focused43 Node PASS. Corrected full gate/public pending. После проверки — IDE root-label authoring/storage с явным review/rebind при изменениях, source/semantic identity и межсобытийная conformance; сохранить current barriers/restrict-only status. Cryptographic program identity не доказывает owner annotation authenticity или pinning foreign bytes. Глобальная цель активна.
 
 # Текущая итерация — classification/grants restriction (AC-089)
 

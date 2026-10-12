@@ -291,7 +291,7 @@ export function validateControlIR(ir, registry) {
 export function serializeControlIR(ir, registry) {
   validateControlIR(ir, registry);
   // Node field order is fixed by lowering; normalize external object order too.
-  const normalize = value => Array.isArray(value) ? value.map(normalize) : value && typeof value === 'object'
+  const normalize = value => typeof value === 'number' && Object.is(value,-0) ? '-0' : Array.isArray(value) ? value.map(normalize) : value && typeof value === 'object'
     ? Object.fromEntries(Object.keys(value).sort().map(key => [key, normalize(value[key])])) : value;
   return JSON.stringify(normalize({ ...ir, functions: [...ir.functions].sort((a,b) => a.id < b.id ? -1 : a.id > b.id ? 1 : 0).map(fn => ({ ...fn, requirements: { effects: [...fn.requirements.effects].sort(), capabilities: [...fn.requirements.capabilities].sort() } })) }), null, 2) + '\n';
 }
