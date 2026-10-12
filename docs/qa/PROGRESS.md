@@ -1,6 +1,6 @@
 # Текущая итерация — дизайн Studio (AC-087)
 
-Владелец попросил сначала сделать понятный дизайн. Незавершённая статическая provenance-работа сохранена вне tracked repository: `/tmp/ems-origins-wip/control-origins.mjs`, `control-origins.test.mjs`, `index.mjs`; не проверена как готовая функция и не экспортируется. После дизайна вернуться к core: проверить absorbing unknown, implicit exit/control flow, resource alias/state uncertainty; сохранить действующий AC-086 barrier. Эта временная копия не является постоянным источником проекта. Глобальная цель остаётся активна.
+Владелец попросил сделать понятный дизайн. AC-087 опубликован: checked8b5410e, gates811/148/62 PASS; public HTTPS smoke PASS, посторонние сервисы/config не изменены. Подробности в STATUS.md. Незавершённая статическая provenance-работа сохранена вне tracked repository: `/tmp/ems-origins-wip/control-origins.mjs`, `control-origins.test.mjs`, `index.mjs`; не проверена как готовая функция и не экспортируется. После дизайна вернуться к core: проверить absorbing unknown, implicit exit/control flow, resource alias/state uncertainty; сохранить действующий AC-086 barrier. Эта временная копия не является постоянным источником проекта. Глобальная цель остаётся активна.
 
 # Журнал продолжения EMS
 
