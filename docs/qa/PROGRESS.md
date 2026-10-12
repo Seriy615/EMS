@@ -1,6 +1,6 @@
 # Текущая итерация — EMS-060 typed error package ABI (AC-095)
 
-New v2 public error set/module descriptor check, union dependencies, no schema downgrade, legacy v1 explicit load/no fake error completeness. Existing user-value throw envelope works across sealed boundaries without changing runtime; Node/compiler/String/Number/-0/Option and independent browser7/3 validated. Focused11 Node/2 Chromium PASS; full gate/public pending. Далее explicit package limits/shared budgeting and async/public algebraic ABI, source maps and reviewed package linking; full platform/ecosystem goal active.
+New v2 public error set/module descriptor check, union dependencies, no schema downgrade, legacy v1 explicit load/no fake error completeness. Existing user-value throw envelope works across sealed boundaries without changing runtime; Node/compiler/String/Number/-0/Option and independent browser7/3 validated. Focused11 Node/2 Chromium PASS; checked27ef642 published:855/156/69 PASS, ordinary HTTPS actual String-error package→consumer runtime42/standalone42 and prior proofs PASS; foreign services/config unchanged. Evidence in STATUS.md. Далее explicit package limits/shared budgeting and async/public algebraic ABI, source maps and reviewed package linking; full platform/ecosystem goal active.
 
 # Текущая итерация — EMS-060 atomic package/compiler slice (AC-094)
 
