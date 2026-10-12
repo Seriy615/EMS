@@ -1,0 +1,9 @@
+fn factorial(n:Number)->Number {
+  if n<=1 {return 1;}
+  return n*factorial(n-1);
+}
+fn main(values:Number[])->Number {
+  let mut total=0;
+  for value in values {total=total+factorial(value);}
+  return total;
+}

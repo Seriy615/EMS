@@ -1,3 +1,5 @@
+import {buildAtomicPackage} from '/src/compiler/atomic-package.mjs';
+import {packageTAR} from '/src/compiler/archive.mjs';
 import {controlNodeEntries} from '/src/ir/control-addresses.mjs';
 import {lowerVisualOrigins,visualOriginAnnotations} from '/src/studio/visual-origins.mjs';
 import {StudioOriginStorage} from '/src/studio/origin-storage.mjs';
@@ -353,3 +355,5 @@ $('origin-apply').onclick=async()=>{try{
  }catch(error){sourceError(error);}};
 $('origin-clear').onclick=()=>{try{new StudioOriginStorage(localStorage,editor.project.id).clear();if(originState){originState.revision++;originState.bound=null;}$('origin-sources').querySelectorAll('select').forEach(s=>s.value='unknown');clearInspectionValues();$('origin-status').textContent='Сохранённые метки удалены. Пересмотрите источники перед новым разрешением.';}catch(error){report(error);}};
 $('origin-enabled').onchange=()=>{clearInspectionValues();$('origin-status').textContent=$('origin-enabled').checked?'Метки будут ограничивать выбранные переменные. Перед запуском нужна проверенная политика.':'Метки выключены. Действуют обычные разрешения просмотра переменных.';};
+
+$('text-seal').onclick=async()=>{const button=$('text-seal');button.disabled=true;try{const bundle=textAPI.compileTextDraft(draft(),editor),artifact=await buildAtomicPackage(bundle.ir,bundle.registry,{id:$('seal-id').value.trim()}),url=URL.createObjectURL(new Blob([packageTAR(artifact.files)],{type:'application/x-tar'})),link=el('a');link.href=url;link.download='ems-atomic-contract.tar';link.click();setTimeout(()=>URL.revokeObjectURL(url),1000);$('text-status').textContent='Атомарный пакет скачан. Содержит типизированный интерфейс и исполняемый модуль.';}catch(error){sourceError(error);}finally{button.disabled=false;}};

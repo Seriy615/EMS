@@ -651,7 +651,7 @@
         "GPT-6.1 Sol",
         "GPT-6 Luna"
       ],
-      "progress": "AC-055/056 implemented: independent state control handler and finite reactor compiler. Interpreted ReactorSession and generated output use the same ReactorKernel FIFO/state draft/commit/rollback/queue/cancel/close implementation. Node/Chromium differential traces, fresh process and source-owned UI-project CLI export pass. Control IR v2 state and pure graph IR v1 supported; state graph v1, native/IO bindings, source maps and state lock/provenance remain open. Production backend and whole UI export not complete. See docs/spec/STATE_COMPILER.md.",
+      "progress": "AC-055/056 implemented: independent state control handler and finite reactor compiler. Interpreted ReactorSession and generated output use the same ReactorKernel FIFO/state draft/commit/rollback/queue/cancel/close implementation. Node/Chromium differential traces, fresh process and source-owned UI-project CLI export pass. Control IR v2 state and pure graph IR v1 supported; state graph v1, native/IO bindings, source maps and state lock/provenance remain open. Production backend and whole UI export not complete. See docs/spec/STATE_COMPILER.md. AC-094 pure synchronous control/call IR to atomic ESM package/manifest, independent identities, trusted import/provenance, consumer compile/reseal, CLI/IDE artifact export implemented. Focused7 Node/4 Chromium PASS; full gate pending. Production maps, richer/async ABI and native target work remain open.",
       "evidence": {
         "scope": "Initial independent finite state session only; production/full UI export not complete.",
         "docs": "docs/spec/STATE_COMPILER.md",

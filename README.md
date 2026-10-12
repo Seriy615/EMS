@@ -127,3 +127,5 @@ UI preview поддерживает «Отладка событий (новый 
 Классификация действительных корней и дополнительное ограничение диагностики: `node tools/ems.mjs module-classify examples/classification.ems --entry main --policy examples/classification.policy.json --out classification.json`. [Формат, алгебра и границы политики](docs/spec/ORIGIN_POLICY.md). Public label сам не даёт разрешения просмотра.
 
 Для сохранённых меток используйте `module-bind-origins … --policy annotations.json --out bound-policy.json`, затем `module-classify … --policy bound-policy.json`: изменённый semantic IR отвергается до диагностики. Source Worker API: `await startBoundStudioExecution(request, options)`. Подробности v2 в ORIGIN_POLICY.md.
+
+Структурный pure EMS-модуль можно собрать в reusable atomic package: node tools/ems.mjs module-seal examples/factorial-sum.ems --entry main --id sealed.Factorials --out dist/factorials. В IDE — «Скачать атомарный контракт» в настройках кода. Формат и trusted import: [ATOMIC_PACKAGE.md](docs/spec/ATOMIC_PACKAGE.md).

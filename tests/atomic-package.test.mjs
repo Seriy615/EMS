@@ -1,0 +1,41 @@
+import test from 'node:test';import assert from 'node:assert/strict';
+import {createCoreRegistry} from '../src/reference/registry.mjs';import {parseEMSModule} from '../src/frontend/index.mjs';import {typecheckModule} from '../src/frontend/check.mjs';import {lowerCheckedModule} from '../src/frontend/lower.mjs';import {executeIR,lowerGraphToIR,compileIRToJS} from '../src/ir/index.mjs';import {buildAtomicPackage,registerTrustedAtomicPackage,validateAtomicPackage} from '../src/compiler/atomic-package.mjs';
+const source='fn factorial(n:Number)->Number {if n<=1 {return 1;}return n*factorial(n-1);}fn main(values:Number[])->Number {let mut total=0;for value in values {total=total+factorial(value);}return total;}',compile=(text,r=createCoreRegistry())=>lowerCheckedModule(typecheckModule(parseEMSModule(text),r),'main',r,{profile:'control'});
+test('structured EMS module seals to a typed atomic package, reimports into a different graph and recompiles independently',async()=>{
+ const b=compile(source),p=await buildAtomicPackage(b.ir,b.registry,{id:'sealed.Factorials',packageId:'package.Factorials'});assert.deepEqual(Object.keys(p.files).sort(),['contract.json','module.mjs']);assert.equal(p.manifest.contract.kind,'atomic');assert.deepEqual(p.manifest.contract.inputs,{values:'NumberArray'});assert.equal(p.manifest.contract.output,'Number');assert.ok(!Object.keys(p.manifest).includes('graph'));assert.ok(!p.files['module.mjs'].includes('ems-ir/2'));assert.ok(!p.files['module.mjs'].includes('import '));
+ const module=await import('data:text/javascript,'+encodeURIComponent(p.files['module.mjs']));for(const values of [[],[0,1,3],[4,5]])assert.equal(module.execute({values}),await executeIR(b.ir,{values},b.registry));
+ const r=createCoreRegistry();await registerTrustedAtomicPackage(r,p.manifest,p.files['module.mjs']);const atom=r.resolve('sealed.Factorials');assert.equal(atom.kind,'atomic');assert.equal(atom.graph,undefined);
+ const graph={schemaVersion:'0.1',id:'consumer',version:'1.0.0',inputs:{items:{type:'NumberArray'}},output:{type:'Number'},nodes:[{id:'sum',uses:'sealed.Factorials',args:{values:{input:'items'}}},{id:'twice',uses:'core.mul',args:{a:{node:'sum'},b:{literal:2}}}],returns:{node:'twice'}},ir=lowerGraphToIR(graph,r);assert.equal(await executeIR(ir,{items:[3,4]},r),60);const compiled=await import('data:text/javascript,'+encodeURIComponent(compileIRToJS(ir,r)));assert.equal(compiled.execute({items:[3,4]}),60);
+ const resealed=await buildAtomicPackage(ir,r,{id:'sealed.Consumer'}),copy=createCoreRegistry();await registerTrustedAtomicPackage(copy,resealed.manifest,resealed.files['module.mjs']);assert.equal(await copy.resolve('sealed.Consumer').execute({items:[3,4]}),60);
+});
+test('package preserves negative zero and typed errors without executing during build',async()=>{
+ for(const [text,inputs]of [['fn main(n:Number)->Number {return n;}',{n:-0}],['fn main(n:Number)->Number {if n<0 {throw "negative";}return n;}',{n:-1}]]){const b=compile(text),p=await buildAtomicPackage(b.ir,b.registry,{id:'sealed.Test'}),mod=await import('data:text/javascript,'+encodeURIComponent(p.files['module.mjs']));if(Object.is(inputs.n,-0))assert.ok(Object.is(mod.execute(inputs),-0));else{await assert.rejects(executeIR(b.ir,inputs,b.registry),{code:'USER_THROW'});assert.throws(()=>mod.execute(inputs),{code:'USER_THROW'});}assert.throws(()=>mod.execute({n:'bad'}),{code:'TYPE_MISMATCH'});}
+});
+test('unsupported target/public ABI/async/local effects/unknown host compilation are refused before export',async()=>{
+ const b=compile('fn main()->Number {return 1;}');await assert.rejects(buildAtomicPackage(b.ir,b.registry,{id:'sealed.Test',target:'ios'}),{code:'UNSUPPORTED_TARGET'});
+ for(const text of ['async fn main()->Number {return 1;}','fn main(value:Option<Number>)->Number {match value {Some(n)=>{return n;},None=>{return 0;}}}','fn main()->Number {using h=resource.cell(1);return resource.read(h);}']){const c=compile(text);await assert.rejects(buildAtomicPackage(c.ir,c.registry,{id:'sealed.Test'}),{code:'UNSUPPORTED_TARGET'});}
+ let calls=0;const r=createCoreRegistry().registerAtomic({id:'host.unknown',inputs:{},output:'Number',execute:()=>{calls++;return 1;},emitJS:()=>{calls++;return '1';}}),c=compile('fn main()->Number {return host.unknown();}',r);await assert.rejects(buildAtomicPackage(c.ir,c.registry,{id:'sealed.Test'}),{code:'UNPINNED_IMPLEMENTATION'});assert.equal(calls,0);
+});
+test('trusted loader verifies bytes and closed manifest before evaluating module code or modifying registry',async()=>{
+ const b=compile('fn main()->Number {return 1;}'),p=await buildAtomicPackage(b.ir,b.registry,{id:'sealed.Test'}),r=createCoreRegistry();await assert.rejects(registerTrustedAtomicPackage(r,p.manifest,'throw new Error("Must not execute")'),{code:'ARTIFACT_MISMATCH'});assert.equal(r.items.has('sealed.Test'),false);
+ for(const value of [{...p.manifest,graph:{}},{...p.manifest,module:{file:'../unsafe.mjs',sha256:p.manifest.module.sha256}},{...p.manifest,contract:{...p.manifest.contract,effects:['network']}}])assert.throws(()=>validateAtomicPackage(value),{code:'INVALID_ATOMIC_PACKAGE'});
+ await registerTrustedAtomicPackage(r,p.manifest,p.files['module.mjs']);await assert.rejects(registerTrustedAtomicPackage(r,p.manifest,'throw new Error("Must not execute")'),{code:'DUPLICATE_CONTRACT'});
+});
+
+test('CLI sealed files run in a fresh process outside the EMS workspace and failures write no fake artifact',async()=>{
+ const {mkdtemp,rm,readFile}=await import('node:fs/promises'),{tmpdir}=await import('node:os'),{join}=await import('node:path'),{execFile}=await import('node:child_process'),{promisify}=await import('node:util'),{pathToFileURL}=await import('node:url'),run=promisify(execFile),dir=await mkdtemp(join(tmpdir(),'ems-atomic-package-'));
+ try{
+  const out=join(dir,'package');await run(process.execPath,['tools/ems.mjs','module-seal','examples/factorial-sum.ems','--entry','main','--id','sealed.Factorials','--out',out]);const manifest=JSON.parse(await readFile(join(out,'contract.json'),'utf8'));assert.equal(manifest.contract.kind,'atomic');
+  const value=await run(process.execPath,['--input-type=module','-e','const m=await import('+JSON.stringify(pathToFileURL(join(out,'module.mjs')).href)+');console.log(m.execute({values:[3,4]}));'],{cwd:dir});assert.equal(value.stdout.trim(),'30');
+  await assert.rejects(run(process.execPath,['tools/ems.mjs','module-seal','examples/factorial-sum.ems','--entry','main','--id','invalid/id','--out',join(dir,'bad')]),error=>error.code===1&&error.stderr.includes('INVALID_ATOMIC_PACKAGE'));await assert.rejects(readFile(join(dir,'bad','module.mjs')),{code:'ENOENT'});
+ }finally{await rm(dir,{recursive:true,force:true});}
+});
+
+test('loaded package ABI metadata cannot drift while keeping trusted callbacks',async()=>{
+ const b=compile('fn main(values:Number[])->Number {return core.sum(values);}'),p=await buildAtomicPackage(b.ir,b.registry,{id:'sealed.Sum',version:'1.0.0',packageVersion:'2.0.0'});assert.equal(p.manifest.version,'2.0.0');assert.equal(p.manifest.contract.version,'1.0.0');const r=createCoreRegistry();await registerTrustedAtomicPackage(r,p.manifest,p.files['module.mjs']);const real=r.resolve('sealed.Sum');r.items.set(real.id,Object.freeze({...real,inputs:{values:'String'}}));const consumer=compile('fn main(value:String)->Number {return sealed.Sum(value);}',r);await assert.rejects(buildAtomicPackage(consumer.ir,consumer.registry,{id:'sealed.Bad'}),{code:'UNPINNED_IMPLEMENTATION'});
+});
+
+test('sealed recompiler preserves prototype-like public port names as own data entries',async()=>{
+ const b=compile('fn main(__proto__:Number)->Number {return __proto__+1;}'),p=await buildAtomicPackage(b.ir,b.registry,{id:'sealed.Proto'}),r=createCoreRegistry();await registerTrustedAtomicPackage(r,p.manifest,p.files['module.mjs']);
+ const graph={schemaVersion:'0.1',id:'consumer',version:'1.0.0',inputs:{x:{type:'Number'}},output:{type:'Number'},nodes:[{id:'invoke',uses:'sealed.Proto',args:Object.fromEntries([['__proto__',{input:'x'}]])}],returns:{node:'invoke'}},ir=lowerGraphToIR(graph,r),compiled=await import('data:text/javascript,'+encodeURIComponent(compileIRToJS(ir,r)));assert.equal(await executeIR(ir,{x:2},r),3);assert.equal(compiled.execute({x:2}),3);
+});

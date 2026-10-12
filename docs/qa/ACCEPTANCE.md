@@ -168,3 +168,7 @@ Original inputs/operand-return literals→actual semantic roots, arrays/signed-z
 ## AC-093 — Verified intrinsic propagation и mutable opaque refusal
 
 Existing coreIntrinsic certificate exact callback/emitter/signature/version/flags, no interface facade; public/private/unknown operand joins preserved. Name/emitter replacement refused. Execution-local registry prevents callback substitution; opaque array mutation initially leaks sentinel then fixed before capture. Node/browser aggregate arithmetic and graph sum5 visible with grants/private input closed; old barriers unchanged. Full gate/public required; trusted host realm/no sandbox/noninterference claim.
+
+## AC-094 — Structured module standalone atomic package
+
+Pure synchronous finite public ABI, exact package/contract identity, manifest+module without graph/IR; recursion/loop/error/-0/type vectors equivalent. Trusted hash-checked import into new graph, consumer compile/reseal, ABI drift/refusal and proto-like input names. CLI fresh process outside workspace; actual IDE TAR/module Browser after EMS origin shutdown, no EMS requests. Async/local effects/nonprimitive/unknown target/host plugins refused before files/execute. Full gate/public proof required; production/rich ABI/isolation/signatures/source maps remain open.

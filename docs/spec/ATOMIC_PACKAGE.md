@@ -1,0 +1,20 @@
+# Структурный EMS-модуль как атомарный пакет (AC-094)
+
+buildAtomicPackage(ir, registry, options) связывает существующие pure IR1 и синхронные finite/error/algebraic IR2 через existing JS compiler. Возвращаются manifest и files: module.mjs, contract.json. Нет EMS IR/graph/canvas/source-map файла; модуль содержит compiled implementation/helpers. Структурная атомарность означает отсутствие раскрываемого EMS-графа у потребителя, не secrecy/DRM. License/visibility не выводятся из kind.
+
+Параметры: id — public contract ID; packageId — отдельный package ID (default id.package); version — contract version; packageVersion — отдельная package version (default contract version); target только js-esm-sync/1. Contract signature переносит ordered inputs/output. Public ABI: Number/Boolean/String/NumberArray, synchronous execute(inputs, options), pure effects/capabilities. Helpers могут содержать условия, циклы, рекурсию, errors и внутренние algebraic values. Async/futures/streams/resources/local mutation effects/system capabilities/nonprimitive public ABI явно отклоняются, не понижаются. Это начальный linker/sealing slice EMS-060, а не полный production backend или закрытый EMS-062.
+
+Зависимости: genuine coreIntrinsic implementations либо explicitly trusted packages, загруженные registerTrustedAtomicPackage с exact executor/emitter/id/version/input/output/purity metadata. Одного названия/неизвестного trusted host emitJS недостаточно. Metadata drift после загрузки отвергается. Re-sealing linked consumer поддержан, package code bounded2MiB. Generated code в build не импортируется/не исполняется; recognized trusted compiler hooks входят в границу доверия.
+
+Manifest ems-atomic-package/1 имеет отдельные package id/version/target, contract id/version/kind/inputs/output/effects/capabilities и module {file:module.mjs,sha256}. Closed own data fields, safe fixed file, synchronous target and primitive types validated. SHA-256 — existing Web Crypto; unavailable hash не заменяется слабой схемой. Manifest фиксирует module bytes, не доказывает owner authenticity или отсутствие вредного trusted JS.
+
+registerTrustedAtomicPackage(registry, manifest, source) — явное доверенное ESM исполнение, не автоматический library import/sandbox. Hash mismatch и существующий contract ID проверяются до module evaluation. При корректном trusted import используется существующий pinned SDK/private callback provenance; registry видит только atomic signature, graph отсутствует. Input expressions re-emission uses Object.fromEntries, включая __proto__. execute/emitJS позволяют вызвать атом из нового graph/control program и повторно скомпилировать потребителя без EMS dependencies. Runtime options применяются внутри synchronous module; pure graph compiled consumer использует existing default per-atom budget. Shared cross-boundary budget/source maps/async/native ABI and package signatures требуют отдельного gate.
+
+CLI:
+    node tools/ems.mjs module-seal examples/factorial-sum.ems --entry main --id sealed.Factorials --out dist/factorials
+
+CLI проверяет/builds всё до записи файлов; ошибки unsupported target/ABI/identity не создают fake package. Filesystem failures/overwrite policy следуют initial reference CLI, installation transaction не заявляется.
+
+IDE: в настройках кода задайте ID нового контракта и выберите «Скачать атомарный контракт». Скачивается TAR двух actual package files; экспортирует click-time checked draft, не live diagnostic state. Import downloaded JS в IDE автоматически не выполняется. Author project/source остаётся inspectable. Package.execute не имеет зависимости от EMS IDE/cloud и работает Node/Web; platform-native support этим результатом не объявляется.
+
+Acceptance: interpreted original vs generated module vectors, user error/type/-0, actual import into new graph, consumer compiler/re-seal, fresh external process, downloaded browser archive after EMS origin shutdown, closed/hash/signature/target/unknown-plugin refusal. Полные rich contract IDL conditions/errors public manifests, async/native/FFI/platform packaging/production source maps remain separate.
