@@ -182,3 +182,7 @@ V2 conservative canonical user-type set, dependency union/reseal, immutable modu
 Критерии и границы: [WORKBENCH_REVISION.md](../plans/WORKBENCH_REVISION.md).
 Проверки: `tests/browser/workbench-interactions.test.mjs`, `tests/flowchart.test.mjs`,
 `tests/ui-designer.test.mjs`, полный набор тестов и публикационный gate.
+
+## AC-101 — мобильный Studio, PWA и публичный доступ
+
+Критерии: [MOBILE_PWA.md](../plans/MOBILE_PWA.md). Исполнимые проверки: `tests/pwa.test.mjs`, `tests/browser/mobile-pwa.test.mjs`, регрессия дизайна, полный gate и анонимный public smoke.

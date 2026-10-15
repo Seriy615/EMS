@@ -4,7 +4,7 @@ revision=${1:?Expected tested revision}
 [[ $revision =~ ^[a-f0-9]{40}$ ]] || exit 2
 deploy_root=/opt/ems-language-dev
 release=$deploy_root/releases/$revision
-[[ -f $release/deploy/ems-language-dev.service && -f /etc/nginx/ems-language-dev.htpasswd ]] || exit 3
+[[ -f $release/deploy/ems-language-dev.service ]] || exit 3
 for owned in /etc/nginx/sites-available/ems-language-dev /etc/systemd/system/ems-language-dev.service; do
   if [[ -e $owned ]]; then head -1 "$owned" | grep -qx '# Managed by EMS language deployment' || { echo 'Refusing to replace an unowned configuration'; exit 4; }; fi
 done

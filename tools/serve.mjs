@@ -4,7 +4,7 @@ import { readFile, realpath } from 'node:fs/promises';
 import { extname, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 const root = resolve(import.meta.dirname, '..');
-const media = { '.html':'text/html; charset=utf-8', '.js':'text/javascript; charset=utf-8', '.mjs':'text/javascript; charset=utf-8', '.json':'application/json; charset=utf-8', '.css':'text/css; charset=utf-8', '.svg':'image/svg+xml', '.md':'text/plain; charset=utf-8' };
+const media = { '.webmanifest':'application/manifest+json', '.png':'image/png', '.html':'text/html; charset=utf-8', '.js':'text/javascript; charset=utf-8', '.mjs':'text/javascript; charset=utf-8', '.json':'application/json; charset=utf-8', '.css':'text/css; charset=utf-8', '.svg':'image/svg+xml', '.md':'text/plain; charset=utf-8' };
 export async function startStudioServer({port=Number(process.env.PORT || 8787),recordModules=false}={}) {
 const moduleTrace=recordModules?createHTTPModuleDiagnostics('http://localhost'):null;
 const server=createServer(async (req, res) => {
@@ -18,7 +18,7 @@ const server=createServer(async (req, res) => {
     const target = await realpath(resolve(root, '.' + rawPath));
     if (!target.startsWith(root + sep) || /(^|\/)\./.test(rawPath)) { res.writeHead(403); res.end('Forbidden'); return; }
     const data = await readFile(target);
-    res.writeHead(200, { 'Content-Type': media[extname(target)] || 'application/octet-stream', 'X-Content-Type-Options': 'nosniff', 'Cache-Control':'no-store', 'Content-Security-Policy':"default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; connect-src 'self'; img-src 'self' data:; object-src 'none'" });
+    res.writeHead(200, { 'Content-Type': media[extname(target)] || 'application/octet-stream', 'X-Content-Type-Options': 'nosniff', ...(rawPath==='/web/service-worker.mjs'?{'Service-Worker-Allowed':'/'}:{}), 'Cache-Control':'no-store', 'Content-Security-Policy':"default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; connect-src 'self'; img-src 'self' data:; object-src 'none'" });
     if (req.method === 'HEAD') res.end(); else res.end(data);
   } catch { res.writeHead(404); res.end('Not found'); }
 });

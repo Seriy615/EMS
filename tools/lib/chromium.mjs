@@ -110,6 +110,10 @@ export async function launchChromium({observeWorkerTargets=false}={}) {
       return {
         screenshot: () => send('Page.captureScreenshot', {format:'png'}, sessionId).then(result=>result.data),
         viewport: (width,height) => send('Emulation.setDeviceMetricsOverride',{width,height,deviceScaleFactor:1,mobile:false},sessionId),
+        touch: async (type,touchPoints) => {await send('Emulation.setTouchEmulationEnabled',{enabled:true},sessionId);return send('Input.dispatchTouchEvent',{type,touchPoints},sessionId);},
+        manifest: () => send('Page.getAppManifest',{},sessionId),
+        reload: async () => {let timer,listener;const loaded=new Promise((resolve,reject)=>{listener=event=>{if(event.sessionId===sessionId&&event.method==='Page.loadEventFired')resolve();};listeners.add(listener);timer=setTimeout(()=>reject(Error('Reload deadline')),8000);});try{await send('Page.reload',{},sessionId);await loaded;}finally{clearTimeout(timer);listeners.delete(listener);}},
+        offline: async offline => {await send('Network.enable',{},sessionId);return send('Network.emulateNetworkConditions',{offline,latency:0,downloadThroughput:-1,uploadThroughput:-1},sessionId);},
         mouse: (type,params) => send('Input.dispatchMouseEvent',{type,...params},sessionId),
         downloads: directory => send('Browser.setDownloadBehavior',{behavior:'allow',downloadPath:directory}),
         async diagnostics(){const result=await send('Runtime.evaluate',{expression:'JSON.stringify({workers:globalThis.__emsQAWorkers??[],errors:globalThis.__emsQAWorkerErrors??[]})',returnByValue:true},sessionId);return {...JSON.parse(result.result.value),modules:moduleDiagnostics.snapshot(),http:httpDiagnostics()};},

@@ -1195,6 +1195,24 @@
         "GPT-6 Luna"
       ],
       "progress": "Owner concept and semantic basis recorded; @ syntax remains a proposal, no new parser or invariant runtime claimed."
+    },
+    {
+      "id": "EMS-039",
+      "title": "Mobile workbench, installable offline PWA and public dev access",
+      "phase": "M2/M3 owner P0",
+      "dependsOn": [
+        "EMS-037"
+      ],
+      "objective": "Usable touch authoring and installable offline Studio without HTTP Basic Auth",
+      "deliverables": "docs/plans/MOBILE_PWA.md; mobile sheets/dock, touch drag/pinch, inline constants, service worker/manifest/icons, public nginx",
+      "acceptance": "AC-101; actual touch and offline reload tests, constant4 without inputs, full gates and anonymous public smoke",
+      "status": "IN_PROGRESS",
+      "priority": "P0",
+      "ownerModelPolicy": [
+        "GPT-6.1 Sol",
+        "GPT-6 Luna"
+      ],
+      "progress": "Baseline879/159/75 accepted AC-100. New880 Node/159 verify PASS; focused mobile/design/workbench Chromium11/11 PASS; generated PWA asset snapshot/security test1/1 PASS. Actual touch drop/pan/pinch, UI single sheet, offline reload graph5/UI1 and inline constant4/reject/persist verified. Exact clean gate and public anonymous deployment pending."
     }
   ]
 }

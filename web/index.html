@@ -2,10 +2,15 @@
 <html lang="ru">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>EMS Studio</title>
 <link rel="stylesheet" href="/web/design.css">
 <link rel="stylesheet" href="/web/studio.css">
+
+<link rel="stylesheet" href="/web/mobile.css">
+<link rel="manifest" href="/web/manifest.webmanifest">
+<meta name="theme-color" content="#17263d">
+<link rel="apple-touch-icon" href="/web/icon-192.png">
 </head>
 <body>
 <header class="app-header">
@@ -132,5 +137,7 @@
 <div id="canvas-menu" class="canvas-menu" role="dialog" aria-label="Действия на холсте" hidden><strong>Действия EMS</strong><label>Операция<select id="context-operation"></select></label><button id="context-add">Добавить здесь</button><button id="context-fit">Показать всю программу</button><button id="context-delete">Удалить выбранную операцию</button></div>
 <script type="module" src="/web/studio.mjs">
 </script>
+<script type="module" src="/web/mobile.mjs"></script>
+<script type="module" src="/web/pwa.mjs"></script>
 </body>
 </html>
