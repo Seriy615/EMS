@@ -44,6 +44,7 @@ function lowerCallModule(checked, entry, baseRegistry, eager = false, preserveGr
   let nextInstance = 0;
   const version = checked.ast.package?.version ?? '0.1.0';
   function specialize(target, inputs) {
+    if(target.arrayTemplate)fail('UNSUPPORTED_PROFILE','Typed array specializations require control IR');
     if (target.contract) return target.name;
     if (target.async)
       fail('UNSUPPORTED_PROFILE', `${target.name}: async EMS requires a richer IR`, { location: target.declaration.location });
@@ -133,7 +134,6 @@ function lowerCallModule(checked, entry, baseRegistry, eager = false, preserveGr
 /** Select one semantic profile from the checked module; preserve the working call-IR backend. */
 export function lowerCheckedModule(checked, entry, registry, { profile = 'auto', preserveGraphIdentity = false } = {}) {
   if (!['auto', 'call', 'control'].includes(profile)) fail('UNSUPPORTED_PROFILE', 'Unknown frontend lowering profile');
-  if(profile==='call'&&[...checked.calls.values()].some(call=>call.target?.arrayTemplate))fail('UNSUPPORTED_PROFILE','Typed array specializations require control IR');
   let control = profile === 'auto' && checked.signatures.get(entry)?.async || profile === 'control' || profile === 'auto' && checked.signatures.get(entry)?.inputs.some(input => ['Option','Result','Future','Stream','ResourceHandle'].includes(input.type.name));
   const entryTarget = checked.signatures.get(entry);
   const pending = entryTarget?.declaration.body ? [entryTarget.declaration.body] : [];
