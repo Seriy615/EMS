@@ -1039,3 +1039,22 @@ assets frozen before final Node gate; subsequent changes are docs/test URLs only
 
 Runtime/source/IR semantics unchanged in this slice. Standalone source projection
 and source helper contracts remain next P0, Maps deferred; global goal active.
+
+AC-118 publication verified: `824d395ed8afd8fc1c50fc9ed95348a83aa81574`,
+asset9d802b08244a7eb3f37deb29. Public API returns the exact live source revision,
+root opens home with matching cached build label, actual update check says latest,
+old flow bookmark opens ordinary canvas and Worker8. Service active/current and
+foreign6 nginx hashes checked. Public mobile screenshot inspected. Evidence logs
+/tmp/ems-entry-{deploy,live-proof,vps-after}.log; GitHub pushed. Initial public
+probe used a mistyped abbreviated expected SHA and was corrected to the actual
+full Git SHA before acceptance; server code did not need a change.
+
+Broad browser finished122 cases:118 PASS/4 initial test-address failures. Those
+4 final files rerun4/4 PASS in /tmp/ems-entry-final-repaired-browser.log. Standalone
+artifacts still make no /web or /src requests; auth fixture remains test-only,
+production remains anonymous. Full122 rerun not performed under owner immediate
+instruction. Final1006 Node/167 verify; focused closure tests PASS.
+
+This slice resolves stale-looking entry/version/update UX and preserves old files.
+It does not claim old standalone source graphs were migrated; source helpers
+and actual shared source projection are the next P0. Goal remains active.
