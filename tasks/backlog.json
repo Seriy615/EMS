@@ -1170,13 +1170,13 @@
       "objective": "Edit program control flow on the ordinary graph and design UI on a full workspace with movable tools",
       "deliverables": "docs/plans/WORKBENCH_REVISION.md; navigation, drag operations, floating UI tools, typed styles, flowchart SVG",
       "acceptance": "AC-100; real mouse graph/UI authoring, layout persistence, interpreted results, standalone style parity, complete gates and public smoke",
-      "status": "IN_PROGRESS",
+      "status": "DONE",
       "priority": "P0",
       "ownerModelPolicy": [
         "GPT-6.1 Sol",
         "GPT-6 Luna"
       ],
-      "progress": "Baseline872 Node/159 verify PASS. New Node879/879 and verify159/159 PASS; focused browser3/3 PASS. Unified graph and floating designer implemented; complete browser/deploy acceptance pending. Full language visual coverage remains open."
+      "progress": "AC-100 принят в заявленном срезе: checked/live `b2b8b36e34a3208885a2a73b830886a54a54dd37`, точный чистый gate879 Node/159 verify/75 Chromium PASS. Полный ordinary HTTPS smoke PASS; отдельный live native mouse: общий граф for/if=7, перетаскивание массива, закрытая стартовая подсказка, полноразмерный UI, widget drop, DOM radius24, перемещение/скрытие окна свойств PASS. Foreign6 nginx hashes/5 services неизменны; own active28.6MB/128MB, tasks32, strict/no-new-privileges/127.0.0.1:18877. Логи `/tmp/ems-workbench-exact-deploy.log`, `/tmp/ems-workbench-public-smoke.log`, `/tmp/ems-workbench-public-features.log`; live screenshots `/tmp/ems-workbench-live-{graph,ui}.png`. Язык, полная визуальная грамматика, @ syntax и инварианты остаются открыты; контрактный базис EMS-038 записан отдельно. Последующее указание владельца: мобильный дизайн/PWA/снятие Basic Auth — следующий срез."
     },
     {
       "id": "EMS-038",
