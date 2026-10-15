@@ -1,3 +1,5 @@
+import {arrayContractTemplate} from '../stdlib/typed-array-contracts.mjs';
+import {coreIntrinsic} from '../reference/registry.mjs';
 import {parseControlType} from '../semantics/control-algebraic.mjs';
 import {expandCollectionApplications} from './collections.mjs';
 import { fail } from '../reference/errors.mjs';
@@ -70,12 +72,14 @@ export function typecheckModule(ast, registry, { imports = new Map(), maxTypeNod
     signatures.set(declaration.name, { name: declaration.name, parameters: declaration.typeParameters, inputs,
       output: type(declaration.output, parameters), async: declaration.async, declaration });
   }
-  function signature(name, at) {
+  function signature(name, at,templates=true) {
     const forced=expansion.intrinsics.get(at);
     if (!forced&&signatures.has(name)) return signatures.get(name);
     const [prefix, ...rest] = name.split('.');
     const resolved = forced??(namespaces.has(prefix) ? `${namespaces.get(prefix)}.${rest.join('.')}` : name);
     const id = ['add','sub','mul','div','sum','min','max'].includes(resolved) ? `core.${resolved}` : resolved;
+    const template=templates&&!forced?arrayContractTemplate(id):null,existing=registry.items.get(id);
+    if(template&&(!existing||coreIntrinsic(existing))){const variable={kind:'Variable',name:'T'},convert=value=>value==='T'?variable:value==='Array<T>'?term('Array',[variable]):primitive(value);return {name:id,parameters:['T'],inputs:Object.entries(template.inputs).map(([name,value])=>({name,type:convert(value)})),output:convert(template.output),async:false,arrayTemplate:id.slice(10)};}
     let contract;
     try { contract = registry.resolve(id); } catch { diagnostic('UNKNOWN_SYMBOL', `Unknown callable ${name}`, at); }
     const syntax = typeName_ => {const located=parsed=>({kind:'NamedType',name:parsed.name,arguments:parsed.arguments.map(located),location:at.location});return located(parseControlType(typeName_));};
@@ -98,8 +102,8 @@ export function typecheckModule(ast, registry, { imports = new Map(), maxTypeNod
         if (!node.elements.length && !hint) diagnostic('CANNOT_INFER', 'Empty array requires an element type', node);
         const elements = node.elements.map(element => expression(element, scope, context, hint));
         const element = hint ?? elements[0];
-        for (const actual of elements) expectType(element, actual, node);
-        result = term('Array', [element]); break;
+        const inferred=new Map();for (const actual of elements) expectType(element, actual, node,inferred);
+        result = term('Array', [resolveType(element,inferred)]); break;
       }
       case 'RecordExpression': {
         const names = new Set(), fields = [], values = [];
@@ -194,7 +198,7 @@ export function typecheckModule(ast, registry, { imports = new Map(), maxTypeNod
           calls.set(node, { algebraicConstructor: name, output: result });
           break;
         }
-        const target = signature(name, node);
+        let target = signature(name, node);
         const collection=collectionHelpers.get(name);if(collection&&scope.has(collection.callback))diagnostic('CONTRACT_REF_REQUIRED','Local values are not contract references',{location:collection.location});
         if (scope.has(name)) diagnostic('UNSUPPORTED_CALL', 'Local callable values are not supported', node.callee);
         if (node.arguments.length !== target.inputs.length) diagnostic('CALL_ARITY', `Wrong number of arguments for ${name}`, node);
@@ -209,7 +213,15 @@ export function typecheckModule(ast, registry, { imports = new Map(), maxTypeNod
         });
         result = resolveType(output, substitutions);
         const unresolved = value => value.kind === 'Variable' ? value.name.startsWith('__call') : value.arguments.some(unresolved);
+        if(target.arrayTemplate&&(unresolved(result)||inputs.some(input=>unresolved(resolveType(input,substitutions))))&&coreIntrinsic(registry.items.get(target.name)??{})){
+          const legacy=signature(name,node,false),attempt=new Map(substitutions);try{inputs.forEach((input,index)=>expectType(legacy.inputs[index].type,resolveType(input,attempt),node,attempt));expectType(legacy.output,resolveType(output,attempt),node,attempt);for(const [key,value]of attempt)substitutions.set(key,value);result=resolveType(output,substitutions);}catch(error){if(error.code!=='TYPE_MISMATCH')throw error;}
+        }
         if (unresolved(result)) diagnostic('CANNOT_INFER', `Cannot infer type arguments for ${name}`, node);
+        if(target.arrayTemplate){
+          if(inputs.some(input=>unresolved(resolveType(input,substitutions))))diagnostic('CANNOT_INFER','Typed array operation requires an element type',node);
+          const pending=[...node.arguments];while(pending.length){const child=pending.pop();if(!child||typeof child!=='object')continue;if(types.has(child))types.set(child,resolveType(types.get(child),substitutions));const nested=calls.get(child);if(nested){nested.inputs=nested.inputs?.map(input=>resolveType(input,substitutions));if(nested.output)nested.output=resolveType(nested.output,substitutions);}for(const [key,value]of Object.entries(child))if(key!=='location'){if(Array.isArray(value))pending.push(...value);else if(value&&typeof value==='object')pending.push(value);}}
+          const first=resolveType(inputs[0],substitutions);if(first.name==='Array'&&first.arguments[0]?.name==='Number'&&coreIntrinsic(registry.items.get(target.name)??{}))target=signature(name,node,false);
+        }
         if (target.async) result = term('Future', [result]);
         calls.set(node, { target, inputs: inputs.map(input => resolveType(input, substitutions)), output: result });
         break;

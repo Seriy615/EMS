@@ -1,3 +1,5 @@
+EMS-045 / [AC-114 typed array contracts](../spec/TYPED_ARRAY_CONTRACTS.md):10 операций как конкретные pure atoms, cold IR/lock/sealing и UI text handlers. Следующий незакрытый объём — Map и generic flow/UI ports; затем полный text/visual roundtrip по зависимостям. Global goal активна.
+
 EMS-045 / [AC-113 typed arrays](../spec/TYPED_ARRAYS.md): исполнение Array<T> через общий control IR. Далее generic collection operations/Map и перенос типов в обычный flow/UI canvas. Это не завершение общей системы коллекций или global goal.
 
 EMS-044 дополнен [AC-112 UI flow handlers](../spec/UI_CONTRACT_FLOW.md): persistent state contracts, applied graph witness и настоящий Worker/standalone UI. Следом text/visual projection и generic collections; full goal остаётся открытой.

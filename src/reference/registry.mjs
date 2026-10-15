@@ -1,3 +1,4 @@
+import {resolveTypedArrayContract} from '../stdlib/typed-array-contracts.mjs';
 import {contractDescriptionTemplate} from '../contracts/descriptions.mjs';
 import {parseControlType,controlTypeName} from '../semantics/control-algebraic.mjs';
 import {installFiniteStandardLibrary} from '../stdlib/finite.mjs';
@@ -16,6 +17,7 @@ export function coreIntrinsic(item) {
 /** Trust boundary: registerAtomic accepts host-trusted implementations only. No plugin sandbox in M0. */
 export class Registry {
   constructor() { this.items = new Map(); }
+  #typedArrayInstances=0;
   /** Optional ems-algebraic/1 signatures use structured control IR; the default reference graph profile stays finite. */
   registerAtomic({ id, version = '1.0.0', inputs, output, effects = [], capabilities = [], execute, emitJS = null, interfaceBoundary = null, valueProfile, description=contractDescriptionTemplate(id,Object.keys(inputs??{})) }) {
     if (typeof execute !== 'function') fail('INVALID_IMPL', `${id}: atomic executor must be a function`);
@@ -62,7 +64,8 @@ export class Registry {
     this.items.set(item.id, Object.freeze({ ...item, effects: Object.freeze([...item.effects]), capabilities: Object.freeze([...item.capabilities]) }));
   }
   resolve(id) {
-    const item = this.items.get(id);
+    let item = this.items.get(id);
+    if(!item){const definition=resolveTypedArrayContract(id);if(definition){if(this.#typedArrayInstances>=1024)fail('CONTRACT_LIMIT','Too many typed array instances');this.registerAtomic(definition);this.#typedArrayInstances++;item=this.items.get(id);}}
     if (!item) fail('MISSING_CONTRACT', `Unknown contract ${id}`);
     return item;
   }

@@ -1,0 +1,10 @@
+// Immutable operations are typed EMS contracts. No application JavaScript is needed.
+@Main(values: Array<String>) -> Array<String> {
+    let appended = std::array::append(values, "EMS");
+    let replaced = std::array::set(appended, 0, "first");
+    return std::array::removeAt(replaced, 1);
+}
+
+@RemoveFirst<T>(values: Array<T>) -> Array<T> {
+    return std::array::removeAt(values, 0);
+}

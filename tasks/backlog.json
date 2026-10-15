@@ -1314,7 +1314,7 @@
         "EMS-037"
       ],
       "objective": "Implement real Array<T> and Map<K,V> values and operations with shared text/visual semantics",
-      "deliverables": "docs/spec/TYPED_ARRAYS.md; generic array control types, expressions/index/for/equality, runtime/compiler/diagnostic types, tests and example; next generic operations, Map and editor ports",
+      "deliverables": "docs/spec/TYPED_ARRAYS.md; generic array control types, expressions/index/for/equality, runtime/compiler/diagnostic types, tests and example; next generic operations, Map and editor ports; docs/spec/TYPED_ARRAY_CONTRACTS.md,10 concrete atomic operation families and catalog v3",
       "acceptance": "AC-113 initial arrays: runtime/standalone parity, typed refusal, IR roundtrip, hostile data/accessor refusals and browser downloaded independent module. Full collections also require operations, Map and editor acceptance.",
       "status": "IN_PROGRESS",
       "priority": "P0",
@@ -1322,7 +1322,7 @@
         "GPT-6.1 Sol",
         "GPT-6 Luna"
       ],
-      "progress": "Initial Array<T> core implemented; focused11 Node and actual Worker/downloaded standalone1 Chromium PASS. Final957 Node/163 verify PASS; Chromium arrays/inspection/UI4 and accepted arrays1 PASS. Published d1c749f per owner immediate/manual instruction: public Worker String array and downloaded independent module PASS, owned service active, foreign6 hashes unchanged. Full browser gate not run; evidence in STATUS. No claims of generic flow/UI ports or dictionaries yet."
+      "progress": "Initial Array<T> core implemented; focused11 Node and actual Worker/downloaded standalone1 Chromium PASS. Final957 Node/163 verify PASS; Chromium arrays/inspection/UI4 and accepted arrays1 PASS. Published d1c749f per owner immediate/manual instruction: public Worker String array and downloaded independent module PASS, owned service active, foreign6 hashes unchanged. Full browser gate not run; evidence in STATUS. No claims of generic flow/UI ports or dictionaries yet. AC-114 adds10 typed operation families, deterministic concrete Registry recipes, legacy numeric compatibility/defaults, pure argument effect preservation, lock/sealing and UI source handler reconstruction. Initial18 new Node/combined46 PASS; final focused41 PASS after metadata and legacy-empty corrections; browser Worker/downloaded module1 PASS. Final975 Node/164 verify and9 Chromium PASS; publication pending per owner immediate/manual instruction, full browser gate not run."
     }
   ]
 }

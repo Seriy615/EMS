@@ -258,3 +258,7 @@ Browser: loops-and-ports, project-files-ui, ui-handler-workspace.
 ## AC-113 — actual typed Array<T> execution
 
 [Правила и границы](../spec/TYPED_ARRAYS.md). Auto lowering, String/Boolean/nested/tagged arrays, contextual empty, indexing/for/equality, IR roundtrip, accessor/type/bounds/size negatives, detached nested atomic callback values, actual browser Worker and downloaded standalone after origin shutdown. Explicit-flow/UI generic ports and Map/Set are not accepted by this slice.
+
+## AC-114 — concrete typed array operation contracts
+
+[Контракты, специализация, обратная совместимость и приёмка](../spec/TYPED_ARRAY_CONTRACTS.md).10 pure atomic operation families, exact concrete interfaces, runtime/standalone/cold IR, legacy numeric IR/defaults, no effect erasure, typing/bounds/size/spoof refusals, private implementation witness, lock/sealing, UI text handler and actual browser/downloaded independent execution. Generic editor ports/Map/full collections remain open.

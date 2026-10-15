@@ -166,3 +166,5 @@ Typed contract declarations accept `@Main() -> Number`, and qualified operations
 UI-обработчики теперь можно создавать обычным графом: «Создать граф обработчика», read/write данных UI, «Применить к UI» и привязка события элемента. [AC-112: правила, черновики и пример](docs/spec/UI_CONTRACT_FLOW.md).
 
 Ядро исполняет `Array<String>`, `Array<Boolean>` и вложенные типизированные массивы в общем Runtime/standalone compiler. [Пример и ограничения AC-113](docs/spec/TYPED_ARRAYS.md); generic UI/flow ports и словари ещё в разработке.
+
+Для `Array<T>` доступны типизированные контракты `append`, `set`, `insertAt`, `removeAt` и ещё шесть операций. [AC-114: пример, Registry/IR и границы](docs/spec/TYPED_ARRAY_CONTRACTS.md). Каталог v3 содержит их generic interfaces.

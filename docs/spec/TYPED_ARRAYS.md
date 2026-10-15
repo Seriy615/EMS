@@ -57,6 +57,6 @@ Worker и скачанный module в отдельном процессе по�
 
 Новый explicit contract-flow canvas, persistent UI state и finite graph/IDL пока
 не принимают эти новые типы. Они продолжают явно отвергать неподдерживаемый тип;
-нет фиктивной поддержки UI или импорта native array ABI. Generic append/set/removeAt,
-словари и полная библиотека коллекций — следующие задачи EMS-045. Числовой
+нет фиктивной поддержки UI или импорта native array ABI. [Generic operation contracts AC-114](TYPED_ARRAY_CONTRACTS.md) реализуют append/set/removeAt и ещё семь операций;
+словари и полная библиотека коллекций остаются задачами EMS-045. Числовой
 std.array.removeAt уже существует в прежнем finite profile. Глобальная цель активна.

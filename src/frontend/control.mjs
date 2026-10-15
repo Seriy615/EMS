@@ -1,3 +1,5 @@
+import {Registry} from '../reference/registry.mjs';
+import {typedArrayContractId,typedArrayIntrinsic} from '../stdlib/typed-array-contracts.mjs';
 import {controlNodeEntries} from '../ir/control-addresses.mjs';
 import { fail } from '../reference/errors.mjs';
 import { resolveType, unifyTypes, typeName } from './types.mjs';
@@ -13,10 +15,12 @@ const flexible = type => type.kind === 'Variable' ? { kind: 'Variable', name: ty
 
 /** Specialize typed functions into semantic control blocks; locations remain a separate sidecar. */
 export function lowerControlModule(checked, entry, registry) {
+  if([...checked.calls.values()].some(call=>call.target?.arrayTemplate)){const derived=new Registry();for(const [id,contract]of registry.items)derived.items.set(id,contract);registry=derived;}
   const functions = [], instances = new Map(), provenance = {}, locations=new WeakMap();
   let next = 0, errors = false, algebraic = false, futures = false, streams = false, resources = false;
   const diagnostic = node => fail('UNSUPPORTED_PROFILE', `${node.kind} requires another IR profile`, { location: node.location });
   function specialize(target, inputs) {
+    if(target.arrayTemplate){algebraic=true;const id=typedArrayContractId(target.arrayTemplate,controlType(inputs[0].arguments[0])),contract=registry.resolve(id);if(!typedArrayIntrinsic(contract))fail('BINDING_SIGNATURE','Typed array specialization was replaced');return {kind:'contract',id,version:'1.0.0'};}
     if(target.contract?.kind==='resource' || target.declaration?.external && registry.resolve(target.name).kind==='resource')resources=true;
     if (target.async) futures = true;
     if (target.contract || target.declaration.external) {

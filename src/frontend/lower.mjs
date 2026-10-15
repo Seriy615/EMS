@@ -133,6 +133,7 @@ function lowerCallModule(checked, entry, baseRegistry, eager = false, preserveGr
 /** Select one semantic profile from the checked module; preserve the working call-IR backend. */
 export function lowerCheckedModule(checked, entry, registry, { profile = 'auto', preserveGraphIdentity = false } = {}) {
   if (!['auto', 'call', 'control'].includes(profile)) fail('UNSUPPORTED_PROFILE', 'Unknown frontend lowering profile');
+  if(profile==='call'&&[...checked.calls.values()].some(call=>call.target?.arrayTemplate))fail('UNSUPPORTED_PROFILE','Typed array specializations require control IR');
   let control = profile === 'auto' && checked.signatures.get(entry)?.async || profile === 'control' || profile === 'auto' && checked.signatures.get(entry)?.inputs.some(input => ['Option','Result','Future','Stream','ResourceHandle'].includes(input.type.name));
   const entryTarget = checked.signatures.get(entry);
   const pending = entryTarget?.declaration.body ? [entryTarget.declaration.body] : [];
@@ -140,12 +141,13 @@ export function lowerCheckedModule(checked, entry, registry, { profile = 'auto',
   while (profile === 'auto' && pending.length) {
     const node = pending.pop(); if (!node || typeof node !== 'object') continue;
     const target = checked.calls.get(node)?.target;
-    if (target && !target.contract && !target.declaration.external && !visited.has(target.name)) {
+    if (target && !target.contract && !target.arrayTemplate && !target.declaration.external && !visited.has(target.name)) {
       visited.add(target.name); pending.push(target.declaration.body);
     }
     if (['IfStatement','WhileStatement','ForStatement','BreakStatement','ContinueStatement','AssignmentExpression','IndexExpression','ThrowStatement','TryStatement','MatchStatement'].includes(node.kind) ||
         node.kind === 'LetDeclaration' && node.mutable || node.kind === 'UnaryExpression' && node.operator === '!' ||
         node.kind === 'BinaryExpression' && !['+','-','*','/'].includes(node.operator)) control = true;
+    if(target?.arrayTemplate)control=true;
     if (target?.async || node.kind === 'UnaryExpression' && node.operator === 'await') control = true;
     if(checked.calls.get(node)?.resourceOperation || target?.contract?.kind==='resource' || checked.types.get(node)?.name==='ResourceHandle' || node.kind==='UsingDeclaration')control=true;
     if (checked.calls.get(node)?.streamOperation || node.kind === 'ForStatement' && node.asynchronous) control = true;

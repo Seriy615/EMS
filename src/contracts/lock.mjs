@@ -1,3 +1,4 @@
+import {typedArrayIntrinsic} from '../stdlib/typed-array-contracts.mjs';
 import { fail } from '../reference/errors.mjs';
 import { Registry,coreIntrinsic } from '../reference/registry.mjs';
 import { serializeIR,parseIR,executeIR,compileIRToJS,graphFromIR,lowerGraphToIR,EFFECT_PROFILE } from '../ir/index.mjs';
@@ -47,7 +48,7 @@ export async function createProgramLock(ir,registry,{target,artifactSources=new 
       const selected=registry.resolve(boundary.binding.implementation.id),captured=atomicBindingSource(item);
       if(!captured||captured.execute!==selected.execute||captured.emitJS!==selected.emitJS)fail('BINDING_DRIFT','Atomic adapter no longer matches selected implementation');implementation={kind:'binding',id:selected.id};await visit(selected.id);
     }else{
-      const intrinsic=coreIntrinsic(item),origin=verifiedOrigin(item);
+      const intrinsic=coreIntrinsic(item)??(typedArrayIntrinsic(item)?{abi:'ems-stdlib-typed-array/1',operation:item.id}:null),origin=verifiedOrigin(item);
       if(intrinsic){implementation={kind:'intrinsic',id:intrinsic.operation};metadata.intrinsic=intrinsic;}
       else if(origin){implementation={kind:'artifact',id:origin.module};for(const artifact of origin.artifacts){const previous=artifacts.get(artifact.id);if(previous&&encode(previous)!==encode(artifact))fail('ARTIFACT_CONFLICT','Artifact identity has conflicting bytes/edges');artifacts.set(artifact.id,artifact);}}
       else fail('UNPINNED_IMPLEMENTATION','Implementation has no verified artifact provenance',{contract:id});
