@@ -76,7 +76,7 @@ export function tokenizeEMS(source, { maxSourceLength = 1_000_000, maxTokens = 1
 class Parser {
   constructor(tokens, maxDepth) { this.tokens = tokens; this.index = 0; this.depth = 0; this.maxDepth = maxDepth; }
   get token() { return this.tokens[this.index]; }
-  is(value) { return this.token.value === value; }
+  is(value) { return this.token.kind!=='string'&&this.token.kind!=='number'&&this.token.value === value; }
   take(value) { if (!this.is(value)) return false; this.index++; return true; }
   expect(value) { const token = this.token; if (!this.take(value)) this.error(`Expected ${value}`); return token; }
   error(message) { fail('SYNTAX', `${this.token.location.start.line}:${this.token.location.start.column}: ${message}`, { location: this.token.location }); }
@@ -169,7 +169,7 @@ class Parser {
         else if(this.take('+')){
           const name=this.uiName(),parameters=[];this.expect('(');
           if(!this.is(')'))do{const at=this.token,name=this.uiName();this.expect(':');parameters.push(this.node('Parameter',at,{name,type:this.type()}));}while(this.take(','));
-          this.expect(')');this.expect('->');const output=this.type(),body=this.take(';')?null:this.block();transitions.push(this.node('TransitionDeclaration',at,{name,parameters,output,body}));
+          this.expect(')');this.expect('->');const output=this.type(),body=this.take(';')?null:this.take('graph')?this.graphBody():this.block();transitions.push(this.node('TransitionDeclaration',at,{name,parameters,output,body}));
         }else{const name=this.uiName();this.expect(':');const type=this.type();this.expect('=');const value=this.initializer();this.expect(';');fields.push(this.node('StateFieldDeclaration',at,{name,type,value}));}
       }
       this.expect('}');return this.node('StatefulContractDeclaration',start,{name,fields,transitions,invariants,exported});
@@ -190,8 +190,30 @@ class Parser {
         }
       } while (this.take(','));
     }
-    const body = external ? (this.expect(';'), null) : this.block();
+    const graph = !external && this.take('graph');
+    if(graph && (category!=='ContractDeclaration'||async||typeParameters.length))this.error('Graph bodies require a concrete synchronous contract');
+    const body = external ? (this.expect(';'), null) : graph ? this.graphBody() : this.block();
     return this.node(category, start, { exported, external, async, name, typeParameters, parameters, output, requirements, body });
+  }
+  graphBody(){
+    const start=this.token,profile=this.token.kind==='string'?this.string():'ems-contract-flow/3';this.expect('{');
+    const nodes=[],connections=[];let entry=null;
+    while(!this.is('}')){
+      const at=this.token;
+      if(this.take('@')){
+        const contract=this.qualified();let version='1.0.0';if(this.take('[')){version=this.string();this.expect(']');}
+        this.expect('#');const name=this.uiName();let valueType=null,initial=null,storage=null;
+        if(this.take(':')){valueType=this.type();this.expect('=');if(this.is('#')&&this.tokens[this.index+1]?.kind!=='number'&&['identifier','string'].includes(this.tokens[this.index+1]?.kind)){this.expect('#');storage=this.uiName();}else initial=this.expression();}
+        this.expect('{');const inputs=[];
+        while(!this.is('}')){const port=this.token,name=this.uiName(),reactive=this.take('<=');if(!reactive)this.expect(':');let value;
+          if(reactive){if(this.take('#'))value=this.node('GraphNodeReference',port,{name:this.uiName()});else{this.expect('input');this.expect('::');value=this.node('GraphInputReference',port,{name:this.uiName()});}}
+          else value=this.expression();this.expect(';');inputs.push(this.node('GraphInputBinding',port,{name,reactive,value}));
+        }
+        this.expect('}');this.take(';');nodes.push(this.node('GraphNodeDeclaration',at,{name,contract,version,valueType,initial,storage,inputs}));
+      }else if(this.take('+')){if(entry!==null)this.error('Graph declares more than one entry');this.expect('#');entry=this.uiName();this.expect(';');}
+      else{this.expect('#');const from=this.uiName();this.expect('.');const port=this.uiName();this.expect('~>');this.expect('#');const to=this.uiName();this.expect('.');const targetPort=this.uiName();this.expect(';');connections.push(this.node('GraphActivationBinding',at,{from,port,to,targetPort}));}
+    }
+    this.expect('}');return this.node('ContractGraph',start,{profile,nodes,connections,entry});
   }
   uiName(){return this.token.kind==='string'?this.string():this.identifier();}
   uiTarget(){let name=this.uiName();while(this.take('.')||this.take('::'))name+='.'+this.uiName();return name;}
@@ -296,7 +318,7 @@ class Parser {
   }
   prefix() {
     const start = this.token;
-    if (['!', '-', '+', 'await'].includes(start.value)) {
+    if (start.kind==='symbol'&&['!', '-', '+'].includes(start.value)||start.kind==='keyword'&&start.value==='await') {
       this.index++; return this.node('UnaryExpression', start, { operator: start.value, value: this.expression(8) });
     }
     if (['number', 'string'].includes(start.kind) || this.is('true') || this.is('false')) {

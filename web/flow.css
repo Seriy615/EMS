@@ -14,3 +14,5 @@ body.ui-flow .execution details[hidden]{display:none}
 .workspace{display:flex;flex-direction:column}.workspace>.scope-bar{position:relative;inset:auto;height:auto;min-height:52px;flex:none}.workspace>#viewport{position:relative;inset:auto;flex:1;min-height:0}
 @media(max-width:700px){.scope-bar:has(#close-contract:not([hidden])) #scope{display:block;flex:1}.scope-bar:has(#close-contract:not([hidden])) .canvas-tools{flex-basis:100%;margin-left:0}}
 #catalog [data-open-flow-contract]{touch-action:pan-y}
+
+#source-dialog{width:min(1100px,calc(100vw - 24px));height:min(820px,calc(100dvh - 24px));max-height:calc(100dvh - 24px);overflow:auto;box-sizing:border-box;padding:16px;border:1px solid var(--line);border-radius:14px}#source-dialog[open]{display:flex;flex-direction:column;gap:6px}#source-dialog>form{align-self:flex-end}#source-dialog h2{margin:4px 0;font-size:18px}#source-dialog p{margin:4px 0}#generated-source{display:block;width:100%;min-height:120px;height:0;flex:1;resize:none;font:13px/1.5 ui-monospace,monospace;tab-size:2}.flow-text-actions{display:flex;flex-wrap:wrap;gap:8px}#flow-text-error{color:#b42336;white-space:pre-wrap;overflow-wrap:anywhere}

@@ -1,5 +1,6 @@
 import {assertFlowValue,canonicalFlowType,defaultFlowValue} from '../contracts/flow-values.mjs';
 import {createCoreRegistry} from '../reference/registry.mjs';
+import {printFlowProjectSource,applyFlowProjectSource} from './flow-source.mjs';
 import {fail} from '../reference/errors.mjs';
 import {createFlowLibrary,flowBaseRegistry,flowCompositeGraph,RECURSIVE_FLOW_CALL_PROFILE,flowCallCreatesCycle} from '../contracts/flow-library.mjs';
 import {CONTRACT_FLOW_VERSION,RICH_CONTRACT_FLOW_VERSION,SHARED_STORAGE_FLOW_VERSION,richContractFlow,validateContractFlow,flowContractInterface} from '../contracts/flow.mjs';
@@ -67,5 +68,7 @@ export class FlowProjectEditor{
  viewport(view){this.workspace.canvas.view=view;validateFlowProject(this.project,this.baseRegistry,this.options);}
  undo(){if(this.history.length){this.future.push(this.project);this.project=this.history.pop();this.refreshRegistry();}}
  redo(){if(this.future.length){this.history.push(this.project);this.project=this.future.pop();this.refreshRegistry();}}
+ get sourceText(){return printFlowProjectSource(this.project,this.baseRegistry,this.options);}
+ applySource(source){const candidate=applyFlowProjectSource(this.project,source,this.baseRegistry,this.options);this.edit((workspace,project)=>{for(const key of Object.keys(project))delete project[key];Object.assign(project,candidate);});}
  serialize(){return serializeFlowProject(this.project,this.baseRegistry,this.options);}
 }

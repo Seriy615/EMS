@@ -22,12 +22,20 @@ function fields(value,keys){object(value);if(Object.keys(value).length!==keys.le
 function literal(value){if(Array.isArray(value)&&value.length>10000||typeof value==='string'&&value.length>262144)fail('FLOW_LIMIT','Literal exceeds contract-flow limit');const type=typeOfValue(value);assertTypeName(type,'flow literal');return type;}
 
 /** The same typed interface describes a card, its ports and compiler implementation. */
-export function flowContractInterface(node,graph,registry,{allowState=false}={}){
+export function flowContractInterface(node,graph,registry,{allowState=false,sourceSignatures}={}){
  const kernel=Object.hasOwn(FLOW_KERNEL,node.uses)?FLOW_KERNEL[node.uses]:null;
  if(kernel){
   if(node.version!=='1.0.0')fail('CONTRACT_VERSION','Kernel contract version mismatch',{node:node.id});
   const inputs=node.uses==='std.storage.Variable'?{value:node.valueType}:node.uses==='std.program.Result'?{value:graph.output.type}:kernel.inputs;
   return {id:node.uses,version:'1.0.0',kind:'atomic',title:kernel.title,description:kernel.title,inputs,output:node.uses==='std.storage.Variable'?node.valueType:null,activation:{input:'enter',outputs:kernel.outputs},effects:[],capabilities:[],implementation:graph.schemaVersion};
+ }
+ // Compile-time forward references only. The common AST checker verifies actual bodies/effects;
+ // these signatures are never installed as executable registry implementations.
+ const source=sourceSignatures?.get(node.uses);
+ if(source){
+  if(node.version!=='1.0.0')fail('CONTRACT_VERSION','Source contract version mismatch',{node:node.id});
+  for(const type of [...Object.values(source.inputs),source.output])assertFlowType(type,'source contract',richContractFlow(graph));
+  return {id:node.uses,version:'1.0.0',kind:'composite',title:node.uses,inputs:source.inputs,output:source.output,activation:{input:'enter',outputs:['next']},implementation:'source'};
  }
  const contract=registry.resolve(node.uses);
  if(contract.version!==node.version)fail('CONTRACT_VERSION','Contract version mismatch',{node:node.id});
@@ -39,7 +47,7 @@ export function flowContractInterface(node,graph,registry,{allowState=false}={})
 }
 
 /** Closed semantic graph, independent of canvas positions, creation order and descriptions. */
-export function validateContractFlow(graph,registry,{complete=true,allowState=false}={}){
+export function validateContractFlow(graph,registry,{complete=true,allowState=false,sourceSignatures}={}){
  fields(graph,['schemaVersion','id','version','inputs','output','nodes','connections','entry']);
  const rich=richContractFlow(graph),shared=graph.schemaVersion===SHARED_STORAGE_FLOW_VERSION;
  if(![CONTRACT_FLOW_VERSION,RICH_CONTRACT_FLOW_VERSION,SHARED_STORAGE_FLOW_VERSION].includes(graph.schemaVersion))fail('FLOW_VERSION','Unsupported contract-flow version');
@@ -48,7 +56,7 @@ export function validateContractFlow(graph,registry,{complete=true,allowState=fa
  if(Object.keys(graph.inputs).length>100||!Array.isArray(graph.nodes)||graph.nodes.length>256||!Array.isArray(graph.connections)||graph.connections.length>1024)fail('FLOW_LIMIT','Contract flow exceeds limits');
  for(const [name,spec]of Object.entries(graph.inputs)){if(!names.test(name)||name.length>200)fail('INVALID_FLOW','Invalid input name');fields(spec,['type']);assertFlowType(spec.type,'flow input',rich);}
  const nodes=new Map(),interfaces=new Map();
- for(const node of graph.nodes){const bound=shared&&Object.hasOwn(node,'storage');fields(node,['id','uses','version','args',...(node.uses==='std.storage.Variable'?['valueType',bound?'storage':'initial']:[])]);if(typeof node.id!=='string'||node.id.length>200||!names.test(node.id)||nodes.has(node.id)||typeof node.uses!=='string'||!ids.test(node.uses))fail('INVALID_FLOW','Invalid or duplicate contract identity');object(node.args);if(node.uses==='std.storage.Variable'){assertFlowType(node.valueType,'variable',rich);if(!bound){if(!rich)literal(node.initial);assertFlowValue(node.initial,node.valueType,'variable initial',rich);}}nodes.set(node.id,node);interfaces.set(node.id,flowContractInterface(node,graph,registry,{allowState}));}
+ for(const node of graph.nodes){const bound=shared&&Object.hasOwn(node,'storage');fields(node,['id','uses','version','args',...(node.uses==='std.storage.Variable'?['valueType',bound?'storage':'initial']:[])]);if(typeof node.id!=='string'||node.id.length>200||!names.test(node.id)||nodes.has(node.id)||typeof node.uses!=='string'||!ids.test(node.uses))fail('INVALID_FLOW','Invalid or duplicate contract identity');object(node.args);if(node.uses==='std.storage.Variable'){assertFlowType(node.valueType,'variable',rich);if(!bound){if(!rich)literal(node.initial);assertFlowValue(node.initial,node.valueType,'variable initial',rich);}}nodes.set(node.id,node);interfaces.set(node.id,flowContractInterface(node,graph,registry,{allowState,sourceSignatures}));}
  const storageOwners=new Map();
  for(const node of nodes.values())if(node.uses==='std.storage.Variable'){
   const owner=Object.hasOwn(node,'storage')?nodes.get(node.storage):node;

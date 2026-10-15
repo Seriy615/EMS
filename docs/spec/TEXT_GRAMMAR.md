@@ -102,3 +102,25 @@ IR, сохраняя различие между literal и вычисляемы
 Native interface/implementation и pure entry bindings описаны в
 [NATIVE_MODULE_SOURCE.md](NATIVE_MODULE_SOURCE.md). Прежний синтаксис control/UI
 сохраняется; нового интерпретатора эти формы не создают.
+
+## AC-132: текстовое графовое тело
+
+Обычный `@Contract(parameters) -> Type` и native `+Transition` допускают вместо
+блока форму `graph [string-profile] { ... }`.
+
+```ebnf
+graph-body = "graph", [string], "{", {graph-node | graph-edge | graph-entry}, "}" ;
+graph-node = "@", qualified-name, ["[", string, "]"], "#", name,
+             [":", type, "=", (closed-value | "#", name)],
+             "{", {name, (":", closed-value | "<=", graph-reference), ";"}, "}", [";"] ;
+graph-reference = "input", "::", name | "#", name ;
+graph-edge = "#", name, ".", name, "~>", "#", name, ".", name, ";" ;
+graph-entry = "+", "#", name, ";" ;
+```
+
+`graph` является контекстным словом. `name` поддерживает quoted написание,
+`closed-value` содержит только данные, без host/EMS execution. Условие — обычный
+Boolean fork, итерация — обычные value-less marker contracts, storage — обычный
+writable контракт. Граф проходит прежний validator и общий AST/type/effect/IR
+pipeline; программа не исполняется при parsing/import/build. Полные правила,
+ограничения source/canvas профилей и примеры: [GRAPH_SOURCE.md](GRAPH_SOURCE.md).

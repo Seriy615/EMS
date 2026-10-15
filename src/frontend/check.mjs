@@ -6,6 +6,8 @@ import {expandCollectionApplications} from './collections.mjs';
 import { fail } from '../reference/errors.mjs';
 import { normalizeType, resolveType, unifyTypes, typeName } from './types.mjs';
 import { checkModuleEffects } from './effects.mjs';
+import {normalizeGraphBodies} from './graphs.mjs';
+import {canonicalFlowType} from '../contracts/flow-values.mjs';
 
 const term = (name, args = []) => ({ kind: 'Type', name, arguments: args });
 const primitive = name => term(name);
@@ -74,6 +76,7 @@ export function typecheckModule(ast, registry, { imports = new Map(), maxTypeNod
     signatures.set(declaration.name, { name: declaration.name, parameters: declaration.typeParameters, inputs,
       output: type(declaration.output, parameters), async: declaration.async, declaration });
   }
+  const graphBodies=normalizeGraphBodies(ast,registry,{signatures,canonical:syntax=>canonicalFlowType(typeName(type(syntax))),canonicalTerm:term=>canonicalFlowType(typeName(term)),resolve:(name,node)=>signature(name,node,false)});
   function signature(name, at,templates=true) {
     const forced=expansion.intrinsics.get(at);
     if (!forced&&signatures.has(name)) return signatures.get(name);
@@ -344,6 +347,7 @@ export function typecheckModule(ast, registry, { imports = new Map(), maxTypeNod
     if (!block(target.declaration.body, scope, context)) diagnostic('MISSING_RETURN', `Not every path returns from ${target.name}`, target.declaration);
   }
   const checked = { ast, signatures, types, calls, catchTypes };
+  if(graphBodies.size)checked.graphBodies=graphBodies;
   checked.policies = checkModuleEffects(checked, registry);
   checked.collectionApplications=expansion.applications;
   for(const application of expansion.applications){const policy=checked.policies.get(application.helper);const localEffects=checked.localEffects.get(application.helper);if(policy.effects.length||policy.capabilities.length||localEffects.length)fail('COLLECTION_EFFECT','Collection callbacks must be pure and require no capabilities',{location:application.location,effects:policy.effects,capabilities:policy.capabilities,localEffects});}

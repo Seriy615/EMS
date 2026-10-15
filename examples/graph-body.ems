@@ -1,0 +1,31 @@
+@demo::CounterFlow(limit: Number) -> Number graph "ems-contract-flow/1" {
+  @std::storage::Variable["1.0.0"] #count: Number = 0 {
+    value <= #increment;
+  }
+  @core::add["1.0.0"] #increment {
+    a <= #count;
+    b: 1;
+  }
+  @std::number::less["1.0.0"] #less {
+    a <= #count;
+    b <= input::limit;
+  }
+  @std::control::IterationBegin["1.0.0"] #begin {
+  }
+  @std::control::IterationEnd["1.0.0"] #end {
+  }
+  @std::program::Result["1.0.0"] #result {
+    value <= #count;
+  }
+  @std::control::If["1.0.0"] #fork {
+    condition <= #less;
+  }
+  + #begin;
+  #begin.next ~> #less.enter;
+  #less.next ~> #fork.enter;
+  #fork.yes ~> #increment.enter;
+  #increment.next ~> #count.enter;
+  #count.next ~> #end.enter;
+  #end.repeat ~> #begin.enter;
+  #fork.no ~> #result.enter;
+}

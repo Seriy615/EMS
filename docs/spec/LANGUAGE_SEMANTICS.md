@@ -111,3 +111,18 @@ AC-025 требует одинаковых значений (включая зн
 AC-036: language async/Future определены в CONTROL_FUTURES.md. Hot scoped tasks, explicit typed await, supervision/join перед commit, total future budget и async standalone реализованы на общем control IR. Прежний graph-only finite standalone profile не расширяется неявно. Stream и guaranteed cleanup остаются следующими gates.
 
 AC-037: Stream<T>, typed intrinsics/for await и обязательные computed localEffects реализованы в ems-control-streams/1 (CONTROL_STREAMS.md). Bounded channels/FIFO/backpressure/cancellation, terminal task wakeup, actor rollback/replay и standalone используют общий IR/helpers. ResourceHandle/using lifecycle и foreign Stream adapters ещё не реализованы.
+
+## AC-132: графовое тело как форма того же контракта
+
+`ContractDeclaration` и native-переход могут иметь located `ContractGraph`:
+см. [GRAPH_SOURCE.md](GRAPH_SOURCE.md) и прежнюю [семантику активаций](CONTRACT_FLOW.md).
+Его значение определяется прежним typed semantic graph и общим lowering в
+control IR2. Source forward signatures не являются runtime implementations;
+обычные bodies и транзитивные effects/capabilities проверяются общим checker.
+Порядок деклараций узлов не активирует их; значения производителей доступны
+только по прежнему правилу доминирования, storage разрывает data cycles,
+`If` получает Boolean и выбирает активационный выход, iteration markers не
+содержат данных. Проверенный текст применяется к той же graph-модели, geometry
+не участвует в семантике. Ошибочный текст является отдельным черновиком и не
+меняет исполняемую программу. Это не объявляет завершённым полный native
+source-document inverse или остальные требования PROJECT_GOAL.md.
