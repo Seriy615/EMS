@@ -971,3 +971,12 @@ editor не заявлена. См. AC-116 и ограничения CONTRACT_FL
 прогон поймал ошибку селектора в новом тесте (выбран вход a вместо b); исправлен
 селектор по delta. Первый offline прогон начат до обновления списка assets и
 обнаружил отсутствующий source-flow.mjs; manifest пересобран перед финальным gate.
+
+AC-116 deployed `0f0a439fe8fdb25d6405bb0e858223cc545a7bf2`: public saved loop6,
+pending-wire cancellation, fork delete/undo, independent module4 with different
+input, migrated old source UI Worker2/4 verified. Release/current and active
+service checked; foreign6 nginx hashes identical. Logs
+/tmp/ems-bugfix-{deploy,live-proof,vps-after}.log. GitHub updated.
+Next P0 remains existing source graph/variable compatibility, not dictionaries.
+Global goal and EMS-043/044 remain active; no claim of complete language or
+complete source/graph inverse conversion.
