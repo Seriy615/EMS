@@ -168,3 +168,5 @@ UI-обработчики теперь можно создавать обычн�
 Ядро исполняет `Array<String>`, `Array<Boolean>` и вложенные типизированные массивы в общем Runtime/standalone compiler. [Пример и ограничения AC-113](docs/spec/TYPED_ARRAYS.md); generic UI/flow ports и словари ещё в разработке.
 
 Для `Array<T>` доступны типизированные контракты `append`, `set`, `insertAt`, `removeAt` и ещё шесть операций. [AC-114: пример, Registry/IR и границы](docs/spec/TYPED_ARRAY_CONTRACTS.md). Каталог v3 содержит их generic interfaces.
+
+Обычный графовый редактор теперь поддерживает `Array<String>`, `Array<Boolean>`, вложенные и tagged типы: выбирайте тип элемента массива в библиотеке, соединяйте обычные порты и задавайте тип результата в свойствах. [AC-115: граф /2 и пример feedback](docs/spec/RICH_CONTRACT_FLOW.md).

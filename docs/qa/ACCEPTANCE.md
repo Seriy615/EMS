@@ -262,3 +262,7 @@ Browser: loops-and-ports, project-files-ui, ui-handler-workspace.
 ## AC-114 — concrete typed array operation contracts
 
 [Контракты, специализация, обратная совместимость и приёмка](../spec/TYPED_ARRAY_CONTRACTS.md).10 pure atomic operation families, exact concrete interfaces, runtime/standalone/cold IR, legacy numeric IR/defaults, no effect erasure, typing/bounds/size/spoof refusals, private implementation witness, lock/sealing, UI text handler and actual browser/downloaded independent execution. Generic editor ports/Map/full collections remain open.
+
+## AC-115 — rich ordinary graph ports and array state cells
+
+[Версии, codec и критерии](../spec/RICH_CONTRACT_FLOW.md). /2 exact types/literals, v1 preserved/refusal, migration/undo/save, same shared compiler/runtime, writable arrays/feedback, own-data/tagged/signed-zero validation, cold managed/workspace transport, mobile drag/wire/run/reopen and actual UI Worker3. Persistent rich UI state and full text/visual roundtrip remain open.

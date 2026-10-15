@@ -93,7 +93,6 @@ copying/signed-zero/limits, descriptions, lock/sealing/consumer и настоя�
 Chromium: реальный text Worker, затем скачанный module с другим входом после
 shutdown EMS origin. Full acceptance evidence — docs/qa/STATUS.md.
 
-Map/Set, generic map/filter callbacks, generic sort/comparator, новые Array<T>
-порты explicit flow/UI state и full text↔visual projection остаются открытыми.
-Обычный graph editor ещё не выдаётся за полностью поддерживающий эти типы.
+Map/Set, generic map/filter callbacks, generic sort/comparator, persistent rich UI state и full text↔visual projection остаются открытыми.
+[AC-115](RICH_CONTRACT_FLOW.md) добавляет ordinary explicit-flow/2 ports для этих типов.
 Глобальная цель PROJECT_GOAL.md и EMS-045 не завершены.

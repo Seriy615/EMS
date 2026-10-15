@@ -55,8 +55,8 @@ literals; IR serialize/parse; bounds/type/accessor/size refusals; nested host co
 правильный String for-binding в diagnostics. Chromium проверяет настоящий text
 Worker и скачанный module в отдельном процессе после остановки EMS server.
 
-Новый explicit contract-flow canvas, persistent UI state и finite graph/IDL пока
-не принимают эти новые типы. Они продолжают явно отвергать неподдерживаемый тип;
+Новый [explicit contract-flow/2 canvas](RICH_CONTRACT_FLOW.md) принимает эти типы. Persistent UI state и прежний finite graph/IDL пока
+не принимают их. Они продолжают явно отвергать неподдерживаемый тип;
 нет фиктивной поддержки UI или импорта native array ABI. [Generic operation contracts AC-114](TYPED_ARRAY_CONTRACTS.md) реализуют append/set/removeAt и ещё семь операций;
 словари и полная библиотека коллекций остаются задачами EMS-045. Числовой
 std.array.removeAt уже существует в прежнем finite profile. Глобальная цель активна.

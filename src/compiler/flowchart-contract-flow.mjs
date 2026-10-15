@@ -3,7 +3,7 @@ import {describeContract,validateDescription} from '../contracts/descriptions.mj
 import {renderFlowchartSVG} from './flowchart.mjs';
 /** Diagram the actual contract edges, never the compiler's dispatcher implementation. */
 export function buildContractFlowchart(graph,registry,{descriptions={},allowState=false}={}){
- const checked=validateContractFlow(graph,registry,{allowState}),nodes=[],edges=[],ids=new Map(),quote=value=>Object.is(value,-0)?'-0':Array.isArray(value)?'['+value.map(quote).join(', ')+']':JSON.stringify(value),ref=value=>value.node??value.input??quote(value.literal);
+ const checked=validateContractFlow(graph,registry,{allowState}),nodes=[],edges=[],ids=new Map(),quote=value=>Object.is(value,-0)?'-0':Array.isArray(value)?'['+value.map(quote).join(', ')+']':value&&typeof value==='object'?'{'+Object.entries(value).map(([key,child])=>JSON.stringify(key)+': '+quote(child)).join(', ')+'}':JSON.stringify(value),ref=value=>value.node??value.input??quote(value.literal);
  for(const value of Object.values(descriptions))validateDescription(value);
  const add=(kind,label)=>{const id='n'+nodes.length;nodes.push({id,kind,label});return id;},edge=(from,to,label='',back=false)=>edges.push({from,to,label,back});
  const start=add('terminal','Начало '+graph.id);let previous=start;

@@ -1,3 +1,5 @@
+2026-10-15: [AC-115](RICH_CONTRACT_FLOW.md) добавляет `ems-contract-flow/2` и rich ports в этот же редактор. /1 ниже остаётся совместимым finite profile; новые проекты используют /2.
+
 # EMS contract flow /1 — reference profile
 
 Статус: реализованный начальный профиль явных связей. Цель — перейти от вложенных
