@@ -266,3 +266,19 @@ Browser: loops-and-ports, project-files-ui, ui-handler-workspace.
 ## AC-115 — rich ordinary graph ports and array state cells
 
 [Версии, codec и критерии](../spec/RICH_CONTRACT_FLOW.md). /2 exact types/literals, v1 preserved/refusal, migration/undo/save, same shared compiler/runtime, writable arrays/feedback, own-data/tagged/signed-zero validation, cold managed/workspace transport, mobile drag/wire/run/reopen and actual UI Worker3. Persistent rich UI state and full text/visual roundtrip remain open.
+
+## AC-116 — исправления соединений, условий, циклов и переменных
+
+- Незавершённое соединение явно отменяется на телефоне и настольном экране;
+  пустой холст, другая карточка, повторный выход, ошибка типов и Escape не оставляют
+  скрытый источник для последующего случайного подключения.
+- Сохранённый цикл: начальное значение переменной2, шаг2, предел6 дают результат6
+  и две записи. Переименование сохраняет data/control references. Удаление
+  условия/переменной не удаляет результат и не двигает другие ноды; undo восстанавливает
+  точный документ. Добавление маркеров/условия не создаёт связей автоматически.
+- Старый UI source counter открывается обычным flow canvas; изменение шага
+  даёт Worker2/4, apply/reopen сохраняет результат2, незавершённый черновик не
+  заменяет исполняемую программу. while/if/break/continue с контрактами состояния
+  совпадают в исходном Runtime, проекции и самостоятельном UI-модуле.
+- Неподдерживаемые source constructs отклоняются без замены исходной программы.
+  Это не свидетельство полной миграции source/IR или готовности универсального EMS.

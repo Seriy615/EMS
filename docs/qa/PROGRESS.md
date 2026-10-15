@@ -950,3 +950,24 @@ Clean baseline975/975 Node и164/164 verify PASS. Final `npm test`983/983 PASS (
 Нормативный docs/spec/RICH_CONTRACT_FLOW.md; example examples/flow-array-loop.graph.json: real Begin/End feedback accumulates Array<String>3 (zero iterations→[]), Runtime/compiled identical. Map/Set, generic callbacks/sort, persistent rich UI state, composite expansion and inverse text/visual still open. Global goal/EMS-045 active; G-02 full equality not claimed.
 
 AC-115 опубликован: live `92169969b358c6bc1b3aeb331a262913e705e941`, GitHub main обновлён; dedicated service active/current symlink подтверждены. Anonymous HTTPS200: actual ordinary graph Worker accumulates Array<String>[x,x,x] with explicit trace begin→less→fork→append→words→increment→count→end, three passes; actual SVG feedback edge present. Downloaded standalone module executes in a separate Node process without EMS with different input limit2→[x,x]. Logs `/tmp/ems-rich-flow-deploy.log`, `/tmp/ems-rich-flow-live-proof.log`, `/tmp/ems-rich-flow-vps-after.log`; artifact `/tmp/ems-rich-flow-live-independent.mjs`. Foreign6 nginx hashes unchanged. Final983/983 Node,165/165 verify, scoped10 Chromium and final rich2 PASS; complete browser gate not run per owner immediate/manual instruction. Evidence commit does not replace live source artifact. Previous goal turn made progress through concrete typed array atoms; this turn connects their actual rich ports and cells to the ordinary graph/UI. Global goal/EMS-045 remain active: Map/Set, persistent rich UI slots, generic callbacks/sort, composite expansion and full inverse text/visual projection still open.
+
+2026-10-15 — owner priority correction: словари отложены; P0 — условия, циклы,
+соединения и переменные. Воспроизведён sticky pending output: после касания
+пустого холста/другой карточки следующий вход неожиданно соединялся. Исправлены
+явная отмена, повторный выход, фон/перемещение, blur/Escape и сброс после ошибки
+типов. Вход переменной подписан как запись, начальное значение видно на карточке.
+Добавлены проверки сохранённого цикла2→4→6, переименования/удаления/undo,
+отсутствия автосвязей и сохранения Result/layout при добавлении условий/маркеров.
+
+Также устранён разрыв UI routing для поддерживаемых старых finite source handlers:
+обычный flow canvas вместо автоматического перехода в legacy AST/ветви; до Apply
+исполняемый UI не заменяется. Enter/new handler всегда создаёт flow. Source-проекция
+консервативна: mutable locals/helpers/for/short-circuit/расширенные профили пока
+отклоняются с сохранением исходника. Полная миграция старого standalone source
+editor не заявлена. См. AC-116 и ограничения CONTRACT_FLOW.md.
+
+Исходная база983/983 Node и165/165 verify. Финальные987/987 Node,165/165 verify и16/16 focused Chromium PASS.
+Логи /tmp/ems-bugfix-final-{node,verify,browser}.log. Публикация после commit. Первый browser
+прогон поймал ошибку селектора в новом тесте (выбран вход a вместо b); исправлен
+селектор по delta. Первый offline прогон начат до обновления списка assets и
+обнаружил отсутствующий source-flow.mjs; manifest пересобран перед финальным gate.

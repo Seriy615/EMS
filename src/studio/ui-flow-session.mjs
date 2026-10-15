@@ -5,13 +5,15 @@ import {createStateRegistry} from '../runtime/reactor.mjs';
 import {createCoreRegistry} from '../reference/registry.mjs';
 import {projectManagerForLocation} from './manager.mjs';
 import {fail} from '../reference/errors.mjs';
+import {sourceContractFlow} from './source-flow.mjs';
 /** Local incomplete draft is distinct from the checked handler saved in the UI application. */
 export class UIFlowSession{
  constructor(storage,search,base=createCoreRegistry()){
   this.storage=storage;this.base=base;const params=new URLSearchParams(search);this.event=params.get('handler');this.projectId=params.get('project');this.fileId=params.get('file');this.manager=this.projectId?projectManagerForLocation(storage,search):null;
   const record=this.manager?.load(this.manager.fileId??this.projectId);if(this.manager&&record?.kind!=='ui')fail('UNKNOWN_PROJECT','UI project not found');
-  this.expected=record?.source??storage.getItem('ems.studio.ui.v1');const workspace=parseUIWorkspace(this.expected,base),source=workspace.sources[this.event]?.flow;if(!source)fail('FLOW_REQUIRED','This handler has no editable contract flow');
+  this.expected=record?.source??storage.getItem('ems.studio.ui.v1');const workspace=parseUIWorkspace(this.expected,base),handler=workspace.application.reactor.handlers.find(handler=>handler.event===this.event);if(!handler)fail('FLOW_REQUIRED','Handler not found');
   this.registry=createStateRegistry(base,workspace.application.reactor.state);this.options={allowState:true};this.key='ems.ui.flow-draft.'+(this.projectId??'local')+':'+(this.fileId??'')+':'+this.event;this.warning='';
+  const source=workspace.sources[this.event]?.flow??sourceContractFlow(handler.program,this.registry,{id:'handler_'+this.event,name:this.event,allowState:true});
   let flow=source;const saved=storage.getItem(this.key);if(saved){let draft;try{draft=JSON.parse(saved);}catch{fail('INVALID_FLOW_DRAFT','Malformed handler graph draft');}if(draft?.schemaVersion!=='ems-ui-flow-draft/1'||typeof draft.base!=='string'||typeof draft.flow!=='string'||Object.keys(draft).sort().join(',')!=='base,flow,schemaVersion')fail('INVALID_FLOW_DRAFT','Invalid handler graph draft');if(draft.base===this.expected)flow=draft.flow;else this.warning='UI изменён: открыт последний применённый граф. Прежний черновик сохранён отдельно.';}
   this.project=parseFlowProject(flow,this.registry,this.options);
  }
