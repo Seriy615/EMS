@@ -1,3 +1,5 @@
+2026-10-15: [AC-117 shared storage /3](SHARED_FLOW_STORAGE.md) добавляет несколько обычных вызовов одной переменной и mutable source/for/short-circuit projection. Исторические ограничения AC-116 ниже описывают прежний срез.
+
 2026-10-15: [AC-115](RICH_CONTRACT_FLOW.md) добавляет `ems-contract-flow/2` и rich ports в этот же редактор. /1 ниже остаётся совместимым finite profile; новые проекты используют /2.
 
 # EMS contract flow /1 — reference profile

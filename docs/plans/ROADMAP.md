@@ -1,3 +1,5 @@
+P0 владельца — EMS-043/044, [AC-117](../spec/SHARED_FLOW_STORAGE.md): несколько записей одной переменной через обычные контрактные вызовы; mutable source/while/for/short-circuit → shared flow/IR2. Следом source helper contracts и единый вход для существующих standalone source-проектов; Map отложен. Глобальная цель не сужается и остаётся активной.
+
 EMS-045 / [AC-115 rich ordinary flow ports](../spec/RICH_CONTRACT_FLOW.md): rich values, writable array cells и ordinary typed operation cards используют общий IR/Worker/standalone, в том числе внутри UI handler. Следом Map и persistent rich UI state; text/visual inverse projection остаётся незакрытой фундаментальной задачей.
 
 EMS-045 / [AC-114 typed array contracts](../spec/TYPED_ARRAY_CONTRACTS.md):10 операций как конкретные pure atoms, cold IR/lock/sealing и UI text handlers. Следующий незакрытый объём — Map и generic flow/UI ports; затем полный text/visual roundtrip по зависимостям. Global goal активна.

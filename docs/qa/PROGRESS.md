@@ -980,3 +980,32 @@ service checked; foreign6 nginx hashes identical. Logs
 Next P0 remains existing source graph/variable compatibility, not dictionaries.
 Global goal and EMS-043/044 remain active; no claim of complete language or
 complete source/graph inverse conversion.
+
+2026-10-15 — AC-117 / EMS-043/044. Previous goal turn was progress: live
+0f0a439 and GitHub evidence fixed sticky wires and ordinary old UI source counter.
+This turn keeps owner P0 (conditions/loops/variables), defers Map. Implemented
+shared variable binding /3 with exact typed owner and unchanged ordinary ports,
+existing IR2 lowering and no new evaluator. Mutable source initializers/writes,
+for iterable snapshot and short-circuit branches now project to actual contracts.
+Multiple assignment sites share the same cell; reads/assignment results capture
+values before later writes. Dynamic declarations inside loops reinitialize at
+each activation. Same-name declarations in independent branches remain separate.
+Frontend continues to reject shadowing an outer local; initial test fixture
+wrongly assumed it was allowed and was corrected without changing frontend.
+
+Owner deletion promotes a surviving invocation with the prior typed initial,
+updates binding references and disconnects only deleted-node data/control wires;
+no auto layout/branch cards/auto links. Reuse is ordinary palette DnD. Alias
+rename remains visible in header; initial owner binding shown in body/properties.
+State rollback in original UI, projected UI and standalone is identical.
+
+Clean baseline987 Node/165 verify PASS; focused43 PASS; full final1002/1002 Node
+and166/166 verify PASS. Browser20/20 plus final9/9 after title/style changes PASS.
+Logs /tmp/ems-storage-{baseline-node,baseline-verify,focused-node,release-node,
+release-verify,final-browser,release-browser}.log; desktop/mobile PNGs inspected.
+Source/PWA frozen before final release gates. Publication pending.
+
+Next unblocked: source helper contracts and existing standalone source-project
+routing/projection; explicit indexing error ABI and richer profiles follow.
+Full text/visual equivalence and global goal remain active; no claim of native
+platform compiler completion or full contract instance model.

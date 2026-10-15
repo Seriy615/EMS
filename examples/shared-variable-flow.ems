@@ -1,0 +1,10 @@
+// Several writes reuse one local variable contract. The iterable is evaluated once.
+@demo::SumSelected(values:NumberArray,skip:Number,stop:Number)->Number {
+  let mut total = 0;
+  for value in values {
+    if value == skip { continue; }
+    if value >= stop { break; }
+    total = total + value;
+  }
+  return total;
+}

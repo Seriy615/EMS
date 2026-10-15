@@ -4,3 +4,5 @@ body.ui-flow .execution details[hidden]{display:none}
 .flow-card .structured-port-row span{min-width:0;overflow-wrap:anywhere}
 
 .toolbar #stop:disabled{display:none}@media(max-width:700px){#cancel-connection{font-size:12px;padding:6px 8px}}
+
+.flow-card header strong{min-width:0;overflow-wrap:anywhere}

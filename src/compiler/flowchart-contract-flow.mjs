@@ -8,10 +8,10 @@ export function buildContractFlowchart(graph,registry,{descriptions={},allowStat
  const add=(kind,label)=>{const id='n'+nodes.length;nodes.push({id,kind,label});return id;},edge=(from,to,label='',back=false)=>edges.push({from,to,label,back});
  const start=add('terminal','Начало '+graph.id);let previous=start;
  if(Object.keys(graph.inputs).length){const input=add('data','Параметры: '+Object.entries(graph.inputs).map(([name,type])=>name+': '+type.type).join(', '));edge(previous,input);previous=input;}
- for(const cell of graph.nodes.filter(node=>node.uses==='std.storage.Variable')){const initial=add('process',cell.id+' := '+quote(cell.initial));edge(previous,initial);previous=initial;}
+ for(const cell of graph.nodes.filter(node=>node.uses==='std.storage.Variable'&&!Object.hasOwn(node,'storage'))){const initial=add('process',cell.id+' := '+quote(cell.initial));edge(previous,initial);previous=initial;}
  for(const id of checked.reachable){const node=checked.nodes.get(id),spec=checked.interfaces.get(id),values=Object.fromEntries(Object.entries(node.args).map(([port,value])=>[port,ref(value)]));let kind='predefined',label=describeContract(registry.items.get(node.uses)??{id:node.uses,inputs:spec.inputs},values);
   if(node.uses==='std.control.If'){kind='decision';label=values.condition+'?';}
-  if(node.uses==='std.storage.Variable'){kind='process';label=Object.hasOwn(node.args,'value')?'Записать '+values.value+' в '+id:'Прочитать '+id;}
+  if(node.uses==='std.storage.Variable'){kind='process';label=Object.hasOwn(node.args,'value')?'Записать '+values.value+' в '+(node.storage??id):'Прочитать '+(node.storage??id);}
   if(node.uses==='std.program.Result'){kind='data';label='Вернуть '+values.value;}
   if(node.uses==='std.control.IterationBegin'||node.uses==='std.control.IterationEnd'){kind='connector';label=node.uses.endsWith('Begin')?'Начало итерации':'Конец итерации';}
   ids.set(id,add(kind,Object.hasOwn(descriptions,id)&&descriptions[id].trim()?descriptions[id]:label));

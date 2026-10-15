@@ -282,3 +282,19 @@ Browser: loops-and-ports, project-files-ui, ui-handler-workspace.
   совпадают в исходном Runtime, проекции и самостоятельном UI-модуле.
 - Неподдерживаемые source constructs отклоняются без замены исходной программы.
   Это не свидетельство полной миграции source/IR или готовности универсального EMS.
+
+## AC-117 — shared variable invocations and mutable source control projection
+
+[Нормативная семантика](../spec/SHARED_FLOW_STORAGE.md). Одна переменная получает
+повторные записи из разных ветвей/циклов через обычные typed contract calls;
+динамическая и повторная инициализация, assign-expression snapshots, for iterable
+snapshot, break/continue и short circuit сохраняют source поведение в Runtime
+и independent JS. Old profiles refuse new binding; bad/missing/alias-chain/type
+bindings fail; rich getters never execute; signed zero и общий work ledger
+сохраняются. Rename/type/owner-delete/undo не создают data/control wires.
+
+Browser: actual drag reusable variable from palette, overwrite2/reopen/delete/undo;
+existing source mutable UI loop Worker5 → graph edit7 → reopen7. Source/flow/
+standalone UI failures after a state write roll back count to0. Full reference
+Node/verify и scoped Chromium evidence записываются в STATUS; полный
+text/visual roundtrip и глобальная цель этим срезом не завершаются.
