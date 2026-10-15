@@ -1017,3 +1017,25 @@ Service active/current symlink confirmed, foreign6 nginx configs unchanged.
 Evidence /tmp/ems-storage-{deploy,live-proof,vps-after}.log; Github main pushed.
 Final1002/166 and scoped20+final9 PASS. Source helpers / standalone legacy
 projection are next P0; full EMS objective remains active and incomplete.
+
+2026-10-15 — EMS-043/044, AC-118. Previous owner status query revalidated live
+28b3c38/active service/HTTPS200. Follow-up audit found root still opened the old
+reference editor despite the ordinary flow release. Implemented typed entry
+router: root→projects, flow/UI/workspace bookmarks→their real editors, reference
+source files retain explicit compatible access and old local storage is linked
+on home. No document/draft migration or overwrite. Added cached build-id, generated
+with offline manifest, readonly serving-release API, visible home update check,
+stale waiting-worker refusal and explicit per-tab refresh without losing saved
+graphs. Existing activate message remains compatible with previous PWA versions.
+
+Baseline1002/1002 Node and166/166 verify PASS. Final1006/1006 Node and167/167
+verify PASS (/tmp/ems-entry-final-{node,verify}.log). First focused10 Chromium
+PASS, final14 had13 PASS/one CDP history timeout under concurrent full Node/browser
+load; closure4 (auth/root/SW/history) PASS without raising timeouts. Independent
+artifact4 PASS. Broad browser run is still running; initial failures exposed
+wrong reference/standalone test URLs after root change, now corrected and focused
+rerun passed. Do not report the initial broad run as fully green. Source/PWA
+assets frozen before final Node gate; subsequent changes are docs/test URLs only.
+
+Runtime/source/IR semantics unchanged in this slice. Standalone source projection
+and source helper contracts remain next P0, Maps deferred; global goal active.

@@ -27,7 +27,7 @@ test('all 37 standard contracts match signed-zero oracles in actual Chromium run
 test('actual Studio catalog filtering builds text comparison selection and array graphs and persists them',async()=>{
  const server=await startStudioServer({port:0,recordModules:true});let browser;
  try{
-  browser=await launchChromium();const page=await browser.page(server.origin,{httpDiagnostics:()=>server.moduleDiagnostics()});
+  browser=await launchChromium();const page=await browser.page(server.origin+'/web/index.html',{httpDiagnostics:()=>server.moduleDiagnostics()});
   const actual=await page.evaluate(`(async()=>{
    await import('/web/studio.mjs');const click=selector=>document.querySelector(selector).click();
    function filter(category,query=''){const field=document.querySelector('#catalog-category');field.value=category;field.dispatchEvent(new Event('change'));const search=document.querySelector('#catalog-search');search.value=query;search.dispatchEvent(new Event('input'));}
@@ -40,6 +40,6 @@ test('actual Studio catalog filtering builds text comparison selection and array
    click('#new');filter('array');click('[data-contract="std.array.sort"]');literal('values','[3,1,-0,0]');output('n1');const array=await run();click('#save');filter('text','no such contract');const empty=document.querySelector('#catalog').textContent;return {report,ids,text,comparison,selection,array,empty,error:document.querySelector('#error').textContent};
   })()`);
   assert.ok(actual.ids.includes('std.text.concat'));assert.ok(actual.ids.every(id=>id.startsWith('std.text.')));assert.equal(actual.report,'"sum=6"');assert.equal(actual.text,'"Hello EMS"');assert.equal(actual.comparison,'true');assert.equal(actual.selection,'10');assert.equal(actual.array,'[-0,0,1,3]');assert.match(actual.empty,/не найдены/);assert.equal(actual.error,'');
-  await page.close();const reopened=await browser.page(server.origin,{httpDiagnostics:()=>server.moduleDiagnostics()});const loaded=await reopened.evaluate(`(async()=>{await import('/web/studio.mjs');document.querySelector('#run').click();const deadline=Date.now()+5000;while(document.querySelector('#run').disabled){if(Date.now()>deadline)throw new Error('Run timeout');await new Promise(resolve=>setTimeout(resolve,10));}return document.querySelector('#output').textContent;})()`);assert.equal(loaded,'[-0,0,1,3]');
+  await page.close();const reopened=await browser.page(server.origin+'/web/index.html',{httpDiagnostics:()=>server.moduleDiagnostics()});const loaded=await reopened.evaluate(`(async()=>{await import('/web/studio.mjs');document.querySelector('#run').click();const deadline=Date.now()+5000;while(document.querySelector('#run').disabled){if(Date.now()>deadline)throw new Error('Run timeout');await new Promise(resolve=>setTimeout(resolve,10));}return document.querySelector('#output').textContent;})()`);assert.equal(loaded,'[-0,0,1,3]');
  }finally{await browser?.close();await server.close();}
 });

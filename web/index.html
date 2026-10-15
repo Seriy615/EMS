@@ -12,7 +12,7 @@
 <meta name="theme-color" content="#17263d">
 <link rel="apple-touch-icon" href="/web/icon-192.png">
 </head>
-<body>
+<body hidden>
 <header class="app-header">
 <a class="brand" href="/web/projects.html">EMS <span>Studio</span></a> <span class="header-divider"></span><nav class="studio-nav" aria-label="Разделы Studio"><a href="/web/projects.html">Проекты</a><a href="/" aria-current="page">Программа</a><a href="/web/ui-demo.html">Интерфейс</a></nav>
 <input id="project-name" aria-label="Название проекта">
@@ -136,7 +136,7 @@
 </details>
 </section>
 <div id="canvas-menu" class="canvas-menu" role="dialog" aria-label="Действия на холсте" hidden><strong>Действия EMS</strong><label>Операция<select id="context-operation"></select></label><button id="context-add">Добавить здесь</button><button id="context-fit">Показать всю программу</button><button id="context-delete">Удалить выбранную операцию</button></div>
-<script type="module" src="/web/studio.mjs">
+<script type="module" src="/web/studio-entry.mjs">
 </script>
 <script type="module" src="/web/mobile.mjs"></script>
 <script type="module" src="/web/pwa.mjs"></script>

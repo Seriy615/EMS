@@ -6,7 +6,7 @@ import {launchChromium} from '../../tools/lib/chromium.mjs';
 test('actual Studio Over skips composite internals and control statements; Out returns to caller or completes root',async()=>{
  const server=await startStudioServer({port:0});let browser;
  try{
-  browser=await launchChromium();const page=await browser.page(server.origin);await page.viewport(1440,900);
+  browser=await launchChromium();const page=await browser.page(server.origin+'/web/index.html');await page.viewport(1440,900);
   const result=await page.evaluate(`(async()=>{
    await import('/web/studio.mjs');const click=id=>document.getElementById(id).click();async function wait(check){const end=Date.now()+5000;while(!check()){if(Date.now()>end)throw Error('Frame step timeout '+document.querySelector('#error').textContent);await new Promise(r=>setTimeout(r,10));}}
    const examples=document.querySelector('#examples');examples.value='avg';examples.dispatchEvent(new Event('change'));await wait(()=>!!document.querySelector('[data-card="avg5"]'));click('debug');await wait(()=>!document.querySelector('#debug-over').disabled);const first=document.querySelector('#debug-location').textContent;click('debug-over');await wait(()=>!document.querySelector('#run').disabled);const avg=Number(document.querySelector('#output').textContent),graphEnd=document.querySelector('#debug-location').textContent;

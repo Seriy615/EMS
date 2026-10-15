@@ -298,3 +298,12 @@ existing source mutable UI loop Worker5 → graph edit7 → reopen7. Source/flow
 standalone UI failures after a state write roll back count to0. Full reference
 Node/verify и scoped Chromium evidence записываются в STATUS; полный
 text/visual roundtrip и глобальная цель этим срезом не завершаются.
+
+## AC-118 — Studio entry and release-aware PWA update
+
+[Поведение](../spec/STUDIO_ENTRY_UPDATES.md): root/home и typed project bookmarks,
+доступ к прежнему локальному хранилищу без перезаписи, unknown-project refusal;
+generated cached build-id и read-only actual-release API; real waiting SW update
+with stale-build refusal, explicit reload and multi-tab saved graph preservation,
+offline reload. Public root + actual graph execution and current API release
+доказываются после деплоя. Это не полная миграция source-проектов.

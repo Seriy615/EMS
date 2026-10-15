@@ -6,7 +6,7 @@ import {launchChromium} from '../../tools/lib/chromium.mjs';
 test('actual Studio run-to-breakpoint, live removal, text cursor loop stops and checked source reattachment',async()=>{
  const server=await startStudioServer({port:0});let browser;
  try{
-  browser=await launchChromium();const page=await browser.page(server.origin);await page.viewport(1440,900);
+  browser=await launchChromium();const page=await browser.page(server.origin+'/web/index.html');await page.viewport(1440,900);
   const graph=await page.evaluate(`(async()=>{
    await import('/web/studio.mjs');const click=id=>document.getElementById(id).click();async function wait(check){const end=Date.now()+5000;while(!check()){if(Date.now()>end)throw Error('Breakpoint timeout '+document.querySelector('#error').textContent);await new Promise(r=>setTimeout(r,10));}}
    const example=document.querySelector('#examples');example.value='sum';example.dispatchEvent(new Event('change'));document.querySelector('[data-card="sum"]').click();click('node-breakpoint');

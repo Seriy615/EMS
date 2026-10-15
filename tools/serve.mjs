@@ -3,6 +3,7 @@ import { createServer } from 'node:http';
 import { readFile, realpath } from 'node:fs/promises';
 import { extname, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import {BUILD_ID} from '../web/build-id.mjs';
 const root = resolve(import.meta.dirname, '..');
 const media = { '.webmanifest':'application/manifest+json', '.png':'image/png', '.html':'text/html; charset=utf-8', '.js':'text/javascript; charset=utf-8', '.mjs':'text/javascript; charset=utf-8', '.json':'application/json; charset=utf-8', '.css':'text/css; charset=utf-8', '.svg':'image/svg+xml', '.md':'text/plain; charset=utf-8' };
 export async function startStudioServer({port=Number(process.env.PORT || 8787),recordModules=false}={}) {
@@ -12,6 +13,11 @@ const server=createServer(async (req, res) => {
   try {
     if (req.method !== 'GET' && req.method !== 'HEAD') { res.writeHead(405); res.end('Method not allowed'); return; }
     const pathname = decodeURIComponent(new URL(req.url, 'http://localhost').pathname);
+    if(pathname==='/api/release'){
+      const candidate=root.split(sep).at(-1),release=/^[a-f0-9]{40}$/.test(candidate)?candidate:null;
+      res.writeHead(200,{'Content-Type':'application/json; charset=utf-8','Cache-Control':'no-store','X-Content-Type-Options':'nosniff'});
+      res.end(req.method==='HEAD'?'':JSON.stringify({schemaVersion:'ems-release/1',release,assets:BUILD_ID}));return;
+    }
     const rawPath = pathname === '/' ? '/web/index.html' : pathname;
     const allowed = rawPath.startsWith('/web/') || rawPath.startsWith('/src/') || rawPath.startsWith('/examples/') || rawPath === '/README.md';
     if (!allowed) { res.writeHead(403); res.end('Forbidden'); return; }

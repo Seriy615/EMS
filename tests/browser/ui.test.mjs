@@ -21,7 +21,7 @@ test('actual browser counter renders semantic UI and DOM buttons execute EMS sta
 test('DOM adapter preserves rollback, typed inputs, XSS boundaries and listener/session cleanup',async()=>{
  const {application}=fixture(),server=await startStudioServer({port:0,recordModules:true});let browser;
  try{
-  browser=await launchChromium();const page=await browser.page(server.origin);
+  browser=await launchChromium();const page=await browser.page(server.origin+'/web/index.html');
   async function check(application,policy){
    const {mountDOMApplication}=await import('/src/ui/dom.mjs'),{createCoreRegistry}=await import('/src/reference/registry.mjs');
    const host=document.createElement('section');host.textContent='Previous';document.body.append(host);const errors=[];

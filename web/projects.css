@@ -3,3 +3,4 @@ body{background:var(--bg)}header{height:76px;background:white;border-color:var(-
 
 [data-rename-project]{display:flex;gap:8px;flex-wrap:wrap;align-items:center}[data-rename-project] input{max-width:100%;background:var(--bg);color:var(--ink);border-color:var(--line)}
 #create-file{display:grid;gap:18px;max-width:560px;background:white;padding:24px;border:1px solid var(--line);border-radius:16px;margin-top:24px}#create-file label{display:grid;gap:8px}#create-file input,#create-file select{padding:12px;width:100%;min-width:0;border:1px solid var(--line);border-radius:8px;background:white;color:var(--ink);font:inherit}#files a{font-size:16px}#files p{padding:14px 0;border-bottom:1px solid var(--line)}
+.pwa-version{display:flex;align-items:center;flex-wrap:wrap;gap:12px;color:var(--muted);font-size:12px}.pwa-version button{font-size:12px}

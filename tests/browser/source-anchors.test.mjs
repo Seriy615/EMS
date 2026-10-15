@@ -26,7 +26,7 @@ test('actual UI source anchors survive safe edits and reload; changed operations
 
 test('actual Studio keeps source anchors through invalid drafts and shifted control paths, and disables changed operations',async()=>{
  const server=await startStudioServer({port:0});let browser;
- try{browser=await launchChromium();const page=await browser.page(server.origin);const result=await page.evaluate(`(async()=>{
+ try{browser=await launchChromium();const page=await browser.page(server.origin+'/web/index.html');const result=await page.evaluate(`(async()=>{
   await import('/web/studio.mjs');const click=id=>document.getElementById(id).click();async function wait(check){const end=Date.now()+5000;while(!check()){if(Date.now()>end)throw Error('Studio anchor timeout '+document.querySelector('#error').textContent);await new Promise(r=>setTimeout(r,10));}}
   click('text-mode');const area=document.querySelector('#text-source'),source='fn main()->Number {let mut x=0;return x+1;}';area.value=source;document.querySelector('#text-entry').value='main';document.querySelector('#text-lowering').value='auto';document.querySelector('#text-inputs').value='{}';area.setSelectionRange(source.indexOf('return'),source.indexOf('return'));click('text-breakpoint');
   area.value='fn';area.dispatchEvent(new Event('input'));const invalid=document.querySelector('#breakpoint-list').textContent;
