@@ -279,6 +279,7 @@ function activateStructured(){const nativeLayout=!textMode?Object.fromEntries([.
 $('text-mode').onclick=()=>{structuredGraph=false;document.body.classList.remove('structured-graph');setTextMode(true);document.body.classList.add('text-mode');$('text-panel').hidden=false;$('text-mode').setAttribute('aria-pressed','true');$('graph-view').setAttribute('aria-pressed','false');};
 $('graph-view').onclick=()=>{if(textMode){try{const bundle=textAPI.compileTextDraft(draft(),editor);if(bundle.ir.schemaVersion==='ems-ir/2'){activateStructured();return;}}catch(error){sourceError(error);return;}}structuredGraph=false;document.body.classList.remove('structured-graph');setTextMode(false);};
 try{if(localStorage.getItem('ems.studio.graph-view.'+editor.project.id)==='structured'){syncTextProject();textMode=true;activateStructured();}}catch(error){sourceError(error);}
+if(new URLSearchParams(location.search).get('text')==='1')$('text-mode').click();
 $('show-guide').onclick=()=>{guideOpen=true;render();};$('close-guide').onclick=()=>{guideOpen=false;render();};
 $('start-example').onclick=()=>{guideOpen=false;const examples=$('examples');examples.value='sum';examples.dispatchEvent(new Event('change'));};
 $('text-from-graph').onclick=()=>{try{generateDraft();$('error').textContent='';}catch(error){sourceError(error);}};

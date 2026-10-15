@@ -42,8 +42,11 @@ checked IR2 used by textual EMS and exports independent JavaScript.
 
 Try `node tools/ems.mjs flow-run examples/flow-counter.graph.json '{"limit":3}'`.
 See [the versioned semantics and remaining limits](docs/spec/CONTRACT_FLOW.md).
-Existing saved graph/text projects remain compatible. Full reverse text editing,
-new-flow UI handler bindings and generic Array/Map support remain separate work.
+Existing saved graph/text projects remain compatible. Supported saved control
+sources open in the same contract canvas; “Сохранить граф” retains the original
+source and creates an editable graph alongside it in the workspace. See
+[saved source editing and its limits](docs/spec/SAVED_SOURCE_FLOW.md).
+Full reverse text editing, source helper composition and Map support remain separate work.
 
 ## Studio projects
 

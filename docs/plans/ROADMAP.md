@@ -1,3 +1,5 @@
+P0 EMS-043/044 / [AC-119](../spec/SAVED_SOURCE_FLOW.md): поддерживаемые сохранённые source-документы открываются тем же ordinary canvas; сохранение создаёт checked flow рядом с исходником. Следующий фундаментальный пробел — source helper definitions как настоящие раскрываемые reusable flow contracts, затем полный inverse projection; не скрывать их за атомами и не сплющивать вызовы. Map отложен по приоритету владельца. Полная цель G-01..18 активна.
+
 P0 владельца — EMS-043/044, [AC-117](../spec/SHARED_FLOW_STORAGE.md): несколько записей одной переменной через обычные контрактные вызовы; mutable source/while/for/short-circuit → shared flow/IR2. Следом source helper contracts и единый вход для существующих standalone source-проектов; Map отложен. Глобальная цель не сужается и остаётся активной.
 
 EMS-045 / [AC-115 rich ordinary flow ports](../spec/RICH_CONTRACT_FLOW.md): rich values, writable array cells и ordinary typed operation cards используют общий IR/Worker/standalone, в том числе внутри UI handler. Следом Map и persistent rich UI state; text/visual inverse projection остаётся незакрытой фундаментальной задачей.

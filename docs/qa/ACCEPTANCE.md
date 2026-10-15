@@ -307,3 +307,15 @@ generated cached build-id и read-only actual-release API; real waiting SW updat
 with stale-build refusal, explicit reload and multi-tab saved graph preservation,
 offline reload. Public root + actual graph execution and current API release
 доказываются после деплоя. Это не полная миграция source-проектов.
+
+## AC-119 — saved source documents in the ordinary contract canvas
+
+[Поведение](../spec/SAVED_SOURCE_FLOW.md): supported finite control source
+bookmarks open the same editable flow canvas, preserve saved run inputs and
+the original record until explicit Save. Separate incomplete drafts reopen;
+stale source and incomplete graphs refuse publication. Explicit Save creates
+a checked graph sibling and retains the original source document in the same
+workspace, including export/import and collision protection. Real Chromium
+Worker loop8 → edit4 → reopen4, source text unchanged, standalone and workspace
+entry paths. Independent JS4; unsupported helpers/profiles stay explicit.
+This does not complete helper composition or bidirectional text projection.
