@@ -134,3 +134,14 @@ CLI run даёт разрешения только локального memory s
 не выдаёт capabilities молча. В примере left1→0, следующая попытка0→-1 отвергается,
 right остаётся5. Прямой файл `examples/contract-instances.module.json` воспроизводим
 из текстового примера.
+
+## AC-130 — текущий текст и явные реализации
+
+Дополнение общего parser/linker: интерфейс `+Operation(ports)->Type;`,
+статическая привязка экземпляра `+Operation = @Implementation;`,
+инициализация полем/override через `@Initializer`, именованный pure predicate
+`? name = @Predicate` и logical state calls `instance::field::read/write`.
+Текущий semantic module можно напечатать, изменить текст и импортировать как
+новую программу. Привязки не исполняются при импорте/сборке; public entry связывается
+непосредственно. Позиционные вызовы интерфейса при другом порядке параметров
+реализации используют обычный IR adapter с сохранением порядка эффектов. Проверяемый профиль и границы: [NATIVE_MODULE_SOURCE.md](NATIVE_MODULE_SOURCE.md).

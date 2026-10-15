@@ -1,3 +1,5 @@
+Текущий native модуль можно показать и скачать как настоящий EMS после правок графов, полей и UI — [AC-130](docs/spec/NATIVE_MODULE_SOURCE.md). CLI `instance-source` / `application-source`; обратный импорт копии и standalone build проверяются на общем parser/IR. Применение полного текста к исходному холсту с сохранением геометрии ещё впереди.
+
 Поля native контрактов: добавление, переименование и удаление с сохранением графов, инвариантов и UI; зависимости удаления и отмена/повтор — [AC-129](docs/spec/INSTANCE_FIELDS.md). Новое поле и операция связываются с кнопкой и текстом через тот же обычный граф.
 
 Native UI на EMS: `@UI.*`, `~>`, `<=`, общий typed model и UI-only text/visual inverse — [AC-128](docs/spec/NATIVE_UI_SOURCE.md), [полный source](examples/native-ui.ems). `application-build` создаёт независимое DOM-приложение.

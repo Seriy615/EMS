@@ -56,10 +56,10 @@ export function lowerControlModule(checked, entry, registry) {
     }
     function expression(node){const result=lowerExpression(node);locations.set(result,node.location);return result;}
     function lowerExpression(node) {
-      if (node.kind === 'GroupExpression') return expression(node.value);
+      if (['GroupExpression','TypeAscriptionExpression'].includes(node.kind)) return expression(node.value);
       const type = typeOf(node); if (type.includes('<')) algebraic = true;
       switch (node.kind) {
-        case 'LiteralExpression': return { kind: 'literal', type, value: Object.is(node.value, -0) ? '-0' : node.value };
+        case 'LiteralExpression': return { kind: 'literal', type, value: Array.isArray(node.value)?node.value.map(value=>Object.is(value,-0)?'-0':value):Object.is(node.value, -0) ? '-0' : node.value };
         case 'NameExpression': return { kind: 'local', type, name: node.name };
         case 'ArrayExpression': return { kind: 'array', type, elements: node.elements.map(expression) };
         case 'IndexExpression': return { kind: 'index', type, value: expression(node.value), index: expression(node.index) };

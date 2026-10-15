@@ -15,12 +15,12 @@ function flexible(type) {
 }
 function numericLiteral(node) {
   if(node.kind==='LiteralExpression')return typeof node.value==='number';
-  if(node.kind==='GroupExpression'||node.kind==='UnaryExpression'&&['+','-'].includes(node.operator))return numericLiteral(node.value);
+  if(['GroupExpression','TypeAscriptionExpression'].includes(node.kind)||node.kind==='UnaryExpression'&&['+','-'].includes(node.operator))return numericLiteral(node.value);
   return false;
 }
 function constant(node) {
   if (node.kind === 'LiteralExpression') return node.value;
-  if (node.kind === 'GroupExpression') return constant(node.value);
+  if (['GroupExpression','TypeAscriptionExpression'].includes(node.kind)) return constant(node.value);
   if (node.kind === 'UnaryExpression' && ['-', '+'].includes(node.operator)) {
     const value = constant(node.value); return node.operator === '-' ? -value : +value;
   }
@@ -89,7 +89,7 @@ function lowerCallModule(checked, entry, baseRegistry, eager = false, preserveGr
     function expression(node, hint) {
       referenceType(resolveType(checked.types.get(node), substitutions), node);
       switch (node.kind) {
-        case 'GroupExpression': return expression(node.value,hint);
+        case 'GroupExpression':case 'TypeAscriptionExpression': return expression(node.value,hint);
         case 'LiteralExpression': return { literal: node.value };
         case 'ArrayExpression': return { literal: constant(node) };
         case 'NameExpression': return environment.get(node.name);

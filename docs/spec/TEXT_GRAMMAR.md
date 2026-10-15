@@ -89,3 +89,16 @@ node --test tests/frontend.test.mjs
 ```
 
 AC-027 покрывает перечисленные конструкции, precedence/associativity, позиции, CRLF/comments, сохранение M0 syntax, отказ от host-only syntax, malformed inputs и управляемые limits. Пример `language-core.ems` является синтаксическим fixture, а не демонстрацией исполнения async/control/state. Следующая задача EMS-013 должна типизировать этот AST и связать исполняемый поднабор с общим IR; EMS-014/015 расширяют effects/runtime.
+
+## AC-130 — типизированная нормальная текстовая форма
+
+Общий parser дополнительно принимает `(expression : Type)` — проверяемую
+аннотацию типа без cast; `#-0` / `#-2` — атомарные числовые литералы;
+`#[1, -0, 2]` — закрытый NumberArray literal. Они понижаются в прежние операции
+IR, сохраняя различие между literal и вычисляемым unary/array expression.
+Числовые константы в `#[]` не содержат вызовов. Экранированный параметр
+`"for"` читается как `#"for"`; имена членов и деклараций могут экранироваться.
+
+Native interface/implementation и pure entry bindings описаны в
+[NATIVE_MODULE_SOURCE.md](NATIVE_MODULE_SOURCE.md). Прежний синтаксис control/UI
+сохраняется; нового интерпретатора эти формы не создают.

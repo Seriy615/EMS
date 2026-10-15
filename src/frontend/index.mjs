@@ -94,7 +94,7 @@ class Parser {
     if (++this.depth > this.maxDepth) fail('SYNTAX_DEPTH', 'EMS syntax exceeds configured nesting limit', { location: this.token.location });
     try { return fn(); } finally { this.depth--; }
   }
-  qualified() { let value = this.identifier(); while (this.take('.') || this.take('::')) value += '.' + this.identifier(); return value; }
+  qualified() { let value = this.uiName(); while (this.take('.') || this.take('::')) value += '.' + this.uiName(); return value; }
   generics() {
     const params = [];
     if (this.take('<')) { do { params.push(this.identifier()); } while (this.take(',')); this.typeClose(); }
@@ -156,27 +156,27 @@ class Parser {
     }
     if(category==='ContractDeclaration'&&this.take('#')){
       if(external||async||typeParameters.length)this.error('Instance declarations cannot be extern, async or generic');
-      const instance=this.identifier(),initials=[];
-      if(this.take('{')){while(!this.is('}')){const at=this.token,field=this.identifier();this.expect(':');const value=this.expression();this.expect(';');initials.push(this.node('InstanceInitial',at,{name:field,value}));}this.expect('}');this.take(';');}else this.terminator();
-      return this.node('ContractInstanceDeclaration',start,{name:instance,contract:name,initials,exported});
+      const instance=this.uiName(),initials=[],bindings=[];
+      if(this.take('{')){while(!this.is('}')){const at=this.token;if(this.take('+')){const name=this.uiName();this.expect('=');this.expect('@');const target=this.qualified();this.expect(';');bindings.push(this.node('InstanceTransitionBinding',at,{name,target}));continue;}const field=this.uiName();this.expect(':');const value=this.initializer();this.expect(';');initials.push(this.node('InstanceInitial',at,{name:field,value}));}this.expect('}');this.take(';');}else this.terminator();
+      return this.node('ContractInstanceDeclaration',start,{name:instance,contract:name,initials,exported,...(bindings.length?{bindings}:{})});
     }
     if(category==='ContractDeclaration'&&this.is('{')){
       if(external||async||typeParameters.length)this.error('Stateful contracts cannot be extern, async or generic in this profile');
       this.expect('{');const fields=[],transitions=[],invariants=[];
       while(!this.is('}')){
         const at=this.token;
-        if(this.take('?')){const value=this.expression();this.expect(';');invariants.push(this.node('InvariantDeclaration',at,{value}));}
+        if(this.take('?')){if(['identifier','string'].includes(this.token.kind)&&this.tokens[this.index+1]?.value==='='&&this.tokens[this.index+2]?.value==='@'){const name=this.uiName();this.expect('=');this.expect('@');const target=this.qualified();this.expect(';');invariants.push(this.node('InvariantBindingDeclaration',at,{name,target}));}else{const value=this.expression();this.expect(';');invariants.push(this.node('InvariantDeclaration',at,{value}));}}
         else if(this.take('+')){
-          const name=this.identifier(),parameters=[];this.expect('(');
-          if(!this.is(')'))do{const at=this.token,name=this.identifier();this.expect(':');parameters.push(this.node('Parameter',at,{name,type:this.type()}));}while(this.take(','));
-          this.expect(')');this.expect('->');const output=this.type(),body=this.block();transitions.push(this.node('TransitionDeclaration',at,{name,parameters,output,body}));
-        }else{const name=this.identifier();this.expect(':');const type=this.type();this.expect('=');const value=this.expression();this.expect(';');fields.push(this.node('StateFieldDeclaration',at,{name,type,value}));}
+          const name=this.uiName(),parameters=[];this.expect('(');
+          if(!this.is(')'))do{const at=this.token,name=this.uiName();this.expect(':');parameters.push(this.node('Parameter',at,{name,type:this.type()}));}while(this.take(','));
+          this.expect(')');this.expect('->');const output=this.type(),body=this.take(';')?null:this.block();transitions.push(this.node('TransitionDeclaration',at,{name,parameters,output,body}));
+        }else{const name=this.uiName();this.expect(':');const type=this.type();this.expect('=');const value=this.initializer();this.expect(';');fields.push(this.node('StateFieldDeclaration',at,{name,type,value}));}
       }
       this.expect('}');return this.node('StatefulContractDeclaration',start,{name,fields,transitions,invariants,exported});
     }
     this.expect('(');
     if (!this.is(')')) do {
-      const at = this.token, name = this.identifier(); this.expect(':');
+      const at = this.token, name = this.uiName(); this.expect(':');
       parameters.push(this.node('Parameter', at, { name, type: this.type() }));
     } while (this.take(','));
     this.expect(')'); this.expect('->'); const output = this.type(), requirements = [];
@@ -215,6 +215,8 @@ class Parser {
       this.expect('}'); return this.node('Block', start, { statements });
     });
   }
+  numberConstant(){const negative=this.take('-');if(!negative)this.take('+');if(this.token.kind!=='number')this.error('Expected a numeric constant');const value=this.token.value;this.index++;return negative?-value:value;}
+  initializer(){const at=this.token;return this.take('@')?this.node('ContractReferenceExpression',at,{target:this.qualified()}):this.expression();}
   statement() {
     const start = this.token;
     if (this.is('{')) return this.block();
@@ -269,7 +271,7 @@ class Parser {
   pattern() {
     return this.nested(() => {
       const start = this.token;
-      if (['number', 'string'].includes(start.kind) || this.is('true') || this.is('false'))
+      if (['number', 'string'].includes(start.kind) || this.is('true') || this.is('false')||this.is('#'))
         return this.node('LiteralPattern', start, { value: this.prefix() });
       const name = this.qualified(), arguments_ = [];
       const constructor = this.take('(');
@@ -301,7 +303,7 @@ class Parser {
       this.index++; const value = start.kind === 'keyword' ? start.value === 'true' : start.value;
       return this.node('LiteralExpression', start, { value });
     }
-    if (this.take('(')) { const value = this.expression(); this.expect(')'); return this.node('GroupExpression', start, { value }); }
+    if (this.take('(')) { const value = this.expression();if(this.take(':')){const type=this.type();this.expect(')');return this.node('TypeAscriptionExpression',start,{value,type});}this.expect(')'); return this.node('GroupExpression', start, { value }); }
     if (this.take('[')) {
       const elements = [];
       if (!this.is(']')) do { elements.push(this.expression()); } while (this.take(',') && !this.is(']'));
@@ -315,6 +317,7 @@ class Parser {
       } while (this.take(',') && !this.is('}'));
       this.expect('}'); return this.node('RecordExpression', start, { fields });
     }
+    if(this.take('#')){if(this.take('[')){const value=[];if(!this.is(']'))do{value.push(this.numberConstant());}while(this.take(','));this.expect(']');return this.node('LiteralExpression',start,{value});}if(this.token.kind==='number'||this.is('-')||this.is('+'))return this.node('LiteralExpression',start,{value:this.numberConstant()});return this.node('NameExpression',start,{name:this.uiName()});}
     if (start.kind === 'identifier') { this.index++; return this.node('NameExpression', start, { name: start.value }); }
     this.error('Expected expression');
   }

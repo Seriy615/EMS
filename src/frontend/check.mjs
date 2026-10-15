@@ -9,8 +9,7 @@ import { checkModuleEffects } from './effects.mjs';
 
 const term = (name, args = []) => ({ kind: 'Type', name, arguments: args });
 const primitive = name => term(name);
-const qualified = expression => expression.kind === 'NameExpression' ? expression.name
-  : expression.kind === 'MemberExpression' ? `${qualified(expression.value)}.${expression.member}` : null;
+const qualified = expression => {if(expression.kind==='NameExpression')return expression.name;if(expression.kind==='MemberExpression'){const base=qualified(expression.value);return base===null?null:base+'.'+expression.member;}return null;};
 function diagnostic(code, message, node) { fail(code, message, { location: node?.location }); }
 function expectType(expected, actual, node, substitutions = new Map()) {
   if (expected.kind === 'Type' && expected.name === 'Union' && actual.kind !== 'Variable' && actual.name !== 'Union') {
@@ -96,7 +95,8 @@ export function typecheckModule(ast, registry, { imports = new Map(), maxTypeNod
     let result;
     switch (node.kind) {
       case 'GroupExpression': result = expression(node.value, scope, context, expected); break;
-      case 'LiteralExpression': result = primitive(typeof node.value === 'number' ? 'Number' : typeof node.value === 'boolean' ? 'Boolean' : 'String'); break;
+      case 'TypeAscriptionExpression': result=expression(node.value,scope,context,type(node.type,context.parameters));break;
+      case 'LiteralExpression': if(Array.isArray(node.value)&&node.value.some(value=>typeof value!=='number'||!Number.isFinite(value)))diagnostic('TYPE_MISMATCH','Numeric literal arrays require finite numbers',node);result = Array.isArray(node.value)?term('Array',[primitive('Number')]):primitive(typeof node.value === 'number' ? 'Number' : typeof node.value === 'boolean' ? 'Boolean' : 'String'); break;
       case 'NameExpression': {
         const binding = scope.get(node.name);
         if (!binding) diagnostic('UNKNOWN_SYMBOL', `Unknown name ${node.name}`, node);

@@ -33,6 +33,8 @@ function usage() {
   node tools/ems.mjs text-parse <source.ems>
   node tools/ems.mjs text-run <source.ems> '<inputs-json>'
   node tools/ems.mjs text-build <source.ems> --out <output.mjs>
+  node tools/ems.mjs instance-source <source.ems|module.json|project.json> --out <current.ems>
+  node tools/ems.mjs application-source <source.ems|project.json> --out <current.ems>
   node tools/ems.mjs application-project <source.ems> --out <project.json>
   node tools/ems.mjs application-build <source.ems|project.json> --out <directory>
   node tools/ems.mjs application-run <source.ems|project.json> --events '<ui-events-json>'
@@ -52,6 +54,8 @@ function usage() {
   node tools/ems.mjs module-bind-origins <source.ems> --entry <name> --policy <annotations.json> --out <bound-policy.json>
   node tools/ems.mjs module-build <source.ems> --entry <name> --out <output.mjs>
   node tools/ems.mjs module-seal <source.ems> --entry <name> --id <contract-id> --out <directory>
+  node tools/ems.mjs instance-source <source.ems|module.json|project.json> --out <current.ems>
+  node tools/ems.mjs application-source <source.ems|project.json> --out <current.ems>
   node tools/ems.mjs application-project <source.ems> --out <project.json>
   node tools/ems.mjs application-build <source.ems|project.json> --out <directory>
   node tools/ems.mjs application-run <source.ems|project.json> --events '<ui-events-json>'
@@ -60,8 +64,8 @@ function usage() {
   node tools/ems.mjs instance-build <source.ems|module.json> --out <module.mjs>`);
 }
 async function main() {
-  if(['application-project','application-build','application-run'].includes(command)){if(!file)throw Error('Application source/project file required');const {applicationCLI}=await import('../src/instances/application-cli.mjs');await applicationCLI(command,file,args);return;}
-  if(['instance-ir','instance-run','instance-build'].includes(command)){if(!file)throw Error('Instance source/module file required');const {instanceCLI}=await import('../src/instances/cli.mjs');await instanceCLI(command,file,args);return;}
+  if(['application-project','application-build','application-run','application-source'].includes(command)){if(!file)throw Error('Application source/project file required');const {applicationCLI}=await import('../src/instances/application-cli.mjs');await applicationCLI(command,file,args);return;}
+  if(['instance-ir','instance-run','instance-build','instance-source'].includes(command)){if(!file)throw Error('Instance source/module file required');const {instanceCLI}=await import('../src/instances/cli.mjs');await instanceCLI(command,file,args);return;}
   if (!file || !['flow-run','flow-build','flow-svg','lock','locked-run','locked-build','interface-check', 'interface-compare', 'binding-check', 'validate', 'run', 'build', 'seal', 'text-parse', 'text-run', 'text-build', 'ir', 'text-ir', 'ir-run', 'ir-build', 'parse', 'check', 'module-run', 'module-build', 'module-ir', 'module-origins', 'module-classify', 'module-bind-origins', 'module-seal'].includes(command)) { usage(); process.exitCode = 2; return; }
   const content = await readFile(file, 'utf8');
   if(['flow-run','flow-build','flow-svg'].includes(command)){
