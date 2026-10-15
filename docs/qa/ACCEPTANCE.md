@@ -348,3 +348,8 @@ Transitive effects reach a fixed point through cycles; fake state callbacks refu
 Old profile behavior, closed transport/import/export/source/UI witnesses persist.
 Worker120→edit240/reopen240/independent240; real self drag/bounded CALL_DEPTH,
 UI3→6/reopen6 and rollback0. Root/helper Back navigation and finite SVG checked.
+
+AC-118/120 supplement: an editor returning to the foreground detects a newer
+server build without visiting home. Explicit update preserves unsaved fields and
+saved graph data; an old tab also detects a worker activated by another tab.
+A stale waiting worker is refused, offline editing remains available.

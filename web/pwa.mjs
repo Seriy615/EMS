@@ -12,8 +12,27 @@ apply.onclick=async()=>{const worker=registration?.waiting??navigator.serviceWor
 addEventListener('beforeinstallprompt',event=>{event.preventDefault();installPrompt=event;localStorage.removeItem('ems.pwa.installed');updateInstall();});
 document.addEventListener('ems-install',async()=>{if(installPrompt){const prompt=installPrompt;installPrompt=null;await prompt.prompt();await prompt.userChoice;}else if(matchMedia('(display-mode:standalone)').matches)notice('EMS уже открыт как приложение.');else notice('В меню браузера выберите «Установить приложение» или «На экран Домой».');});
 addEventListener('offline',()=>notice('Нет сети. Сохранённые проекты доступны на этом устройстве.'));
-addEventListener('online',()=>{message.hidden=true;available();});
+addEventListener('online',()=>{message.hidden=true;available();void checkEditorRelease();});
 const ready='serviceWorker' in navigator?navigator.serviceWorker.register('/web/service-worker.mjs',{scope:'/',type:'module',updateViaCache:'none'}).then(value=>{registration=value;available();const watch=worker=>worker?.addEventListener('statechange',()=>{if(worker.state==='installed'&&navigator.serviceWorker.controller)available();});watch(registration.installing);registration.addEventListener('updatefound',()=>watch(registration.installing));return value;}).catch(()=>{notice('Офлайн-режим пока недоступен. Продолжайте работу в браузере.');return null;}):Promise.resolve(null);
+// A long-lived editor can keep an older module graph after another tab updates the worker.
+// Detect it without navigating or replacing any in-memory edits.
+let checkingEditorRelease=false;
+async function checkEditorRelease(){
+ if(document.getElementById('project-list')||document.visibilityState!=='visible'||checkingEditorRelease)return;
+ checkingEditorRelease=true;
+ try{
+  const release=await serverRelease();
+  if(release.assets===BUILD_ID)return;
+  await ready;
+  await registration?.update();
+  if(available())return;
+  const controller=navigator.serviceWorker?.controller;
+  if(controller&&await workerVersion(controller)===release.assets)notice('Этот редактор открыт в старой версии EMS. Сохраните изменения во всех вкладках и нажмите «Обновить».',true);
+ }catch{/* Offline editing remains available; a failed check must not interrupt it. */}
+ finally{checkingEditorRelease=false;}
+}
+void ready.then(()=>checkEditorRelease());
+document.addEventListener('visibilitychange',()=>{void checkEditorRelease();});
 if(document.getElementById('project-list')){
  const version=document.createElement('p'),label=document.createElement('span'),check=document.createElement('button');version.className='pwa-version';label.dataset.appVersion=BUILD_ID;label.textContent='Версия '+BUILD_ID.slice(0,8);check.textContent='Проверить обновление';check.dataset.checkUpdate='';version.append(label,check);document.querySelector('main').prepend(version);
  check.onclick=async()=>{check.disabled=true;try{const release=await serverRelease();await ready;await registration?.update();if(!available(true)){if(release.assets===BUILD_ID)notice('Установлена последняя версия EMS.');else if(!registration?.installing&&navigator.serviceWorker?.controller&&await workerVersion(navigator.serviceWorker.controller)===release.assets)notice('Доступна новая версия EMS. Сохраните изменения во всех вкладках и нажмите «Обновить».',true);else notice('Загружается обновление EMS. Сохранённые проекты остаются на устройстве.');}}catch{notice('Не удалось проверить обновление. Сохранённые проекты доступны без сети.');}finally{check.disabled=false;}};
