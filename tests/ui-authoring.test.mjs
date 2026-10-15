@@ -20,3 +20,8 @@ test('source/IR mismatch, stale signatures and malformed source reject without m
 test('source witness supports safe prototype-named handler and rejects metadata for absent handlers',()=>{
  const editor=author();editor.applyHandler('__proto__','fn safe()->Number {return 1;}','safe');assert.equal(Object.hasOwn(editor.sources,'__proto__'),true);const data=JSON.parse(editor.source);data.sources.unknown={source:'fn safe()->Number{return 1;}',entry:'safe'};assert.throws(()=>parseUIWorkspace(JSON.stringify(data),editor.base),{code:'INVALID_UI_PROJECT'});
 });
+test('optional UI property removal is validated, undoable and restores actual events without changing handlers',async()=>{
+ const editor=author(),body=JSON.stringify(editor.application.reactor.handlers);editor.property('button','disabled',{literal:true});let runtime=new UIRuntime(editor.application,editor.base,{policy});await assert.rejects(runtime.dispatch('button','press'),{code:'UI_EVENT_DISABLED'});await runtime.close();
+ editor.property('button','disabled',null);assert.equal(Object.hasOwn(editor.application.ui.root.children[1].props,'disabled'),false);assert.equal(JSON.stringify(editor.application.reactor.handlers),body);editor.undo();assert.deepEqual(editor.application.ui.root.children[1].props.disabled,{literal:true});editor.redo();runtime=new UIRuntime(editor.application,editor.base,{policy});assert.equal(await runtime.dispatch('button','press'),1);await runtime.close();
+ const saved=editor.source;assert.throws(()=>editor.property('button','text',null),{code:'INVALID_UI'});assert.throws(()=>editor.property('button','unknown',null),{code:'UNSUPPORTED_UI'});assert.equal(editor.source,saved);
+});

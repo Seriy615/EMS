@@ -53,7 +53,7 @@ function pointAt(handler,offset,expectedSource){
  toggleUIPoint(handler,breakpointAtTextOffset(compileUIHandler(draft.source,draft.entry,editor.application,base),offset));
 }
 let restarting=Promise.resolve(),authoringQueue=Promise.resolve(),authoring,designer,connections;export let applicationController,editor;
-function report(failure){error.textContent=failure.code??'HOST_ERROR';const location=failure.details?.location;if(location?.start?.offset!==undefined){const field=document.querySelector('#handler-source');field.focus();field.setSelectionRange(location.start.offset,location.end?.offset??location.start.offset);error.textContent+=' — '+location.start.line+':'+location.start.column;}}
+function report(failure){error.textContent=(failure.code??'HOST_ERROR')+(['UI_BINDING_TYPE','INVALID_UI_VALUE'].includes(failure.code)&&failure.message?' — '+failure.message:'');const location=failure.details?.location;if(location?.start?.offset!==undefined){const field=document.querySelector('#handler-source');field.focus();field.setSelectionRange(location.start.offset,location.end?.offset??location.start.offset);error.textContent+=' — '+location.start.line+':'+location.start.column;}}
 function render(){syncUIPoints();authoring?.refresh();designer?.refresh();connections?.refresh();source.value=editor.source;document.querySelector('#undo-ui').disabled=!editor.history.length;document.querySelector('#redo-ui').disabled=!editor.future.length;}
 function debugPause(pause){
  pausedEvent=pause.eventId;pausedOperation=pause;syncUIPoints();

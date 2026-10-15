@@ -2,6 +2,7 @@ import {canonicalFlowType} from '../contracts/flow-values.mjs';
 import {compileUIFlow,newUIFlow} from '../ui/flow.mjs';
 import {compileUIHandler} from '../ui/source.mjs';
 import {fail} from '../reference/errors.mjs';
+import {kinds} from '../ui/kernel.mjs';
 import {serializeUIProject,parseUIProject,parseUIWorkspace} from '../ui/project.mjs';
 import {createCoreRegistry} from '../reference/registry.mjs';
 /** Transactional UI authoring snapshot. Execution state is owned by preview, not this saved program. */
@@ -26,7 +27,8 @@ export class UIProjectEditor{
  addNode(parent,node,index){this.edit(app=>{const children=find(app.ui.root,parent).children;if(index!==undefined&&(!Number.isSafeInteger(index)||index<0||index>children.length))fail('INVALID_UI','Invalid insertion index');children.splice(index??children.length,0,structuredClone(node));});}
  moveNode(id,parent,index){this.edit(app=>{if(id===app.ui.root.id)fail('INVALID_UI','Cannot move root');const node=find(app.ui.root,id),target=find(app.ui.root,parent);if(!['column','row'].includes(target.kind))fail('INVALID_UI','Drop target must be a container');function contains(n){return n.id===parent||n.children.some(contains);}if(contains(node))fail('INVALID_UI','Cannot place a container inside itself');let previous;function detach(n){const at=n.children.findIndex(c=>c.id===id);if(at>=0){previous={parent:n,index:at};n.children.splice(at,1);return true;}return n.children.some(detach);}detach(app.ui.root);const at=index??target.children.length;if(!Number.isSafeInteger(at)||at<0||at>target.children.length+(previous.parent===target?1:0))fail('INVALID_UI','Invalid insertion index');target.children.splice(previous.parent===target&&previous.index<at?at-1:at,0,node);});}
  removeNode(id){this.edit(app=>{if(app.ui.root.id===id)fail('INVALID_UI','Cannot remove root');function remove(parent){const index=parent.children.findIndex(child=>child.id===id);if(index>=0){parent.children.splice(index,1);return true;}return parent.children.some(remove);}if(!remove(app.ui.root))fail('INVALID_UI','Unknown UI node');});}
- property(id,name,binding){this.edit(app=>{if(binding.format==='json'){app.schemaVersion='ems-ui-app/2';app.reactor.schemaVersion='ems-reactor/2';}find(app.ui.root,id).props[name]=structuredClone(binding);});}
+ /** A null binding removes an optional property; required properties remain validated. */
+ property(id,name,binding){this.edit(app=>{const node=find(app.ui.root,id);if(binding===null){if(!Object.hasOwn(kinds[node.kind].props,name))fail('UNSUPPORTED_UI','Unsupported semantic property');delete node.props[name];return;}if(binding.format==='json'){app.schemaVersion='ems-ui-app/2';app.reactor.schemaVersion='ems-reactor/2';}node.props[name]=structuredClone(binding);});}
  event(id,name,handler,inputs){this.edit(app=>{find(app.ui.root,id).events[name]={handler,inputs:structuredClone(inputs)};});}
  applyHandler(event,source,entry){this.edit((app,sources)=>{const bundle=compileUIHandler(source,entry,app,this.base),handler=app.reactor.handlers.find(item=>item.event===event);if(handler)handler.program=bundle.ir;else app.reactor.handlers.push({event,program:bundle.ir});Object.defineProperty(sources,event,{value:{source,entry},enumerable:true,writable:true,configurable:true});});}
  undo(){if(!this.history.length)return;parseUIProject(this.history.at(-1),this.base);this.future.push(this.source);this.source=this.history.pop();}

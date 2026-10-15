@@ -3,22 +3,26 @@ import {formatFiniteJSON} from '../src/semantics/data-json.mjs';
 import {renderStateEditors} from './ui-state-editor.mjs';
 import {createStateRegistry} from '../src/runtime/reactor.mjs';
 import {signatureIR} from '../src/ir/index.mjs';
+import {kinds} from '../src/ui/kernel.mjs';
+import {fail} from '../src/reference/errors.mjs';
 const $=id=>document.getElementById(id),text=(tag,value)=>{const node=document.createElement(tag);node.textContent=value;return node;};
 const defaults={column:{},row:{},text:{text:{literal:'Текст'}},button:{text:{literal:'Кнопка'}},textInput:{value:{literal:''},label:{literal:'Поле'}},checkbox:{checked:{literal:false},label:{literal:'Флажок'}}};
 const properties={column:{label:'String'},row:{label:'String'},text:{text:'String',label:'String'},button:{text:'String',label:'String',disabled:'Boolean'},textInput:{value:'String',label:'String',disabled:'Boolean'},checkbox:{checked:'Boolean',label:'String',disabled:'Boolean'}};
 function nodes(root){return [root,...root.children.flatMap(nodes)];}
 function fill(select,values){const previous=select.value;select.replaceChildren();for(const value of values){const option=text('option',value);option.value=value;select.append(option);}if(values.includes(previous))select.value=previous;}
-function literal(value,type){return type==='String'?value:JSON.parse(value);}
+function literal(value,type){if(type==='String')return value;if(type==='Boolean'){const normalized=value.trim();if(normalized==='true')return true;if(normalized==='false')return false;fail('UI_BINDING_TYPE','Укажите true (да) или false (нет).');}try{return JSON.parse(value);}catch{fail('INVALID_UI_VALUE','Укажите корректное значение в формате JSON.');}}
 function binding(mode,value,type){return mode==='literal'?{literal:literal(value,type)}:mode==='state'?{state:value}:['number','json'].includes(mode)?{state:value,format:mode}:{value:true};}
 /** Forms edit the same validated UI program; DOM preview contains no authoring-only business logic. */
 export function installUIAuthoring(getEditor,change,report){
  let selected=null;const paths=document.createElement('datalist');paths.id='ui-state-paths';document.body.append(paths);
  function suggest(field,mode){if(['state','number','json'].includes(mode)){field.setAttribute('list',paths.id);field.placeholder='Выберите данные программы';}else{field.removeAttribute('list');field.placeholder='';}}
- $('property-mode').onchange=()=>suggest($('property-value'),$('property-mode').value);
+ const reset=text('button','Сбросить свойство'),hint=text('p','');reset.id='reset-property';reset.type='button';hint.id='property-help';$('set-property').after(reset,hint);$('property-value').setAttribute('aria-describedby',hint.id);
+ function propertyHelp(){const node=selectedNode(),name=$('property-name').value,required=(kinds[node?.kind]?.required??[]).includes(name),boolean=properties[node?.kind]?.[name]==='Boolean'&&$('property-mode').value==='literal';reset.disabled=required;reset.title=required?'Обязательное свойство: задайте значение.':'Убрать свойство и использовать поведение по умолчанию.';hint.hidden=!boolean;hint.textContent='true — да, false — нет.'+(!required?' Пустое поле — поведение по умолчанию (элемент доступен).':'');suggest($('property-value'),$('property-mode').value);if(boolean)$('property-value').placeholder='true / false';}
+ $('property-mode').onchange=propertyHelp;
  for(const type of FLOW_VALUE_TYPES){const option=text('option',type);option.value=type;$('ui-value-types').append(option);}
  $('state-type').onchange=()=>{try{const value=defaultFlowValue($('state-type').value);$('state-initial').value=typeof value==='string'?value:formatFiniteJSON(value);}catch(error){report(error);}};
  function selectedNode(){return nodes(getEditor().application.ui.root).find(node=>node.id===$('widget-select').value);}
- function propertyValue(){const node=selectedNode(),ref=node?.props[$('property-name').value];$('property-mode').value=ref?.state?(ref.format??'state'):'literal';$('property-value').value=ref?.state??(ref&&Object.hasOwn(ref,'literal')?(typeof ref.literal==='string'?ref.literal:Object.is(ref.literal,-0)?'-0':formatFiniteJSON(ref.literal)):'');suggest($('property-value'),$('property-mode').value);}
+ function propertyValue(){const node=selectedNode(),ref=node?.props[$('property-name').value];$('property-mode').value=ref?.state?(ref.format??'state'):'literal';$('property-value').value=ref?.state??(ref&&Object.hasOwn(ref,'literal')?(typeof ref.literal==='string'?ref.literal:Object.is(ref.literal,-0)?'-0':formatFiniteJSON(ref.literal)):'');propertyHelp();}
  function propertyChoices(){const node=selectedNode();fill($('property-name'),Object.keys(properties[node?.kind]??{}));propertyValue();}
  function selectBinding(){const node=selectedNode(),ref=node?.events?.[node.kind==='button'?'press':'change'];if(ref)$('event-handler').value=ref.handler;eventChoices();$('handler-inspect').textContent=JSON.stringify(node?.events??{},null,2);for(const context of document.querySelectorAll('[data-ui-context]'))context.textContent='Элемент: '+(node?.id??'—');document.dispatchEvent(new CustomEvent('ems:ui-selection',{detail:{id:node?.id}}));}
  function select(id){selected=id;$('widget-select').value=id;propertyChoices();selectBinding();}
@@ -45,7 +49,8 @@ export function installUIAuthoring(getEditor,change,report){
  $('property-name').onchange=propertyValue;
  const context=text('p',''),open=text('button','Открыть граф контракта');context.dataset.uiContext='';$('event-inputs').before(context);open.id='open-bound-handler';open.onclick=()=>document.dispatchEvent(new CustomEvent('ems:ui-open-graph',{detail:{event:$('event-handler').value}}));$('set-event').after(open);
  const propContext=text('p','');propContext.dataset.uiContext='';$('property-name').closest('label').before(propContext);
- $('set-property').onclick=()=>{try{const node=selectedNode(),name=$('property-name').value,ref=binding($('property-mode').value,$('property-value').value,properties[node.kind][name]);action(editor=>editor.property(node.id,name,ref));}catch(error){report(error);}};
+ reset.onclick=()=>{const node=selectedNode(),name=$('property-name').value;action(editor=>editor.property(node.id,name,null));};
+ $('set-property').onclick=()=>{try{const node=selectedNode(),name=$('property-name').value,type=properties[node.kind][name],mode=$('property-mode').value,value=$('property-value').value,clear=type==='Boolean'&&mode==='literal'&&!value.trim()&&!(kinds[node.kind].required??[]).includes(name),ref=clear?null:binding(mode,value,type);action(editor=>editor.property(node.id,name,ref));}catch(error){report(error);}};
  $('event-handler').onchange=eventChoices;
  $('set-event').onclick=()=>{try{const editor=getEditor(),node=selectedNode(),handler=$('event-handler').value,signature=editor.handlerSignatures?.get(handler)??signatureIR(editor.application.reactor.handlers.find(item=>item.event===handler).program,createStateRegistry(editor.base,editor.application.reactor.state,editor.application.reactor.schemaVersion)),inputs={};for(const [name,spec]of Object.entries(signature.inputs)){const mode=[...$('event-inputs').querySelectorAll('[data-event-mode]')].find(field=>field.dataset.eventMode===name).value,value=[...$('event-inputs').querySelectorAll('[data-event-value]')].find(field=>field.dataset.eventValue===name).value;inputs[name]=binding(mode,value,spec.type);}const event=node.kind==='button'?'press':'change';action(editor=>editor.event(node.id,event,handler,inputs));}catch(error){report(error);}};
  $('apply-handler').onclick=()=>action(editor=>editor.applyHandler($('handler-event').value,$('handler-source').value,$('handler-entry').value));
