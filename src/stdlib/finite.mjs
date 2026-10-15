@@ -1,10 +1,11 @@
+import {contractDescriptionTemplate} from '../contracts/descriptions.mjs';
 import {COLLECTION_TEMPLATES} from './collections.mjs';
 import {validateContractInterface} from '../contracts/idl.mjs';
 /** Trusted, pure standard contracts for the finite primitive profile. */
 const definitions=[];
 function define(id,category,inputs,output,operation,summary,errors=[]){
  const signature=Object.freeze({...inputs});
- definitions.push(Object.freeze({id,version:'1.0.0',category,inputs:signature,output,operation,summary,errors:Object.freeze([...errors])}));
+ definitions.push(Object.freeze({id,version:'1.0.0',description:contractDescriptionTemplate(id,Object.keys(inputs)),category,inputs:signature,output,operation,summary,errors:Object.freeze([...errors])}));
 }
 for(const type of ['Number','Boolean','String','NumberArray']){
  define(`std.value.${type}`,'value',{value:type},type,type==='NumberArray'?({value})=>value.slice():({value})=>value,'Typed value identity; arrays are copied.');
@@ -30,11 +31,12 @@ define('std.array.concat','array',{a:'NumberArray',b:'NumberArray'},'NumberArray
 define('std.array.reverse','array',{values:'NumberArray'},'NumberArray',({values})=>values.slice().reverse(),'Reverse a copy.');
 define('std.array.sort','array',{values:'NumberArray'},'NumberArray',({values})=>values.slice().sort((a,b)=>a-b),'Stable ascending numeric order; preserve order of signed zeros.');
 define('std.array.slice','array',{values:'NumberArray',start:'Number',end:'Number'},'NumberArray',({values,start,end},fail)=>{if(!Number.isSafeInteger(start)||!Number.isSafeInteger(end)||start<0||end<start||end>values.length)fail('INDEX_RANGE','Array slice requires 0 <= start <= end <= length');return values.slice(start,end);},'Strict half-open interval.',['INDEX_RANGE']);
+define('std.array.removeAt','array',{values:'NumberArray',index:'Number'},'NumberArray',({values,index},fail)=>{if(!Number.isSafeInteger(index)||index<0||index>=values.length)fail('INDEX_RANGE','Array index must be a safe integer within bounds');return [...values.slice(0,index),...values.slice(index+1)];},'Remove one zero-based element from a copy.',['INDEX_RANGE']);
 define('std.array.contains','array',{values:'NumberArray',value:'Number'},'Boolean',({values,value})=>values.includes(value),'Finite numeric membership; signed zeros compare equal.');
 export const STANDARD_CONTRACTS=Object.freeze(definitions);
 /** Public interfaces are data artifacts, separate from operational bodies and binding provenance. */
 export const STANDARD_INTERFACES=Object.freeze(STANDARD_CONTRACTS.map(item=>validateContractInterface({schemaVersion:'ems-contract-interface/1',id:item.id,version:item.version,inputs:Object.entries(item.inputs).map(([name,type])=>({name,type})),output:{type:item.output},errors:item.errors.map(code=>({code,payloadType:null})),semantics:{determinism:'deterministic',effects:[],capabilities:[]},conditions:{pre:[],post:[]}})));
-export function standardCatalog(){return {schemaVersion:'ems-stdlib-catalog/2',templates:COLLECTION_TEMPLATES,contracts:STANDARD_CONTRACTS.map((item,index)=>({interface:STANDARD_INTERFACES[index],category:item.category,summary:item.summary,implementation:{kind:'intrinsic',abi:'ems-stdlib-finite/1',id:item.id}}))};}
+export function standardCatalog(){return {schemaVersion:'ems-stdlib-catalog/2',templates:COLLECTION_TEMPLATES,contracts:STANDARD_CONTRACTS.map((item,index)=>({interface:STANDARD_INTERFACES[index],category:item.category,summary:item.summary,description:item.description,implementation:{kind:'intrinsic',abi:'ems-stdlib-finite/1',id:item.id}}))};}
 /** One trusted operational body is used by runtime and standalone emission. No source from users is evaluated. */
 export function installFiniteStandardLibrary(registry,fail){
  for(const {id,version,inputs,output,operation} of STANDARD_CONTRACTS){

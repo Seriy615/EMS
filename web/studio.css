@@ -115,3 +115,4 @@ body.text-mode main{grid-template-columns:minmax(0,1fr)}
 
 
 .structured-card [data-write-variable]{margin:8px 12px;font-size:12px;min-height:36px;padding:8px 10px}
+.contract-description-form{margin:16px 0;padding:12px 0;border-bottom:1px solid var(--line)}.contract-description-form label{display:grid;gap:8px}.contract-description-form textarea{width:100%;resize:vertical;min-height:76px}.structured-card .contract-description{margin:10px 12px;font-size:12px;line-height:1.5;white-space:pre-wrap;overflow-wrap:anywhere;max-height:90px;overflow:auto}

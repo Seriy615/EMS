@@ -1,3 +1,4 @@
+import {describeContract,validateDescription} from '../contracts/descriptions.mjs';
 import {fail} from '../reference/errors.mjs';
 import {validateControlIR,decodeControlLiteral} from '../ir/control.mjs';
 import {graphFromIR} from '../ir/index.mjs';
@@ -5,26 +6,30 @@ const quote=v=>typeof v==='number'&&Object.is(v,-0)?'-0':Array.isArray(v)?'['+v.
 function expression(n){switch(n.kind){case 'literal':return quote(decodeControlLiteral(n.value,n.type));case 'local':return n.name;case 'array':return '['+n.elements.map(expression).join(', ')+']';case 'index':return expression(n.value)+'['+expression(n.index)+']';case 'unary':return n.operator+'('+expression(n.value)+')';case 'binary':return '('+expression(n.left)+' '+n.operator+' '+expression(n.right)+')';case 'assign':return n.name+' := '+expression(n.value);case 'call':return n.target.id+'('+n.arguments.map(expression).join(', ')+')';case 'construct':return n.tag+'('+n.arguments.map(expression).join(', ')+')';default:fail('UNSUPPORTED_FLOWCHART','Unsupported expression '+n.kind);}}
 function pattern(p){return p.kind==='constructor'?p.tag+'('+p.arguments.map(pattern).join(', ')+')':p.kind==='literal'?quote(p.value):p.kind==='wildcard'?'_':p.name;}
 /** Semantic CFG for the supported synchronous EMS subset, independent of canvas positions. */
-export function buildFlowchart(ir,registry){
+export function buildFlowchart(ir,registry,{descriptions={}}={}){
+ if(!descriptions||typeof descriptions!=='object'||Array.isArray(descriptions))fail('INVALID_DESCRIPTION','Expected diagram descriptions');
+ for(const labels of Object.values(descriptions)){if(!labels||typeof labels!=='object'||Array.isArray(labels))fail('INVALID_DESCRIPTION','Expected component descriptions');for(const label of Object.values(labels))validateDescription(label);}
+ const label=(name,key,fallback)=>(Object.hasOwn(descriptions,name)&&Object.hasOwn(descriptions[name],key)?descriptions[name][key].trim():'')||fallback;
+ const operation=value=>{if(value.kind==='call'){const contract=registry.items.get(value.target.id);return describeContract(contract??{id:value.target.id,inputs:{}},Object.fromEntries(Object.keys(contract?.inputs??{}).map((name,i)=>[name,expression(value.arguments[i])])));}return expression(value);};
  const components=[];
  function component(name,inputs){const nodes=[],edges=[];const add=(kind,label)=>{if(nodes.length>=3000||label.length>5000)fail('FLOWCHART_LIMIT','Diagram exceeds bounded export size');const id='n'+nodes.length;nodes.push({id,kind,label});return id;},edge=(from,to,label='',back=false)=>{if(to!==null)edges.push({from,to,label,back});};return {name,inputs,nodes,edges,add,edge};}
  if(ir?.schemaVersion==='ems-ir/2'){
   const checked=validateControlIR(ir,registry);if(!['ems-control-finite/1','ems-control-errors/1','ems-control-algebraic/1'].includes(ir.profile))fail('UNSUPPORTED_FLOWCHART','Export currently requires synchronous finite/control/algebraic IR');
   for(const fn of checked.functions.values()){
    const c=component(fn.id,fn.inputs),end=c.add('terminal','Конец '+fn.id);
-   function block(body,next,loop={}){for(const s of [...body].reverse()){
+   function block(body,next,loop={},parent='/body'){for(const [index,s]of [...body.entries()].reverse()){const at=parent+'/'+index;
     let node;
     switch(s.kind){
-     case 'let':node=c.add(s.value.kind==='call'?'predefined':'process',s.name+' := '+expression(s.value));c.edge(node,next);next=node;break;
-     case 'expression':node=c.add(s.value.kind==='call'?'predefined':'process',expression(s.value));c.edge(node,next);next=node;break;
-     case 'return':node=c.add('data','Вернуть '+expression(s.value));c.edge(node,end);next=node;break;
-     case 'block':next=block(s.body,next,loop);break;
-     case 'if':node=c.add('decision',expression(s.condition));c.edge(node,block(s.then,next,loop),'Да');c.edge(node,block(s.otherwise,next,loop),'Нет');next=node;break;
-     case 'while':{node=c.add('decision',expression(s.condition));const again=c.add('connector','');c.edge(again,node,'',true);c.edge(node,block(s.body,again,{breakTo:next,continueTo:again}),'Да');c.edge(node,next,'Нет');next=node;break;}
-     case 'for':{const init=c.add('process','Подготовить обход копии '+expression(s.iterable)),check=c.add('decision','Есть следующий элемент?'),bind=c.add('process',s.binding+' := следующий элемент'),again=c.add('connector','');c.edge(init,check);c.edge(check,bind,'Да');c.edge(check,next,'Нет');c.edge(bind,block(s.body,again,{breakTo:next,continueTo:again}));c.edge(again,check,'',true);next=init;break;}
+     case 'let':node=c.add(s.value.kind==='call'?'predefined':'process',label(fn.id,at,operation(s.value)+'\nРезультат: '+s.name));c.edge(node,next);next=node;break;
+     case 'expression':node=c.add(s.value.kind==='call'?'predefined':'process',label(fn.id,at,operation(s.value)));c.edge(node,next);next=node;break;
+     case 'return':node=c.add('data',label(fn.id,at,'Вернуть '+expression(s.value)));c.edge(node,end);next=node;break;
+     case 'block':next=block(s.body,next,loop,at+'/body');break;
+     case 'if':node=c.add('decision',label(fn.id,at,expression(s.condition)));c.edge(node,block(s.then,next,loop,at+'/then'),'Да');c.edge(node,block(s.otherwise,next,loop,at+'/otherwise'),'Нет');next=node;break;
+     case 'while':{node=c.add('decision',label(fn.id,at,expression(s.condition)));const again=c.add('connector','');c.edge(again,node,'',true);c.edge(node,block(s.body,again,{breakTo:next,continueTo:again},at+'/body'),'Да');c.edge(node,next,'Нет');next=node;break;}
+     case 'for':{const init=c.add('process',label(fn.id,at,'Подготовить обход копии '+expression(s.iterable))),check=c.add('decision','Есть следующий элемент?'),bind=c.add('process',s.binding+' := следующий элемент'),again=c.add('connector','');c.edge(init,check);c.edge(check,bind,'Да');c.edge(check,next,'Нет');c.edge(bind,block(s.body,again,{breakTo:next,continueTo:again},at+'/body'));c.edge(again,check,'',true);next=init;break;}
      case 'break':node=c.add('connector','break');c.edge(node,loop.breakTo);next=node;break;
      case 'continue':node=c.add('connector','continue');c.edge(node,loop.continueTo);next=node;break;
-     case 'match':{let fallback=next;for(const arm of [...s.arms].reverse()){node=c.add('decision',expression(s.value)+' соответствует '+pattern(arm.pattern)+'?');c.edge(node,block(arm.body,next,loop),'Да');c.edge(node,fallback,'Нет');fallback=node;}next=fallback;break;}
+     case 'match':{let fallback=next;for(const [armIndex,arm]of [...s.arms.entries()].reverse()){node=c.add('decision',expression(s.value)+' соответствует '+pattern(arm.pattern)+'?');c.edge(node,block(arm.body,next,loop,at+'/arms/'+armIndex+'/body'),'Да');c.edge(node,fallback,'Нет');fallback=node;}next=fallback;break;}
      default:fail('UNSUPPORTED_FLOWCHART','Explicit '+s.kind+' flow is not supported by this export profile');
     }
    }return next;}
@@ -33,7 +38,7 @@ export function buildFlowchart(ir,registry){
  }else{
   const g=graphFromIR(ir,registry),c=component(g.id,Object.entries(g.inputs).map(([name,v])=>({name,type:v.type}))),start=c.add('terminal','Начало '+g.id),input=c.add('data','Параметры: '+Object.entries(g.inputs).map(([n,p])=>n+': '+p.type).join(', '));c.edge(start,input);let previous=input;const seen=new Set(),byId=new Map(g.nodes.map(n=>[n.id,n]));
   const ref=r=>Object.hasOwn(r,'input')?r.input:Object.hasOwn(r,'node')?r.node:quote(r.literal);
-  function visit(id){if(seen.has(id))return;const n=byId.get(id);for(const r of Object.values(n.args))if(Object.hasOwn(r,'node'))visit(r.node);seen.add(id);const at=c.add('predefined',n.id+' := '+n.uses+'('+Object.entries(n.args).map(([k,v])=>k+'='+ref(v)).join(', ')+')');c.edge(previous,at);previous=at;}
+  function visit(id){if(seen.has(id))return;const n=byId.get(id);for(const r of Object.values(n.args))if(Object.hasOwn(r,'node'))visit(r.node);seen.add(id);const at=c.add('predefined',label(g.id,n.id,describeContract(registry.resolve(n.uses),Object.fromEntries(Object.entries(n.args).map(([k,v])=>[k,ref(v)])))+'\nРезультат: '+n.id));c.edge(previous,at);previous=at;}
   for(const id of g.sequence??[])visit(id);if(Object.hasOwn(g.returns,'node'))visit(g.returns.node);const output=c.add('data','Вернуть '+ref(g.returns)),end=c.add('terminal','Конец '+g.id);c.edge(previous,output);c.edge(output,end);c.start=start;components.push(c);
  }
  return {schemaVersion:'ems-flowchart/1',standard:'ГОСТ 19.701-90',components:components.map(({name,inputs,nodes,edges,start})=>({name,inputs,nodes,edges,start}))};
@@ -50,7 +55,7 @@ export function renderFlowchartSVG(chart){
   const nodes=new Map(c.nodes.map(n=>[n.id,{...n,rank:0}])),reachable=new Set(),visit=id=>{if(reachable.has(id))return;reachable.add(id);for(const e of c.edges.filter(e=>e.from===id&&!e.back))visit(e.to);};visit(c.start);
   const indegree=new Map([...reachable].map(id=>[id,0]));for(const e of c.edges)if(!e.back&&reachable.has(e.from)&&reachable.has(e.to))indegree.set(e.to,indegree.get(e.to)+1);const queue=[...reachable].filter(id=>indegree.get(id)===0);let processed=0;
   while(queue.length){const id=queue.shift();processed++;for(const e of c.edges.filter(e=>e.from===id&&!e.back&&reachable.has(e.to))){nodes.get(e.to).rank=Math.max(nodes.get(e.to).rank,nodes.get(id).rank+1);indegree.set(e.to,indegree.get(e.to)-1);if(!indegree.get(e.to))queue.push(e.to);}}if(processed!==reachable.size)fail('INVALID_FLOWCHART','Unexpected unmarked cycle');
-  const rows=new Map();for(const n of nodes.values())if(reachable.has(n.id)){const row=rows.get(n.rank)??[];row.push(n);rows.set(n.rank,row);n.lines=n.label.match(/.{1,36}/gu)??[''];n.h=n.kind==='connector'?36:Math.max(n.kind==='decision'?100:70,n.lines.length*17+30);}
+  const rows=new Map();for(const n of nodes.values())if(reachable.has(n.id)){const row=rows.get(n.rank)??[];row.push(n);rows.set(n.rank,row);n.lines=n.label.split(/\r?\n/).flatMap(line=>line.match(/.{1,36}/gu)??['']);n.h=n.kind==='connector'?36:Math.max(n.kind==='decision'?100:70,n.lines.length*17+30);}
   const w=Math.max(800,...[...rows.values()].map(row=>row.length*380+140)),backCount=c.edges.filter(e=>e.back||nodes.get(e.to)?.rank>nodes.get(e.from)?.rank+1).length;width=Math.max(width,w+backCount*24+50);let y=offset+45;
   content.push(`<text x="40" y="${offset}" font-size="20" font-weight="bold">${escape(c.name)}</text>`);
   for(const rank of [...rows.keys()].sort((a,b)=>a-b)){const row=rows.get(rank),h=Math.max(...row.map(n=>n.h));row.forEach((n,index)=>{n.x=(w-row.length*380)/2+index*380+40;n.y=y;n.w=300;n.rowBottom=y+h;});y+=h+80;}
@@ -60,4 +65,4 @@ export function renderFlowchartSVG(chart){
  }
  return `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${offset}" viewBox="0 0 ${width} ${offset}" role="img" aria-label="Схема алгоритма EMS"><title>EMS — ${escape(chart.standard)}</title><desc>Выбранные символы ГОСТ 19.701-90. Семантический поток, без значений отладчика. Полное оформление ЕСПД и неподдерживаемые профили не заявляются.</desc><defs><marker id="arrow" viewBox="0 0 10 10" refX="10" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="#222"/></marker></defs><rect width="100%" height="100%" fill="white"/><g font-family="Arial, sans-serif" fill="#111"><text x="40" y="35" font-size="18">Схема программы EMS · ГОСТ 19.701-90</text>${content.join('\n')}</g></svg>`;
 }
-export function exportFlowchartSVG(ir,registry){return renderFlowchartSVG(buildFlowchart(ir,registry));}
+export function exportFlowchartSVG(ir,registry,options){return renderFlowchartSVG(buildFlowchart(ir,registry,options));}

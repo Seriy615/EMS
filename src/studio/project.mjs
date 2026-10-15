@@ -1,3 +1,4 @@
+import {validateDescription} from '../contracts/descriptions.mjs';
 import {serializeCollectionProject,decodeCollectionProject,verifyCollectionProject,validateCollectionAuthoring} from './project-v3.mjs';
 import {collectionItem,checkCollection,hasCollections,lowerCollectionGraph} from './collections.mjs';
 import { Registry, createCoreRegistry } from '../reference/registry.mjs';
@@ -19,10 +20,11 @@ export function newProject(id = 'main', name = 'Новый проект') {
     inputs: {}, canvas: { positions: {}, view: { x: 0, y: 0, scale: 1 } }, contracts: [] };
 }
 function validateCanvas(canvas, graph) {
-  fields(canvas, ['positions', 'view']); fields(canvas.view, ['x', 'y', 'scale']);
+  fields(canvas, ['positions', 'view',...(Object.hasOwn(canvas,'descriptions')?['descriptions']:[])]); fields(canvas.view, ['x', 'y', 'scale']);
   if (![canvas.view.x, canvas.view.y, canvas.view.scale].every(Number.isFinite) || canvas.view.scale < 0.25 || canvas.view.scale > 2)
     fail('INVALID_PROJECT', 'Invalid viewport');
   const ids = new Set([...graph.nodes.map(node => node.id), ...Object.keys(graph.inputs).map(name => `input:${name}`), 'output']);
+  if(Object.hasOwn(canvas,'descriptions')){if(!canvas.descriptions||typeof canvas.descriptions!=='object'||Array.isArray(canvas.descriptions)||Object.keys(canvas.descriptions).length>ids.size)fail('INVALID_DESCRIPTION','Invalid node descriptions');for(const [id,text]of Object.entries(canvas.descriptions)){if(!ids.has(id))fail('INVALID_DESCRIPTION','Unknown described node');validateDescription(text);}}
   if (!canvas.positions || typeof canvas.positions !== 'object' || Array.isArray(canvas.positions)) fail('INVALID_PROJECT', 'Invalid positions');
   for (const [id, position] of Object.entries(canvas.positions)) {
     fields(position, ['x', 'y']);
@@ -203,12 +205,14 @@ export class ProjectEditor {
       else project.graph.nodes = project.graph.nodes.filter(node => node.id !== id);
       if(project.graph.sequence)project.graph.sequence=project.graph.sequence.filter(node=>node!==id);
       delete project.canvas.positions[id];
+      if(project.canvas.descriptions)delete project.canvas.descriptions[id];
       for (const node of project.graph.nodes) for (const [port, ref] of Object.entries(node.args)) if (matches(ref)) {
         const type = this.registry.resolve(node.uses).inputs[port]; node.args[port] = { literal: defaultValue(typeof type === 'string' ? type : type.type) };
       }
       if (matches(project.graph.returns)) project.graph.returns = { literal: defaultValue(project.graph.output.type) };
     });
   }
+  describe(id,text){validateDescription(text);return this.editWorkspace(project=>{project.canvas.descriptions??={};if(text.trim())Object.defineProperty(project.canvas.descriptions,id,{value:text.trim(),enumerable:true,configurable:true,writable:true});else delete project.canvas.descriptions[id];});}
   setInput(name, value) { this.editWorkspace(project => { if (!Object.hasOwn(project.inputs, name)) fail('UNKNOWN_INPUT', 'Unknown input'); assertValueType(value, project.graph.inputs[name].type, name); project.inputs[name] = value; }); }
   move(id, x, y) { this.editWorkspace(project => { project.canvas.positions[id] = { x, y }; }); }
   viewport(view) { this.editWorkspace(project => { project.canvas.view = view; }); }

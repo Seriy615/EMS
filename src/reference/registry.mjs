@@ -1,3 +1,4 @@
+import {contractDescriptionTemplate} from '../contracts/descriptions.mjs';
 import {parseControlType,controlTypeName} from '../semantics/control-algebraic.mjs';
 import {installFiniteStandardLibrary} from '../stdlib/finite.mjs';
 import { fail } from './errors.mjs';
@@ -16,9 +17,9 @@ export function coreIntrinsic(item) {
 export class Registry {
   constructor() { this.items = new Map(); }
   /** Optional ems-algebraic/1 signatures use structured control IR; the default reference graph profile stays finite. */
-  registerAtomic({ id, version = '1.0.0', inputs, output, effects = [], capabilities = [], execute, emitJS = null, interfaceBoundary = null, valueProfile }) {
+  registerAtomic({ id, version = '1.0.0', inputs, output, effects = [], capabilities = [], execute, emitJS = null, interfaceBoundary = null, valueProfile, description=contractDescriptionTemplate(id,Object.keys(inputs??{})) }) {
     if (typeof execute !== 'function') fail('INVALID_IMPL', `${id}: atomic executor must be a function`);
-    this.#register({ id, version, kind: 'atomic', inputs, output, effects, capabilities, execute, emitJS, interfaceBoundary,...(valueProfile===undefined?{}:{valueProfile}) });
+    this.#register({ id, version, kind: 'atomic', description, inputs, output, effects, capabilities, execute, emitJS, interfaceBoundary,...(valueProfile===undefined?{}:{valueProfile}) });
     return this;
   }
   registerResource({id,version='1.0.0',inputs,valueType,effects=[],capabilities=[],acquire,read,write=null,release,resourceBoundaries=[]}) {
@@ -48,6 +49,7 @@ export class Registry {
     return this;
   }
   #register(item) {
+    if(item.description!==undefined&&(typeof item.description!=='string'||item.description.length>2000))fail('INVALID_DESCRIPTION','Invalid contract description');
     if (!item.id || !/^[-a-zA-Z0-9_.]+$/.test(item.id)) fail('INVALID_ID', `Invalid contract id ${item.id}`);
     if (this.items.has(item.id)) fail('DUPLICATE_CONTRACT', `Duplicate contract ${item.id}`);
     if (!item.inputs || typeof item.inputs !== 'object') fail('INVALID_CONTRACT', `Missing inputs for ${item.id}`);

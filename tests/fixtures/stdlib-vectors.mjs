@@ -1,4 +1,7 @@
 export const vectors=[
+ ['std.array.removeAt',{values:[2,5,8],index:1},[2,8]],
+ ['std.array.removeAt',{values:[-0,1,1],index:2},[-0,1]],
+
  ['std.value.Number',{value:-0},-0],['std.value.Boolean',{value:false},false],['std.value.String',{value:'text'},'text'],['std.value.NumberArray',{value:[1,-0]},[1,-0]],
  ['std.select.Number',{condition:false,whenTrue:1,whenFalse:-0},-0],['std.select.Boolean',{condition:true,whenTrue:false,whenFalse:true},false],['std.select.String',{condition:false,whenTrue:'yes',whenFalse:'no'},'no'],['std.select.NumberArray',{condition:true,whenTrue:[-0,2],whenFalse:[3]},[-0,2]],
  ['std.logic.and',{a:true,b:false},false],['std.logic.or',{a:false,b:true},true],['std.logic.not',{value:true},false],

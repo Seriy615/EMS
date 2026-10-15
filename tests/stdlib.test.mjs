@@ -19,11 +19,11 @@ for(const [id,args,expected] of vectors)test(`${id}: shared IR runtime/serializa
  assert.deepEqual(await executeIR(ir,{},registry),expected);assert.deepEqual(await executeIR(loaded,{},registry),expected);assert.deepEqual(generated.execute({}),expected);assert.deepEqual(args,before);
 });
 test('every shipped standard contract has a tested typed pure implementation and genuine intrinsic witness',()=>{
- assert.equal(STANDARD_CONTRACTS.length,36);assert.deepEqual(new Set(vectors.map(([id])=>id)),new Set(STANDARD_CONTRACTS.map(item=>item.id)));
+ assert.equal(STANDARD_CONTRACTS.length,37);assert.deepEqual(new Set(vectors.map(([id])=>id)),new Set(STANDARD_CONTRACTS.map(item=>item.id)));
  for(const descriptor of STANDARD_CONTRACTS){const item=registry.resolve(descriptor.id);assert.equal(item.version,'1.0.0');assert.deepEqual(item.effects,[]);assert.deepEqual(item.capabilities,[]);assert.equal(coreIntrinsic(item).abi,'ems-stdlib-finite/1');assert.equal(coreIntrinsic({...item,execute:()=>0}),null);}
 });
 test('invalid indexing, strict decimal parsing and port types reject identically in both engines',async()=>{
- const failures=[['std.array.at',{values:[],index:0},'INDEX_RANGE'],['std.array.at',{values:[1],index:0.5},'INDEX_RANGE'],['std.array.slice',{values:[1],start:1,end:0},'INDEX_RANGE'],['std.text.slice',{text:'😀',start:0,end:2},'INDEX_RANGE'],...[' 1','0x10','Infinity','NaN','1e309','1junk',''].map(text=>['std.text.toNumber',{text},'NUMBER_FORMAT'])];
+ const failures=[...[-1,0.5,2].map(index=>['std.array.removeAt',{values:[1,2],index},'INDEX_RANGE']),['std.array.removeAt',{values:[],index:0},'INDEX_RANGE'],['std.array.at',{values:[],index:0},'INDEX_RANGE'],['std.array.at',{values:[1],index:0.5},'INDEX_RANGE'],['std.array.slice',{values:[1],start:1,end:0},'INDEX_RANGE'],['std.text.slice',{text:'😀',start:0,end:2},'INDEX_RANGE'],...[' 1','0x10','Infinity','NaN','1e309','1junk',''].map(text=>['std.text.toNumber',{text},'NUMBER_FORMAT'])];
  for(const [id,args,code] of failures){const ir=irFor(id,args),compiled=await import('data:text/javascript,'+encodeURIComponent(compileIRToJS(ir,registry)));await assert.rejects(executeIR(ir,{},registry),{code});assert.throws(()=>compiled.execute({}),{code});}
  assert.throws(()=>irFor('std.logic.and',{a:1,b:false}),{code:'TYPE_MISMATCH'});assert.throws(()=>irFor('std.array.append',{values:[1],value:'2'}),{code:'TYPE_MISMATCH'});
 });
@@ -41,7 +41,7 @@ test('dependency lock pins actual standard intrinsic metadata and rejects a repl
 });
 
 test('standard public interfaces are independent validated IDL and bind with declared error boundaries',async()=>{
- const catalog=standardCatalog();assert.equal(catalog.contracts.length,36);
+ const catalog=standardCatalog();assert.equal(catalog.contracts.length,37);
  for(const item of catalog.contracts){assert.deepEqual(validateContractInterface(item.interface),item.interface);assert.equal(Object.hasOwn(item.interface,'operation'),false);assert.equal(Object.hasOwn(item.interface,'license'),false);}
  const local=createCoreRegistry(),spec=structuredClone(STANDARD_INTERFACES.find(item=>item.id==='std.text.toNumber'));spec.id='public.parse';registerContractBinding(local,spec,{schemaVersion:'ems-contract-binding/1',id:'binding.parse',version:'1.0.0',interface:{id:spec.id,version:spec.version},implementation:{id:'std.text.toNumber',version:'1.0.0'},targets:['node','web'],determinism:'deterministic'},{target:'node'});
  const editor=new ProjectEditor(undefined,local),draft={source:'fn test(text:String)->Number {return public.parse(text);}',entry:'test',lowering:'auto'};assert.equal(await runTextDraft(draft,editor,{text:'1.25'}),1.25);await assert.rejects(runTextDraft(draft,editor,{text:'not decimal'}),{code:'NUMBER_FORMAT'});const compiled=await import('data:text/javascript,'+encodeURIComponent(compileTextJS(draft,editor)));assert.throws(()=>compiled.execute({text:'not decimal'}),{code:'NUMBER_FORMAT'});

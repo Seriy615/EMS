@@ -1,3 +1,4 @@
+import {sourceFlowchartDescriptions} from './descriptions.mjs';
 import {hasCollections,collectionSource} from './collections.mjs';
 import {Registry} from '../reference/registry.mjs';
 import {fail} from '../reference/errors.mjs';
@@ -39,7 +40,7 @@ export function compileTextJS(draft,editor){const bundle=compileTextDraft(draft,
 function layout(graph,previous){
  const positions=Object.fromEntries([...Object.keys(graph.inputs).map((name,index)=>[`input:${name}`,{x:30,y:100+index*120}]),...graph.nodes.map((node,index)=>[node.id,{x:280+(index%2)*250,y:70+Math.floor(index/2)*160}])]);
  for(const id of [...Object.keys(positions),'output'])if(previous?.positions[id])positions[id]=structuredClone(previous.positions[id]);
- return {positions,view:structuredClone(previous?.view??{x:0,y:0,scale:1})};
+ return {positions,view:structuredClone(previous?.view??{x:0,y:0,scale:1}),...(previous?.descriptions?{descriptions:Object.fromEntries(Object.entries(previous.descriptions).filter(([id])=>id==='output'||Object.hasOwn(positions,id)))}:{})};
 }
 /** Only actual call-IR can become this dataflow editor; control IR stays control IR. */
 export function projectFromText(draft,editor,inputs){
@@ -52,6 +53,7 @@ export function projectFromText(draft,editor,inputs){
  for(const item of bundle.registry.items.values())if(item.kind==='composite'&&item.id!==project.graph.id){
   const body=structuredClone(item.graph),old=editor.project.contracts.find(item=>item.graph.id===body.id);project.contracts.push({graph:body,inputs:target===body.id?structuredClone(inputs):Object.fromEntries(Object.entries(body.inputs).map(([name,spec])=>[name,old?.graph.inputs[name]?.type===spec.type?structuredClone(old.inputs[name]):defaultValue(spec.type)])),canvas:layout(body,old?.canvas)});
  }
+ const descriptions=sourceFlowchartDescriptions(draft.source,bundle.provenance);for(const workspace of [project,...project.contracts]){const labels=descriptions[workspace.graph.id];if(labels&&Object.keys(labels).length)workspace.canvas.descriptions={...workspace.canvas.descriptions,...Object.fromEntries(Object.entries(labels).filter(([id])=>workspace.graph.nodes.some(node=>node.id===id)))};}
  validateProject(project,editor.baseRegistry);
  return {project,provenance:bundle.provenance,ir:bundle.ir};
 }
@@ -74,7 +76,7 @@ export function textFromWorkspace(editor){
   graph.nodes.forEach(visit);
  }
  const lines=[`package studio.text @ ${JSON.stringify(graph.version)};`,`@${name(graph.id).replaceAll('.', '::')}(${Object.entries(graph.inputs).map(([key,spec])=>`${name(key)}:${type(spec.type)}`).join(',')})->${type(graph.output.type)} {`];
- for(const node of ordered){const contract=registry.resolve(node.uses);lines.push(`  let ${name(node.id)}=${name(node.uses).replaceAll('.', '::')}(${Object.keys(contract.inputs).map(port=>ref(node.args[port])).join(',')});`);}
+ for(const node of ordered){const contract=registry.resolve(node.uses);const description=editor.workspace.canvas.descriptions?.[node.id];if(description)lines.push(...description.split(/\r?\n/).map(line=>'  /// '+line));lines.push(`  let ${name(node.id)}=${name(node.uses).replaceAll('.', '::')}(${Object.keys(contract.inputs).map(port=>ref(node.args[port])).join(',')});`);}
  lines.push(`  return ${ref(graph.returns)};`,'}');return {source:lines.join('\n')+'\n',entry:graph.id,lowering};
 }
 

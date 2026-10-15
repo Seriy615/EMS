@@ -238,3 +238,11 @@ Unit: kernel-contracts, storage-connections, project-files, ui-handler-create.
 Browser: loops-and-ports, project-files-ui, ui-handler-workspace.
 Обязательны полные Node/verify/Chromium gates, public HTTPS smoke и проверка
 неизменности чужих сервисов при публикации. Полная межфайловая линковка остаётся открытой.
+
+## AC-110 — описания и удаление обычных контрактов
+
+[Критерии, реализация и пределы](../plans/CONTRACT_DESCRIPTIONS.md). Atomic templates с аргументами, instance overrides, сохранение/roundtrip/undo, неизменность IR/runtime и escaped SVG. Удаление разрывает связи, сохраняет выход/позиции/камеру. removeAt: interpreted/standalone, copying/signed-zero/index errors. Полный локальный Node/verify и targeted Chromium; порядок публикации по явному указанию владельца о ручной приёмке.
+
+## AC-111 — явный граф с обратными связями (план)
+
+[Рисунок, последовательность реализации и приёмка](../plans/EXPLICIT_CONTRACT_FLOW.md). Пока не принят.

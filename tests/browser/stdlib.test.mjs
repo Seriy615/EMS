@@ -11,16 +11,16 @@ import {lowerGraphToIR,serializeIR,compileIRToJS} from '../../src/ir/index.mjs';
 import {encodeValue} from '../../src/conformance/index.mjs';
 import {vectors} from '../fixtures/stdlib-vectors.mjs';
 
-test('all 36 standard contracts match signed-zero oracles in actual Chromium runtime and independent standalone',async()=>{
+test('all 37 standard contracts match signed-zero oracles in actual Chromium runtime and independent standalone',async()=>{
  const dir=await mkdtemp(join(tmpdir(),'ems-browser-stdlib-'));let browser,runtime,staticServer;
  try{
   const registry=createCoreRegistry(),programs=[];
-  for(const [id,args,expected] of vectors){const ir=lowerGraphToIR({schemaVersion:'0.1',id:'test.library',version:'1.0.0',inputs:{},output:{type:registry.resolve(id).output},nodes:[{id:'value',uses:id,args:Object.fromEntries(Object.entries(args).map(([key,value])=>[key,{literal:value}]))}],returns:{node:'value'}},registry);programs.push({id,ir:serializeIR(ir,registry),expected:encodeValue(expected)});await writeFile(join(dir,id+'.mjs'),compileIRToJS(ir,registry));}
+  for(const [id,args,expected] of vectors){const ir=lowerGraphToIR({schemaVersion:'0.1',id:'test.library',version:'1.0.0',inputs:{},output:{type:registry.resolve(id).output},nodes:[{id:'value',uses:id,args:Object.fromEntries(Object.entries(args).map(([key,value])=>[key,{literal:value}]))}],returns:{node:'value'}},registry);const module='vector_'+programs.length;programs.push({id,module,ir:serializeIR(ir,registry),expected:encodeValue(expected)});await writeFile(join(dir,module+'.mjs'),compileIRToJS(ir,registry));}
   await writeFile(join(dir,'index.html'),'<!doctype html><title>EMS standalone standard library QA</title>');await writeFile(join(dir,'codec.mjs'),await readFile(new URL('../../src/conformance/index.mjs',import.meta.url),'utf8'));
   browser=await launchChromium();runtime=await serveQA(resolve(import.meta.dirname,'../..'),{runtime:true});staticServer=await serveQA(dir);const page=await browser.page(runtime.origin+'/index.html');
   const values=await page.evaluate(`(async()=>{const {createCoreRegistry}=await import('/src/reference/registry.mjs'),{parseIR,executeIR}=await import('/src/ir/index.mjs'),{encodeValue}=await import('/src/conformance/index.mjs');const registry=createCoreRegistry(),result=[];for(const vector of ${JSON.stringify(programs)})result.push(encodeValue(await executeIR(parseIR(vector.ir,registry),{},registry)));return result;})()`);
   assert.deepEqual(values,programs.map(item=>item.expected));await page.close();await runtime.close();runtime=null;
-  const independent=await browser.page(staticServer.origin+'/index.html');const exported=await independent.evaluate(`(async()=>{const {encodeValue}=await import('./codec.mjs'),result=[];for(const id of ${JSON.stringify(programs.map(item=>item.id))})result.push(encodeValue((await import('./'+id+'.mjs')).execute({})));return result;})()`);assert.deepEqual(exported,programs.map(item=>item.expected));assert.equal(staticServer.requests.some(path=>path.startsWith('/src/')),false);
+  const independent=await browser.page(staticServer.origin+'/index.html');const exported=await independent.evaluate(`(async()=>{const {encodeValue}=await import('./codec.mjs'),result=[];for(const id of ${JSON.stringify(programs.map(item=>item.module))})result.push(encodeValue((await import('./'+id+'.mjs')).execute({})));return result;})()`);assert.deepEqual(exported,programs.map(item=>item.expected));assert.equal(staticServer.requests.some(path=>path.startsWith('/src/')),false);
  }finally{await browser?.close();await runtime?.close();await staticServer?.close();await rm(dir,{recursive:true,force:true});}
 });
 
