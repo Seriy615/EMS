@@ -12,14 +12,15 @@ import {controlSourceGraph} from '../src/studio/control-graph.mjs';
 import {signatureIR} from '../src/ir/index.mjs';
 import {assertControlValueType} from '../src/semantics/control-algebraic.mjs';
 const titles={Parameter:'Вход программы',ContractDeclaration:'Контракт',FunctionDeclaration:'Функция',Block:'Последовательность',LetDeclaration:'Значение',IfStatement:'Условие',WhileStatement:'Цикл по условию',ForStatement:'Цикл по массиву',ReturnStatement:'Результат',BreakStatement:'Выход из цикла',ContinueStatement:'Следующая итерация',ExpressionStatement:'Операция',ArrayExpression:'Массив',IndexExpression:'Индекс массива',CallExpression:'Контракт',MatchStatement:'Выбор варианта'};
-export const CONTRACT_TITLES={'std.array.removeAt':'Удалить элемент массива','std.number.less':'Меньше','std.number.greater':'Больше','std.number.equal':'Равно','std.number.notEqual':'Не равно','std.number.lessEqual':'Меньше или равно','std.number.greaterEqual':'Больше или равно','std.value.Number':'Число','std.value.Boolean':'Да / нет','std.value.NumberArray':'Список чисел','core.add':'Сложение','core.sub':'Вычитание','core.mul':'Умножение','core.div':'Деление'};
+import {CONTRACT_TITLES,typeLabel} from './contract-labels.mjs';
+export {CONTRACT_TITLES} from './contract-labels.mjs';
 export const STRUCTURES=KERNEL_CONTRACTS.map(item=>[item.key,item.title,item.implementation.source,item.id]);
 const omitted=new Set(['NameExpression','LiteralExpression','AssignmentExpression','UnaryExpression','BinaryExpression','Parameter']);
 const $=id=>document.getElementById(id),el=(tag,text)=>{const n=document.createElement(tag);if(text!==undefined)n.textContent=text;return n;};
 /** Structured operations live on the ordinary graph canvas and edit the same checked EMS source. */
 export function installStructuredGraph({getDraft,getEditor,compile,commit,getCamera,report,saveInputs,parameterInfo,getContractInterface,canOpenContract,onOpenContract}){
  const operationTitles=CONTRACT_TITLES;
- const friendlyType=type=>({Number:'Число',Boolean:'Да / нет',String:'Текст',NumberArray:'Список чисел','Array<Number>':'Список чисел'})[type]??type;
+ const friendlyType=typeLabel;
  const title=node=>node.storage?'Переменная · '+node.storage.name:node.storageWrite?'Записать · '+node.storageWrite.name:node.kind==='ReturnStatement'?'Выход программы':node.operation?(operationTitles[node.operation.id]??node.operation.id):node.viewLabel??titles[node.kind]??node.kind;
  let ports={sources:[],targets:[],edges:[]},wireSource=null;
  let graph,presentation,lastError=null,selected=null,insertionTarget=null,positions={},currentOwner=null;const host=$('nodes');
