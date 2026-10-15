@@ -1,3 +1,4 @@
+import {assertStateType,assertStateValue} from '../runtime/state-values.mjs';
 import {ReactorSession,replayEvents} from '../runtime/reactor.mjs';
 import {ReactorKernel,fields,declarations} from '../runtime/reactor-kernel.mjs';
 import {stateIntrinsic} from '../runtime/state-bindings.mjs';
@@ -29,8 +30,8 @@ export function compileReactorJS(manifest,registry){
   const policy=control?validateControlIR(handler.program,registry).policy:{effects:[],capabilities:[]};
   handlers.push(`{event:${JSON.stringify(handler.event)},inputs:${JSON.stringify(inputs)},checkPolicy:options=>checkControlPolicy(${JSON.stringify(policy)},options),execute:${name}}`);
  }
- const literal=value=>typeof value==='number'&&Object.is(value,-0)?'-0':Array.isArray(value)?`[${value.map(literal).join(',')}]`:JSON.stringify(value);
+ const literal=value=>typeof value==='number'&&Object.is(value,-0)?'-0':Array.isArray(value)?`[${value.map(literal).join(',')}]`:value!==null&&typeof value==='object'?'Object.fromEntries(['+Object.entries(value).map(([key,item])=>'['+JSON.stringify(key)+','+literal(item)+']').join(',')+'])':JSON.stringify(value);
  const state=`[${manifest.state.map(slot=>`{id:${JSON.stringify(slot.id)},type:${JSON.stringify(slot.type)},initial:${literal(slot.initial)}}`).join(',')}]`;
- const helpers=[EmsError,fail,typeOfValue,assertValueType,assertTypeName,fields,declarations,assertPolicyNames,checkControlPolicy,parseControlType,controlTypeName,controlVariants,assertControlValueType,validateControlInputs,assertSignal,checkCancellation,ReactorKernel,replayEvents].map(fn=>fn.toString().replace(/^export /,'')).join('\n');
- return `// EMS independent finite reactor. Shared FIFO transaction kernel; no EMS imports.\nconst copy=value=>structuredClone(value),namePattern=/^[A-Za-z_][A-Za-z0-9_]*$/;\nconst PRIMITIVE_TYPES=new Set(['Number','NumberArray','Boolean','String']);\nconst assertPrimitiveValueType=(...args)=>assertValueType(...args);\n${helpers}\n${implementations.join('\n')}\nconst __handlers=[${handlers.join(',')}];\nexport function createSession(options={}){return new ReactorKernel(${state},__handlers,options);}\nexport function checkSessionPolicy(policy){for(const handler of __handlers)handler.checkPolicy(policy);}\nexport {replayEvents};\n`;
+ const helpers=[EmsError,fail,typeOfValue,assertValueType,assertTypeName,fields,assertStateType,assertStateValue,declarations,assertPolicyNames,checkControlPolicy,parseControlType,controlTypeName,controlVariants,assertControlValueType,validateControlInputs,assertSignal,checkCancellation,ReactorKernel,replayEvents].map(fn=>fn.toString().replace(/^export /,'')).join('\n');
+ return `// EMS independent finite reactor. Shared FIFO transaction kernel; no EMS imports.\nconst copy=value=>structuredClone(value),namePattern=/^[A-Za-z_][A-Za-z0-9_]*$/;\nconst PRIMITIVE_TYPES=new Set(['Number','NumberArray','Boolean','String']);\nconst assertPrimitiveValueType=(...args)=>assertValueType(...args);\n${helpers}\n${implementations.join('\n')}\nconst __handlers=[${handlers.join(',')}];\nexport function createSession(options={}){return new ReactorKernel(${state},__handlers,{...options,stateVersion:${JSON.stringify(manifest.schemaVersion)}});}\nexport function checkSessionPolicy(policy){for(const handler of __handlers)handler.checkPolicy(policy);}\nexport {replayEvents};\n`;
 }

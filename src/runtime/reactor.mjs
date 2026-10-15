@@ -16,18 +16,18 @@ function copyRegistry(base) {
   return registry;
 }
 /** Install typed state interfaces. Memory belongs to each reactor session, never to this registry. */
-export function createStateRegistry(base,state){return installStateBindings(copyRegistry(base),declarations(state));}
+export function createStateRegistry(base,state,version='ems-reactor/1'){return installStateBindings(copyRegistry(base),declarations(state,version));}
 
 /** Single-owner transactional event runner for finite EMS IR. No external-effect rollback or plugin sandbox. */
 export class ReactorSession extends ReactorKernel {
   constructor(manifest, registry, { policy = {}, maxQueue = 64, recordTrace = false } = {}) {
     fields(manifest, ['schemaVersion', 'id', 'version', 'state', 'handlers'], 'reactor');
-    if (manifest.schemaVersion !== 'ems-reactor/1') fail('REACTOR_VERSION', 'Expected ems-reactor/1');
+    if (!['ems-reactor/1','ems-reactor/2'].includes(manifest.schemaVersion)) fail('REACTOR_VERSION', 'Expected ems-reactor/1');
     if (typeof manifest.id !== 'string' || !manifest.id || typeof manifest.version !== 'string' || !manifest.version)
       fail('INVALID_REACTOR', 'Reactor identity/version required');
     if (!Number.isSafeInteger(maxQueue) || maxQueue < 1) fail('INVALID_REACTOR', 'maxQueue must be a positive safe integer');
     if (typeof recordTrace !== 'boolean') fail('INVALID_REACTOR', 'recordTrace must be Boolean');
-    const slots = declarations(manifest.state);
+    const slots = declarations(manifest.state,manifest.schemaVersion);
     const linkedRegistry = copyRegistry(registry);
     for (const [id, slot] of slots) for (const action of ['read', 'write']) {
       const binding = linkedRegistry.resolve(`state.${id}.${action}`);
@@ -49,7 +49,7 @@ export class ReactorSession extends ReactorKernel {
         checkPolicy:grants=>checkIRPolicy(program,linkedRegistry,grants),
         execute:(inputs,options)=>executeIR(program,inputs,linkedRegistry,options)});
     }
-    super(manifest.state,handlers,{policy,maxQueue,recordTrace});
+    super(manifest.state,handlers,{policy,maxQueue,recordTrace,stateVersion:manifest.schemaVersion});
   }
 }
 

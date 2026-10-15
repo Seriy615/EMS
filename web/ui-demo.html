@@ -36,12 +36,7 @@
 <fieldset>
 <legend>Переменные приложения</legend>
 <div id="state-list"></div><details><summary>Добавить переменную</summary><label class="field-label">Имя данных<input id="state-id" placeholder="count" aria-label="ID состояния"></label>
-<label class="field-label">Тип<select id="state-type">
-<option>Number</option>
-<option>String</option>
-<option>Boolean</option>
-<option>NumberArray</option>
-</select></label>
+<label class="field-label">Тип<input id="state-type" list="ui-value-types" value="Number" aria-label="Тип переменной"></label>
 <label class="field-label">Начальное значение<input id="state-initial" value="0" aria-label="Начальное значение"></label>
 <button id="add-state-ui">Добавить переменную</button>
 </details>
@@ -51,7 +46,7 @@
 <label class="field-label">Обработчик<select id="handler-select" aria-label="Существующий обработчик"></select></label>
 
 <button id="open-handler-graph" class="primary">Открыть граф контрактов</button>
-<form id="create-handler"><h3>Новый обработчик</h3><label>Имя события<input id="new-handler-event" required placeholder="submit"></label><label>Имя контракта<input id="new-handler-entry" required placeholder="app.Submit"></label><label>Вход события (необязательно)<input id="new-handler-parameter" placeholder="value"></label><label>Тип входа<select id="new-handler-type"><option>Number</option><option>Boolean</option><option>String</option><option>NumberArray</option></select></label><button id="create-flow-handler" type="submit">Создать граф обработчика</button></form>
+<form id="create-handler"><h3>Новый обработчик</h3><label>Имя события<input id="new-handler-event" required placeholder="submit"></label><label>Имя контракта<input id="new-handler-entry" required placeholder="app.Submit"></label><label>Вход события (необязательно)<input id="new-handler-parameter" placeholder="value"></label><label>Тип входа<input id="new-handler-type" list="ui-value-types" value="Number" aria-label="Тип входа обработчика"></label><button id="create-flow-handler" type="submit">Создать граф обработчика</button></form>
 <details id="handler-code"><summary>Код EMS</summary><button id="load-handler">Загрузить код обработчика</button><label class="field-label">Имя события<input id="handler-event" placeholder="increment" aria-label="Событие обработчика"></label>
 <label class="field-label">Функция EMS<input id="handler-entry" placeholder="update" aria-label="Функция обработчика"></label>
 <textarea id="handler-source" placeholder="Выберите обработчик и нажмите «Открыть обработчик», чтобы увидеть код EMS." spellcheck="false" aria-label="Исходник обработчика EMS"></textarea>
@@ -106,7 +101,7 @@
 <label class="field-label">Источник значения<select id="property-mode">
 <option value="literal">Значение</option>
 <option value="state">Состояние</option>
-<option value="number">Число → текст</option>
+<option value="number">Число → текст</option><option value="json">Данные → текст (JSON)</option>
 </select></label>
 <label class="field-label">Значение / имя данных<input id="property-value" aria-label="Значение или ID состояния"></label>
 <button id="set-property">Применить свойство</button>
@@ -145,5 +140,5 @@
 </script>
 <script type="module" src="/web/mobile.mjs"></script>
 <script type="module" src="/web/pwa.mjs"></script>
-</body>
+<datalist id="ui-value-types"></datalist></body>
 </html>

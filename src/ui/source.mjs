@@ -8,13 +8,13 @@ import {serializeIR} from '../ir/index.mjs';
 /** UI handlers are ordinary EMS functions. Control lowering keeps source helpers in the shared program IR. */
 export function compileUIHandler(source,entry,application,base){
  if(typeof source!=='string'||source.length>262144||new TextEncoder().encode(source).length>262144||typeof entry!=='string'||!entry||entry.length>1024)fail('SOURCE_LIMIT','Invalid bounded UI handler source/entry');
- const registry=createStateRegistry(base,application.reactor.state);
+ const registry=createStateRegistry(base,application.reactor.state,application.reactor.schemaVersion);
  return lowerCheckedModule(typecheckModule(parseEMSModule(source,{maxTokens:20000,maxDepth:128}),registry),entry,registry,{profile:'control'});
 }
 /** Source metadata must be a reproducible witness for the saved executable handler, not an unrelated draft. */
 export function validateUISources(application,base,sources){
  if(!sources||typeof sources!=='object'||Array.isArray(sources)||![Object.prototype,null].includes(Object.getPrototypeOf(sources))||Reflect.ownKeys(sources).length!==Object.keys(sources).length||Object.keys(sources).length>100)fail('INVALID_UI_PROJECT','Invalid handler sources');
- const handlers=new Map(application.reactor.handlers.map(handler=>[handler.event,handler.program])),registry=createStateRegistry(base,application.reactor.state);
+ const handlers=new Map(application.reactor.handlers.map(handler=>[handler.event,handler.program])),registry=createStateRegistry(base,application.reactor.state,application.reactor.schemaVersion);
  for(const [event,draft]of Object.entries(sources)){
   if(!handlers.has(event)||!draft||typeof draft!=='object'||Array.isArray(draft)||Reflect.ownKeys(draft).length!==(Object.hasOwn(draft,'flow')?3:2)||!Object.hasOwn(draft,'source')||!Object.hasOwn(draft,'entry'))fail('INVALID_UI_PROJECT','Source must identify a real handler');
   const compiled=compileUIHandler(draft.source,draft.entry,application,base);

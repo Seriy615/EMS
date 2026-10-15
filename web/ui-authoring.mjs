@@ -1,3 +1,5 @@
+import {FLOW_VALUE_TYPES,defaultFlowValue} from '../src/contracts/flow-values.mjs';
+import {formatFiniteJSON} from '../src/semantics/data-json.mjs';
 import {renderStateEditors} from './ui-state-editor.mjs';
 import {createStateRegistry} from '../src/runtime/reactor.mjs';
 import {signatureIR} from '../src/ir/index.mjs';
@@ -7,23 +9,25 @@ const properties={column:{label:'String'},row:{label:'String'},text:{text:'Strin
 function nodes(root){return [root,...root.children.flatMap(nodes)];}
 function fill(select,values){const previous=select.value;select.replaceChildren();for(const value of values){const option=text('option',value);option.value=value;select.append(option);}if(values.includes(previous))select.value=previous;}
 function literal(value,type){return type==='String'?value:JSON.parse(value);}
-function binding(mode,value,type){return mode==='literal'?{literal:literal(value,type)}:mode==='state'?{state:value}:mode==='number'?{state:value,format:'number'}:{value:true};}
+function binding(mode,value,type){return mode==='literal'?{literal:literal(value,type)}:mode==='state'?{state:value}:['number','json'].includes(mode)?{state:value,format:mode}:{value:true};}
 /** Forms edit the same validated UI program; DOM preview contains no authoring-only business logic. */
 export function installUIAuthoring(getEditor,change,report){
  let selected=null;
+ for(const type of FLOW_VALUE_TYPES){const option=text('option',type);option.value=type;$('ui-value-types').append(option);}
+ $('state-type').onchange=()=>{try{const value=defaultFlowValue($('state-type').value);$('state-initial').value=typeof value==='string'?value:formatFiniteJSON(value);}catch(error){report(error);}};
  function selectedNode(){return nodes(getEditor().application.ui.root).find(node=>node.id===$('widget-select').value);}
- function propertyValue(){const node=selectedNode(),ref=node?.props[$('property-name').value];$('property-mode').value=ref?.state?(ref.format==='number'?'number':'state'):'literal';$('property-value').value=ref?.state??(ref&&Object.hasOwn(ref,'literal')?(typeof ref.literal==='string'?ref.literal:Object.is(ref.literal,-0)?'-0':JSON.stringify(ref.literal)):'');}
+ function propertyValue(){const node=selectedNode(),ref=node?.props[$('property-name').value];$('property-mode').value=ref?.state?(ref.format??'state'):'literal';$('property-value').value=ref?.state??(ref&&Object.hasOwn(ref,'literal')?(typeof ref.literal==='string'?ref.literal:Object.is(ref.literal,-0)?'-0':formatFiniteJSON(ref.literal)):'');}
  function propertyChoices(){const node=selectedNode();fill($('property-name'),Object.keys(properties[node?.kind]??{}));propertyValue();}
  function selectBinding(){const node=selectedNode(),ref=node?.events?.[node.kind==='button'?'press':'change'];if(ref)$('event-handler').value=ref.handler;eventChoices();$('handler-inspect').textContent=JSON.stringify(node?.events??{},null,2);for(const context of document.querySelectorAll('[data-ui-context]'))context.textContent='Элемент: '+(node?.id??'—');document.dispatchEvent(new CustomEvent('ems:ui-selection',{detail:{id:node?.id}}));}
  function select(id){selected=id;$('widget-select').value=id;propertyChoices();selectBinding();}
  function openHandler(event){$('handler-select').value=event;$('load-handler').click();document.dispatchEvent(new CustomEvent('ems:ui-open-handler',{detail:{event}}));}
  function eventChoices(){
   const editor=getEditor(),app=editor.application,handler=app.reactor.handlers.find(item=>item.event===$('event-handler').value);$('event-inputs').replaceChildren();if(!handler)return;
-  const signature=signatureIR(handler.program,createStateRegistry(editor.base,app.reactor.state));
+  const signature=signatureIR(handler.program,createStateRegistry(editor.base,app.reactor.state,app.reactor.schemaVersion));
   for(const [port,spec]of Object.entries(signature.inputs)){
    const row=document.createElement('label');row.append(text('span',port+' : '+spec.type));
-   const mode=document.createElement('select');mode.dataset.eventMode=port;for(const value of ['literal','state','value',...(spec.type==='String'?['number']:[])]){const option=text('option',({literal:'Значение',state:'Состояние',value:'Значение события',number:'Число → текст'})[value]);option.value=value;mode.append(option);}
-   const value=document.createElement('input');value.dataset.eventValue=port;value.value=spec.type==='String'?'':spec.type==='Boolean'?'false':spec.type==='NumberArray'?'[]':'0';const existing=selectedNode()?.events?.[selectedNode()?.kind==='button'?'press':'change'];if(existing?.handler===handler.event){const ref=existing.inputs[port];if(ref){if(Object.hasOwn(ref,'literal')){mode.value='literal';value.value=spec.type==='String'?ref.literal:Object.is(ref.literal,-0)?'-0':JSON.stringify(ref.literal);}else if(ref.state){mode.value=ref.format==='number'?'number':'state';value.value=ref.state;}else mode.value='value';}}row.append(mode,value);$('event-inputs').append(row);
+   const mode=document.createElement('select');mode.dataset.eventMode=port;for(const value of ['literal','state','value',...(spec.type==='String'?['number',...(app.schemaVersion==='ems-ui-app/2'?['json']:[])]:[])]){const option=text('option',({literal:'Значение',state:'Состояние',value:'Значение события',number:'Число → текст',json:'Данные → текст (JSON)'})[value]);option.value=value;mode.append(option);}
+   const value=document.createElement('input');value.dataset.eventValue=port;value.value=spec.type==='String'?'':spec.type==='Boolean'?'false':formatFiniteJSON(defaultFlowValue(spec.type));const existing=selectedNode()?.events?.[selectedNode()?.kind==='button'?'press':'change'];if(existing?.handler===handler.event){const ref=existing.inputs[port];if(ref){if(Object.hasOwn(ref,'literal')){mode.value='literal';value.value=spec.type==='String'?ref.literal:Object.is(ref.literal,-0)?'-0':formatFiniteJSON(ref.literal);}else if(ref.state){mode.value=ref.format??'state';value.value=ref.state;}else mode.value='value';}}row.append(mode,value);$('event-inputs').append(row);
   }
  }
  function refresh(){
@@ -32,16 +36,16 @@ export function installUIAuthoring(getEditor,change,report){
   fill($('handler-select'),app.reactor.handlers.map(handler=>handler.event));$('handler-inspect').textContent=JSON.stringify(selectedNode()?.events??{},null,2);
  }
  const action=operation=>{change(operation).catch(report);};
- $('add-state-ui').onclick=()=>action(editor=>editor.addState($('state-id').value,$('state-type').value,literal($('state-initial').value,$('state-type').value)));
+ $('add-state-ui').onclick=()=>{try{const id=$('state-id').value,type=$('state-type').value,initial=literal($('state-initial').value,type);action(editor=>editor.addState(id,type,initial));}catch(error){report(error);}};
  $('add-widget').onclick=()=>action(editor=>{const id=$('widget-id').value,kind=$('widget-kind').value;editor.addNode($('widget-parent').value,{id,kind,props:structuredClone(defaults[kind]),events:{},children:[]});selected=id;});
  $('remove-widget').onclick=()=>action(editor=>editor.removeNode($('widget-select').value));
  $('widget-select').onchange=()=>select($('widget-select').value);
  $('property-name').onchange=propertyValue;
  const context=text('p',''),open=text('button','Открыть граф контракта');context.dataset.uiContext='';$('event-inputs').before(context);open.id='open-bound-handler';open.onclick=()=>document.dispatchEvent(new CustomEvent('ems:ui-open-graph',{detail:{event:$('event-handler').value}}));$('set-event').after(open);
  const propContext=text('p','');propContext.dataset.uiContext='';$('property-name').closest('label').before(propContext);
- $('set-property').onclick=()=>action(editor=>{const node=selectedNode(),name=$('property-name').value;editor.property(node.id,name,binding($('property-mode').value,$('property-value').value,properties[node.kind][name]));});
+ $('set-property').onclick=()=>{try{const node=selectedNode(),name=$('property-name').value,ref=binding($('property-mode').value,$('property-value').value,properties[node.kind][name]);action(editor=>editor.property(node.id,name,ref));}catch(error){report(error);}};
  $('event-handler').onchange=eventChoices;
- $('set-event').onclick=()=>action(editor=>{const node=selectedNode(),handler=$('event-handler').value,signature=signatureIR(editor.application.reactor.handlers.find(item=>item.event===handler).program,createStateRegistry(editor.base,editor.application.reactor.state)),inputs={};for(const [name,spec]of Object.entries(signature.inputs)){const mode=[...$('event-inputs').querySelectorAll('[data-event-mode]')].find(field=>field.dataset.eventMode===name).value,value=[...$('event-inputs').querySelectorAll('[data-event-value]')].find(field=>field.dataset.eventValue===name).value;inputs[name]=binding(mode,value,spec.type);}editor.event(node.id,node.kind==='button'?'press':'change',handler,inputs);});
+ $('set-event').onclick=()=>{try{const editor=getEditor(),node=selectedNode(),handler=$('event-handler').value,signature=signatureIR(editor.application.reactor.handlers.find(item=>item.event===handler).program,createStateRegistry(editor.base,editor.application.reactor.state,editor.application.reactor.schemaVersion)),inputs={};for(const [name,spec]of Object.entries(signature.inputs)){const mode=[...$('event-inputs').querySelectorAll('[data-event-mode]')].find(field=>field.dataset.eventMode===name).value,value=[...$('event-inputs').querySelectorAll('[data-event-value]')].find(field=>field.dataset.eventValue===name).value;inputs[name]=binding(mode,value,spec.type);}const event=node.kind==='button'?'press':'change';action(editor=>editor.event(node.id,event,handler,inputs));}catch(error){report(error);}};
  $('apply-handler').onclick=()=>action(editor=>editor.applyHandler($('handler-event').value,$('handler-source').value,$('handler-entry').value));
  $('handler-select').onchange=()=>{$('load-handler').click();};
  $('load-handler').onclick=()=>{const editor=getEditor(),event=$('handler-select').value,draft=editor.sources[event];$('handler-event').value=event;if(draft){$('handler-source').value=draft.source;$('handler-entry').value=draft.entry;}else{$('handler-source').value='';$('handler-entry').value='';}$('handler-inspect').textContent=JSON.stringify(editor.application.reactor.handlers.find(handler=>handler.event===event)?.program,null,2);};

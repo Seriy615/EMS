@@ -1,3 +1,4 @@
+import {canonicalFlowType} from '../contracts/flow-values.mjs';
 import {compileUIFlow,newUIFlow} from '../ui/flow.mjs';
 import {compileUIHandler} from '../ui/source.mjs';
 import {fail} from '../reference/errors.mjs';
@@ -11,21 +12,21 @@ export class UIProjectEditor{
  get application(){return parseUIProject(this.source,this.base);}
  replace(source){const workspace=parseUIWorkspace(source,this.base),next=serializeUIProject(workspace.application,this.base,{sources:workspace.sources});if(next===this.source)return;this.history.push(this.source);if(this.history.length>100)this.history.shift();this.source=next;this.future=[];}
  edit(change){const workspace=this.workspace;change(workspace.application,workspace.sources);this.replace(serializeUIProject(workspace.application,this.base,{sources:workspace.sources}));}
- addState(id,type,initial){this.edit(app=>app.reactor.state.push({id,type,initial}));}
+ addState(id,type,initial){type=canonicalFlowType(type);this.edit(app=>{if(type.includes('<')){app.schemaVersion='ems-ui-app/2';app.reactor.schemaVersion='ems-reactor/2';}app.reactor.state.push({id,type,initial});});}
  setInitial(id,initial){this.edit(app=>{const slot=app.reactor.state.find(slot=>slot.id===id);if(!slot)fail('UNKNOWN_STATE','Unknown state');slot.initial=initial;});}
  createHandler(event,entry,{parameter='',type='Number'}={}){
   if(!/^[_A-Za-z][_A-Za-z0-9]*$/.test(event)||!/^[_A-Za-z][_A-Za-z0-9]*(\.[_A-Za-z][_A-Za-z0-9]*)*$/.test(entry)||parameter&&!/^[_A-Za-z][_A-Za-z0-9]*$/.test(parameter))fail('INVALID_HANDLER','Use EMS identifiers for handler, contract and parameter');
   if(this.application.reactor.handlers.some(handler=>handler.event===event))fail('DUPLICATE_HANDLER','Handler already exists');
-  const types={Number:'Number',Boolean:'Boolean',String:'String',NumberArray:'Number[]'};
-  if(!Object.hasOwn(types,type))fail('INVALID_TYPE','Unsupported handler parameter type');
-  this.applyHandler(event,'@'+entry.replaceAll('.','::')+'('+ (parameter?parameter+':'+types[type]:'') +')->'+(parameter?types[type]:'Number')+' { return '+(parameter||'0')+'; }',entry);
+  type=canonicalFlowType(type);const types={[type]:type==='NumberArray'?'Number[]':type};
+  const source='@'+entry.replaceAll('.','::')+'('+ (parameter?parameter+':'+types[type]:'') +')->'+(parameter?types[type]:'Number')+' { return '+(parameter||'0')+'; }';
+  this.edit((app,sources)=>{if(type.includes('<')){app.schemaVersion='ems-ui-app/2';app.reactor.schemaVersion='ems-reactor/2';}const bundle=compileUIHandler(source,entry,app,this.base);app.reactor.handlers.push({event,program:bundle.ir});Object.defineProperty(sources,event,{value:{source,entry},enumerable:true,writable:true,configurable:true});});
  }
  createFlowHandler(event,entry,options={}){const candidate=new UIProjectEditor(this.application,this.base,{sources:this.sources});candidate.createHandler(event,entry,options);candidate.applyFlow(event,newUIFlow(event,entry,options));this.replace(candidate.source);}
  applyFlow(event,flow){this.edit((app,sources)=>{if(!/^[_A-Za-z][_A-Za-z0-9]*$/.test(event))fail('INVALID_HANDLER','Use an EMS event name');const bundle=compileUIFlow(flow,app,this.base),handler=app.reactor.handlers.find(item=>item.event===event);if(handler)handler.program=bundle.ir;else app.reactor.handlers.push({event,program:bundle.ir});Object.defineProperty(sources,event,{value:{source:bundle.source,entry:bundle.project.graph.id,flow:bundle.flow},enumerable:true,writable:true,configurable:true});});}
  addNode(parent,node,index){this.edit(app=>{const children=find(app.ui.root,parent).children;if(index!==undefined&&(!Number.isSafeInteger(index)||index<0||index>children.length))fail('INVALID_UI','Invalid insertion index');children.splice(index??children.length,0,structuredClone(node));});}
  moveNode(id,parent,index){this.edit(app=>{if(id===app.ui.root.id)fail('INVALID_UI','Cannot move root');const node=find(app.ui.root,id),target=find(app.ui.root,parent);if(!['column','row'].includes(target.kind))fail('INVALID_UI','Drop target must be a container');function contains(n){return n.id===parent||n.children.some(contains);}if(contains(node))fail('INVALID_UI','Cannot place a container inside itself');let previous;function detach(n){const at=n.children.findIndex(c=>c.id===id);if(at>=0){previous={parent:n,index:at};n.children.splice(at,1);return true;}return n.children.some(detach);}detach(app.ui.root);const at=index??target.children.length;if(!Number.isSafeInteger(at)||at<0||at>target.children.length+(previous.parent===target?1:0))fail('INVALID_UI','Invalid insertion index');target.children.splice(previous.parent===target&&previous.index<at?at-1:at,0,node);});}
  removeNode(id){this.edit(app=>{if(app.ui.root.id===id)fail('INVALID_UI','Cannot remove root');function remove(parent){const index=parent.children.findIndex(child=>child.id===id);if(index>=0){parent.children.splice(index,1);return true;}return parent.children.some(remove);}if(!remove(app.ui.root))fail('INVALID_UI','Unknown UI node');});}
- property(id,name,binding){this.edit(app=>{find(app.ui.root,id).props[name]=structuredClone(binding);});}
+ property(id,name,binding){this.edit(app=>{if(binding.format==='json'){app.schemaVersion='ems-ui-app/2';app.reactor.schemaVersion='ems-reactor/2';}find(app.ui.root,id).props[name]=structuredClone(binding);});}
  event(id,name,handler,inputs){this.edit(app=>{find(app.ui.root,id).events[name]={handler,inputs:structuredClone(inputs)};});}
  applyHandler(event,source,entry){this.edit((app,sources)=>{const bundle=compileUIHandler(source,entry,app,this.base),handler=app.reactor.handlers.find(item=>item.event===event);if(handler)handler.program=bundle.ir;else app.reactor.handlers.push({event,program:bundle.ir});Object.defineProperty(sources,event,{value:{source,entry},enumerable:true,writable:true,configurable:true});});}
  undo(){if(!this.history.length)return;parseUIProject(this.history.at(-1),this.base);this.future.push(this.source);this.source=this.history.pop();}

@@ -366,3 +366,16 @@ mobile catalog/ports/remove/reopen/downloaded module, actual UI Worker state2
 and saved dictionary source→editable graph with original source retained are required.
 Persistent rich UI slots, Set/Record, native Map ABI and complete inverse projection
 are not covered by this acceptance slice.
+
+## AC-124 — versioned rich transactional UI state
+
+[Нормативные правила](../spec/RICH_UI_STATE.md): reactor/2 and UI app/2/project/4
+add finite Array/Map/Option/Result slots without widening old schemas. Checked
+read/write contracts preserve policy and private kernel witnesses. FIFO, detached
+snapshots, rollback, initial editing/undo and source/flow references are retained.
+Nested signed zero and literal String "-0" survive project and independent output.
+JSON property formatting is explicit. Browser forms must capture values before
+queued preview repaint, persist valid initial values and refuse invalid writes.
+Ordinary UI graph Map Worker7→9/reopen7 and downloaded independent package7→9
+are required. State persists between events of a session; durable disk state and
+contract instances/invariants are not claimed.

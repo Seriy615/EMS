@@ -1,3 +1,5 @@
+import {assertStateValue} from '../runtime/state-values.mjs';
+import {formatFiniteJSON} from '../semantics/data-json.mjs';
 import {UI_STYLE_TYPES} from './styles.mjs';
 import {fail} from '../reference/errors.mjs';
 import {assertValueType} from '../reference/types.mjs';
@@ -17,7 +19,7 @@ export function record(value,where){if(!value||typeof value!=='object'||Array.is
 export function valueOf(ref,snapshot,eventValue){
  if(Object.hasOwn(ref,'literal'))return clone(ref.literal);
  if(Object.hasOwn(ref,'value'))return clone(eventValue);
- const value=clone(snapshot[ref.state]);return ref.format==='number'?(Object.is(value,-0)?'-0':String(value)):value;
+ const value=clone(snapshot[ref.state]);return ref.format==='json'?formatFiniteJSON(value):ref.format==='number'?(Object.is(value,-0)?'-0':String(value)):value;
 }
 
 export function checkUIPolicy(policy){
@@ -35,7 +37,7 @@ export function createUIRuntimeLink(application,session){
 }
 export function renderUITree(link,snapshot){
  record(snapshot,'UI state snapshot');if(Object.keys(snapshot).sort().join(',')!==[...link.slots.keys()].sort().join(','))fail('UI_BINDING_TYPE','Snapshot does not match UI state');
- for(const [id,slot]of link.slots)assertValueType(snapshot[id],slot.type,`ui.state.${id}`);
+ for(const [id,slot]of link.slots)assertStateValue(snapshot[id],slot.type,`ui.state.${id}`,link.application.reactor.schemaVersion);
  function visit(node){return {id:node.id,kind:node.kind,props:Object.fromEntries(Object.entries(node.props).map(([name,ref])=>[name,valueOf(ref,snapshot)])),children:node.children.map(visit)};}
  return visit(link.application.ui.root);
 }

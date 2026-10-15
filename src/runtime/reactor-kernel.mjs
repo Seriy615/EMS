@@ -1,5 +1,5 @@
+import {assertStateType,assertStateValue} from './state-values.mjs';
 import {fail} from '../reference/errors.mjs';
-import {assertTypeName,assertValueType} from '../reference/types.mjs';
 import {validateControlInputs} from '../semantics/control-algebraic.mjs';
 import {assertPolicyNames} from '../semantics/effects.mjs';
 import {assertSignal,checkCancellation} from './cancellation.mjs';
@@ -12,13 +12,14 @@ export function fields(value, required, at) {
       Reflect.ownKeys(value).length !== required.length || required.some(key => !Object.hasOwn(value, key)))
     fail('INVALID_REACTOR', `${at}: expected exactly ${required.join(', ')}`);
 }
-export function declarations(state) {
+export function declarations(state,version='ems-reactor/1') {
+  assertStateType('Number',version);
   if (!Array.isArray(state) || Object.keys(state).length !== state.length) fail('INVALID_REACTOR', 'Expected dense state declarations');
   const slots = new Map();
   for (const slot of state) {
     fields(slot, ['id', 'type', 'initial'], 'state');
     if (typeof slot.id !== 'string' || !namePattern.test(slot.id) || slots.has(slot.id)) fail('INVALID_REACTOR', 'Invalid or duplicate state ID');
-    assertTypeName(slot.type, `state.${slot.id}`); assertValueType(slot.initial, slot.type, `state.${slot.id}.initial`);
+    assertStateValue(slot.initial,slot.type,`state.${slot.id}.initial`,version);
     slots.set(slot.id, { type: slot.type, initial: copy(slot.initial) });
   }
   return slots;
@@ -26,12 +27,12 @@ export function declarations(state) {
 
 /** Shared execution-owned FIFO transaction engine. Handler callbacks are trusted linked implementations. */
 export class ReactorKernel {
-  #slots; #values; #handlers = new Map(); #policy; #maxQueue; #recordTrace;
+  #slots; #stateVersion; #values; #handlers = new Map(); #policy; #maxQueue; #recordTrace;
   #queue = []; #running = false; #closed = false; #active = null; #idle = []; #trace = []; #next = 0;
-  constructor(state, handlers, { policy = {}, maxQueue = 64, recordTrace = false } = {}) {
+  constructor(state, handlers, { policy = {}, maxQueue = 64, recordTrace = false, stateVersion='ems-reactor/1' } = {}) {
     if (!Number.isSafeInteger(maxQueue) || maxQueue < 1) fail('INVALID_REACTOR', 'maxQueue must be a positive safe integer');
     if (typeof recordTrace !== 'boolean') fail('INVALID_REACTOR', 'recordTrace must be Boolean');
-    this.#slots = declarations(state);
+    this.#slots = declarations(state,stateVersion);this.#stateVersion=stateVersion;
     this.#values = new Map([...this.#slots].map(([id, slot]) => [id, copy(slot.initial)]));
     fields(policy, Object.keys(policy), 'policy');
     if (Object.keys(policy).some(key => !['capabilities', 'allowedEffects'].includes(key))) fail('INVALID_POLICY', 'Unknown policy field');
@@ -81,7 +82,7 @@ export class ReactorKernel {
       const state = Object.freeze({
         read: id => { slot(id); return copy(draft.get(id)); },
         write: (id, value) => {
-          const declaration = slot(id); assertValueType(value, declaration.type, `state.${id}`);
+          const declaration = slot(id); assertStateValue(value, declaration.type, `state.${id}`,this.#stateVersion);
           draft.set(id, copy(value)); return copy(value);
         }
       });

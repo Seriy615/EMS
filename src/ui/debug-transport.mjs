@@ -10,7 +10,7 @@ import {fail} from '../reference/errors.mjs';
 
 /** Reconstruct handler semantics locally. Debug transport never grants speculative state or values. */
 export function prepareUIDebugTransport(project,options){
- const base=createCoreRegistry(),workspace=parseUIWorkspace(project,base),registry=createStateRegistry(base,workspace.application.reactor.state),bundles=new Map(),handlers=new Map(),nodes=new Map();
+ const base=createCoreRegistry(),workspace=parseUIWorkspace(project,base),registry=createStateRegistry(base,workspace.application.reactor.state,workspace.application.reactor.schemaVersion),bundles=new Map(),handlers=new Map(),nodes=new Map();
  for(const [event,draft]of Object.entries(workspace.sources))bundles.set(event,compileUIHandler(draft.source,draft.entry,workspace.application,base));
  const checked=checkUIDebugOptions(options,workspace,bundles);
  for(const handler of workspace.application.reactor.handlers){

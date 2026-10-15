@@ -1,3 +1,7 @@
+import {assertStateType,assertStateValue} from '../runtime/state-values.mjs';
+import {parseControlType,controlTypeName,controlVariants,assertControlValueType} from '../semantics/control-algebraic.mjs';
+import {assertTypeName} from '../reference/types.mjs';
+import {formatFiniteJSON} from '../semantics/data-json.mjs';
 import {validateUIStyles} from '../ui/styles.mjs';
 import {linkUIApplication} from '../ui/model.mjs';
 import {UIKernel,kinds,record,valueOf,checkUIPolicy,createUIRuntimeLink,renderUITree} from '../ui/kernel.mjs';
@@ -20,7 +24,7 @@ export function compileUIJS(application,baseRegistry){
  const reactor=compileReactorJS(link.application.reactor,link.registry)
   .replace(/^export function (createSession|checkSessionPolicy)\(/gm,'function $1(')
   .replace(/^export \{replayEvents\};$/m,'');
- const data={ui:link.application.ui,reactor:{state:link.application.reactor.state}};
- const helpers=[validateUIStyles,EmsError,fail,typeOfValue,assertValueType,assertPolicyNames,record,valueOf,checkUIPolicy,createUIRuntimeLink,renderUITree,UIKernel,mountDOMRuntime].map(fn=>fn.toString()).join('\n');
- return `// EMS independent finite semantic UI application. No EMS imports or service dependency.\nconst clone=value=>structuredClone(value),mounted=new WeakMap(),kinds=Object.freeze(${JSON.stringify(kinds)});\n${helpers}\nconst __reactor=(()=>{${reactor}\nreturn {createSession,checkSessionPolicy};})();\nconst __application=${literal(data)};\nexport function createRuntime(options={}){const policy=options.policy??{};checkUIPolicy(policy);const session=__reactor.createSession(options);__reactor.checkSessionPolicy(policy);return new UIKernel(createUIRuntimeLink(__application,session));}\nexport function mountApplication(host,{onError=()=>{},...options}={}){\nif(!host?.ownerDocument||typeof host.replaceChildren!=='function'||typeof onError!=='function')fail('INVALID_UI','DOM host and error callback required');\nif(mounted.has(host))fail('UI_HOST_BUSY','DOM host already owns a mounted EMS application');\nreturn mountDOMRuntime(host,__application,createRuntime(options),{onError});}\n`;
+ const data={ui:link.application.ui,reactor:{schemaVersion:link.application.reactor.schemaVersion,state:link.application.reactor.state}};
+ const helpers=[validateUIStyles,EmsError,fail,typeOfValue,assertValueType,assertTypeName,parseControlType,controlTypeName,controlVariants,assertControlValueType,assertStateType,assertStateValue,formatFiniteJSON,assertPolicyNames,record,valueOf,checkUIPolicy,createUIRuntimeLink,renderUITree,UIKernel,mountDOMRuntime].map(fn=>fn.toString()).join('\n');
+ return `// EMS independent finite semantic UI application. No EMS imports or service dependency.\nconst clone=value=>structuredClone(value),mounted=new WeakMap(),kinds=Object.freeze(${JSON.stringify(kinds)});\nconst PRIMITIVE_TYPES=new Set(['Number','NumberArray','Boolean','String']);\nconst assertPrimitiveValueType=(...args)=>assertValueType(...args);\n${helpers}\nconst __reactor=(()=>{${reactor}\nreturn {createSession,checkSessionPolicy};})();\nconst __application=${literal(data)};\nexport function createRuntime(options={}){const policy=options.policy??{};checkUIPolicy(policy);const session=__reactor.createSession(options);__reactor.checkSessionPolicy(policy);return new UIKernel(createUIRuntimeLink(__application,session));}\nexport function mountApplication(host,{onError=()=>{},...options}={}){\nif(!host?.ownerDocument||typeof host.replaceChildren!=='function'||typeof onError!=='function')fail('INVALID_UI','DOM host and error callback required');\nif(mounted.has(host))fail('UI_HOST_BUSY','DOM host already owns a mounted EMS application');\nreturn mountDOMRuntime(host,__application,createRuntime(options),{onError});}\n`;
 }
