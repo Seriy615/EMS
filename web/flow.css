@@ -9,3 +9,8 @@ body.ui-flow .execution details[hidden]{display:none}
 .flow-card[data-flow-error]{outline:3px solid #c34343;outline-offset:3px}.port[data-flow-error]{box-shadow:0 0 0 4px #c3434370}.flow-diagnostic-hint{display:block;margin-top:8px;font:13px/1.5 system-ui}#error [data-flow-diagnostic-node]{margin:10px 8px 0 0;font:13px system-ui;min-height:40px}
 
 .execution:has([data-flow-diagnostic-node]) #output,.execution:has([data-flow-diagnostic-node]) details:has(#trace:empty){display:none}
+
+.scope-bar:has(#close-contract:not([hidden])){flex-wrap:wrap}.scope-bar #scope{min-width:0;overflow-wrap:anywhere}.scope-bar #close-contract{flex:none}.flow-card>[data-open-flow-contract]{margin:8px 12px}#create-contract{display:grid;gap:8px;padding:8px 0}#create-contract input{width:100%;min-width:0}
+.workspace{display:flex;flex-direction:column}.workspace>.scope-bar{position:relative;inset:auto;height:auto;min-height:52px;flex:none}.workspace>#viewport{position:relative;inset:auto;flex:1;min-height:0}
+@media(max-width:700px){.scope-bar:has(#close-contract:not([hidden])) #scope{display:block;flex:1}.scope-bar:has(#close-contract:not([hidden])) .canvas-tools{flex-basis:100%;margin-left:0}}
+#catalog [data-open-flow-contract]{touch-action:pan-y}

@@ -46,7 +46,7 @@ Existing saved graph/text projects remain compatible. Supported saved control
 sources open in the same contract canvas; “Сохранить граф” retains the original
 source and creates an editable graph alongside it in the workspace. See
 [saved source editing and its limits](docs/spec/SAVED_SOURCE_FLOW.md).
-Full reverse text editing, source helper composition and Map support remain separate work.
+Owned composite contracts can be created, dragged, opened and edited on this same canvas. Supported finite source helpers retain separate editable definitions, including UI handlers. See [composition semantics and limits](docs/spec/FLOW_COMPOSITES.md). Recursive flow definitions, full reverse text editing and Map support remain separate work.
 
 ## Studio projects
 

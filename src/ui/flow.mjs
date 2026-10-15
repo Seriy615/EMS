@@ -4,7 +4,7 @@ import {parseFlowProject,serializeFlowProject,newFlowProject,FlowProjectEditor} 
 /** Flow handlers share the ordinary checked IR and kernel-owned transactional state bindings. */
 export function compileUIFlow(source,application,base){
  const registry=createStateRegistry(base,application.reactor.state),project=parseFlowProject(source,registry,{allowState:true});
- return {...compileContractFlow(project.graph,registry,{allowState:true}),project,flow:serializeFlowProject(project,registry,{allowState:true})};
+ return {...compileContractFlow(project.graph,registry,{allowState:true,contracts:project.contracts?.map(item=>item.graph)??[]}),project,flow:serializeFlowProject(project,registry,{allowState:true})};
 }
 /** A new graph is an explicit identity handler, without fabricated state updates or event bindings. */
 export function newUIFlow(event,entry,{parameter='',type='Number'}={}){

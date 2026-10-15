@@ -74,7 +74,7 @@ break выходит после цикла. Непустой доступ at д�
 [1,2,3,4,5], skip2, stop5 →8; [3,4], skip0, stop99 →7.
 
 Исходный UI сохраняется до Apply; incomplete draft не заменяет рабочий handler.
-Source helper calls, пользовательский index syntax с отдельным error ABI,
+AC-121 добавляет [раскрываемые source helpers](FLOW_COMPOSITES.md). Пользовательский index syntax с отдельным error ABI,
 расширенные IR profiles, явная дополнительная policy и полная двусторонняя
 проекция текста пока остаются отдельной работой. [AC-119](SAVED_SOURCE_FLOW.md)
 открывает поддерживаемые сохранённые source-документы обычным canvas и сохраняет

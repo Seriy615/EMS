@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+import {parseFlowProject} from '../src/studio/flow-project.mjs';
 import {compileContractFlowJS,executeContractFlow} from '../src/compiler/contract-flow.mjs';
 import {exportContractFlowSVG} from '../src/compiler/flowchart-contract-flow.mjs';
 import {buildAtomicPackage} from '../src/compiler/atomic-package.mjs';
@@ -50,9 +51,9 @@ async function main() {
   if (!file || !['flow-run','flow-build','flow-svg','lock','locked-run','locked-build','interface-check', 'interface-compare', 'binding-check', 'validate', 'run', 'build', 'seal', 'text-parse', 'text-run', 'text-build', 'ir', 'text-ir', 'ir-run', 'ir-build', 'parse', 'check', 'module-run', 'module-build', 'module-ir', 'module-origins', 'module-classify', 'module-bind-origins', 'module-seal'].includes(command)) { usage(); process.exitCode = 2; return; }
   const content = await readFile(file, 'utf8');
   if(['flow-run','flow-build','flow-svg'].includes(command)){
-    const parsed=JSON.parse(content),graph=parsed.schemaVersion==='ems-flow-project/1'?parsed.graph:parsed,registry=createCoreRegistry();
-    if(command==='flow-run'){if(args.length>1)throw Error('Use optional JSON inputs');console.log(JSON.stringify({result:await executeContractFlow(graph,registry,JSON.parse(args[0]??'{}'))},null,2));}
-    else{if(args.length!==2||args[0]!=='--out')throw Error('Use --out <file>');const source=command==='flow-build'?compileContractFlowJS(graph,registry):exportContractFlowSVG(graph,registry,{descriptions:parsed.canvas?.descriptions??{}}),dest=resolve(args[1]);await mkdir(dirname(dest),{recursive:true});await writeFile(dest,source);console.log('Built '+dest);}return;
+    const data=JSON.parse(content),registry=createCoreRegistry(),parsed=['ems-flow-project/1','ems-flow-project/2'].includes(data.schemaVersion)?parseFlowProject(content,registry):data,graph=parsed.graph??parsed,options={contracts:parsed.contracts?.map(item=>item.graph)??[]};
+    if(command==='flow-run'){if(args.length>1)throw Error('Use optional JSON inputs');console.log(JSON.stringify({result:await executeContractFlow(graph,registry,JSON.parse(args[0]??'{}'),options)},null,2));}
+    else{if(args.length!==2||args[0]!=='--out')throw Error('Use --out <file>');const source=command==='flow-build'?compileContractFlowJS(graph,registry,options):exportContractFlowSVG(graph,registry,{descriptions:parsed.canvas?.descriptions??{},contracts:parsed.contracts??[]}),dest=resolve(args[1]);await mkdir(dirname(dest),{recursive:true});await writeFile(dest,source);console.log('Built '+dest);}return;
   }
 
   if(['lock','locked-run','locked-build'].includes(command)){

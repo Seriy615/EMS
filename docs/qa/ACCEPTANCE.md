@@ -328,3 +328,14 @@ authored positions/wires. Stale diagnostic references refuse highlighting.
 Actual Worker array loop refuses an operation output that may never execute;
 connecting the current variable output explicitly gives [] for zero iterations
 and [1,1,1] for three. No auto activation rewiring or fabricated initial result.
+
+## AC-121 — editable reusable ordinary flow composites
+
+[Семантика и границы](../spec/FLOW_COMPOSITES.md): project/2 retains typed separate
+definitions, DAG validation, transitive state policy and actual IR2 call frames.
+The same canvas creates/expands/edits repeated calls, preserves every scope geometry,
+repairs affected typed references on signature edits and supports explicit deletion/undo.
+Runtime/standalone/module export/import/CLI/SVG parity; real Worker12→27/reopen27,
+UI helpers4→6/reopen6 and caller-error rollback. Saved helper source bookmarks
+retain source while saving a sibling module. Nested diagnostics focus correct scope.
+Recursion, broader source profiles, cross-file imports and full inverse remain open.

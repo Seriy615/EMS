@@ -15,7 +15,7 @@ export function savedSourceFlow(record){
  const project=parseFlowProject(sourceContractFlow(bundle.ir,bundle.registry,{id:record.id,name:record.name}),bundle.registry);
  let inputs;try{inputs=JSON.parse(draft.inputs);}catch{fail('INVALID_DRAFT','Неверные данные запуска исходника.');}
  project.inputs=inputs;
- const registry=createCoreRegistry();compileContractFlow(project.graph,registry);
+ const registry=createCoreRegistry();compileContractFlow(project.graph,registry,{contracts:project.contracts?.map(item=>item.graph)??[]});
  return {project:parseFlowProject(serializeFlowProject(project,registry),registry),registry};
 }
 
@@ -35,7 +35,7 @@ export class SourceFlowSession{
  apply(flow){
   const record=this.manager.load(this.id);if(JSON.stringify(record)!==this.expected)fail('STALE_SOURCE_PROJECT','Исходник изменён в другом окне. Ваш черновик графа сохранён.');
   // Validate with the standard registry used after reopen: no transient source library may escape.
-  const registry=createCoreRegistry(),project=parseFlowProject(flow,registry);compileContractFlow(project.graph,registry);
+  const registry=createCoreRegistry(),project=parseFlowProject(flow,registry);compileContractFlow(project.graph,registry,{contracts:project.contracts?.map(item=>item.graph)??[]});
   let id=this.id+'_flow',index=1;while(this.manager.load(id))id=this.id+'_flow_'+(++index);
   project.id=id;const source=serializeFlowProject(project,registry);
   const graphRecord={id,name:project.name,kind:'flow',source,draft:null};

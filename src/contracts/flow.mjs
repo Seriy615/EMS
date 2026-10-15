@@ -3,6 +3,7 @@ import {stateIntrinsic} from '../runtime/state-bindings.mjs';
 import {fail} from '../reference/errors.mjs';
 import {assertTypeName,assertValueType,typeOfValue} from '../reference/types.mjs';
 import {describeContract} from './descriptions.mjs';
+import {flowCompositeGraph} from './flow-library.mjs';
 
 export const CONTRACT_FLOW_VERSION='ems-contract-flow/1';
 export const RICH_CONTRACT_FLOW_VERSION='ems-contract-flow/2';
@@ -22,7 +23,7 @@ function literal(value){if(Array.isArray(value)&&value.length>10000||typeof valu
 
 /** The same typed interface describes a card, its ports and compiler implementation. */
 export function flowContractInterface(node,graph,registry,{allowState=false}={}){
- const kernel=FLOW_KERNEL[node.uses];
+ const kernel=Object.hasOwn(FLOW_KERNEL,node.uses)?FLOW_KERNEL[node.uses]:null;
  if(kernel){
   if(node.version!=='1.0.0')fail('CONTRACT_VERSION','Kernel contract version mismatch',{node:node.id});
   const inputs=node.uses==='std.storage.Variable'?{value:node.valueType}:node.uses==='std.program.Result'?{value:graph.output.type}:kernel.inputs;
@@ -30,11 +31,11 @@ export function flowContractInterface(node,graph,registry,{allowState=false}={})
  }
  const contract=registry.resolve(node.uses);
  if(contract.version!==node.version)fail('CONTRACT_VERSION','Contract version mismatch',{node:node.id});
- if((contract.effects.length||contract.capabilities.length)&&!(allowState===true&&stateIntrinsic(contract)))fail('UNSUPPORTED_FLOW_CONTRACT','This flow profile accepts pure contracts and local storage only',{node:node.id});
+ if((contract.effects.length||contract.capabilities.length)&&!(allowState===true&&(stateIntrinsic(contract)||flowCompositeGraph(contract))))fail('UNSUPPORTED_FLOW_CONTRACT','This flow profile accepts pure contracts and local storage only',{node:node.id});
  if(contract.valueProfile!==undefined&&!(richContractFlow(graph)&&contract.valueProfile==='ems-algebraic/1')||!['atomic','composite'].includes(contract.kind))fail('UNSUPPORTED_FLOW_CONTRACT','Unsupported contract value profile',{node:node.id});
  const inputs=Object.fromEntries(Object.entries(contract.inputs).map(([name,type])=>[name,typeof type==='string'?type:type.type]));
  for(const type of [...Object.values(inputs),contract.output])assertFlowType(type,'flow contract',richContractFlow(graph));
- return {id:contract.id,version:contract.version,kind:contract.kind,title:contract.id,description:describeContract(contract),inputs,output:contract.output,activation:{input:'enter',outputs:['next']},effects:[...contract.effects],capabilities:[...contract.capabilities],implementation:'registry'};
+ return {id:contract.id,version:contract.version,kind:contract.kind,title:contract.id,description:describeContract(contract),inputs,output:contract.output,activation:{input:'enter',outputs:['next']},effects:[...contract.effects],capabilities:[...contract.capabilities],implementation:flowCompositeGraph(contract)?'flow':'registry'};
 }
 
 /** Closed semantic graph, independent of canvas positions, creation order and descriptions. */
