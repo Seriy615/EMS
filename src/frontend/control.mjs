@@ -6,7 +6,7 @@ import { CONTROL_VERSION, CONTROL_PROFILE, CONTROL_ERROR_PROFILE, CONTROL_ALGEBR
 function controlType(type, node) {
   if (type.kind === 'Type' && ['Number', 'Boolean', 'String'].includes(type.name)) return type.name;
   if (type.name === 'Array' && type.arguments[0]?.name === 'Number') return 'NumberArray';
-  if (['Option', 'Result', 'Future', 'Stream', 'ResourceHandle'].includes(type.name)) return `${type.name}<${type.arguments.map(argument => controlType(argument, node)).join(',')}>`;
+  if (['Array','Option', 'Result', 'Future', 'Stream', 'ResourceHandle'].includes(type.name)) return `${type.name}<${type.arguments.map(argument => controlType(argument, node)).join(',')}>`;
   fail('UNSUPPORTED_PROFILE', `Control IR cannot represent ${typeName(type)}`, { location: node?.location });
 }
 const flexible = type => type.kind === 'Variable' ? { kind: 'Variable', name: type.name } : { ...type, arguments: type.arguments.map(flexible) };

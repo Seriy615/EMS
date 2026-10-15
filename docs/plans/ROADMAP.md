@@ -1,3 +1,5 @@
+EMS-045 / [AC-113 typed arrays](../spec/TYPED_ARRAYS.md): исполнение Array<T> через общий control IR. Далее generic collection operations/Map и перенос типов в обычный flow/UI canvas. Это не завершение общей системы коллекций или global goal.
+
 EMS-044 дополнен [AC-112 UI flow handlers](../spec/UI_CONTRACT_FLOW.md): persistent state contracts, applied graph witness и настоящий Worker/standalone UI. Следом text/visual projection и generic collections; full goal остаётся открытой.
 
 Текущий P0: EMS-044 / AC-111 [явные контрактные связи с value-less Begin/End](../spec/CONTRACT_FLOW.md). Новый профиль → checked IR2 → runtime/standalone, новый обычный canvas; затем generic Array<T>/Map<K,V>, интеграция flow в UI и обратимое текстовое представление. Глобальная цель активна.

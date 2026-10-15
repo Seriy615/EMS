@@ -9,7 +9,7 @@ import { createStreamScope, executeStreamOperation, streamBudgetOptions } from '
 import { createFutureScope } from './futures.mjs';
 import { fail } from '../reference/errors.mjs';
 import { assertValueType } from '../reference/types.mjs';
-import { assertControlValueType, cloneControlValue, validateControlInputs, matchControlPattern } from '../semantics/control-algebraic.mjs';
+import { assertControlValueType, controlArrayElementType, cloneControlValue, validateControlInputs, matchControlPattern } from '../semantics/control-algebraic.mjs';
 import { executeGraph } from '../reference/runtime.mjs';
 import { validateControlIR, decodeControlLiteral, CONTROL_FUTURE_PROFILE, CONTROL_STREAM_PROFILE,CONTROL_RESOURCE_PROFILE } from '../ir/control.mjs';
 import { assertPolicyNames } from '../semantics/effects.mjs';
@@ -172,7 +172,7 @@ export async function executeControlIR(ir, inputs, registry, options = {}) {
         }
         case 'for': {
           const values = [...await expression(statement.iterable, scope, frame)];
-          for (const value of values) { tick(); const nested = new Map(scope); nested.set(statement.binding, { value,type:'Number',...(inspect?{declaration:addresses.get(statement)+'/binding'}:{}) });
+          for (const value of values) { tick(); const nested = new Map(scope); nested.set(statement.binding, { value,type:controlArrayElementType(statement.iterable.type),...(inspect?{declaration:addresses.get(statement)+'/binding'}:{}) });
             const result = await block(statement.body, nested, frame); if (result?.kind === 'return'){exitValue=result;exit=result;break;} if (result?.kind === 'break') break;
           } break;
         }

@@ -1,7 +1,7 @@
 import {normalizeOriginPolicy,classifyControlOrigins} from '../semantics/origin-policy.mjs';
 import {fail} from '../reference/errors.mjs';
 import {controlNodeEntries} from '../ir/control-addresses.mjs';
-import {parseControlType,controlVariants,controlTypeName} from '../semantics/control-algebraic.mjs';
+import {parseControlType,controlVariants,controlTypeName,controlArrayElementType} from '../semantics/control-algebraic.mjs';
 
 const plain=value=>value&&typeof value==='object'&&!Array.isArray(value)&&[Object.prototype,null].includes(Object.getPrototypeOf(value));
 function fields(value,allowed,required=[]){if(!plain(value)||Reflect.ownKeys(value).some(key=>!allowed.includes(key))||required.some(key=>!Object.hasOwn(value,key))||Reflect.ownKeys(value).some(key=>!Object.hasOwn(Object.getOwnPropertyDescriptor(value,key),'value')))fail('INVALID_INSPECTION_POLICY','Invalid inspection fields');}
@@ -105,7 +105,7 @@ export function controlInspectionDeclarations(fn){
  for(const [path,node]of entries){
   if(['let','using'].includes(node.kind))result.push({name:node.name,type:node.type,declaration:path});
   if(node.kind==='binding')result.push({name:node.name,type:patterns.get(node),declaration:path});
-  if(['for','forAwait'].includes(node.kind))result.push({name:node.binding,type:node.kind==='for'?'Number':controlTypeName(parseControlType(node.iterable.type,true,true,true).arguments[0]),declaration:path+'/binding'});
+  if(['for','forAwait'].includes(node.kind))result.push({name:node.binding,type:node.kind==='for'?controlArrayElementType(node.iterable.type):controlTypeName(parseControlType(node.iterable.type,true,true,true).arguments[0]),declaration:path+'/binding'});
   if(node.kind==='try'&&node.handler)result.push({name:node.handler.binding,type:node.handler.type,declaration:path+'/handler/binding'});
  }
  return result;

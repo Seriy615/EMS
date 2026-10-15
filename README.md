@@ -164,3 +164,5 @@ UI preview поддерживает «Отладка событий (новый 
 Typed contract declarations accept `@Main() -> Number`, and qualified operations accept `core::add(10, 20)`. They use the existing checker, semantic IR and standalone compiler. Run `node tools/ems.mjs module-run examples/native-contracts.ems --entry Main '{}'` (result: 60). See [the current syntax profile](docs/spec/NATIVE_CONTRACT_SYNTAX.md) for limits; state transitions and invariants are separate upcoming work.
 
 UI-обработчики теперь можно создавать обычным графом: «Создать граф обработчика», read/write данных UI, «Применить к UI» и привязка события элемента. [AC-112: правила, черновики и пример](docs/spec/UI_CONTRACT_FLOW.md).
+
+Ядро исполняет `Array<String>`, `Array<Boolean>` и вложенные типизированные массивы в общем Runtime/standalone compiler. [Пример и ограничения AC-113](docs/spec/TYPED_ARRAYS.md); generic UI/flow ports и словари ещё в разработке.

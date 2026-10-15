@@ -150,6 +150,7 @@ export function lowerCheckedModule(checked, entry, registry, { profile = 'auto',
     if(checked.calls.get(node)?.resourceOperation || target?.contract?.kind==='resource' || checked.types.get(node)?.name==='ResourceHandle' || node.kind==='UsingDeclaration')control=true;
     if (checked.calls.get(node)?.streamOperation || node.kind === 'ForStatement' && node.asynchronous) control = true;
     if (checked.calls.get(node)?.algebraicConstructor || checked.types.get(node)?.name === 'Option' || checked.types.get(node)?.name === 'Result') control = true;
+    if(checked.types.get(node)?.name==='Array'&&checked.types.get(node)?.arguments[0]?.name!=='Number')control=true;
     if (node.kind === 'ArrayExpression') { try { constant(node); } catch { control = true; } }
     for (const [key, value] of Object.entries(node)) if (key !== 'location') {
       if (Array.isArray(value)) pending.push(...value); else if (value && typeof value === 'object') pending.push(value);

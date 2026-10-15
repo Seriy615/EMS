@@ -34,6 +34,7 @@ for(const f of required) { await stat(new URL(f,root)); await check(`found ${f}`
 for(const f of ['docs/qa/CONFORMANCE.md','tests/fixtures/language-conformance.json','docs/qa/BROWSER_P1.md','examples/portable-analysis.ems']) { await stat(new URL(f,root)); await check(`found ${f}`,()=>true); }
 for(const f of ['docs/spec/STUDIO_PROJECT.md','schemas/studio-project.schema.json']) { await stat(new URL(f,root)); await check(`found ${f}`,()=>true); }
 await stat(new URL('docs/spec/STUDIO_COMPOSITES.md',root));await check('found docs/spec/STUDIO_COMPOSITES.md',()=>true);
+await check('typed String arrays share runtime and independent compiler semantics',async()=>{const base=createCoreRegistry(),bundle=lowerCheckedModule(typecheckModule(parseEMSModule(await get('examples/typed-arrays.ems')),base),'Main',base),inputs={values:['EMS',' arrays']},module=await import('data:text/javascript;base64,'+Buffer.from(compileIRToJS(bundle.ir,bundle.registry)).toString('base64'));return await executeIR(bundle.ir,inputs,bundle.registry)==='EMS arrays'&&module.execute(inputs)==='EMS arrays';});
 await check('saved Studio example executes through existing semantic IR',async()=>await new ProjectEditor(parseProject(await get('examples/studio-sum.ems.json'))).run()===5);
 await check('saved nested Studio composite dependencies execute actual edited body',async()=>await new ProjectEditor(parseProject(await get('examples/studio-composite.ems.json'))).run()===12);
 await stat(new URL('docs/spec/STUDIO_TEXT.md',root));await check('found docs/spec/STUDIO_TEXT.md',()=>true);

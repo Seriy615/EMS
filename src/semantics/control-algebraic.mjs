@@ -11,11 +11,11 @@ export function parseControlType(source, allowFuture = false, allowStream = fals
     if (!match) fail('UNKNOWN_TYPE', 'Invalid control type ' + source);
     const name = match[0]; offset += name.length;
     if (['Number', 'NumberArray', 'Boolean', 'String'].includes(name)) return { name, arguments: [] };
-    if (!['Option', 'Result', ...(allowFuture ? ['Future'] : []), ...(allowStream ? ['Stream'] : []), ...(allowResource ? ['ResourceHandle'] : [])].includes(name) || source[offset++] !== '<') fail('UNKNOWN_TYPE', 'Invalid control type ' + source);
+    if (!['Array', 'Option', 'Result', ...(allowFuture ? ['Future'] : []), ...(allowStream ? ['Stream'] : []), ...(allowResource ? ['ResourceHandle'] : [])].includes(name) || source[offset++] !== '<') fail('UNKNOWN_TYPE', 'Invalid control type ' + source);
     const arguments_ = [parse(depth + 1)];
     if (name === 'Result') { if (source[offset++] !== ',') fail('UNKNOWN_TYPE', 'Invalid control type ' + source); arguments_.push(parse(depth + 1)); }
     if (source[offset++] !== '>') fail('UNKNOWN_TYPE', 'Invalid control type ' + source);
-    return { name, arguments: arguments_ };
+    return name==='Array'&&arguments_[0].name==='Number'?{name:'NumberArray',arguments:[]}:{ name, arguments: arguments_ };
   }
   const result = parse(0);
   if (offset !== source.length) fail('UNKNOWN_TYPE', 'Invalid control type ' + source);
@@ -31,7 +31,17 @@ export function controlVariants(type) {
 }
 export function assertControlValueType(value, expected, context, futureCheck, streamCheck, resourceCheck) {
   const type = parseControlType(expected, !!futureCheck, !!streamCheck, !!resourceCheck);
+  let arrayElements=0;
   function check(value, type) {
+    const nestedNumbers=type.name==='NumberArray'&&arrayElements>0;
+    if(type.name==='Array'||nestedNumbers){
+      if(Array.isArray(value)&&(arrayElements+value.length)>10000)fail('VALUE_LIMIT','Typed array value exceeds 10000 elements');
+      const descriptors=Array.isArray(value)?Object.getOwnPropertyDescriptors(value):null;
+      if(!descriptors||Object.getPrototypeOf(value)!==Array.prototype||Reflect.ownKeys(value).length!==value.length+1)fail('TYPE_MISMATCH',`${context}: expected ${expected}`,{expected,context});
+      if((arrayElements+=value.length)>10000)fail('VALUE_LIMIT','Typed array value exceeds 10000 elements');
+      for(let index=0;index<value.length;index++){const descriptor=descriptors[index];if(!descriptor||!Object.hasOwn(descriptor,'value'))fail('TYPE_MISMATCH','Typed arrays require dense own data elements',{expected,context});check(descriptor.value,nestedNumbers?{name:'Number',arguments:[]}:type.arguments[0]);}
+      return;
+    }
     if(type.name==='ResourceHandle'){if(!resourceCheck?.(value,controlTypeName(type.arguments[0])))fail('TYPE_MISMATCH',`${context}: expected ${expected}, got Unknown`,{expected,received:'Unknown',context});return;}
     if (type.name === 'Stream') {
       if (!streamCheck?.(value, controlTypeName(type.arguments[0]))) fail('TYPE_MISMATCH', `${context}: expected ${expected}, got Unknown`, { expected, received: 'Unknown', context });
@@ -56,7 +66,7 @@ export function assertControlValueType(value, expected, context, futureCheck, st
   check(value, type);
 }
 export function cloneControlValue(value) {
-  if (Array.isArray(value)) return [...value];
+  if (Array.isArray(value)) return value.map(cloneControlValue);
   if (value !== null && typeof value === 'object') return Object.hasOwn(value, 'value')
     ? { tag: value.tag, value: cloneControlValue(value.value) } : { tag: value.tag };
   return value;
@@ -83,3 +93,6 @@ export function validateControlInputs(fn, inputs) {
   }
   for (const name of Object.keys(inputs)) if (!fn.inputs.some(input => input.name === name)) fail('EXTRA_INPUT', 'Unexpected input ' + name);
 }
+
+/** Canonical element type for typed array operations; legacy NumberArray remains an alias. */
+export function controlArrayElementType(source){const type=parseControlType(source,true,true,true);if(type.name==='NumberArray')return 'Number';if(type.name!=='Array')fail('TYPE_MISMATCH','Array operation requires Array');return controlTypeName(type.arguments[0]);}

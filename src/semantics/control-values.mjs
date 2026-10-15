@@ -3,7 +3,7 @@ import { fail } from '../reference/errors.mjs';
 export function equalControlValues(a, b) {
   if (a !== null && b !== null && typeof a === 'object' && typeof b === 'object' && !Array.isArray(a) && !Array.isArray(b))
     return a.tag === b.tag && (!Object.hasOwn(a, 'value') || equalControlValues(a.value, b.value));
-  return Array.isArray(a) && Array.isArray(b) ? a.length === b.length && a.every((value, index) => value === b[index]) : a === b;
+  return Array.isArray(a) && Array.isArray(b) ? a.length === b.length && a.every((value, index) => equalControlValues(value,b[index])) : a === b;
 }
 export function unaryControlValue(operator, value) {
   if (operator === '!') return !value;

@@ -7,10 +7,10 @@ EMS-015, AC-035, G-01/03/11/12. Профиль `ems-control-algebraic/1` исп�
 Каноническая грамматика IR type strings:
 
 ```text
-T = Number | NumberArray | Boolean | String | Option<T> | Result<T,T>
+T = Number | NumberArray | Boolean | String | Array<T> | Option<T> | Result<T,T>
 ```
 
-Без пробелов, глубина вложенности ≤32, длина type string ≤4096. Frontend aliases и generic specializations нормализуются до этой грамматики; `Number[]` становится `NumberArray`, включая payload. Другие Array, Record, Union, Future/Stream и ResourceHandle пока явно UNSUPPORTED_PROFILE. Это ограниченный исполняемый профиль, не полный набор типов целевого языка.
+Без пробелов, глубина вложенности ≤32, длина type string ≤4096. Frontend aliases и generic specializations нормализуются до этой грамматики; `Number[]` становится `NumberArray`, включая payload. Array<T> исполняется по [AC-113](TYPED_ARRAYS.md); Record и Union пока явно UNSUPPORTED_PROFILE. Future/Stream и ResourceHandle требуют своих профилей. Это ограниченный исполняемый профиль, не полный набор типов целевого языка.
 
 На API границе значения имеют явный тег:
 

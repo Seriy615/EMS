@@ -1,6 +1,6 @@
 import { fail } from '../reference/errors.mjs';
 import { assertTypeName } from '../reference/types.mjs';
-import { parseControlType, controlTypeName, controlVariants, assertControlValueType } from '../semantics/control-algebraic.mjs';
+import { parseControlType, controlTypeName, controlVariants, assertControlValueType, controlArrayElementType } from '../semantics/control-algebraic.mjs';
 import { analyzeGraphEffects, assertPolicyNames } from '../semantics/effects.mjs';
 
 export const CONTROL_VERSION = 'ems-ir/2';
@@ -85,10 +85,10 @@ export function validateControlIR(ir, registry) {
         case 'literal': if (node.type.includes('<')) fail('INVALID_IR', 'Algebraic values require construct expression'); controlFields(node, ['kind', 'type', 'value']); decodeControlLiteral(node.value, node.type); actual = node.type; break;
         case 'local': controlFields(node, ['kind', 'type', 'name']); name(node.name);
           if (!scope.has(node.name)) fail('UNKNOWN_SYMBOL', `Unknown local ${node.name}`); actual = scope.get(node.name).type; break;
-        case 'array': controlFields(node, ['kind', 'type', 'elements']); array(node.elements);
-          for (const element of node.elements) expect(expression(element, scope, depth + 1), 'Number'); actual = 'NumberArray'; break;
-        case 'index': controlFields(node, ['kind', 'type', 'value', 'index']); expect(expression(node.value, scope, depth + 1), 'NumberArray');
-          expect(expression(node.index, scope, depth + 1), 'Number'); actual = 'Number'; break;
+        case 'array': controlFields(node, ['kind', 'type', 'elements']); array(node.elements); controlArrayElementType(node.type);
+          for (const element of node.elements) expect(expression(element, scope, depth + 1), controlArrayElementType(node.type)); actual = node.type; break;
+        case 'index': controlFields(node, ['kind', 'type', 'value', 'index']); {const element=controlArrayElementType(expression(node.value, scope, depth + 1));
+          expect(expression(node.index, scope, depth + 1), 'Number'); actual = element;} break;
         case 'assign': controlFields(node, ['kind', 'type', 'name', 'value']); name(node.name);
           if (!scope.has(node.name)) fail('UNKNOWN_SYMBOL', `Unknown local ${node.name}`);
           if (!scope.get(node.name).mutable) fail('IMMUTABLE_ASSIGNMENT', `Cannot assign ${node.name}`);
@@ -268,8 +268,8 @@ export function validateControlIR(ir, registry) {
             if (iterable.name !== 'Stream') fail('TYPE_MISMATCH','Async iteration requires Stream');
             const nested=new Map(scope);nested.set(statement.binding,{type:controlTypeName(iterable.arguments[0]),mutable:false});block(statement.body,nested,loops+1,depth+1);break;
           }
-          case 'for': controlFields(statement, ['kind', 'binding', 'iterable', 'body']); name(statement.binding); expect(expression(statement.iterable, scope, depth + 1), 'NumberArray');
-            { const nested = new Map(scope); nested.set(statement.binding, { type: 'Number', mutable: false }); block(statement.body, nested, loops + 1, depth + 1); } break;
+          case 'for': controlFields(statement, ['kind', 'binding', 'iterable', 'body']); name(statement.binding);
+            { const element=controlArrayElementType(expression(statement.iterable, scope, depth + 1)),nested = new Map(scope); nested.set(statement.binding, { type: element, mutable: false }); block(statement.body, nested, loops + 1, depth + 1); } break;
           case 'break': case 'continue': controlFields(statement, ['kind']); if (!loops) fail('INVALID_CONTROL', 'Loop exit outside loop'); terminated = true; break;
           default: fail('INVALID_IR', 'Unknown control statement');
         }

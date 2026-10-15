@@ -254,3 +254,7 @@ Browser: loops-and-ports, project-files-ui, ui-handler-workspace.
 ## AC-112 — ordinary flow graph connected to actual transactional UI
 
 [Семантика, путь редактирования, свидетельства и границы](../spec/UI_CONTRACT_FLOW.md). Real kernel state contracts, canonical flow/source/IR witness, v3 roundtrip, actual UI events, rollback/policy denial, incomplete local draft, same-file CAS/sibling preservation, actual ordinary browser ports/new handler/button binding, standalone UI compiler. Нет автоматической AST migration или полного text/visual roundtrip.
+
+## AC-113 — actual typed Array<T> execution
+
+[Правила и границы](../spec/TYPED_ARRAYS.md). Auto lowering, String/Boolean/nested/tagged arrays, contextual empty, indexing/for/equality, IR roundtrip, accessor/type/bounds/size negatives, detached nested atomic callback values, actual browser Worker and downloaded standalone after origin shutdown. Explicit-flow/UI generic ports and Map/Set are not accepted by this slice.

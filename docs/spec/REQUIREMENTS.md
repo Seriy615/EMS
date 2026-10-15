@@ -5,7 +5,7 @@
 | ID | Требование | Milestone | Текущий статус |
 |---|---|---|---|
 | LANG-01 | Один язык, текстовая и визуальная формы с единой семантикой | M1–M2 | partial: учебный текстовый поднабор |
-| LANG-02 | Типы: базовые, составные, generic, Result, Stream, resource | M1 | partial: AST type pass/generics (AC-028); runtime пока finite core |
+| LANG-02 | Типы: базовые, составные, generic, Result, Stream, resource | M1 | partial: AST type pass/generics (AC-028); runtime finite core + tagged/control profiles и Array<T> AC-113; Map/Set/Record ещё planned |
 | LANG-03 | Условия, циклы, функции, события, ошибки, async | M1–M3 | partial: structured if/loops/functions runtime/standalone (AC-033), events (AC-032); typed primitive error execution AC-034; async syntax AC-027, full execution planned |
 | LANG-04 | Формальная семантика effectful/dataflow и concurrency | M1 | partial: finite core + explicit effect sequence (AC-025, AC-030/031); finite event/state transactions (AC-032); structured control/loops/recursion (AC-033); concurrency expansion planned |
 | LANG-05 | AST/HIR/IR не зависят от координат канваса | M1 | partial: typed IR v1, located AST и pure SSA lowering (AC-026..028); structured control lowering AC-033; typed exceptions/finally AC-034; full algebraic/async lowering planned |

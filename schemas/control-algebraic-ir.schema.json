@@ -756,7 +756,7 @@
       "type": "string",
       "minLength": 1,
       "maxLength": 4096,
-      "pattern": "^(Number|NumberArray|Boolean|String|(Option|Result)<[A-Za-z<>,]+>)$",
+      "pattern": "^(Number|NumberArray|Boolean|String|(Array|Option|Result)<[A-Za-z<>,]+>)$",
       "$comment": "Canonical balanced grammar, arities and depth <=32 are checked by validateControlIR."
     },
     "pattern": {

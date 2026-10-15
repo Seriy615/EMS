@@ -1,0 +1,16 @@
+// A single typed EMS program: String array iteration and an ordinary text contract.
+@Main(values: Array<String>) -> String {
+    let mut text = "";
+    for part in values {
+        text = std::text::concat(text, part);
+    }
+    return text;
+}
+
+@CountTrue(flags: Array<Boolean>) -> Number {
+    let mut count = 0;
+    for flag in flags {
+        if flag { count = count + 1; }
+    }
+    return count;
+}
