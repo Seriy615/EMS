@@ -1242,14 +1242,14 @@
       ],
       "objective": "Expose actual saved UI-to-contract routes and remove ambiguous variable/control presentation in the same graph",
       "deliverables": "docs/plans/UI_LOGIC_CONNECTIONS.md; shared selection, state dependency routes, handler navigation, inline arguments/conditions",
-      "acceptance": "AC-104; actual Worker delta -5, reopen, typed rejection, both condition branches11/22, exact full gates and public smoke",
+      "acceptance": "AC-104; actual Worker delta -5, reopen, typed rejection, both condition branches11/22, exact full gates and public smoke; preserve existing node coordinates/camera and append order, explicit arrange",
       "status": "IN_PROGRESS",
       "priority": "P0",
       "ownerModelPolicy": [
         "GPT-6.1 Sol",
         "GPT-6 Luna"
       ],
-      "progress": "Node routes3 and graph projection4 PASS; focused UI/workbench12 PASS before final additions; final inline/links checks and exact publish gate pending. Full port-based binding editor and EMS-038 core remain open."
+      "progress": "Source46f3a8c exact898/159/87 PASS, deployed; HTTPS UI -5/reopen and conditions11/22 PASS. Owner follow-up: source-span position preservation, append order, explicit arrange; unit layout/view6 and browser8 PASS. Final combined gate/public smoke pending."
     }
   ]
 }
