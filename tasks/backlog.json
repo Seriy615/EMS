@@ -1268,7 +1268,7 @@
         "GPT-6.1 Sol",
         "GPT-6 Luna"
       ],
-      "progress": "AC-108 owner refinement: unified kernel catalogue and connection transaction; variable overwrite through its own input; checked scoped source edits and folded write edges. Focused13 Node and25 Chromium PASS before document additions. Full final gate pending."
+      "progress": "AC-108 owner refinement: unified kernel catalogue and connection transaction; variable overwrite through its own input; checked scoped source edits and folded write edges. Focused13 Node and25 Chromium PASS before document additions. Full final gate pending. Owner requested immediate deploy/manual acceptance: e835997 published after913 Node/159 verify; full browser interrupted after46 successful cases, not full PASS. Safari history-rate fix regression1/1 PASS; source/publication evidence in STATUS."
     },
     {
       "id": "EMS-043",
@@ -1286,7 +1286,7 @@
         "GPT-6.1 Sol",
         "GPT-6 Luna"
       ],
-      "progress": "Graph-first custom handlers, initial value editing, multi-document workspace through the same existing editors. Cross-file module linkage and state rename/type migration remain open. Full final/public gate pending."
+      "progress": "Graph-first custom handlers, initial value editing, multi-document workspace through the same existing editors. Cross-file module linkage and state rename/type migration remain open. Full final/public gate pending. Owner requested immediate deploy/manual acceptance: e835997 published after913 Node/159 verify; full browser interrupted after46 successful cases, not full PASS. Safari history-rate fix regression1/1 PASS; source/publication evidence in STATUS."
     }
   ]
 }
