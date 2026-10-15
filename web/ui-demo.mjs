@@ -1,3 +1,4 @@
+import {installUIConnections} from './ui-connections.mjs';
 import {installUIDesigner} from './ui-designer.mjs';
 import {captureSourceBreakpoint,resolveSourceBreakpoint,UISourceBreakpointStorage} from '../src/studio/source-anchors.mjs';
 import {breakpointAtTextOffset} from '../src/studio/breakpoints.mjs';
@@ -49,9 +50,9 @@ function pointAt(handler,offset,expectedSource){
  if(!draft||draft.source!==expectedSource)throw Object.assign(Error('Apply checked handler source first'),{code:'STALE_DEBUG_SOURCE'});
  toggleUIPoint(handler,breakpointAtTextOffset(compileUIHandler(draft.source,draft.entry,editor.application,base),offset));
 }
-let restarting=Promise.resolve(),authoringQueue=Promise.resolve(),authoring,designer;export let applicationController,editor;
+let restarting=Promise.resolve(),authoringQueue=Promise.resolve(),authoring,designer,connections;export let applicationController,editor;
 function report(failure){error.textContent=failure.code??'HOST_ERROR';const location=failure.details?.location;if(location?.start?.offset!==undefined){const field=document.querySelector('#handler-source');field.focus();field.setSelectionRange(location.start.offset,location.end?.offset??location.start.offset);error.textContent+=' — '+location.start.line+':'+location.start.column;}}
-function render(){syncUIPoints();authoring?.refresh();designer?.refresh();source.value=editor.source;document.querySelector('#undo-ui').disabled=!editor.history.length;document.querySelector('#redo-ui').disabled=!editor.future.length;}
+function render(){syncUIPoints();authoring?.refresh();designer?.refresh();connections?.refresh();source.value=editor.source;document.querySelector('#undo-ui').disabled=!editor.history.length;document.querySelector('#redo-ui').disabled=!editor.future.length;}
 function debugPause(pause){
  pausedEvent=pause.eventId;pausedOperation=pause;syncUIPoints();
  const field=document.querySelector('#handler-source'),draft=editor.sources[pause.handler];
@@ -97,6 +98,7 @@ designer=installUIDesigner(()=>editor,change,report);
 document.querySelector('#new-ui').onclick=()=>{const empty={schemaVersion:'ems-ui-app/1',id:'project.ui',version:'1.0.0',reactor:{schemaVersion:'ems-reactor/1',id:'project.ui',version:'1.0.0',state:[],handlers:[]},ui:{schemaVersion:'ems-ui/1',root:{id:'root',kind:'column',props:{},events:{},children:[]}}};if(manager){try{const id='p'+crypto.randomUUID().replaceAll('-','');manager.save({id,name:'Новый UI-проект',kind:'ui',source:new UIProjectEditor(empty,base).source,draft:null});location.href='/web/ui-demo.html?project='+id;}catch(failure){report(failure);}}else apply(new UIProjectEditor(empty,base).source).catch(report);};
 
 installControlGraph(()=>editor,change,report);
+connections=installUIConnections(()=>editor,authoring,designer);
 
 function saveProject(){if(manager)manager.save({...manager.load(managedId),source:editor.source});else storage.save(editor.application,{sources:editor.sources});}
 function saveManaged(){if(manager)saveProject();}

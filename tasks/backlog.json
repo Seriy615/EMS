@@ -1225,13 +1225,31 @@
       "objective": "Make ordinary contract authoring scroll-safe and present semantic control blocks instead of AST scaffolding",
       "deliverables": "docs/plans/CONTROL_WORKBENCH.md; round ports, shared catalog, hold drag, typed loop inputs and body projection",
       "acceptance": "AC-103; real native swipe/hold drag, square connector geometry, no sample loop instructions, invalid input rollback, semantic branch/break/return edges, complete gates and public smoke",
+      "status": "DONE",
+      "priority": "P0",
+      "ownerModelPolicy": [
+        "GPT-6.1 Sol",
+        "GPT-6 Luna"
+      ],
+      "progress": "AC-103 accepted source/live048823e: exact894 Node/159 verify/84 Chromium PASS, full anonymous public HTTPS smoke PASS. Native touch diagnostics confirmed held drag, scroll safety, if four cards and configured loop result0. Initial extra live harness sampled before UI drop render; preserved logs. Follow-up owner request for contract labels/inline conditions is EMS-041."
+    },
+    {
+      "id": "EMS-041",
+      "title": "Connected UI events, handlers and state; editable contract calls and conditions",
+      "phase": "M2 owner P0",
+      "dependsOn": [
+        "EMS-040"
+      ],
+      "objective": "Expose actual saved UI-to-contract routes and remove ambiguous variable/control presentation in the same graph",
+      "deliverables": "docs/plans/UI_LOGIC_CONNECTIONS.md; shared selection, state dependency routes, handler navigation, inline arguments/conditions",
+      "acceptance": "AC-104; actual Worker delta -5, reopen, typed rejection, both condition branches11/22, exact full gates and public smoke",
       "status": "IN_PROGRESS",
       "priority": "P0",
       "ownerModelPolicy": [
         "GPT-6.1 Sol",
         "GPT-6 Luna"
       ],
-      "progress": "Node894/159 verify and focused Chromium12/12 PASS; final line geometry verification and exact publish gate pending. Core EMS-038 stays open."
+      "progress": "Node routes3 and graph projection4 PASS; focused UI/workbench12 PASS before final additions; final inline/links checks and exact publish gate pending. Full port-based binding editor and EMS-038 core remain open."
     }
   ]
 }

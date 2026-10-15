@@ -194,3 +194,12 @@ V2 conservative canonical user-type set, dependency union/reseal, immutable modu
 ## AC-103 — коннекторы, общая библиотека, жесты и представление управления
 
 Критерии: [CONTROL_WORKBENCH.md](../plans/CONTROL_WORKBENCH.md). Исполнимые проверки: `tests/structured-view.test.mjs`, `tests/browser/loops-and-ports.test.mjs`, mobile/native/workbench regression и полный publication gate.
+
+## AC-104 — связанные UI/обработчики и редактируемые условия
+
+Критерии и ограничения: [UI_LOGIC_CONNECTIONS.md](../plans/UI_LOGIC_CONNECTIONS.md).
+Тесты: `tests/ui-connections.test.mjs`, `tests/structured-view.test.mjs`,
+`tests/browser/ui-connections.test.mjs`, `tests/browser/loops-and-ports.test.mjs`.
+Реальный Worker: delta -5 → count -5; сохранение/повторное открытие. Общий граф:
+core.add(2,3), Boolean sum > 4 →11 / sum < 4 →22, неверное условие Number
+сохраняет предыдущую программу. Полные gates и публичный smoke обязательны.
