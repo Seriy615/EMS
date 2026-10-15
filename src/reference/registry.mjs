@@ -1,3 +1,4 @@
+import {resolveTypedMapContract} from '../stdlib/typed-map-contracts.mjs';
 import {resolveTypedArrayContract} from '../stdlib/typed-array-contracts.mjs';
 import {contractDescriptionTemplate} from '../contracts/descriptions.mjs';
 import {parseControlType,controlTypeName} from '../semantics/control-algebraic.mjs';
@@ -65,7 +66,7 @@ export class Registry {
   }
   resolve(id) {
     let item = this.items.get(id);
-    if(!item){const definition=resolveTypedArrayContract(id);if(definition){if(this.#typedArrayInstances>=1024)fail('CONTRACT_LIMIT','Too many typed array instances');this.registerAtomic(definition);this.#typedArrayInstances++;item=this.items.get(id);}}
+    if(!item){const definition=resolveTypedArrayContract(id)??resolveTypedMapContract(id);if(definition){if(this.#typedArrayInstances>=1024)fail('CONTRACT_LIMIT','Too many typed collection instances');this.registerAtomic(definition);this.#typedArrayInstances++;item=this.items.get(id);}}
     if (!item) fail('MISSING_CONTRACT', `Unknown contract ${id}`);
     return item;
   }

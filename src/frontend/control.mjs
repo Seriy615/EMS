@@ -1,3 +1,4 @@
+import {typedMapContractId,typedMapIntrinsic} from '../stdlib/typed-map-contracts.mjs';
 import {Registry} from '../reference/registry.mjs';
 import {typedArrayContractId,typedArrayIntrinsic} from '../stdlib/typed-array-contracts.mjs';
 import {controlNodeEntries} from '../ir/control-addresses.mjs';
@@ -8,18 +9,19 @@ import { CONTROL_VERSION, CONTROL_PROFILE, CONTROL_ERROR_PROFILE, CONTROL_ALGEBR
 function controlType(type, node) {
   if (type.kind === 'Type' && ['Number', 'Boolean', 'String'].includes(type.name)) return type.name;
   if (type.name === 'Array' && type.arguments[0]?.name === 'Number') return 'NumberArray';
-  if (['Array','Option', 'Result', 'Future', 'Stream', 'ResourceHandle'].includes(type.name)) return `${type.name}<${type.arguments.map(argument => controlType(argument, node)).join(',')}>`;
+  if (['Array','Map','Option', 'Result', 'Future', 'Stream', 'ResourceHandle'].includes(type.name)) return `${type.name}<${type.arguments.map(argument => controlType(argument, node)).join(',')}>`;
   fail('UNSUPPORTED_PROFILE', `Control IR cannot represent ${typeName(type)}`, { location: node?.location });
 }
 const flexible = type => type.kind === 'Variable' ? { kind: 'Variable', name: type.name } : { ...type, arguments: type.arguments.map(flexible) };
 
 /** Specialize typed functions into semantic control blocks; locations remain a separate sidecar. */
 export function lowerControlModule(checked, entry, registry) {
-  if([...checked.calls.values()].some(call=>call.target?.arrayTemplate)){const derived=new Registry();for(const [id,contract]of registry.items)derived.items.set(id,contract);registry=derived;}
+  if([...checked.calls.values()].some(call=>(call.target?.arrayTemplate||call.target?.mapTemplate))){const derived=new Registry();for(const [id,contract]of registry.items)derived.items.set(id,contract);registry=derived;}
   const functions = [], instances = new Map(), provenance = {}, locations=new WeakMap();
   let next = 0, errors = false, algebraic = false, futures = false, streams = false, resources = false;
   const diagnostic = node => fail('UNSUPPORTED_PROFILE', `${node.kind} requires another IR profile`, { location: node.location });
-  function specialize(target, inputs) {
+  function specialize(target, inputs, output) {
+    if(target.mapTemplate){algebraic=true;const map=inputs.find(type=>type.name==='Map')??(output?.name==='Map'?output:null),key=map?.arguments[0]??inputs[0]?.arguments[0],value=map?.arguments[1]??inputs[1]?.arguments[0],id=typedMapContractId(target.mapTemplate,controlType(key),controlType(value)),contract=registry.resolve(id);if(!typedMapIntrinsic(contract))fail('BINDING_SIGNATURE','Typed map specialization was replaced');return {kind:'contract',id,version:'1.0.0'};}
     if(target.arrayTemplate){algebraic=true;const id=typedArrayContractId(target.arrayTemplate,controlType(inputs[0].arguments[0])),contract=registry.resolve(id);if(!typedArrayIntrinsic(contract))fail('BINDING_SIGNATURE','Typed array specialization was replaced');return {kind:'contract',id,version:'1.0.0'};}
     if(target.contract?.kind==='resource' || target.declaration?.external && registry.resolve(target.name).kind==='resource')resources=true;
     if (target.async) futures = true;
@@ -66,7 +68,7 @@ export function lowerControlModule(checked, entry, registry) {
         case 'AssignmentExpression': return { kind: 'assign', type, name: node.left.name, value: expression(node.right) };
         case 'CallExpression': {
           const call = checked.calls.get(node); if(call.resourceOperation){resources=true;return {kind:'resource',type,operation:call.resourceOperation,arguments:node.arguments.map(expression)};} if (call.streamOperation) { streams = true; return { kind: 'stream', type, operation: call.streamOperation, arguments: node.arguments.map(expression) }; } if (call.algebraicConstructor) { algebraic = true; return { kind: 'construct', type, tag: call.algebraicConstructor, arguments: node.arguments.map(expression) }; }
-          const target = specialize(call.target, call.inputs.map(input => resolveType(input, substitutions)));
+          const target = specialize(call.target, call.inputs.map(input => resolveType(input, substitutions)),resolveType(call.output,substitutions));
           return { kind: 'call', type, target, arguments: node.arguments.map(expression) };
         }
       }

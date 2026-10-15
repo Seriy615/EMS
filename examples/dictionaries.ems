@@ -1,0 +1,8 @@
+@app::WordCounts(words:Array<String>)->Map<String,Number> {
+    let mut counts:Map<String,Number> = std.map.empty();
+    for word in words {
+        let count = std.map.getOr(counts, word, 0);
+        counts = std.map.set(counts, word, count + 1);
+    }
+    return counts;
+}

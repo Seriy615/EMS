@@ -44,7 +44,7 @@ function lowerCallModule(checked, entry, baseRegistry, eager = false, preserveGr
   let nextInstance = 0;
   const version = checked.ast.package?.version ?? '0.1.0';
   function specialize(target, inputs) {
-    if(target.arrayTemplate)fail('UNSUPPORTED_PROFILE','Typed array specializations require control IR');
+    if(target.arrayTemplate||target.mapTemplate)fail('UNSUPPORTED_PROFILE','Typed array specializations require control IR');
     if (target.contract) return target.name;
     if (target.async)
       fail('UNSUPPORTED_PROFILE', `${target.name}: async EMS requires a richer IR`, { location: target.declaration.location });
@@ -134,24 +134,24 @@ function lowerCallModule(checked, entry, baseRegistry, eager = false, preserveGr
 /** Select one semantic profile from the checked module; preserve the working call-IR backend. */
 export function lowerCheckedModule(checked, entry, registry, { profile = 'auto', preserveGraphIdentity = false } = {}) {
   if (!['auto', 'call', 'control'].includes(profile)) fail('UNSUPPORTED_PROFILE', 'Unknown frontend lowering profile');
-  let control = profile === 'auto' && checked.signatures.get(entry)?.async || profile === 'control' || profile === 'auto' && checked.signatures.get(entry)?.inputs.some(input => ['Option','Result','Future','Stream','ResourceHandle'].includes(input.type.name));
+  let control = profile === 'auto' && checked.signatures.get(entry)?.async || profile === 'control' || profile === 'auto' && checked.signatures.get(entry)?.inputs.some(input => ['Map','Option','Result','Future','Stream','ResourceHandle'].includes(input.type.name));
   const entryTarget = checked.signatures.get(entry);
   const pending = entryTarget?.declaration.body ? [entryTarget.declaration.body] : [];
   const visited = new Set([entry]);
   while (profile === 'auto' && pending.length) {
     const node = pending.pop(); if (!node || typeof node !== 'object') continue;
     const target = checked.calls.get(node)?.target;
-    if (target && !target.contract && !target.arrayTemplate && !target.declaration.external && !visited.has(target.name)) {
+    if (target && !target.contract && !target.arrayTemplate && !target.mapTemplate && !target.declaration.external && !visited.has(target.name)) {
       visited.add(target.name); pending.push(target.declaration.body);
     }
     if (['IfStatement','WhileStatement','ForStatement','BreakStatement','ContinueStatement','AssignmentExpression','IndexExpression','ThrowStatement','TryStatement','MatchStatement'].includes(node.kind) ||
         node.kind === 'LetDeclaration' && node.mutable || node.kind === 'UnaryExpression' && node.operator === '!' ||
         node.kind === 'BinaryExpression' && !['+','-','*','/'].includes(node.operator)) control = true;
-    if(target?.arrayTemplate)control=true;
+    if(target?.arrayTemplate||target?.mapTemplate)control=true;
     if (target?.async || node.kind === 'UnaryExpression' && node.operator === 'await') control = true;
     if(checked.calls.get(node)?.resourceOperation || target?.contract?.kind==='resource' || checked.types.get(node)?.name==='ResourceHandle' || node.kind==='UsingDeclaration')control=true;
     if (checked.calls.get(node)?.streamOperation || node.kind === 'ForStatement' && node.asynchronous) control = true;
-    if (checked.calls.get(node)?.algebraicConstructor || checked.types.get(node)?.name === 'Option' || checked.types.get(node)?.name === 'Result') control = true;
+    if (checked.calls.get(node)?.algebraicConstructor || checked.types.get(node)?.name === 'Map' || checked.types.get(node)?.name === 'Option' || checked.types.get(node)?.name === 'Result') control = true;
     if(checked.types.get(node)?.name==='Array'&&checked.types.get(node)?.arguments[0]?.name!=='Number')control=true;
     if (node.kind === 'ArrayExpression') { try { constant(node); } catch { control = true; } }
     for (const [key, value] of Object.entries(node)) if (key !== 'location') {

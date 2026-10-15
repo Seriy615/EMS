@@ -353,3 +353,16 @@ AC-118/120 supplement: an editor returning to the foreground detects a newer
 server build without visiting home. Explicit update preserves unsaved fields and
 saved graph data; an old tab also detects a worker activated by another tab.
 A stale waiting worker is refused, offline editing remains available.
+
+## AC-123 — typed dictionaries across text, ordinary graphs and standalone contracts
+
+[Нормативные правила и границы](../spec/TYPED_MAPS.md): finite primitive keys,
+unique ordered entries, immutable updates, Option absence, eager explicit fallback,
+structural order-independent Map equality and bounded validated own-data values.
+10 ordinary typed atomic families, cold Registry/IR and trusted lock witnesses.
+Public Map/error types use sealed package/6 with tagged-values/2; downgrade refused.
+Runtime/standalone values and failures agree. Normal writable graph variables,
+mobile catalog/ports/remove/reopen/downloaded module, actual UI Worker state2
+and saved dictionary source→editable graph with original source retained are required.
+Persistent rich UI slots, Set/Record, native Map ABI and complete inverse projection
+are not covered by this acceptance slice.

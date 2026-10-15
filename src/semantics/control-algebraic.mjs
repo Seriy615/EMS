@@ -11,10 +11,12 @@ export function parseControlType(source, allowFuture = false, allowStream = fals
     if (!match) fail('UNKNOWN_TYPE', 'Invalid control type ' + source);
     const name = match[0]; offset += name.length;
     if (['Number', 'NumberArray', 'Boolean', 'String'].includes(name)) return { name, arguments: [] };
-    if (!['Array', 'Option', 'Result', ...(allowFuture ? ['Future'] : []), ...(allowStream ? ['Stream'] : []), ...(allowResource ? ['ResourceHandle'] : [])].includes(name) || source[offset++] !== '<') fail('UNKNOWN_TYPE', 'Invalid control type ' + source);
+    if (!['Array', 'Map', 'Option', 'Result', ...(allowFuture ? ['Future'] : []), ...(allowStream ? ['Stream'] : []), ...(allowResource ? ['ResourceHandle'] : [])].includes(name) || source[offset++] !== '<') fail('UNKNOWN_TYPE', 'Invalid control type ' + source);
     const arguments_ = [parse(depth + 1)];
-    if (name === 'Result') { if (source[offset++] !== ',') fail('UNKNOWN_TYPE', 'Invalid control type ' + source); arguments_.push(parse(depth + 1)); }
+    if (name === 'Result' || name === 'Map') { if (source[offset++] !== ',') fail('UNKNOWN_TYPE', 'Invalid control type ' + source); arguments_.push(parse(depth + 1)); }
     if (source[offset++] !== '>') fail('UNKNOWN_TYPE', 'Invalid control type ' + source);
+    if(name==='Map'&&!['String','Number','Boolean'].includes(arguments_[0].name))fail('UNKNOWN_TYPE','Map keys require String, Number or Boolean');
+    if(name==='Map'){const live=type=>['Future','Stream','ResourceHandle'].includes(type.name)||type.arguments.some(live);if(live(arguments_[1]))fail('UNKNOWN_TYPE','Map values require finite serializable types');}
     return name==='Array'&&arguments_[0].name==='Number'?{name:'NumberArray',arguments:[]}:{ name, arguments: arguments_ };
   }
   const result = parse(0);
@@ -33,6 +35,18 @@ export function assertControlValueType(value, expected, context, futureCheck, st
   const type = parseControlType(expected, !!futureCheck, !!streamCheck, !!resourceCheck);
   let arrayElements=0;
   function check(value, type) {
+    if(type.name==='Map'){
+      const record=value!==null&&typeof value==='object'&&!Array.isArray(value)&&[Object.prototype,null].includes(Object.getPrototypeOf(value));
+      const descriptors=record?Object.getOwnPropertyDescriptors(value):{};
+      if(!record||Reflect.ownKeys(value).length!==2||descriptors.tag?.value!=='Map'||!Object.hasOwn(descriptors.value??{},'value'))fail('TYPE_MISMATCH',`${context}: expected ${expected}`,{expected,context});
+      const entries=descriptors.value.value;
+      function dense(array,length){if(!Array.isArray(array)||Object.getPrototypeOf(array)!==Array.prototype||array.length!==length||Reflect.ownKeys(array).length!==length+1)fail('TYPE_MISMATCH','Map requires dense own-data entries',{expected,context});const data=Object.getOwnPropertyDescriptors(array);for(let i=0;i<length;i++)if(!Object.hasOwn(data[i]??{},'value'))fail('TYPE_MISMATCH','Map entries must be own data',{expected,context});return data;}
+      if(!Array.isArray(entries))fail('TYPE_MISMATCH','Map requires an entry array',{expected,context});
+      if((arrayElements+=entries.length)>10000)fail('VALUE_LIMIT','Collections exceed 10000 elements');
+      const data=dense(entries,entries.length),keys=new Set();
+      for(let i=0;i<entries.length;i++){const pair=dense(data[i].value,2),key=pair[0].value;check(key,type.arguments[0]);if(keys.has(key))fail('DUPLICATE_MAP_KEY','Map keys must be unique',{context});keys.add(key);check(pair[1].value,type.arguments[1]);}
+      return;
+    }
     const nestedNumbers=type.name==='NumberArray'&&arrayElements>0;
     if(type.name==='Array'||nestedNumbers){
       if(Array.isArray(value)&&(arrayElements+value.length)>10000)fail('VALUE_LIMIT','Typed array value exceeds 10000 elements');

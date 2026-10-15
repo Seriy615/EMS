@@ -1,6 +1,7 @@
 import { fail } from '../reference/errors.mjs';
 
 export function equalControlValues(a, b) {
+  if(a?.tag==='Map'&&b?.tag==='Map'){if(a.value.length!==b.value.length)return false;const right=new Map(b.value);return a.value.every(([key,value])=>right.has(key)&&equalControlValues(value,right.get(key)));}
   if (a !== null && b !== null && typeof a === 'object' && typeof b === 'object' && !Array.isArray(a) && !Array.isArray(b))
     return a.tag === b.tag && (!Object.hasOwn(a, 'value') || equalControlValues(a.value, b.value));
   return Array.isArray(a) && Array.isArray(b) ? a.length === b.length && a.every((value, index) => equalControlValues(value,b[index])) : a === b;

@@ -1,3 +1,4 @@
+import {mapContractTemplate} from '../stdlib/typed-map-contracts.mjs';
 import {arrayContractTemplate} from '../stdlib/typed-array-contracts.mjs';
 import {coreIntrinsic} from '../reference/registry.mjs';
 import {parseControlType} from '../semantics/control-algebraic.mjs';
@@ -80,6 +81,8 @@ export function typecheckModule(ast, registry, { imports = new Map(), maxTypeNod
     const id = ['add','sub','mul','div','sum','min','max'].includes(resolved) ? `core.${resolved}` : resolved;
     const template=templates&&!forced?arrayContractTemplate(id):null,existing=registry.items.get(id);
     if(template&&(!existing||coreIntrinsic(existing))){const variable={kind:'Variable',name:'T'},convert=value=>value==='T'?variable:value==='Array<T>'?term('Array',[variable]):primitive(value);return {name:id,parameters:['T'],inputs:Object.entries(template.inputs).map(([name,value])=>({name,type:convert(value)})),output:convert(template.output),async:false,arrayTemplate:id.slice(10)};}
+    const mapTemplate=templates&&!forced&&!existing?mapContractTemplate(id):null;
+    if(mapTemplate){const convert=value=>{if(['K','V'].includes(value))return {kind:'Variable',name:value};const build=pattern=>{if(pattern==='K'||pattern==='V')return {kind:'Variable',name:pattern};if(!pattern.includes('<'))return primitive(pattern);const name=pattern.slice(0,pattern.indexOf('<')),parts=pattern.slice(pattern.indexOf('<')+1,-1).split(',');return term(name,parts.map(part=>build(part)));};return build(value);};return {name:id,parameters:['K','V'],inputs:Object.entries(mapTemplate.inputs).map(([name,value])=>({name,type:convert(value)})),output:convert(mapTemplate.output),async:false,mapTemplate:id.slice(8)};}
     let contract;
     try { contract = registry.resolve(id); } catch { diagnostic('UNKNOWN_SYMBOL', `Unknown callable ${name}`, at); }
     const syntax = typeName_ => {const located=parsed=>({kind:'NamedType',name:parsed.name,arguments:parsed.arguments.map(located),location:at.location});return located(parseControlType(typeName_));};
@@ -217,10 +220,10 @@ export function typecheckModule(ast, registry, { imports = new Map(), maxTypeNod
           const legacy=signature(name,node,false),attempt=new Map(substitutions);try{inputs.forEach((input,index)=>expectType(legacy.inputs[index].type,resolveType(input,attempt),node,attempt));expectType(legacy.output,resolveType(output,attempt),node,attempt);for(const [key,value]of attempt)substitutions.set(key,value);result=resolveType(output,substitutions);}catch(error){if(error.code!=='TYPE_MISMATCH')throw error;}
         }
         if (unresolved(result)) diagnostic('CANNOT_INFER', `Cannot infer type arguments for ${name}`, node);
-        if(target.arrayTemplate){
+        if(target.arrayTemplate||target.mapTemplate){
           if(inputs.some(input=>unresolved(resolveType(input,substitutions))))diagnostic('CANNOT_INFER','Typed array operation requires an element type',node);
           const pending=[...node.arguments];while(pending.length){const child=pending.pop();if(!child||typeof child!=='object')continue;if(types.has(child))types.set(child,resolveType(types.get(child),substitutions));const nested=calls.get(child);if(nested){nested.inputs=nested.inputs?.map(input=>resolveType(input,substitutions));if(nested.output)nested.output=resolveType(nested.output,substitutions);}for(const [key,value]of Object.entries(child))if(key!=='location'){if(Array.isArray(value))pending.push(...value);else if(value&&typeof value==='object')pending.push(value);}}
-          const first=resolveType(inputs[0],substitutions);if(first.name==='Array'&&first.arguments[0]?.name==='Number'&&coreIntrinsic(registry.items.get(target.name)??{}))target=signature(name,node,false);
+          const first=inputs[0]&&resolveType(inputs[0],substitutions);if(target.arrayTemplate&&first.name==='Array'&&first.arguments[0]?.name==='Number'&&coreIntrinsic(registry.items.get(target.name)??{}))target=signature(name,node,false);
         }
         if (target.async) result = term('Future', [result]);
         calls.set(node, { target, inputs: inputs.map(input => resolveType(input, substitutions)), output: result });

@@ -58,7 +58,7 @@ export function checkModuleEffects(checked, registry) {
   }
   const dependents = new Map([...entries.keys()].map(name => [name, new Set()]));
   for (const entry of entries.values()) for (const call of entry.calls) {
-    if(call.target.arrayTemplate)continue;
+    if(call.target.arrayTemplate||call.target.mapTemplate)continue;
     if (call.target.contract) {
       const policy = contractPolicy(call.target.contract);
       for (const field of ['effects', 'capabilities']) for (const value of policy[field]) entry[field].add(value);

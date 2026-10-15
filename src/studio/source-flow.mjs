@@ -1,3 +1,5 @@
+import {typedArrayContractId} from '../stdlib/typed-array-contracts.mjs';
+import {controlArrayElementType} from '../semantics/control-algebraic.mjs';
 import {recursiveFlowCalls,RECURSIVE_FLOW_CALL_PROFILE} from '../contracts/flow-library.mjs';
 import {validateControlIR,decodeControlLiteral} from '../ir/control.mjs';
 import {newFlowProject,serializeFlowProject} from './flow-project.mjs';
@@ -8,7 +10,7 @@ import {fail} from '../reference/errors.mjs';
 /** Project checked finite source into ordinary contracts. Never mutate the original source. */
 export function sourceContractFlow(ir,registry,{id='source',name=ir.entry,allowState=false}={}){
  validateControlIR(ir,registry);
- if(ir.profile!=='ems-control-finite/1')fail('SOURCE_FLOW_UNSUPPORTED','Этот исходник пока нельзя открыть обычным графом; исходный текст сохранён.');
+ if(!['ems-control-finite/1','ems-control-algebraic/1'].includes(ir.profile))fail('SOURCE_FLOW_UNSUPPORTED','Этот исходник пока нельзя открыть обычным графом; исходный текст сохранён.');
  const functions=new Map(ir.functions.map(fn=>[fn.id,fn]));
  function projectFunction(fn){
  if(fn.requirements.effects.length||fn.requirements.capabilities.length)fail('SOURCE_FLOW_UNSUPPORTED','Явная политика исходного контракта требует сохранения в текстовом представлении.');
@@ -22,13 +24,13 @@ export function sourceContractFlow(ir,registry,{id='source',name=ir.entry,allowS
  }
  const edge=(item,port,target)=>{if(target)graph.connections.push({from:{node:item.id,port},to:{node:target,port:'enter'}});};
  function call(uses,args,next){const item=node(uses,args);edge(item,'next',next({node:item.id}));return item.id;}
- function snapshot(ref,type,next){return call('std.value.'+type,{value:ref},next);}
+ function snapshot(ref,type,next){if(!type.includes('<'))return call('std.value.'+type,{value:ref},next);const cell=node('std.storage.Variable',{value:ref},{valueType:type,initial:defaultFlowValue(type)},'snapshot');edge(cell,'next',next({node:cell.id}));return cell.id;}
  function value(expr,scope,next){
   switch(expr.kind){
    case 'literal':return next({literal:decodeControlLiteral(expr.value,expr.type)});
    case 'array':{
     if(expr.elements.every(item=>item.kind==='literal'))return next({literal:expr.elements.map(item=>decodeControlLiteral(item.value,item.type))});
-    const append=(index,values)=>index===expr.elements.length?next(values):value(expr.elements[index],scope,ref=>call('std.array.append',{values,value:ref},result=>append(index+1,result)));return append(0,{literal:[]});
+    const append=(index,values)=>index===expr.elements.length?next(values):value(expr.elements[index],scope,ref=>call(expr.type==='NumberArray'?'std.array.append':typedArrayContractId('append',controlArrayElementType(expr.type)),{values,value:ref},result=>append(index+1,result)));return append(0,{literal:[]});
    }
    case 'local':{const local=scope.get(expr.name);if(!local)unsupported('local '+expr.name);return local.mutable?snapshot(local.ref,expr.type,next):next(local.ref);}
    case 'assign':{
@@ -70,10 +72,10 @@ export function sourceContractFlow(ir,registry,{id='source',name=ir.entry,allowS
    case 'while':{const begin=node('std.control.IterationBegin'),end=node('std.control.IterationEnd'),afterLoop=next();edge(end,'repeat',begin.id);edge(begin,'next',value(statement.condition,scope,ref=>{const fork=node('std.control.If',{condition:ref});edge(fork,'yes',block(statement.body,new Map(scope),end.id,{end:end.id,after:afterLoop}));edge(fork,'no',afterLoop);return fork.id;}));return begin.id;}
    case 'for':{
     graph.schemaVersion=SHARED_STORAGE_FLOW_VERSION;const afterLoop=next();
-    return value(statement.iterable,scope,ref=>snapshot(ref,'NumberArray',values=>call('std.array.length',{values},length=>{
+    return value(statement.iterable,scope,ref=>snapshot(ref,statement.iterable.type,values=>call(statement.iterable.type==='NumberArray'?'std.array.length':typedArrayContractId('length',controlArrayElementType(statement.iterable.type)),{values},length=>{
      const index=node('std.storage.Variable',{value:{literal:0}},{valueType:'Number',initial:0},'index'),begin=node('std.control.IterationBegin'),end=node('std.control.IterationEnd');edge(end,'repeat',begin.id);
      const increment=call('core.add',{a:{node:index.id},b:{literal:1}},ref=>{const write=node('std.storage.Variable',{value:ref},{valueType:'Number',storage:index.id},'index_write');edge(write,'next',end.id);return write.id;});
-     const body=call('std.array.at',{values,index:{node:index.id}},item=>{const bindings=new Map(scope);bindings.set(statement.binding,{ref:item,mutable:false});return block(statement.body,bindings,increment,{end:increment,after:afterLoop});});
+     const body=call(statement.iterable.type==='NumberArray'?'std.array.at':typedArrayContractId('at',controlArrayElementType(statement.iterable.type)),{values,index:{node:index.id}},item=>{const bindings=new Map(scope);bindings.set(statement.binding,{ref:item,mutable:false});return block(statement.body,bindings,increment,{end:increment,after:afterLoop});});
      edge(begin,'next',call('std.number.less',{a:{node:index.id},b:length},condition=>{const fork=node('std.control.If',{condition});edge(fork,'yes',body);edge(fork,'no',afterLoop);return fork.id;}));edge(index,'next',begin.id);return index.id;
     })));
    }
