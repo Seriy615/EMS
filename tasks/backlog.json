@@ -1205,14 +1205,14 @@
       ],
       "objective": "Usable touch authoring and installable offline Studio without HTTP Basic Auth",
       "deliverables": "docs/plans/MOBILE_PWA.md; mobile sheets/dock, touch drag/pinch, inline constants, service worker/manifest/icons, public nginx",
-      "acceptance": "AC-101; actual touch and offline reload tests, constant4 without inputs, full gates and anonymous public smoke",
+      "acceptance": "AC-101; actual touch and offline reload tests, constant4 without inputs, full gates and anonymous public smoke; common literal argument component for all ordinary contracts, no special number node kind",
       "status": "IN_PROGRESS",
       "priority": "P0",
       "ownerModelPolicy": [
         "GPT-6.1 Sol",
         "GPT-6 Luna"
       ],
-      "progress": "Baseline879/159/75 accepted AC-100. New880 Node/159 verify PASS; focused mobile/design/workbench Chromium11/11 PASS; generated PWA asset snapshot/security test1/1 PASS. Actual touch drop/pan/pinch, UI single sheet, offline reload graph5/UI1 and inline constant4/reject/persist verified. Exact clean gate and public anonymous deployment pending."
+      "progress": "AC-101 мобильный/PWA/public срез опубликован: checked/live `b43b207ac093087b42fca91c9555b4c2d5594233`, exact880 Node/159 verify/79 Chromium PASS. Полный ordinary public smoke без credentials PASS; отдельный public touch390px/drop, manifest, offline reload число4 без входов и UI1, single sheet PASS. Foreign6 nginx hashes/5 services неизменны; own active28MB/128MB, tasks32, strict/no-new-privileges/loopback. Логи `/tmp/ems-mobile-exact-deploy.log`, `/tmp/ems-mobile-public-smoke.log`, `/tmp/ems-mobile-public-features.log`; снимки `/tmp/ems-mobile-live-{constant,ui}.png`. Последующее уточнение владельца: никакой отдельной сущности числа/константы. Общий literalEditor для аргументов всех обычных контрактов на карточке и в свойствах реализован; дополнительный final gate этой коррекции ещё не завершён."
     }
   ]
 }
