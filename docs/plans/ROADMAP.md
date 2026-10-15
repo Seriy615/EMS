@@ -1,3 +1,5 @@
+Текущий P0 владельца: **EMS-037 / AC-100**, [единый граф и конструктор](WORKBENCH_REVISION.md); статус IN_PROGRESS до полного gate и public smoke. Глобальная цель `PROJECT_GOAL.md` сохраняется.
+
 # EMS Roadmap / engineering gates
 
 **Rule:** each milestone has evidence, tests and runnable demo. Do not declare whole EMS complete because the M0 prototype works. Work is iterative; future targets can change after ADR reviews.

@@ -26,7 +26,7 @@ function validateCanvas(canvas, graph) {
   if (!canvas.positions || typeof canvas.positions !== 'object' || Array.isArray(canvas.positions)) fail('INVALID_PROJECT', 'Invalid positions');
   for (const [id, position] of Object.entries(canvas.positions)) {
     fields(position, ['x', 'y']);
-    if (!ids.has(id) || ![position.x, position.y].every(Number.isFinite) || Math.abs(position.x) > 100000 || Math.abs(position.y) > 100000)
+    if (!ids.has(id) || ![position.x, position.y].every(Number.isFinite))
       fail('INVALID_PROJECT', 'Invalid node position');
   }
 }

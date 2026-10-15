@@ -1,3 +1,7 @@
+## AC-100 — EMS-037: единый граф и полноэкранный UI-конструктор (в работе)
+
+План и границы: `docs/plans/WORKBENCH_REVISION.md`. Отдельного алгоритма нет: структурные операции размещаются на основном холсте. UI использует полноразмерную область и перемещаемые скрываемые окна. Baseline872/159 PASS; новые879 Node/159 verify PASS, focused Chromium3/3 PASS. Полные браузерные проверки и публикация ещё не приняты. Следующий срез: полное редактирование управляющих связей и коллекций в графе.
+
 # Текущая итерация — EMS-060 tagged public ABI (AC-099)
 
 V5 value interface for Option/Result via existing semantic parser/validator/cloner, explicit atomic registry profile, frontend contract structural syntax, typed runtime/compiler call boundary and copy semantics. Legacy finite graph/IDL reject rich profile instead of fake lowering. Baseline866/158 PASS; focused28 Node/3 Chromium PASS, actual IDE archive after EMS shutdown and fresh CLI Node. Checked d4735adc47d761bd1228215c922990f9f1fe8cd9: exact872 Node/159 verify/72 Chromium PASS; dev опубликован, ordinary HTTPS live tagged package→external consumer runtime6/compiledNone -1/-0/wrong payload refusal и все prior smoke PASS; foreign6 hashes/5 services unchanged. Далее rich contract IDL/composite value schema and async ABI/maps; full language/native/ecosystem remain active. Intermittent public Worker startup from AC-098 cause still unproven, not claimed resolved.

@@ -176,3 +176,9 @@ Pure synchronous finite public ABI, exact package/contract identity, manifest+mo
 ## AC-095 — Sealed typed error ABI
 
 V2 conservative canonical user-type set, dependency union/reseal, immutable module description and SHA binding; altered errors/signature/package ID and schema downgrade rejected. Runtime/compiler caller catches String/Number/-0/Option tags; terminal STEP_LIMIT bypasses user catches. Actual standalone browser consumer7/3 without EMS paths. Legacy v1 explicit load supported but v2 re-seal cannot erase missing ABI. Full gate/public proof; future shared budgets/async/native/rich returns remain open.
+
+## AC-100 — единый граф и рабочее пространство конструктора
+
+Критерии и границы: [WORKBENCH_REVISION.md](../plans/WORKBENCH_REVISION.md).
+Проверки: `tests/browser/workbench-interactions.test.mjs`, `tests/flowchart.test.mjs`,
+`tests/ui-designer.test.mjs`, полный набор тестов и публикационный gate.

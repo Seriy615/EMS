@@ -11,6 +11,12 @@ export function handlerSourceGraph(editor,event){
  const workspace=editor.workspace,draft=workspace.sources[event];if(!draft)fail('SOURCE_REQUIRED','Handler has no editable source witness');
  const registry=createStateRegistry(editor.base,workspace.application.reactor.state);
  compileUIHandler(draft.source,draft.entry,workspace.application,editor.base);
+ return controlSourceGraph(draft.source,draft.entry,registry,{event});
+}
+
+/** Common located control projection for program and UI authoring. */
+export function controlSourceGraph(source,entry,registry,{event=null}={}){
+ const draft={source,entry};
  const checked=typecheckModule(parseEMSModule(draft.source,{maxTokens:20000,maxDepth:128}),registry);
  if(checked.collectionApplications.length)fail('UNSUPPORTED_VISUAL_PROFILE','Collection expansion requires a separate source projection');
  const nodes=[],edges=[],functions=new Map();

@@ -1,3 +1,4 @@
+import {validateUIStyles} from './styles.mjs';
 import {UIKernel,kinds,record,checkUIPolicy,createUIRuntimeLink} from './kernel.mjs';
 export {renderUITree} from './kernel.mjs';
 const clone=value=>structuredClone(value);
@@ -36,7 +37,7 @@ export function linkUIApplication(application,baseRegistry,{policy={},maxQueue=6
   fields(node,['id','kind','props','events','children'],'UI node');
   if(typeof node.id!=='string'||!/^[-A-Za-z0-9_.]+$/.test(node.id)||nodes.has(node.id))fail('INVALID_UI','Invalid or duplicate UI node ID');
   const spec=typeof node.kind==='string'&&Object.hasOwn(kinds,node.kind)?kinds[node.kind]:null;if(!spec)fail('UNSUPPORTED_UI','Unsupported semantic UI kind');nodes.set(node.id,node);
-  record(node.props,'properties');record(node.events,'events');
+  record(node.props,'properties');record(node.events,'events');validateUIStyles(node.props);
   if(!Array.isArray(node.children)||Object.keys(node.children).length!==node.children.length||(!spec.children&&node.children.length))fail('INVALID_UI','Invalid UI children');
   for(const required of spec.required??[])if(!Object.hasOwn(node.props,required))fail('INVALID_UI','Missing required UI property');
   for(const [name,ref]of Object.entries(node.props)){const type=spec.props[name];if(!type)fail('UNSUPPORTED_UI','Unsupported semantic property');assertValueType(bindingType(ref,slots),type,`ui.${node.id}.${name}`);}

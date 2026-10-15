@@ -1,3 +1,4 @@
+import {UI_STYLE_TYPES} from './styles.mjs';
 import {fail} from '../reference/errors.mjs';
 import {assertValueType} from '../reference/types.mjs';
 import {assertPolicyNames} from '../semantics/effects.mjs';
@@ -9,6 +10,7 @@ export const kinds=Object.freeze({
  textInput:{props:{value:'String',label:'String',disabled:'Boolean'},required:['value','label'],event:'change',value:'String'},
  checkbox:{props:{checked:'Boolean',label:'String',disabled:'Boolean'},required:['checked','label'],event:'change',value:'Boolean'}
 });
+for(const kind of Object.values(kinds))Object.assign(kind.props,UI_STYLE_TYPES);
 for(const spec of Object.values(kinds)){Object.freeze(spec.props);if(spec.required)Object.freeze(spec.required);Object.freeze(spec);}
 const clone=value=>structuredClone(value);
 export function record(value,where){if(!value||typeof value!=='object'||Array.isArray(value)||![Object.prototype,null].includes(Object.getPrototypeOf(value))||Reflect.ownKeys(value).some(key=>typeof key!=='string'))fail('INVALID_UI',`${where}: expected record`);}

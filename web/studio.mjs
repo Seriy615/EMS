@@ -1,3 +1,7 @@
+import {exportFlowchartSVG} from '/src/compiler/flowchart.mjs';
+import {lowerWorkspace} from '/src/studio/project.mjs';
+import {installStructuredGraph,STRUCTURES} from './structured-graph.mjs';
+import {installCanvasNavigation} from './canvas-navigation.mjs';
 import {buildAtomicPackage} from '/src/compiler/atomic-package.mjs';
 import {packageTAR} from '/src/compiler/archive.mjs';
 import {controlNodeEntries} from '/src/ir/control-addresses.mjs';
@@ -25,6 +29,7 @@ const standardMetadata=new Map(STANDARD_CONTRACTS.map(item=>[item.id,item]));
 const categories={number:'Числа',value:'Значения',logic:'Логика',comparison:'Сравнения',selection:'Выбор значения (входы вычислены)',text:'Текст',array:'Числовые массивы',collection:'Map / Filter',custom:'Составные контракты'};
 const el=(tag,text,style)=>{const node=document.createElement(tag);if(text!==undefined)node.textContent=text;if(style)node.className=style;return node;};
 const identity=()=> 'p'+crypto.randomUUID().replaceAll('-','');
+let guideOpen=false,structuredGraph=false,structuredEditor;
 let store,editor,selected=null,pending=null,failedNode=null,textMode=false,textProjectId=null,textStorage;
 const managedId=new URLSearchParams(location.search).get('project'),manager=managedId?new ProjectManager(localStorage):null;
 let activeExecution=null,pausedOperation=null,executionBreakpointIdentity=null;
@@ -66,7 +71,7 @@ async function executeStudio(action,draft,inputs,debug=false){
  showInspection(pause);document.querySelector('.debug-tools').open=true;pausedOperation=pause;$('output').textContent='Пауза. Нажмите «Шаг» или «Продолжить».';syncBreakpoints();$('debug-over').disabled=false;$('debug-out').disabled=false;$('debug-step').disabled=false;$('debug-continue').disabled=false;
  const where=pause.profile==='control'?pause.callStack.map(inspectionFunctionLabel).join(' → ')+' / '+pause.node+' ('+pause.kind+') → '+(pause.type??'statement'):pause.callPath.map(call=>call.graph+' / '+call.node+' → '+call.contract).join('\n')+'\nВходы: '+JSON.stringify(pause.inputs)+' → '+pause.output;
  $('debug-location').textContent=(pause.phase==='exit'?'Пауза после операции (выход вычислен)\n':'Пауза перед операцией (снимок программы)\n')+where+(pause.location?'\nСтрока '+pause.location.start.line+', столбец '+pause.location.start.column:'');
- if(action==='text'&&pause.location&&$('text-source').value===draft.source){$('text-source').focus();$('text-source').setSelectionRange(pause.location.start.offset,pause.location.end.offset);}
+ if(action==='text'&&pause.location&&$('text-source').value===draft.source){if(structuredGraph)structuredEditor.highlight(pause.location);else $('text-source').focus();$('text-source').setSelectionRange(pause.location.start.offset,pause.location.end.offset);}
  if(action==='graph'&&pause.profile==='control'&&inspectionState?.prepared.presentation){const item=inspectionState.prepared.presentation.get(pause.function),binding=item?.bindings.find(b=>b.kind==='node'&&(pause.node===b.declaration||pause.node.startsWith(b.declaration+'/')));if(item?.graph===editor.workspace.graph.id&&binding){selected=binding.displayName;render();}}
  const at=pause.callPath?.find(call=>call.graph===editor.workspace.graph.id);if(action==='graph'&&at){selected=at.node;render();}
  },onLog:record=>{if(['finished','failed'].includes(record.type))clearInspectionValues();if(debug&&['finished','failed'].includes(record.type))$('debug-location').textContent=(record.type==='finished'?'Отладка завершена':'Отладка остановлена: '+record.code)+'\n'+$('debug-location').textContent.replace(/Пауза (?:перед операцией \(снимок программы\)|после операции \(выход вычислен\))/,'Последняя операция (снимок программы)');const message=record.type==='started'?'Запуск '+record.action:record.type==='validated'?'Проект проверен: '+record.id:record.type==='finished'?'Выполнение завершено':'Выполнение остановлено: '+record.code;$('execution-log').textContent+=message+'\n';}});if(witness?.policy.originPolicy?.schemaVersion==='ems-origin-policy/2')job=await job;if(witness&&startedIdentity!==currentInspectionIdentity())job.cancel();activeExecution=job;$('stop').disabled=false;
@@ -80,7 +85,7 @@ function projectList(){
  $('projects').replaceChildren();const current=el('option',editor.project.name);current.value=editor.project.id;$('projects').append(current);
  try{for(const project of store?.list()??[])if(project.id!==editor.project.id){const option=el('option',project.name);option.value=project.id;$('projects').append(option);}}catch{}
 }
-function save(){try{if(!store)throw new Error('Хранилище недоступно. Экспортируйте проект.');store.save(editor.project);$('save-status').textContent='Сохранено локально';}catch(error){$('save-status').textContent='Не сохранено — доступен экспорт';report(error);}projectList();}
+function save(){try{if(!store)throw new Error('Хранилище недоступно. Экспортируйте проект.');store.save(editor.project);if(textMode&&textProjectId===editor.project.id)saveDraft();$('save-status').textContent='Сохранено локально';}catch(error){$('save-status').textContent='Не сохранено — доступен экспорт';report(error);}projectList();}
 function change(action,errorNode=null){try{action();$('error').textContent='';pending=null;failedNode=null;save();render();}catch(error){if(errorNode){failedNode=errorNode;selected=errorNode;render();}report(error);}}
 function position(id,index=0){return editor.workspace.canvas.positions[id]??(id==='output'?{x:760,y:100}:{x:330,y:50+index*150});}
 function view(){const v=editor.workspace.canvas.view;$('world').style.transform=`translate(${v.x}px,${v.y}px) scale(${v.scale})`;$('zoom').textContent=Math.round(v.scale*100)+'%';}
@@ -100,12 +105,13 @@ function card(id,title,kind,index){
  node.onclick=()=>{selected=id;inspector();document.querySelectorAll('.card').forEach(card=>card.classList.toggle('selected',card.dataset.card===id));};
  header.onpointerdown=event=>{
   if(event.button!==0)return;event.stopPropagation();header.setPointerCapture(event.pointerId);const start={x:event.clientX,y:event.clientY};let final={...at};
-  header.onpointermove=move=>{final={x:Math.max(10,at.x+(move.clientX-start.x)/editor.workspace.canvas.view.scale),y:Math.max(40,at.y+(move.clientY-start.y)/editor.workspace.canvas.view.scale)};node.style.left=final.x+'px';node.style.top=final.y+'px';wires();};
+  header.onpointermove=move=>{final={x:at.x+(move.clientX-start.x)/editor.workspace.canvas.view.scale,y:at.y+(move.clientY-start.y)/editor.workspace.canvas.view.scale};node.style.left=final.x+'px';node.style.top=final.y+'px';wires();};
   header.onpointerup=()=>{header.onpointermove=null;header.onpointerup=null;if(final.x!==at.x||final.y!==at.y)change(()=>editor.move(id,final.x,final.y));};
   header.onpointercancel=()=>{header.onpointermove=null;header.onpointerup=null;render();};
  };return node;
 }
 function wires(){
+ if(structuredGraph){structuredEditor?.wires();return;}
  $('wires').replaceChildren();const graph=editor.workspace.graph,connections=graph.nodes.flatMap(node=>Object.entries(node.args).map(([port,ref])=>({id:node.id,port,ref})));connections.push({id:'output',port:'return',ref:graph.returns});
  for(const connection of connections){
   if(Object.hasOwn(connection.ref,'literal'))continue;const sourceId=connection.ref.node??`input:${connection.ref.input}`;
@@ -117,9 +123,10 @@ function wires(){
 }
 function render(){
  if(textMode&&textProjectId!==editor.project.id)syncTextProject();
+ if(structuredGraph){view();structuredEditor?.render();return;}
  $('nodes').replaceChildren();const graph=editor.workspace.graph;
  syncBreakpoints();
- $('canvas-guide').hidden=graph.nodes.length>0||Object.keys(graph.inputs).length>0;
+ $('canvas-guide').hidden=!guideOpen;
  for(const [name,input]of Object.entries(graph.inputs)){const node=card(`input:${name}`,name,'Входные данные');node.append(el('div',json(editor.workspace.inputs[name]),'input-preview'));node.append(port({input:name},null,name,input.type));$('nodes').append(node);}
  graph.nodes.forEach((definition,index)=>{const contract=editor.registry.resolve(definition.uses),node=card(definition.id,titles[contract.id]??contract.id,contract.kind==='composite'?'Составной':contract.kind==='collection'?'Коллекция':'Операция',index);if(operationHints[contract.id])node.append(el('p',operationHints[contract.id],'operation-hint'));for(const [name,type]of Object.entries(contract.inputs))node.append(port(null,{id:definition.id,port:name},name,typeof type==='string'?type:type.type));node.append(port({node:definition.id},null,'Результат',contract.output));$('nodes').append(node);});
  const output=card('output','Ответ программы','выход');output.append(port(null,{id:'output',port:'return'},'Ответ',graph.output.type));$('nodes').append(output);
@@ -175,7 +182,7 @@ function inspector(){
  const remove=el('button','Удалить блок','danger');remove.onclick=()=>change(()=>{editor.remove(selected);selected=null;});panel.append(remove);
 }
 function catalog(){
- $('catalog').replaceChildren();const query=$('catalog-search').value.trim().toLowerCase(),category=$('catalog-category').value;let count=0;
+ $('catalog').replaceChildren();const heading=el('h3','Условия, циклы и массивы');$('catalog').append(heading);for(const [key,title]of STRUCTURES){const button=el('button',title);button.className='structure-contract';button.dataset.structure=key;button.draggable=false;button.onpointerdown=event=>{if(event.button!==0)return;const start={x:event.clientX,y:event.clientY};let moved=false;button.setPointerCapture(event.pointerId);const move=e=>{if(Math.hypot(e.clientX-start.x,e.clientY-start.y)>5)moved=true;};const finish=e=>{button.removeEventListener('pointermove',move);button.removeEventListener('pointerup',finish);button.removeEventListener('pointercancel',cancel);if(!moved)return;const target=document.elementFromPoint(e.clientX,e.clientY);if(!target||!$('viewport').contains(target))return;if(!structuredGraph)activateStructured();structuredEditor.drop({target,clientX:e.clientX,clientY:e.clientY},key);};const cancel=()=>{moved=false;finish(event);};button.addEventListener('pointermove',move);button.addEventListener('pointerup',finish);button.addEventListener('pointercancel',cancel);};button.onclick=e=>{if(e.detail===0){activateStructured();structuredEditor.drop(null,key);}};$('catalog').append(button);}const query=$('catalog-search').value.trim().toLowerCase(),category=$('catalog-category').value;let count=0;
  for(const [key,title] of Object.entries(categories)){
   if(category&&category!==key)continue;let heading=false;
   for(const contract of editor.registry.items.values()){
@@ -183,7 +190,7 @@ function catalog(){
    const signature=Object.entries(contract.inputs).map(([name,type])=>name+':'+(typeof type==='string'?type:type.type)).join(', ')+' → '+contract.output;
    if(group!==key||query&&!(contract.id+' '+(titles[contract.id]??'')+' '+signature).toLowerCase().includes(query))continue;
    if(!heading){$('catalog').append(el('h3',title));heading=true;}
-   const label=contract.kind==='collection'?contract.collection.operation.toUpperCase()+' · '+contract.id:(titles[contract.id]??contract.id);const row=el('div',undefined,'catalog-item'),button=el('button',label+(contract.kind==='composite'?' ▧':''));button.dataset.contract=contract.id;button.title=contract.id+' · '+signature+(metadata?' · '+metadata.summary:'');button.onclick=()=>change(()=>{selected=editor.addNode(contract.id);});row.append(button);
+   const label=contract.kind==='collection'?contract.collection.operation.toUpperCase()+' · '+contract.id:(titles[contract.id]??contract.id);const row=el('div',undefined,'catalog-item'),button=el('button',label+(contract.kind==='composite'?' ▧':''));button.dataset.contract=contract.id;button.draggable=true;button.ondragstart=event=>{event.dataTransfer.setData('application/x-ems-contract',contract.id);event.dataTransfer.effectAllowed='copy';};button.title=contract.id+' · '+signature+(metadata?' · '+metadata.summary:'');button.onclick=event=>{if(event.detail===0){if(structuredGraph)structuredEditor.drop(null,'contract:'+contract.id);else change(()=>{selected=editor.addNode(contract.id);});}};row.append(button);
    if(contract.kind==='composite'){
     const open=el('button','Открыть');open.dataset.openContract=contract.id;open.onclick=()=>change(()=>{editor.openContract(contract.id);selected=null;});
     const remove=el('button','Удалить');remove.dataset.deleteContract=contract.id;remove.onclick=()=>change(()=>{editor.removeComposite(contract.id);selected=null;});row.append(open,remove);
@@ -204,22 +211,28 @@ $('create-collection').onclick=()=>change(()=>editor.createCollection($('collect
 $('catalog-search').addEventListener('input',catalog);$('catalog-category').addEventListener('change',catalog);
 $('add-input').onsubmit=event=>{event.preventDefault();change(()=>{const name=$('input-name').value.trim();editor.addInput(name,$('input-type').value);selected=`input:${name}`;$('input-name').value='';});};
 $('project-name').onchange=()=>change(()=>editor.edit(project=>{project.name=$('project-name').value;}));$('save').onclick=save;
-$('new').onclick=()=>change(()=>{editor=new ProjectEditor(newProject(identity()));selected=null;$('output').textContent='Новый проект';});
-$('projects').onchange=()=>change(()=>{const project=store.load($('projects').value);if(!project)throw new Error('Проект не найден');editor=new ProjectEditor(project);selected=null;});
+$('new').onclick=()=>change(()=>{guideOpen=false;structuredGraph=false;textMode=false;document.body.classList.remove('structured-graph','text-mode');$('text-panel').hidden=true;editor=new ProjectEditor(newProject(identity()));selected=null;$('output').textContent='Новый проект';});
+$('projects').onchange=()=>{change(()=>{const project=store.load($('projects').value);if(!project)throw new Error('Проект не найден');structuredGraph=false;textMode=false;document.body.classList.remove('structured-graph','text-mode');$('text-panel').hidden=true;editor=new ProjectEditor(project);selected=null;});try{if(localStorage.getItem('ems.studio.graph-view.'+editor.project.id)==='structured'){syncTextProject();textMode=true;activateStructured();}}catch(error){sourceError(error);}};
 $('undo').onclick=()=>change(()=>editor.undo());$('redo').onclick=()=>change(()=>editor.redo());
 async function runGraph(debug=false){ $('run').disabled=true;$('error').textContent='';failedNode=null;render();const started=performance.now();try{$('output').textContent=json(await executeStudio('graph',undefined,undefined,debug));}catch(error){$('output').textContent='Выполнение остановлено';const at=error.failurePath?.find(call=>call.graph===editor.workspace.graph.id);if(at){selected=failedNode=at.node;render();}report(error);}finally{$('duration').textContent=(performance.now()-started).toFixed(1)+' мс';$('run').disabled=false;$('debug').disabled=false;} }
 $('run').onclick=()=>runGraph();$('debug').onclick=()=>textMode?runText(true):runGraph(true);
-function zoom(factor){change(()=>{const view=editor.workspace.canvas.view;editor.viewport({...view,scale:Math.min(2,Math.max(.25,view.scale*factor))});});}
-$('zoom-in').onclick=()=>zoom(1.2);$('zoom-out').onclick=()=>zoom(1/1.2);$('viewport').onwheel=event=>{event.preventDefault();zoom(event.deltaY<0?1.1:1/1.1);};
-$('viewport').onpointerdown=event=>{
- if(event.button!==0||event.target.closest('.card')||event.target.closest('.wire'))return;const viewport=$('viewport'),original={...editor.workspace.canvas.view},start={x:event.clientX,y:event.clientY};let next=original;viewport.setPointerCapture(event.pointerId);
- viewport.onpointermove=move=>{next={...original,x:original.x+move.clientX-start.x,y:original.y+move.clientY-start.y};$('world').style.transform=`translate(${next.x}px,${next.y}px) scale(${next.scale})`;};
- viewport.onpointerup=()=>{viewport.onpointermove=null;viewport.onpointerup=null;if(next!==original)change(()=>editor.viewport(next));};viewport.onpointercancel=()=>{viewport.onpointermove=null;viewport.onpointerup=null;view();};
-};
+const menu=$('canvas-menu');let menuPoint={x:0,y:0};
+const navigation=installCanvasNavigation({viewport:$('viewport'),getView:()=>editor.workspace.canvas.view,commit:camera=>change(()=>editor.viewport(camera)),preview:camera=>{$('world').style.transform=`translate(${camera.x}px,${camera.y}px) scale(${camera.scale})`;},context:{close:()=>{menu.hidden=true;},open:event=>{
+ const rect=$('viewport').getBoundingClientRect(),camera=editor.workspace.canvas.view;menuPoint={x:(event.clientX-rect.left-camera.x)/camera.scale,y:(event.clientY-rect.top-camera.y)/camera.scale};const card=event.target.closest('[data-card]');if(card&&!structuredGraph){selected=card.dataset.card;inspector();}
+ const select=$('context-operation');select.replaceChildren();for(const item of editor.registry.items.values()){const option=el('option',titles[item.id]??item.id);option.value=item.id;select.append(option);}
+ $('context-delete').disabled=structuredGraph||!editor.workspace.graph.nodes.some(n=>n.id===selected);menu.hidden=false;menu.style.left=Math.max(8,Math.min(event.clientX,innerWidth-menu.offsetWidth-8))+'px';menu.style.top=Math.max(8,Math.min(event.clientY,innerHeight-menu.offsetHeight-8))+'px';$('context-add').focus();
+}}});
+$('viewport').addEventListener('dragover',event=>{if([...event.dataTransfer.types].some(type=>['application/x-ems-contract','application/x-ems-structure'].includes(type))){event.preventDefault();event.dataTransfer.dropEffect='copy';}});
+$('viewport').addEventListener('drop',event=>{const key=event.dataTransfer.getData('application/x-ems-structure'),id=event.dataTransfer.getData('application/x-ems-contract');if(!key&&!id)return;event.preventDefault();if(key||structuredGraph){if(!structuredGraph)activateStructured();structuredEditor.drop(event,key||'contract:'+id);return;}const rect=$('viewport').getBoundingClientRect(),camera=editor.workspace.canvas.view;change(()=>{selected=editor.addNode(id);editor.move(selected,(event.clientX-rect.left-camera.x)/camera.scale,(event.clientY-rect.top-camera.y)/camera.scale);});});
+$('zoom-in').onclick=()=>navigation.zoom(1.2);$('zoom-out').onclick=()=>navigation.zoom(1/1.2);
+$('context-add').onclick=()=>{const id=$('context-operation').value;menu.hidden=true;if(structuredGraph){structuredEditor.drop(null,'contract:'+id);return;}change(()=>{selected=editor.addNode(id);editor.move(selected,menuPoint.x,menuPoint.y);});};
+$('context-fit').onclick=()=>{menu.hidden=true;fitGraph();};$('context-delete').onclick=()=>{menu.hidden=true;change(()=>{editor.remove(selected);selected=null;});};
+document.addEventListener('pointerdown',event=>{if(!menu.contains(event.target))menu.hidden=true;});document.addEventListener('keydown',event=>{if(event.key==='Escape')menu.hidden=true;});
+for(const pane of ['library','inspector','result']){const button=$('toggle-'+pane),key='ems.studio.pane.'+pane;let closed=false;try{closed=localStorage.getItem(key)==='closed';}catch{}const apply=()=>{document.body.classList.toggle('hide-'+pane,closed);button.setAttribute('aria-expanded',String(!closed));requestAnimationFrame(wires);};button.onclick=()=>{closed=!closed;try{localStorage.setItem(key,closed?'closed':'open');}catch{}apply();};apply();}
 document.addEventListener('keydown',event=>{if(event.key==='Escape'){pending=null;render();}if((event.ctrlKey||event.metaKey)&&event.key.toLowerCase()==='s'){event.preventDefault();save();}});
-$('export').onclick=()=>{try{const url=URL.createObjectURL(new Blob([editor.serialize()],{type:'application/json'})),anchor=el('a');anchor.href=url;anchor.download=editor.project.id+'.ems.json';anchor.click();setTimeout(()=>URL.revokeObjectURL(url),1000);}catch(error){report(error);}};
-$('import').onclick=()=> $('file').click();$('file').onchange=async()=>{const file=$('file').files[0];if(!file)return;try{if(file.size>4*1024*1024)throw new Error('Файл слишком большой');const source=await file.text();change(()=>{const project=parseProject(source);project.id=identity();project.name=project.name.slice(0,180)+' (импорт)';editor=new ProjectEditor(project);selected=null;});}catch(error){report(error);}$('file').value='';};
-$('examples').onchange=async()=>{
+$('export').onclick=()=>{try{const url=URL.createObjectURL(new Blob([textMode?JSON.stringify({schemaVersion:'ems-studio-workspace/1',project:JSON.parse(editor.serialize()),draft:textAPI.validateStoredDraft({schemaVersion:'ems-studio-text/1',...draft()})}):editor.serialize()],{type:'application/json'})),anchor=el('a');anchor.href=url;anchor.download=editor.project.id+'.ems.json';anchor.click();setTimeout(()=>URL.revokeObjectURL(url),1000);}catch(error){report(error);}};
+$('import').onclick=()=> $('file').click();$('file').onchange=async()=>{const file=$('file').files[0];if(!file)return;try{if(file.size>4*1024*1024)throw new Error('Файл слишком большой');const source=await file.text(),record=JSON.parse(source),wrapped=record?.schemaVersion==='ems-studio-workspace/1',project=parseProject(wrapped?JSON.stringify(record.project):source),candidate=new ProjectEditor(project),saved=wrapped?textAPI.validateStoredDraft(record.draft):null;if(saved)textAPI.compileTextDraft(saved,candidate);project.id=identity();project.name=project.name.slice(0,180)+' (импорт)';change(()=>{structuredGraph=false;textMode=false;document.body.classList.remove('structured-graph','text-mode');$('text-panel').hidden=true;editor=new ProjectEditor(project);selected=null;});if(saved){setDraft(saved);textProjectId=editor.project.id;saveDraft();textMode=true;activateStructured();}}catch(error){report(error);}$('file').value='';};
+$('examples').onchange=async()=>{guideOpen=false;structuredGraph=false;textMode=false;document.body.classList.remove('structured-graph','text-mode');$('text-panel').hidden=true;
  const choice=$('examples').value;if(!choice)return;try{const project=newProject(identity(),choice==='avg'?'Среднее пяти — арифметика':'Сумма двух чисел');
  if(choice==='map'){const saved=parseProject(await fetch('/examples/studio-map-double.ems.json').then(response=>response.text()));saved.id=project.id;Object.assign(project,saved);}
  else if(choice==='avg'){const saved=parseProject(await fetch('/examples/studio-avg5.ems.json').then(response=>response.text()));saved.id=project.id;Object.assign(project,saved);}
@@ -250,9 +263,13 @@ function setTextMode(next){
  try{if(next&&textProjectId!==editor.project.id)syncTextProject();
  textMode=next;document.body.classList.toggle('text-mode',textMode);$('text-panel').hidden=!textMode;$('text-mode').setAttribute('aria-pressed',String(textMode));$('graph-view').setAttribute('aria-pressed',String(!textMode));if(!textMode)render();else{syncBreakpoints();inspector();}}catch(error){sourceError(error);}
 }
-$('text-mode').onclick=()=>setTextMode(true);
-$('graph-view').onclick=()=>setTextMode(false);
-$('start-example').onclick=()=>{const examples=$('examples');examples.value='sum';examples.dispatchEvent(new Event('change'));};
+structuredEditor=installStructuredGraph({getDraft:draft,getEditor:()=>editor,compile:d=>textAPI.compileTextDraft(d,editor),commit:source=>{const next={...draft(),source,lowering:'auto'};textAPI.compileTextDraft(next,editor);setDraft(next);saveDraft();syncBreakpoints();},getCamera:()=>editor.workspace.canvas.view,report:sourceError,saveInputs:values=>{setDraft({...draft(),inputs:json(values)});saveDraft();syncBreakpoints();}});
+function activateStructured(){if(!textMode){generateDraft();textMode=true;}structuredGraph=true;document.body.classList.remove('text-mode');document.body.classList.add('structured-graph');$('text-panel').hidden=true;$('graph-view').setAttribute('aria-pressed','true');$('text-mode').setAttribute('aria-pressed','false');catalog();structuredEditor.render();try{localStorage.setItem('ems.studio.graph-view.'+editor.project.id,'structured');}catch{}}
+$('text-mode').onclick=()=>{structuredGraph=false;document.body.classList.remove('structured-graph');setTextMode(true);document.body.classList.add('text-mode');$('text-panel').hidden=false;$('text-mode').setAttribute('aria-pressed','true');$('graph-view').setAttribute('aria-pressed','false');};
+$('graph-view').onclick=()=>{if(textMode){try{const bundle=textAPI.compileTextDraft(draft(),editor);if(bundle.ir.schemaVersion==='ems-ir/2'){activateStructured();return;}}catch(error){sourceError(error);return;}}structuredGraph=false;document.body.classList.remove('structured-graph');setTextMode(false);};
+try{if(localStorage.getItem('ems.studio.graph-view.'+editor.project.id)==='structured'){syncTextProject();textMode=true;activateStructured();}}catch(error){sourceError(error);}
+$('show-guide').onclick=()=>{guideOpen=true;render();};$('close-guide').onclick=()=>{guideOpen=false;render();};
+$('start-example').onclick=()=>{guideOpen=false;const examples=$('examples');examples.value='sum';examples.dispatchEvent(new Event('change'));};
 $('text-from-graph').onclick=()=>{try{generateDraft();$('error').textContent='';}catch(error){sourceError(error);}};
 for(const id of ['text-source','text-entry','text-lowering','text-inputs'])$(id).addEventListener('input',()=>{saveDraft();syncBreakpoints();});
 const graphRun=$('run').onclick;
@@ -261,6 +278,8 @@ async function runText(debug=false){
  try{$('output').textContent=json(await executeStudio('text',draft(),JSON.parse($('text-inputs').value),debug));saveDraft();}catch(error){$('output').textContent='Выполнение остановлено';sourceError(error);}finally{$('duration').textContent=(performance.now()-started).toFixed(1)+' мс';$('run').disabled=false;}
 };
 $('run').onclick=()=>runText();
+function downloadFlowchart(){try{const bundle=textMode?textAPI.compileTextDraft(draft(),editor):{ir:lowerWorkspace(editor.workspace.graph,editor.registry),registry:editor.registry},svg=exportFlowchartSVG(bundle.ir,bundle.registry),url=URL.createObjectURL(new Blob([svg],{type:'image/svg+xml'})),link=el('a');link.href=url;link.download='ems-flowchart.svg';link.click();setTimeout(()=>URL.revokeObjectURL(url),1000);$('error').textContent='';}catch(error){sourceError(error);}}
+for(const id of ['flowchart-export','text-flowchart-export'])$(id).onclick=downloadFlowchart;
 $('text-ir').onclick=()=>{try{const bundle=textAPI.compileTextDraft(draft(),editor);$('output').textContent=JSON.stringify({ir:bundle.ir,provenance:bundle.provenance},null,2);$('error').textContent='';}catch(error){sourceError(error);}};
 $('text-to-graph').onclick=()=>{try{const value=textAPI.projectFromText(draft(),editor,JSON.parse($('text-inputs').value));editor.edit(project=>Object.assign(project,value.project));selected=null;textMode=false;document.body.classList.remove('text-mode');$('text-panel').hidden=true;$('text-mode').setAttribute('aria-pressed','false');$('graph-view').setAttribute('aria-pressed','true');save();render();$('error').textContent='';}catch(error){sourceError(error);}};
 const graphCompile=$('compile').onclick;
