@@ -1,3 +1,5 @@
+import {createWorkBudget,assertWorkBudget} from '../semantics/work-budget.mjs';
+import {controlBudgetOptions} from '../semantics/control-values.mjs';
 import {assertStateType,assertStateValue} from '../runtime/state-values.mjs';
 import {ReactorSession,replayEvents} from '../runtime/reactor.mjs';
 import {ReactorKernel,fields,declarations} from '../runtime/reactor-kernel.mjs';
@@ -13,7 +15,7 @@ import {parseControlType,controlTypeName,controlVariants,assertControlValueType,
 import {assertSignal,checkCancellation} from '../runtime/cancellation.mjs';
 
 /** Compile a linked finite reactor to an independent module with the same FIFO transaction kernel. */
-export function compileReactorJS(manifest,registry){
+export function compileReactorJS(manifest,registry,{dynamicInitialState=false}={}){
  // Validate the original semantic artifact before selecting any backend. No handler executes here.
  new ReactorSession(manifest,registry);
  for(const slot of manifest.state)for(const action of ['read','write'])
@@ -32,6 +34,6 @@ export function compileReactorJS(manifest,registry){
  }
  const literal=value=>typeof value==='number'&&Object.is(value,-0)?'-0':Array.isArray(value)?`[${value.map(literal).join(',')}]`:value!==null&&typeof value==='object'?'Object.fromEntries(['+Object.entries(value).map(([key,item])=>'['+JSON.stringify(key)+','+literal(item)+']').join(',')+'])':JSON.stringify(value);
  const state=`[${manifest.state.map(slot=>`{id:${JSON.stringify(slot.id)},type:${JSON.stringify(slot.type)},initial:${literal(slot.initial)}}`).join(',')}]`;
- const helpers=[EmsError,fail,typeOfValue,assertValueType,assertTypeName,fields,assertStateType,assertStateValue,declarations,assertPolicyNames,checkControlPolicy,parseControlType,controlTypeName,controlVariants,assertControlValueType,validateControlInputs,assertSignal,checkCancellation,ReactorKernel,replayEvents].map(fn=>fn.toString().replace(/^export /,'')).join('\n');
- return `// EMS independent finite reactor. Shared FIFO transaction kernel; no EMS imports.\nconst copy=value=>structuredClone(value),namePattern=/^[A-Za-z_][A-Za-z0-9_]*$/;\nconst PRIMITIVE_TYPES=new Set(['Number','NumberArray','Boolean','String']);\nconst assertPrimitiveValueType=(...args)=>assertValueType(...args);\n${helpers}\n${implementations.join('\n')}\nconst __handlers=[${handlers.join(',')}];\nexport function createSession(options={}){return new ReactorKernel(${state},__handlers,{...options,stateVersion:${JSON.stringify(manifest.schemaVersion)}});}\nexport function checkSessionPolicy(policy){for(const handler of __handlers)handler.checkPolicy(policy);}\nexport {replayEvents};\n`;
+ const helpers=[EmsError,fail,typeOfValue,assertValueType,assertTypeName,fields,assertStateType,assertStateValue,declarations,createWorkBudget,assertWorkBudget,controlBudgetOptions,assertPolicyNames,checkControlPolicy,parseControlType,controlTypeName,controlVariants,assertControlValueType,validateControlInputs,assertSignal,checkCancellation,ReactorKernel,replayEvents].map(fn=>fn.toString().replace(/^export /,'')).join('\n');
+ return `// EMS independent finite reactor. Shared FIFO transaction kernel; no EMS imports.\nconst copy=value=>structuredClone(value),namePattern=/^[A-Za-z_][A-Za-z0-9_]*$/;\nconst PRIMITIVE_TYPES=new Set(['Number','NumberArray','Boolean','String']);\nconst assertPrimitiveValueType=(...args)=>assertValueType(...args);\n${helpers}\n${implementations.join('\n')}\nconst __handlers=[${handlers.join(',')}];\nexport function createSession(options={}${dynamicInitialState?',initialState='+state:''}){${dynamicInitialState?"const limits=controlBudgetOptions(options),handlers=__handlers.map(handler=>({...handler,execute:(inputs,context)=>handler.execute(inputs,{...context,...limits})}));":''}return new ReactorKernel(${dynamicInitialState?'initialState':state},${dynamicInitialState?'handlers':'__handlers'},{...options,stateVersion:${JSON.stringify(manifest.schemaVersion)}});}\nexport function checkSessionPolicy(policy){for(const handler of __handlers)handler.checkPolicy(policy);}\nexport {replayEvents};\n`;
 }

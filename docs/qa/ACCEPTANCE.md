@@ -379,3 +379,19 @@ queued preview repaint, persist valid initial values and refuse invalid writes.
 Ordinary UI graph Map Worker7→9/reopen7 and downloaded independent package7→9
 are required. State persists between events of a session; durable disk state and
 contract instances/invariants are not claimed.
+
+## AC-125 — native static instances, transactional transitions and invariants
+
+[Нормативный профиль](../spec/CONTRACT_INSTANCES.md): common parser @definition,
++transition, ?predicate and #instance declarations lower to existing control IR2.
+Two counters keep independent identity; left1→0 commits,0→-1 rejects with terminal
+INVARIANT_VIOLATION and leaves right5. Creation checks all initial invariants before
+returning an owner. Nested calls share an outer local-memory transaction; body and
+predicates use the same work/depth ledger. Type/policy/fake and foreign-owner state
+bindings refuse before effects. Initial bounds, cancellation, recursion, aliases,
+generics and Map signed zero have Runtime/standalone differential evidence.
+Ordinary FlowProjectEditor API edits body/shared callee/prototype predicate; linker
+reapplies checks. Actual persistent Worker, offline new owner, deadline preserving
+last acknowledged state and browser-generated independent output are required.
+Full Studio native-module document/routing, first-class/dynamic instance values,
+UI instance event binding and outgoing language events are not claimed by this gate.

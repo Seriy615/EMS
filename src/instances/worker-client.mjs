@@ -1,0 +1,14 @@
+import {assertSignal} from '../runtime/cancellation.mjs';
+import {fail} from '../reference/errors.mjs';
+/** Each worker owns a module lifetime; cancellation/timeout preserves only the last acknowledged snapshot. */
+export async function createInstanceWorker(module,{timeout=5000,initTimeout=5000,workerFactory=()=>new Worker('/web/instance-worker.mjs',{type:'module'}),policy={},maxSteps=100000,maxDepth=64,maxQueue=64,recordTrace=false,signal}={}){
+ assertSignal(signal);if(signal?.aborted)fail('CANCELLED','Instance creation cancelled');
+ if(!Number.isSafeInteger(timeout)||timeout<1||timeout>60000||!Number.isSafeInteger(initTimeout)||initTimeout<1||initTimeout>60000||typeof workerFactory!=='function')fail('INVALID_OPTION','Invalid instance worker deadline/factory');
+ const worker=workerFactory(),pending=new Map();if(!worker||typeof worker.postMessage!=='function'||typeof worker.terminate!=='function')fail('INVALID_OPTION','Invalid instance worker');let next=0,closed=false,snapshot,trace=[];
+ function stop(code='SESSION_CLOSED'){if(closed)return;closed=true;signal?.removeEventListener('abort',abort);for(const item of pending.values()){clearTimeout(item.timer);item.reject(Object.assign(Error('Instance worker stopped'),{code}));}pending.clear();worker.terminate();}
+ const abort=()=>stop('CANCELLED');signal?.addEventListener('abort',abort,{once:true});
+ function request(data,duration=timeout){if(closed)return Promise.reject(Object.assign(Error('Instance worker is closed'),{code:'SESSION_CLOSED'}));if(pending.size>=64)return Promise.reject(Object.assign(Error('Instance worker queue is full'),{code:'QUEUE_FULL'}));return new Promise((resolve,reject)=>{const id=next++,timer=setTimeout(()=>stop('EXECUTION_TIMEOUT'),duration);pending.set(id,{resolve,reject,timer});try{worker.postMessage({id,...data});}catch(error){clearTimeout(timer);pending.delete(id);reject(error);}});}
+ worker.onerror=()=>stop('EXECUTION_WORKER');worker.onmessage=({data})=>{const item=pending.get(data?.id);if(!item)return;clearTimeout(item.timer);pending.delete(data.id);if(typeof data.ok!=='boolean'||!data.ok&&typeof data.error?.code!=='string'){item.reject(Object.assign(Error('Invalid instance worker reply'),{code:'EXECUTION_WORKER'}));stop('EXECUTION_WORKER');return;}if(data.snapshot!==undefined){snapshot=structuredClone(data.snapshot);trace=structuredClone(data.trace??[]);}data.ok?item.resolve(data.value):item.reject(Object.assign(Error(data.error.message),data.error));};
+ try{await request({action:'create',module,options:{policy,maxSteps,maxDepth,maxQueue,recordTrace}},initTimeout);}catch(error){stop();throw error;}
+ return {snapshot:()=>structuredClone(snapshot),trace:()=>structuredClone(trace),dispatch:(instance,transition,inputs={})=>request({action:'dispatch',instance,transition,inputs}),close:()=>stop(),cancel:()=>stop('CANCELLED')};
+}

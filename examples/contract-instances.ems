@@ -1,0 +1,13 @@
+@Counter {
+    value: Number = 1;
+
+    +Change(delta: Number) -> Number {
+        value = value + delta;
+        return value;
+    }
+
+    ? value >= 0;
+}
+
+@Counter #left;
+@Counter #right { value: 5; }

@@ -66,7 +66,7 @@ export function tokenizeEMS(source, { maxSourceLength = 1_000_000, maxTokens = 1
     if (['::', '->', '=>', '==', '!=', '<=', '>=', '&&', '||'].includes(pair)) {
       advance(); advance(); emit('symbol', pair, start); continue;
     }
-    if ('{}()[],:;.@+-*/%!=<>'.includes(ch)) { advance(); emit('symbol', ch, start); continue; }
+    if ('{}()[],:;.@#?+-*/%!=<>'.includes(ch)) { advance(); emit('symbol', ch, start); continue; }
     error(`Unexpected character ${JSON.stringify(ch)}`, start);
   }
   tokens.push({ kind: 'eof', value: '', location: { start: point(), end: point() } });
@@ -97,7 +97,7 @@ class Parser {
   qualified() { let value = this.identifier(); while (this.take('.') || this.take('::')) value += '.' + this.identifier(); return value; }
   generics() {
     const params = [];
-    if (this.take('<')) { do { params.push(this.identifier()); } while (this.take(',')); this.expect('>'); }
+    if (this.take('<')) { do { params.push(this.identifier()); } while (this.take(',')); this.typeClose(); }
     return params;
   }
   typeClose() {
@@ -145,6 +145,26 @@ class Parser {
     else if (this.take('contract') || this.take('@')) category = 'ContractDeclaration';
     else this.error('Expected @, contract, fn or type declaration');
     const name = this.qualified(), typeParameters = this.generics(), parameters = [];
+    if(category==='ContractDeclaration'&&this.take('#')){
+      if(external||async||typeParameters.length)this.error('Instance declarations cannot be extern, async or generic');
+      const instance=this.identifier(),initials=[];
+      if(this.take('{')){while(!this.is('}')){const at=this.token,field=this.identifier();this.expect(':');const value=this.expression();this.expect(';');initials.push(this.node('InstanceInitial',at,{name:field,value}));}this.expect('}');this.take(';');}else this.terminator();
+      return this.node('ContractInstanceDeclaration',start,{name:instance,contract:name,initials,exported});
+    }
+    if(category==='ContractDeclaration'&&this.is('{')){
+      if(external||async||typeParameters.length)this.error('Stateful contracts cannot be extern, async or generic in this profile');
+      this.expect('{');const fields=[],transitions=[],invariants=[];
+      while(!this.is('}')){
+        const at=this.token;
+        if(this.take('?')){const value=this.expression();this.expect(';');invariants.push(this.node('InvariantDeclaration',at,{value}));}
+        else if(this.take('+')){
+          const name=this.identifier(),parameters=[];this.expect('(');
+          if(!this.is(')'))do{const at=this.token,name=this.identifier();this.expect(':');parameters.push(this.node('Parameter',at,{name,type:this.type()}));}while(this.take(','));
+          this.expect(')');this.expect('->');const output=this.type(),body=this.block();transitions.push(this.node('TransitionDeclaration',at,{name,parameters,output,body}));
+        }else{const name=this.identifier();this.expect(':');const type=this.type();this.expect('=');const value=this.expression();this.expect(';');fields.push(this.node('StateFieldDeclaration',at,{name,type,value}));}
+      }
+      this.expect('}');return this.node('StatefulContractDeclaration',start,{name,fields,transitions,invariants,exported});
+    }
     this.expect('(');
     if (!this.is(')')) do {
       const at = this.token, name = this.identifier(); this.expect(':');

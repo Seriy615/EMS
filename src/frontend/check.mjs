@@ -28,6 +28,7 @@ function expectType(expected, actual, node, substitutions = new Map()) {
 /** Check the located EMS AST; imports resolve only through explicitly supplied namespaces. */
 export function typecheckModule(ast, registry, { imports = new Map(), maxTypeNodes = 20_000, maxExpressions = 100_000 } = {}) {
   if (ast?.schemaVersion !== 'ems-ast/1') fail('AST_VERSION', 'Expected ems-ast/1');
+  if(ast.declarations.some(node=>['StatefulContractDeclaration','ContractInstanceDeclaration'].includes(node.kind)))fail('INSTANCE_PROFILE_REQUIRED','Stateful declarations require the contract instance module linker');
   const expansion=expandCollectionApplications(ast,registry,{imports});ast=expansion.ast;const collectionHelpers=new Map(expansion.applications.map(item=>[item.helper,item]));
   const aliases = new Map(), declarations = new Map(), signatures = new Map(), namespaces = new Map();
   const types = new Map(), calls = new Map(), catchTypes = new Map();

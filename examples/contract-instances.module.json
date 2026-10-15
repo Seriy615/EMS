@@ -1,0 +1,342 @@
+{
+  "schemaVersion": "ems-instance-module/1",
+  "id": "application",
+  "version": "1.0.0",
+  "definitions": [
+    {
+      "id": "Counter",
+      "version": "1.0.0",
+      "fields": [
+        {
+          "name": "value",
+          "type": "Number",
+          "initializer": {
+            "entry": "ems_initial_0_0",
+            "functions": [
+              {
+                "body": [
+                  {
+                    "kind": "return",
+                    "value": {
+                      "kind": "literal",
+                      "type": "Number",
+                      "value": 1
+                    }
+                  }
+                ],
+                "id": "ems_initial_0_0",
+                "inputs": [],
+                "output": {
+                  "type": "Number"
+                },
+                "policy": {
+                  "capabilities": [],
+                  "effects": []
+                },
+                "requirements": {
+                  "capabilities": [],
+                  "effects": []
+                }
+              }
+            ],
+            "id": "ems_initial_0_0",
+            "profile": "ems-control-finite/1",
+            "schemaVersion": "ems-ir/2",
+            "version": "0.1.0"
+          }
+        }
+      ],
+      "invariants": [
+        {
+          "id": "invariant_0",
+          "program": {
+            "entry": "ems_invariant_0_0",
+            "functions": [
+              {
+                "body": [
+                  {
+                    "kind": "return",
+                    "value": {
+                      "kind": "binary",
+                      "left": {
+                        "kind": "local",
+                        "name": "value",
+                        "type": "Number"
+                      },
+                      "operator": ">=",
+                      "right": {
+                        "kind": "literal",
+                        "type": "Number",
+                        "value": 0
+                      },
+                      "type": "Boolean"
+                    }
+                  }
+                ],
+                "id": "ems_invariant_0_0",
+                "inputs": [
+                  {
+                    "name": "value",
+                    "type": "Number"
+                  }
+                ],
+                "output": {
+                  "type": "Boolean"
+                },
+                "policy": {
+                  "capabilities": [],
+                  "effects": []
+                },
+                "requirements": {
+                  "capabilities": [],
+                  "effects": []
+                }
+              }
+            ],
+            "id": "ems_invariant_0_0",
+            "profile": "ems-control-finite/1",
+            "schemaVersion": "ems-ir/2",
+            "version": "0.1.0"
+          }
+        }
+      ],
+      "transitions": [
+        {
+          "name": "Change",
+          "inputs": [
+            {
+              "name": "delta",
+              "type": "Number"
+            }
+          ],
+          "output": {
+            "type": "Number"
+          }
+        }
+      ]
+    }
+  ],
+  "instances": [
+    {
+      "id": "left",
+      "contract": "Counter",
+      "version": "1.0.0",
+      "initials": [],
+      "transitions": [
+        {
+          "name": "Change",
+          "entry": "ems_body_i6c656674_t4368616e6765"
+        }
+      ]
+    },
+    {
+      "id": "right",
+      "contract": "Counter",
+      "version": "1.0.0",
+      "initials": [
+        {
+          "field": "value",
+          "program": {
+            "entry": "ems_override_7269676874_76616c7565",
+            "functions": [
+              {
+                "body": [
+                  {
+                    "kind": "return",
+                    "value": {
+                      "kind": "literal",
+                      "type": "Number",
+                      "value": 5
+                    }
+                  }
+                ],
+                "id": "ems_override_7269676874_76616c7565",
+                "inputs": [],
+                "output": {
+                  "type": "Number"
+                },
+                "policy": {
+                  "capabilities": [],
+                  "effects": []
+                },
+                "requirements": {
+                  "capabilities": [],
+                  "effects": []
+                }
+              }
+            ],
+            "id": "ems_override_7269676874_76616c7565",
+            "profile": "ems-control-finite/1",
+            "schemaVersion": "ems-ir/2",
+            "version": "0.1.0"
+          }
+        }
+      ],
+      "transitions": [
+        {
+          "name": "Change",
+          "entry": "ems_body_i7269676874_t4368616e6765"
+        }
+      ]
+    }
+  ],
+  "program": {
+    "entry": "ems_body_i6c656674_t4368616e6765",
+    "functions": [
+      {
+        "body": [
+          {
+            "kind": "expression",
+            "value": {
+              "arguments": [
+                {
+                  "kind": "binary",
+                  "left": {
+                    "arguments": [],
+                    "kind": "call",
+                    "target": {
+                      "id": "state.ems_i6c656674_f76616c7565.read",
+                      "kind": "contract",
+                      "version": "1.0.0"
+                    },
+                    "type": "Number"
+                  },
+                  "operator": "+",
+                  "right": {
+                    "kind": "local",
+                    "name": "delta",
+                    "type": "Number"
+                  },
+                  "type": "Number"
+                }
+              ],
+              "kind": "call",
+              "target": {
+                "id": "state.ems_i6c656674_f76616c7565.write",
+                "kind": "contract",
+                "version": "1.0.0"
+              },
+              "type": "Number"
+            }
+          },
+          {
+            "kind": "return",
+            "value": {
+              "arguments": [],
+              "kind": "call",
+              "target": {
+                "id": "state.ems_i6c656674_f76616c7565.read",
+                "kind": "contract",
+                "version": "1.0.0"
+              },
+              "type": "Number"
+            }
+          }
+        ],
+        "id": "ems_body_i6c656674_t4368616e6765",
+        "inputs": [
+          {
+            "name": "delta",
+            "type": "Number"
+          }
+        ],
+        "output": {
+          "type": "Number"
+        },
+        "policy": {
+          "capabilities": [
+            "state.read",
+            "state.write"
+          ],
+          "effects": [
+            "state.read",
+            "state.write"
+          ]
+        },
+        "requirements": {
+          "capabilities": [],
+          "effects": []
+        }
+      },
+      {
+        "body": [
+          {
+            "kind": "expression",
+            "value": {
+              "arguments": [
+                {
+                  "kind": "binary",
+                  "left": {
+                    "arguments": [],
+                    "kind": "call",
+                    "target": {
+                      "id": "state.ems_i7269676874_f76616c7565.read",
+                      "kind": "contract",
+                      "version": "1.0.0"
+                    },
+                    "type": "Number"
+                  },
+                  "operator": "+",
+                  "right": {
+                    "kind": "local",
+                    "name": "delta",
+                    "type": "Number"
+                  },
+                  "type": "Number"
+                }
+              ],
+              "kind": "call",
+              "target": {
+                "id": "state.ems_i7269676874_f76616c7565.write",
+                "kind": "contract",
+                "version": "1.0.0"
+              },
+              "type": "Number"
+            }
+          },
+          {
+            "kind": "return",
+            "value": {
+              "arguments": [],
+              "kind": "call",
+              "target": {
+                "id": "state.ems_i7269676874_f76616c7565.read",
+                "kind": "contract",
+                "version": "1.0.0"
+              },
+              "type": "Number"
+            }
+          }
+        ],
+        "id": "ems_body_i7269676874_t4368616e6765",
+        "inputs": [
+          {
+            "name": "delta",
+            "type": "Number"
+          }
+        ],
+        "output": {
+          "type": "Number"
+        },
+        "policy": {
+          "capabilities": [
+            "state.read",
+            "state.write"
+          ],
+          "effects": [
+            "state.read",
+            "state.write"
+          ]
+        },
+        "requirements": {
+          "capabilities": [],
+          "effects": []
+        }
+      }
+    ],
+    "id": "ems_collect",
+    "profile": "ems-control-finite/1",
+    "schemaVersion": "ems-ir/2",
+    "version": "0.1.0"
+  }
+}
