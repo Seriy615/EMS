@@ -52,7 +52,7 @@ Storage output разрывает data dependency cycle; pure data cycles зап
 Закрытая версия schema, уникальные имена/версии, типы портов и литералов, наличие
 ссылок, pure contracts/effects/capabilities, data cycles, activation ports,
 complete wiring и dominators. Текущий предел256 узлов/1024 activation links.
-Профиль принимает Number/Boolean/String/NumberArray, trusted pure атомы и pure
+Базовый профиль принимает Number/Boolean/String/NumberArray, trusted pure атомы и pure
 Registry composites. Stateful host/API/Future/Stream/Resource не включаются
 молчаливо; недоступная реализация явно отвергается.
 
@@ -102,6 +102,6 @@ EMS и обратное восстановление arbitrary flow из тек�
 «Код сборки» — явно readonly backend view. Graph и textual compiler используют
 общий IR, но весь G-02 не объявляется принятым.
 
-Нет интеграции новых flow documents как persistent UI handlers, межфайлового linker,
+Интеграция persistent UI handlers реализована отдельным [AC-112 профилем](UI_CONTRACT_FLOW.md). Открыты межфайловый linker,
 вложенного раскрытия composites в новом canvas, parallel tokens, generic arrays/maps,
 native targets или полного debugger. Общая цель, EMS-038 и эти направления открыты.

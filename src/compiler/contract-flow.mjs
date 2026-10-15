@@ -9,8 +9,8 @@ const quote=value=>Object.is(value,-0)?'-0':Array.isArray(value)?'['+value.map(q
 const type=value=>value==='NumberArray'?'Number[]':value;
 
 /** Lower explicit contract activations to the existing checked IR2 state machine. No second evaluator. */
-export function compileContractFlow(graph,registry){
- const checked=validateContractFlow(graph,registry),nodes=[...checked.nodes.values()].sort((a,b)=>a.id<b.id?-1:a.id>b.id?1:0),numbers=new Map(nodes.map((node,index)=>[node.id,index]));
+export function compileContractFlow(graph,registry,options={}){
+ const checked=validateContractFlow(graph,registry,{...options,complete:true}),nodes=[...checked.nodes.values()].sort((a,b)=>a.id<b.id?-1:a.id>b.id?1:0),numbers=new Map(nodes.map((node,index)=>[node.id,index]));
  let prefix='__ems_flow_';while(Object.keys(graph.inputs).some(name=>name.startsWith(prefix)))prefix+='_';
  const activeNodes=nodes.filter(node=>checked.reachable.has(node.id)),liveCells=new Set(activeNodes.flatMap(node=>[node.id,...Object.values(node.args).filter(ref=>Object.hasOwn(ref,'node')).map(ref=>ref.node)]));
  const pc=prefix+'pc',values=new Map(activeNodes.filter(node=>checked.interfaces.get(node.id).output&&node.uses!=='std.storage.Variable').map(node=>[node.id,prefix+'value_'+numbers.get(node.id)])),cells=new Map(nodes.filter(node=>node.uses==='std.storage.Variable'&&liveCells.has(node.id)).map(node=>[node.id,prefix+'cell_'+numbers.get(node.id)])),lines=['@'+graph.id.replaceAll('.','::')+'('+Object.entries(graph.inputs).sort(([a],[b])=>a<b?-1:a>b?1:0).map(([name,spec])=>name+':'+type(spec.type)).join(',')+')->'+type(graph.output.type)+' {'];

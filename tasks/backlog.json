@@ -1296,7 +1296,7 @@
         "EMS-037"
       ],
       "objective": "Execute actual contract edges with ordinary branch/storage/iteration markers through shared IR, without lexical region relocation",
-      "deliverables": "docs/spec/CONTRACT_FLOW.md; semantic graph validator/compiler, standalone target, project model, ordinary canvas and CLI",
+      "deliverables": "docs/spec/CONTRACT_FLOW.md; semantic graph validator/compiler, standalone target, project model, ordinary canvas and CLI; docs/spec/UI_CONTRACT_FLOW.md, kernel state profile and ordinary UI handler editing",
       "acceptance": "AC-111 reference slice: marker inputs/outputs have no data; comparison feeds Boolean fork; explicit feedback runtime3/standalone3; type/cycle/availability/budget failures; browser wire/reopen/delete/mobile and project compatibility",
       "status": "IN_PROGRESS",
       "priority": "P0",
@@ -1304,7 +1304,7 @@
         "GPT-6.1 Sol",
         "GPT-6 Luna"
       ],
-      "progress": "Reference slice implemented: value-less Begin/End with arbitrary activation targets, independent Boolean fork, writable storage, actual feedback lowered to shared IR2, ordinary canvas and standalone/SVG/CLI. Baseline923 Node/159 verify; final939/939 Node and162/162 verify PASS. Chromium explicit-flow2 plus manager2 PASS after stale-execution/mobile overflow regressions. Final workspace compatibility2/2 and PWA manifest1/1 PASS; CLI runtime3/build/SVG PASS. Published87089d1: public HTTPS200/Worker3, downloaded standalone3 in fresh Node process, real SVG feedback; dedicated service active, foreign6 hashes unchanged. See STATUS evidence. Full browser gate not rerun per owner immediate/manual instruction. Arbitrary old AST migration, source editing/reverse projection and flow UI handler linkage remain open."
+      "progress": "Reference slice implemented: value-less Begin/End with arbitrary activation targets, independent Boolean fork, writable storage, actual feedback lowered to shared IR2, ordinary canvas and standalone/SVG/CLI. Baseline923 Node/159 verify; final939/939 Node and162/162 verify PASS. Chromium explicit-flow2 plus manager2 PASS after stale-execution/mobile overflow regressions. Final workspace compatibility2/2 and PWA manifest1/1 PASS; CLI runtime3/build/SVG PASS. Published87089d1: public HTTPS200/Worker3, downloaded standalone3 in fresh Node process, real SVG feedback; dedicated service active, foreign6 hashes unchanged. See STATUS evidence. Full browser gate not rerun per owner immediate/manual instruction. Arbitrary old AST migration, source editing/reverse projection and flow UI handler linkage remain open. AC-112 implements transactional UI flow handlers, v3 exact graph/source/IR witness, incomplete local draft and checked apply, shared canvas, actual UI Worker and standalone UI. Initial7 new Node plus15 authoring/project compatibility PASS; first4 explicit/UI browser PASS. Final946 Node/162 verify PASS; shared UI/flow/files8 Chromium and mobile/PWA/UI9 PASS; finalUI2 PASS. Publication pending per owner immediate/manual instruction; full browser gate not run. Text/reverse projection, cross-file linker and generic collections open."
     }
   ]
 }

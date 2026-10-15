@@ -1,3 +1,5 @@
+2026-10-15: новые explicit flow handlers используют [AC-112](../spec/UI_CONTRACT_FLOW.md), тот же обычный canvas `/web/flow.html`, kernel state contracts и UI project v3. Существующие text handlers сохраняют описанный ниже совместимый editor.
+
 Актуализация 2026-10-15: [AC-108/109](ORDINARY_CONTRACT_PORTS.md) заменяет прежний UX записи переменных и отдельных портов исполнения. Исторические критерии ниже сохраняются для трассировки.
 
 # Обычный контрактный граф внутри UI — AC-107

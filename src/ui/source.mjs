@@ -1,3 +1,4 @@
+import {compileUIFlow} from './flow.mjs';
 import {fail} from '../reference/errors.mjs';
 import {createStateRegistry} from '../runtime/reactor.mjs';
 import {parseEMSModule} from '../frontend/index.mjs';
@@ -15,9 +16,10 @@ export function validateUISources(application,base,sources){
  if(!sources||typeof sources!=='object'||Array.isArray(sources)||![Object.prototype,null].includes(Object.getPrototypeOf(sources))||Reflect.ownKeys(sources).length!==Object.keys(sources).length||Object.keys(sources).length>100)fail('INVALID_UI_PROJECT','Invalid handler sources');
  const handlers=new Map(application.reactor.handlers.map(handler=>[handler.event,handler.program])),registry=createStateRegistry(base,application.reactor.state);
  for(const [event,draft]of Object.entries(sources)){
-  if(!handlers.has(event)||!draft||typeof draft!=='object'||Array.isArray(draft)||Reflect.ownKeys(draft).length!==2||!Object.hasOwn(draft,'source')||!Object.hasOwn(draft,'entry'))fail('INVALID_UI_PROJECT','Source must identify a real handler');
+  if(!handlers.has(event)||!draft||typeof draft!=='object'||Array.isArray(draft)||Reflect.ownKeys(draft).length!==(Object.hasOwn(draft,'flow')?3:2)||!Object.hasOwn(draft,'source')||!Object.hasOwn(draft,'entry'))fail('INVALID_UI_PROJECT','Source must identify a real handler');
   const compiled=compileUIHandler(draft.source,draft.entry,application,base);
+  if(Object.hasOwn(draft,'flow')){const flow=compileUIFlow(draft.flow,application,base);if(flow.source!==draft.source||flow.project.graph.id!==draft.entry)fail('FLOW_SOURCE_MISMATCH','Handler graph disagrees with source witness',{event});}
   if(serializeIR(compiled.ir,compiled.registry)!==serializeIR(handlers.get(event),registry))fail('SOURCE_IR_MISMATCH','Handler source disagrees with saved semantic IR',{event});
  }
- return Object.fromEntries(Object.keys(sources).sort().map(event=>[event,{source:sources[event].source,entry:sources[event].entry}]));
+ return Object.fromEntries(Object.keys(sources).sort().map(event=>[event,{source:sources[event].source,entry:sources[event].entry,...(Object.hasOwn(sources[event],'flow')?{flow:sources[event].flow}:{})}]));
 }

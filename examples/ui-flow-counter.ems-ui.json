@@ -1,0 +1,513 @@
+{
+  "schemaVersion": "ems-ui-project/3",
+  "application": {
+    "schemaVersion": "ems-ui-app/1",
+    "id": "demo.ui.counter",
+    "version": "1.0.0",
+    "reactor": {
+      "schemaVersion": "ems-reactor/1",
+      "id": "demo.ui.counter",
+      "version": "1.0.0",
+      "state": [
+        {
+          "id": "count",
+          "type": "Number",
+          "initial": {
+            "type": "Number",
+            "value": 0
+          }
+        }
+      ],
+      "handlers": [
+        {
+          "event": "change",
+          "program": {
+            "entry": "app.Counter",
+            "functions": [
+              {
+                "body": [
+                  {
+                    "kind": "let",
+                    "mutable": true,
+                    "name": "__ems_flow_value_0",
+                    "type": "Number",
+                    "value": {
+                      "kind": "literal",
+                      "type": "Number",
+                      "value": 0
+                    }
+                  },
+                  {
+                    "kind": "let",
+                    "mutable": true,
+                    "name": "__ems_flow_value_1",
+                    "type": "Number",
+                    "value": {
+                      "kind": "literal",
+                      "type": "Number",
+                      "value": 0
+                    }
+                  },
+                  {
+                    "kind": "let",
+                    "mutable": true,
+                    "name": "__ems_flow_value_3",
+                    "type": "Number",
+                    "value": {
+                      "kind": "literal",
+                      "type": "Number",
+                      "value": 0
+                    }
+                  },
+                  {
+                    "kind": "let",
+                    "mutable": true,
+                    "name": "__ems_flow_pc",
+                    "type": "Number",
+                    "value": {
+                      "kind": "literal",
+                      "type": "Number",
+                      "value": 1
+                    }
+                  },
+                  {
+                    "body": [
+                      {
+                        "condition": {
+                          "kind": "binary",
+                          "left": {
+                            "kind": "local",
+                            "name": "__ems_flow_pc",
+                            "type": "Number"
+                          },
+                          "operator": "==",
+                          "right": {
+                            "kind": "literal",
+                            "type": "Number",
+                            "value": 0
+                          },
+                          "type": "Boolean"
+                        },
+                        "kind": "if",
+                        "otherwise": [],
+                        "then": [
+                          {
+                            "kind": "let",
+                            "mutable": false,
+                            "name": "__ems_flow_activation",
+                            "type": "Number",
+                            "value": {
+                              "kind": "literal",
+                              "type": "Number",
+                              "value": 0
+                            }
+                          },
+                          {
+                            "kind": "expression",
+                            "value": {
+                              "kind": "assign",
+                              "name": "__ems_flow_value_0",
+                              "type": "Number",
+                              "value": {
+                                "arguments": [
+                                  {
+                                    "kind": "local",
+                                    "name": "__ems_flow_value_1",
+                                    "type": "Number"
+                                  },
+                                  {
+                                    "kind": "local",
+                                    "name": "delta",
+                                    "type": "Number"
+                                  }
+                                ],
+                                "kind": "call",
+                                "target": {
+                                  "id": "core.add",
+                                  "kind": "contract",
+                                  "version": "1.0.0"
+                                },
+                                "type": "Number"
+                              }
+                            }
+                          },
+                          {
+                            "kind": "expression",
+                            "value": {
+                              "kind": "assign",
+                              "name": "__ems_flow_pc",
+                              "type": "Number",
+                              "value": {
+                                "kind": "literal",
+                                "type": "Number",
+                                "value": 3
+                              }
+                            }
+                          },
+                          {
+                            "kind": "continue"
+                          }
+                        ]
+                      },
+                      {
+                        "condition": {
+                          "kind": "binary",
+                          "left": {
+                            "kind": "local",
+                            "name": "__ems_flow_pc",
+                            "type": "Number"
+                          },
+                          "operator": "==",
+                          "right": {
+                            "kind": "literal",
+                            "type": "Number",
+                            "value": 1
+                          },
+                          "type": "Boolean"
+                        },
+                        "kind": "if",
+                        "otherwise": [],
+                        "then": [
+                          {
+                            "kind": "let",
+                            "mutable": false,
+                            "name": "__ems_flow_activation",
+                            "type": "Number",
+                            "value": {
+                              "kind": "literal",
+                              "type": "Number",
+                              "value": 1
+                            }
+                          },
+                          {
+                            "kind": "expression",
+                            "value": {
+                              "kind": "assign",
+                              "name": "__ems_flow_value_1",
+                              "type": "Number",
+                              "value": {
+                                "arguments": [],
+                                "kind": "call",
+                                "target": {
+                                  "id": "state.count.read",
+                                  "kind": "contract",
+                                  "version": "1.0.0"
+                                },
+                                "type": "Number"
+                              }
+                            }
+                          },
+                          {
+                            "kind": "expression",
+                            "value": {
+                              "kind": "assign",
+                              "name": "__ems_flow_pc",
+                              "type": "Number",
+                              "value": {
+                                "kind": "literal",
+                                "type": "Number",
+                                "value": 0
+                              }
+                            }
+                          },
+                          {
+                            "kind": "continue"
+                          }
+                        ]
+                      },
+                      {
+                        "condition": {
+                          "kind": "binary",
+                          "left": {
+                            "kind": "local",
+                            "name": "__ems_flow_pc",
+                            "type": "Number"
+                          },
+                          "operator": "==",
+                          "right": {
+                            "kind": "literal",
+                            "type": "Number",
+                            "value": 2
+                          },
+                          "type": "Boolean"
+                        },
+                        "kind": "if",
+                        "otherwise": [],
+                        "then": [
+                          {
+                            "kind": "let",
+                            "mutable": false,
+                            "name": "__ems_flow_activation",
+                            "type": "Number",
+                            "value": {
+                              "kind": "literal",
+                              "type": "Number",
+                              "value": 2
+                            }
+                          },
+                          {
+                            "kind": "return",
+                            "value": {
+                              "kind": "local",
+                              "name": "__ems_flow_value_3",
+                              "type": "Number"
+                            }
+                          }
+                        ]
+                      },
+                      {
+                        "condition": {
+                          "kind": "binary",
+                          "left": {
+                            "kind": "local",
+                            "name": "__ems_flow_pc",
+                            "type": "Number"
+                          },
+                          "operator": "==",
+                          "right": {
+                            "kind": "literal",
+                            "type": "Number",
+                            "value": 3
+                          },
+                          "type": "Boolean"
+                        },
+                        "kind": "if",
+                        "otherwise": [],
+                        "then": [
+                          {
+                            "kind": "let",
+                            "mutable": false,
+                            "name": "__ems_flow_activation",
+                            "type": "Number",
+                            "value": {
+                              "kind": "literal",
+                              "type": "Number",
+                              "value": 3
+                            }
+                          },
+                          {
+                            "kind": "expression",
+                            "value": {
+                              "kind": "assign",
+                              "name": "__ems_flow_value_3",
+                              "type": "Number",
+                              "value": {
+                                "arguments": [
+                                  {
+                                    "kind": "local",
+                                    "name": "__ems_flow_value_0",
+                                    "type": "Number"
+                                  }
+                                ],
+                                "kind": "call",
+                                "target": {
+                                  "id": "state.count.write",
+                                  "kind": "contract",
+                                  "version": "1.0.0"
+                                },
+                                "type": "Number"
+                              }
+                            }
+                          },
+                          {
+                            "kind": "expression",
+                            "value": {
+                              "kind": "assign",
+                              "name": "__ems_flow_pc",
+                              "type": "Number",
+                              "value": {
+                                "kind": "literal",
+                                "type": "Number",
+                                "value": 2
+                              }
+                            }
+                          },
+                          {
+                            "kind": "continue"
+                          }
+                        ]
+                      }
+                    ],
+                    "condition": {
+                      "kind": "literal",
+                      "type": "Boolean",
+                      "value": true
+                    },
+                    "kind": "while"
+                  },
+                  {
+                    "kind": "return",
+                    "value": {
+                      "kind": "literal",
+                      "type": "Number",
+                      "value": 0
+                    }
+                  }
+                ],
+                "id": "app.Counter",
+                "inputs": [
+                  {
+                    "name": "delta",
+                    "type": "Number"
+                  }
+                ],
+                "output": {
+                  "type": "Number"
+                },
+                "policy": {
+                  "capabilities": [
+                    "state.read",
+                    "state.write"
+                  ],
+                  "effects": [
+                    "state.read",
+                    "state.write"
+                  ]
+                },
+                "requirements": {
+                  "capabilities": [],
+                  "effects": []
+                }
+              }
+            ],
+            "id": "app.Counter",
+            "profile": "ems-control-finite/1",
+            "schemaVersion": "ems-ir/2",
+            "version": "0.1.0"
+          }
+        }
+      ]
+    },
+    "ui": {
+      "schemaVersion": "ems-ui/1",
+      "root": {
+        "id": "root",
+        "kind": "column",
+        "props": {
+          "label": {
+            "literal": {
+              "type": "String",
+              "value": "EMS counter"
+            }
+          }
+        },
+        "events": {},
+        "children": [
+          {
+            "id": "title",
+            "kind": "text",
+            "props": {
+              "text": {
+                "literal": {
+                  "type": "String",
+                  "value": "Счётчик EMS"
+                }
+              }
+            },
+            "events": {},
+            "children": []
+          },
+          {
+            "id": "count",
+            "kind": "text",
+            "props": {
+              "label": {
+                "literal": {
+                  "type": "String",
+                  "value": "Значение счётчика"
+                }
+              },
+              "text": {
+                "state": "count",
+                "format": "number"
+              }
+            },
+            "events": {},
+            "children": []
+          },
+          {
+            "id": "actions",
+            "kind": "row",
+            "props": {},
+            "events": {},
+            "children": [
+              {
+                "id": "increment",
+                "kind": "button",
+                "props": {
+                  "text": {
+                    "literal": {
+                      "type": "String",
+                      "value": "Увеличить"
+                    }
+                  }
+                },
+                "events": {
+                  "press": {
+                    "handler": "change",
+                    "inputs": {
+                      "delta": {
+                        "literal": {
+                          "type": "Number",
+                          "value": 1
+                        }
+                      }
+                    }
+                  }
+                },
+                "children": []
+              },
+              {
+                "id": "decrement",
+                "kind": "button",
+                "props": {
+                  "text": {
+                    "literal": {
+                      "type": "String",
+                      "value": "Уменьшить"
+                    }
+                  }
+                },
+                "events": {
+                  "press": {
+                    "handler": "change",
+                    "inputs": {
+                      "delta": {
+                        "literal": {
+                          "type": "Number",
+                          "value": -1
+                        }
+                      }
+                    }
+                  }
+                },
+                "children": []
+              }
+            ]
+          }
+        ]
+      }
+    }
+  },
+  "references": [
+    {
+      "id": "core.add",
+      "version": "1.0.0"
+    },
+    {
+      "id": "state.count.read",
+      "version": "1.0.0"
+    },
+    {
+      "id": "state.count.write",
+      "version": "1.0.0"
+    }
+  ],
+  "sources": {
+    "change": {
+      "source": "@app::Counter(delta:Number)->Number {\nlet mut __ems_flow_value_0:Number = 0;\nlet mut __ems_flow_value_1:Number = 0;\nlet mut __ems_flow_value_3:Number = 0;\nlet mut __ems_flow_pc = 1;\nwhile true {\nif __ems_flow_pc == 0 {\nlet __ems_flow_activation = 0;\n__ems_flow_value_0 = core::add(__ems_flow_value_1,delta);\n__ems_flow_pc = 3;\ncontinue;\n}\nif __ems_flow_pc == 1 {\nlet __ems_flow_activation = 1;\n__ems_flow_value_1 = state::count::read();\n__ems_flow_pc = 0;\ncontinue;\n}\nif __ems_flow_pc == 2 {\nlet __ems_flow_activation = 2;\nreturn __ems_flow_value_3;\n}\nif __ems_flow_pc == 3 {\nlet __ems_flow_activation = 3;\n__ems_flow_value_3 = state::count::write(__ems_flow_value_0);\n__ems_flow_pc = 2;\ncontinue;\n}\n}\nreturn 0;\n}",
+      "entry": "app.Counter",
+      "flow": "{\"schemaVersion\":\"ems-flow-project/1\",\"id\":\"counterflow\",\"name\":\"Counter graph\",\"graph\":{\"schemaVersion\":\"ems-contract-flow/1\",\"id\":\"app.Counter\",\"version\":\"1.0.0\",\"inputs\":{\"delta\":{\"type\":\"Number\"}},\"output\":{\"type\":\"Number\"},\"nodes\":[{\"id\":\"read\",\"uses\":\"state.count.read\",\"version\":\"1.0.0\",\"args\":{}},{\"id\":\"add\",\"uses\":\"core.add\",\"version\":\"1.0.0\",\"args\":{\"a\":{\"node\":\"read\"},\"b\":{\"input\":\"delta\"}}},{\"id\":\"write\",\"uses\":\"state.count.write\",\"version\":\"1.0.0\",\"args\":{\"value\":{\"node\":\"add\"}}},{\"id\":\"result\",\"uses\":\"std.program.Result\",\"version\":\"1.0.0\",\"args\":{\"value\":{\"node\":\"write\"}}}],\"connections\":[{\"from\":{\"node\":\"read\",\"port\":\"next\"},\"to\":{\"node\":\"add\",\"port\":\"enter\"}},{\"from\":{\"node\":\"add\",\"port\":\"next\"},\"to\":{\"node\":\"write\",\"port\":\"enter\"}},{\"from\":{\"node\":\"write\",\"port\":\"next\"},\"to\":{\"node\":\"result\",\"port\":\"enter\"}}],\"entry\":\"read\"},\"inputs\":{\"delta\":1},\"canvas\":{\"positions\":{\"read\":{\"x\":40,\"y\":40},\"add\":{\"x\":350,\"y\":40},\"write\":{\"x\":660,\"y\":40},\"result\":{\"x\":970,\"y\":40},\"input:delta\":{\"x\":40,\"y\":350}},\"view\":{\"x\":0,\"y\":0,\"scale\":1},\"descriptions\":{}}}\n"
+    }
+  }
+}

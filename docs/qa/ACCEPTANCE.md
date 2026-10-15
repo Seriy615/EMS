@@ -250,3 +250,7 @@ Browser: loops-and-ports, project-files-ui, ui-handler-workspace.
 ### AC-111 reference slice: маркеры без значения и явный feedback graph
 
 [Нормативные правила и пределы](../spec/CONTRACT_FLOW.md). Counter3: три настоящих increment/write/end и четыре comparison/fork; limit0 без тела; разные targets концов реально меняют исполнение. Node-order invariant IR, typed refusal, data-cycle/ref availability, shared infinite-loop budget, signed-zero transport/copy/import, fresh-process standalone, actual browser Worker/wire/reopen/delete/unconnected state/mobile. Старый AST canvas не объявляется мигрированным; полный text editing/UI linking/Array<T>/Map ещё не выполнены.
+
+## AC-112 — ordinary flow graph connected to actual transactional UI
+
+[Семантика, путь редактирования, свидетельства и границы](../spec/UI_CONTRACT_FLOW.md). Real kernel state contracts, canonical flow/source/IR witness, v3 roundtrip, actual UI events, rollback/policy denial, incomplete local draft, same-file CAS/sibling preservation, actual ordinary browser ports/new handler/button binding, standalone UI compiler. Нет автоматической AST migration или полного text/visual roundtrip.
