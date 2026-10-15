@@ -6,6 +6,7 @@
 
 Native UI на EMS: `@UI.*`, `~>`, `<=`, общий typed model и UI-only text/visual inverse — [AC-128](docs/spec/NATIVE_UI_SOURCE.md), [полный source](examples/native-ui.ems). `application-build` создаёт независимое DOM-приложение.
 Native `graph` bodies сохраняют авторские узлы при первом открытии в обычном редакторе, включая поля и инварианты: [AC-133 / проверяемые origins](docs/spec/NATIVE_GRAPH_ORIGINS.md), [пример UI и графового обработчика](examples/native-graph-ui.ems).
+Полный актуальный EMS можно редактировать и применить к тому же проекту: «Код EMS» / «Код приложения EMS» в UI. Графы сохраняют IDs и оформление, invalid drafts хранятся отдельно — [AC-134](docs/spec/NATIVE_SOURCE_APPLY.md).
 
 Native контрактный модуль теперь связывается с UI: поля `left.value`, операции `left::Change`, общий designer/canvas и независимый DOM export — [AC-127](docs/spec/INSTANCE_UI.md). Пример для импорта: [contract-instance-ui.ems-project.json](examples/contract-instance-ui.ems-project.json).
 

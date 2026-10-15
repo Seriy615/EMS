@@ -30,3 +30,5 @@ Initial layout назначается только новому представ
 Переименование поля обновляет настоящие state targets, origin-ссылки, интерфейс guard и UI-привязки. Add/remove актуализирует порты; rich типы повышают старый graph profile при необходимости. Если новое имя захватило бы частную переменную или меняется recursive arity, исходный guard остаётся helper-функцией с исходными node IDs, а проверенный wrapper меняет интерфейс. Реальные и неисполняемые authoring-ссылки остаются зависимостями удаления.
 
 Проверки: `tests/native-graph-origins.test.mjs`, `tests/browser/native-graph-origins.test.mjs`; пример `examples/native-graph-ui.ems`. UI/Worker и независимый compiler исполняют прежний настоящий semantic module. Полное применение текущего native source к существующему документу с metadata-aware diff/CAS остаётся следующей задачей; динамические instances/lifetimes и полная платформенная экосистема не завершены.
+
+Продолжение AC-134: [NATIVE_SOURCE_APPLY.md](NATIVE_SOURCE_APPLY.md) добавляет полное current-source apply в тот же документ и project/4 graph presentation. Описанные здесь прежние ограничения source backend/origins сохраняют исторический контекст своего этапа.

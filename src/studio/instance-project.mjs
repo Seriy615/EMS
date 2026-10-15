@@ -1,3 +1,4 @@
+import {graphViewsFor,validateInstanceGraphViews} from './instance-graph-views.mjs';
 import {authoredGraphsFor,validateAuthoredGraphs,clearAuthoredScope} from './authored-graphs.mjs';
 import {compileInstanceSource,compileInstanceUIFragment} from '../instances/ui-source.mjs';
 import {formatFiniteJSON} from '../semantics/data-json.mjs';
@@ -17,12 +18,12 @@ export function newInstanceProject(source='@Main { +Run()->Number { return 0; } 
 /** Saved graphs are checked authoring witnesses. Import, listing and saving never execute a program. */
 export function validateInstanceProject(project,base=createCoreRegistry()){
  const version=project&&typeof project==='object'?Object.getOwnPropertyDescriptor(project,'schemaVersion')?.value:undefined;
- fields(project,['schemaVersion','module','sourceArchive','bodyGraph','invariantGraphs',...(version==='ems-instance-project/2'||version==='ems-instance-project/3'&&Object.hasOwn(project,'ui')?['ui']:[]),...(version==='ems-instance-project/3'?['authoredGraphs']:[])]);
- if(!['ems-instance-project/1','ems-instance-project/2','ems-instance-project/3'].includes(project.schemaVersion)||project.sourceArchive!==null&&(typeof project.sourceArchive!=='string'||project.sourceArchive.length>1048576)||project.bodyGraph!==null&&typeof project.bodyGraph!=='string'||!Array.isArray(project.invariantGraphs)||project.invariantGraphs.length>512)fail('INVALID_INSTANCE_PROJECT','Invalid contract document');
+ fields(project,['schemaVersion','module','sourceArchive','bodyGraph','invariantGraphs',...(version==='ems-instance-project/2'||['ems-instance-project/3','ems-instance-project/4'].includes(version)&&Object.hasOwn(project,'ui')?['ui']:[]),...(['ems-instance-project/3','ems-instance-project/4'].includes(version)?['authoredGraphs']:[]),...(version==='ems-instance-project/4'?['graphViews']:[])]);
+ if(!['ems-instance-project/1','ems-instance-project/2','ems-instance-project/3','ems-instance-project/4'].includes(project.schemaVersion)||project.sourceArchive!==null&&(typeof project.sourceArchive!=='string'||project.sourceArchive.length>1048576)||project.bodyGraph!==null&&typeof project.bodyGraph!=='string'||!Array.isArray(project.invariantGraphs)||project.invariantGraphs.length>512)fail('INVALID_INSTANCE_PROJECT','Invalid contract document');
  if(Object.hasOwn(project,'ui'))validateInstanceUI(project.module,project.ui,base);
  const checked=validateInstanceModule(project.module,base),canonical=serializeInstanceModule(project.module,base);
  if(project.bodyGraph!==null){const root=checked.transitions.find(action=>action.entry===project.module.program.entry);if(!root)fail('INSTANCE_ENTRY','Body graph must retain a public entry');const next=applyTransitionFlow(project.module,root.instance,root.name,project.bodyGraph,base);if(serializeInstanceModule(next,base)!==canonical)fail('INSTANCE_GRAPH_MISMATCH','Saved transition graph disagrees with semantic module');}
- if(project.schemaVersion==='ems-instance-project/3')validateAuthoredGraphs(project,checked,base);
+ if(['ems-instance-project/3','ems-instance-project/4'].includes(project.schemaVersion))validateAuthoredGraphs(project,checked,base);if(project.schemaVersion==='ems-instance-project/4')validateInstanceGraphViews(project);
  const seen=new Set();for(const item of project.invariantGraphs){fields(item,['contract','id','flow']);const key=JSON.stringify([item.contract,item.id]);if(seen.has(key)||typeof item.flow!=='string')fail('INVALID_INSTANCE_PROJECT','Invalid or duplicate invariant graph');seen.add(key);const next=applyInvariantFlow(project.module,item.contract,item.id,item.flow,base);if(serializeInstanceModule(next,base)!==canonical)fail('INSTANCE_GRAPH_MISMATCH','Saved invariant graph disagrees with semantic module');}
  return project;
 }
@@ -34,16 +35,16 @@ export function serializeInstanceProject(project,base=createCoreRegistry()){
 }
 export function importInstanceProject(source,base=createCoreRegistry()){
  let data;try{data=JSON.parse(source);}catch{return newInstanceProject(source,base);}
- if(['ems-instance-project/1','ems-instance-project/2','ems-instance-project/3'].includes(data?.schemaVersion))return parseInstanceProject(source,base);
+ if(['ems-instance-project/1','ems-instance-project/2','ems-instance-project/3','ems-instance-project/4'].includes(data?.schemaVersion))return parseInstanceProject(source,base);
  if(data?.schemaVersion==='ems-instance-module/1')return {schemaVersion:'ems-instance-project/1',module:parseInstanceModule(source,base),sourceArchive:null,bodyGraph:null,invariantGraphs:[]};
  fail('INSTANCE_VERSION','Expected native EMS or a contract module/document');
 }
 /** All transition scopes share one authoring graph, retaining geometry and helper definitions. */
 export function instanceProjectFlow(project,target,base=createCoreRegistry()){
  const checked=validateInstanceModule(project.module,base);
- if(target.kind==='invariant'){const saved=project.invariantGraphs.find(item=>item.contract===target.contract&&item.id===target.id);if(saved)return {source:saved.flow,registry:base,options:{},activeContract:null};return {...invariantFlow(project.module,target.contract,target.id,base,{authoredGraphs:authoredGraphsFor(project,{kind:'invariant',definition:target.contract,id:target.id})}),activeContract:null};}
+ if(target.kind==='invariant'){const saved=project.invariantGraphs.find(item=>item.contract===target.contract&&item.id===target.id);if(saved)return {source:saved.flow,registry:base,options:{},activeContract:null};return {...invariantFlow(project.module,target.contract,target.id,base,{authoredGraphs:authoredGraphsFor(project,{kind:'invariant',definition:target.contract,id:target.id}),graphViews:graphViewsFor(project,{kind:'invariant',definition:target.contract,id:target.id})}),activeContract:null};}
  const root=checked.transitions.find(action=>action.entry===project.module.program.entry)??checked.transitions[0],action=checked.transitions.find(action=>action.instance===target.instance&&action.name===target.name);if(!action)fail('UNKNOWN_TRANSITION','Unknown transition');
- const view=project.bodyGraph!==null?{registry:checked.registry,options:{allowState:true},source:project.bodyGraph}:transitionFlow(project.module,root.instance,root.name,base,{authoredGraphs:authoredGraphsFor(project,{kind:'body'})});return {...view,activeContract:action.entry===root.entry?null:action.entry};
+ const view=project.bodyGraph!==null?{registry:checked.registry,options:{allowState:true},source:project.bodyGraph}:transitionFlow(project.module,root.instance,root.name,base,{authoredGraphs:authoredGraphsFor(project,{kind:'body'}),graphViews:graphViewsFor(project,{kind:'body'})});return {...view,activeContract:action.entry===root.entry?null:action.entry};
 }
 export function applyInstanceProjectFlow(project,target,flow,base=createCoreRegistry()){
  const next=structuredClone(project);
@@ -72,6 +73,6 @@ export function addInstanceInvariant(project,contract,base=createCoreRegistry())
  const temporary=compileInstanceModule('@Initial {'+def.fields.map(field=>field.name+':'+field.type+'='+flowValueSource(defaultFlowValue(field.type),field.type)+';').join('')+'+Run()->Boolean{return true;} ? true;} @Initial #initial;',base),next=structuredClone(project);next.module.definitions.find(item=>item.id===contract).invariants.push({id,program:temporary.definitions[0].invariants[0].program});validateInstanceProject(next,base);return {project:next,id};
 }
 
-export function withInstanceUI(project,ui={schemaVersion:'ems-ui/1',root:{id:'root',kind:'column',props:{gap:{literal:12},padding:{literal:16}},events:{},children:[]}},base=createCoreRegistry()){const next={...structuredClone(project),schemaVersion:project.schemaVersion==='ems-instance-project/3'?'ems-instance-project/3':'ems-instance-project/2',ui:structuredClone(ui)};validateInstanceProject(next,base);return next;}
+export function withInstanceUI(project,ui={schemaVersion:'ems-ui/1',root:{id:'root',kind:'column',props:{gap:{literal:12},padding:{literal:16}},events:{},children:[]}},base=createCoreRegistry()){const next={...structuredClone(project),schemaVersion:['ems-instance-project/3','ems-instance-project/4'].includes(project.schemaVersion)?project.schemaVersion:'ems-instance-project/2',ui:structuredClone(ui)};validateInstanceProject(next,base);return next;}
 
 export function applyInstanceUIFragment(project,source,{expectedUI}={},base=createCoreRegistry()){if(expectedUI!==undefined&&expectedUI!==formatFiniteJSON(project.ui))fail('STALE_UI_TEXT','UI changed since this text draft was opened');return withInstanceUI(project,compileInstanceUIFragment(source,project.module,base),base);}

@@ -8,11 +8,12 @@ import {controlFunctionIdentity} from '../ir/control-alpha.mjs';
 import {validateContractFlow} from '../contracts/flow.mjs';
 import {fail} from '../reference/errors.mjs';
 /** Authoring witnesses are finite own data, never code-bearing host objects. */
-export function assertAuthoredData(value){
+export function assertAuthoredData(value,{maxRecordKeys=200}={}){
+ if(!Number.isSafeInteger(maxRecordKeys)||maxRecordKeys<1||maxRecordKeys>2048)fail('AUTHORED_GRAPH_LIMIT','Invalid own-data record limit');
  const active=new Set();let count=0;
  function visit(value,depth){if(++count>200000||depth>256)fail('AUTHORED_GRAPH_LIMIT','Authored graph data exceeds structural limit');if(value===null||typeof value==='string'||typeof value==='boolean'||typeof value==='number'&&Number.isFinite(value))return;
   if(!value||typeof value!=='object'||active.has(value))fail('INVALID_AUTHORED_GRAPH','Expected finite own data');const array=Array.isArray(value),keys=Reflect.ownKeys(value);
-  if(array&&(Object.getPrototypeOf(value)!==Array.prototype||value.length>20000||keys.length!==value.length+1)||!array&&(![Object.prototype,null].includes(Object.getPrototypeOf(value))||keys.length>200))fail('INVALID_AUTHORED_GRAPH','Invalid graph data record');
+  if(array&&(Object.getPrototypeOf(value)!==Array.prototype||value.length>20000||keys.length!==value.length+1)||!array&&(![Object.prototype,null].includes(Object.getPrototypeOf(value))||keys.length>maxRecordKeys))fail('INVALID_AUTHORED_GRAPH','Invalid graph data record');
   if(array)for(let i=0;i<value.length;i++)if(!Object.hasOwn(value,String(i)))fail('INVALID_AUTHORED_GRAPH','Graph arrays must be dense');
   active.add(value);for(const key of keys){if(array&&key==='length')continue;const descriptor=Object.getOwnPropertyDescriptor(value,key);if(typeof key!=='string'||!descriptor||!Object.hasOwn(descriptor,'value')||!descriptor.enumerable)fail('INVALID_AUTHORED_GRAPH','Graph accessors and symbols are prohibited');visit(descriptor.value,depth+1);}active.delete(value);
  }

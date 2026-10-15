@@ -10,7 +10,11 @@ export function newFlowProject(id='main',name='Новый проект') {return
 function fields(value,keys){if(!value||typeof value!=='object'||Array.isArray(value)||Object.keys(value).sort().join(',')!==[...keys].sort().join(','))fail('INVALID_FLOW_PROJECT','Unexpected flow project fields');}
 const workspaces=project=>[project,...(project.contracts??[])];
 function validateWorkspace(project,registry,options){
- const checked=validateContractFlow(project.graph,registry,{...options,complete:false}),ids=new Set([...checked.nodes.keys(),...Object.keys(project.graph.inputs).map(name=>'input:'+name)]);
+ validateContractFlow(project.graph,registry,{...options,complete:false});return validateFlowPresentation(project);
+}
+/** Validate only presentation against a separately checked semantic graph. */
+export function validateFlowPresentation(project){
+ const ids=new Set([...project.graph.nodes.map(node=>node.id),...Object.keys(project.graph.inputs).map(name=>'input:'+name)]);
  fields(project.canvas,['positions','view','descriptions']);fields(project.canvas.view,['x','y','scale']);if(![project.canvas.view.x,project.canvas.view.y,project.canvas.view.scale].every(Number.isFinite)||project.canvas.view.scale<.25||project.canvas.view.scale>2)fail('INVALID_FLOW_PROJECT','Invalid viewport');
  for(const name of ['positions','descriptions'])if(!project.canvas[name]||typeof project.canvas[name]!=='object'||Array.isArray(project.canvas[name]))fail('INVALID_FLOW_PROJECT','Invalid canvas map');
  for(const [id,position]of Object.entries(project.canvas.positions)){fields(position,['x','y']);if(!ids.has(id)||![position.x,position.y].every(Number.isFinite))fail('INVALID_FLOW_PROJECT','Invalid position');}

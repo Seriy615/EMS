@@ -37,9 +37,10 @@ export function readGraphDeclaration(declaration,canonical){
  return {graph:{schemaVersion:body.profile,id:declaration.name,version:'1.0.0',inputs:Object.fromEntries(Object.entries(inputs)),output:{type:canonical(declaration.output)},nodes,connections:body.connections.map(edge=>({from:{node:edge.from,port:edge.port},to:{node:edge.to,port:edge.targetPort}})),entry:body.entry},locations};
 }
 /** Expand graph bodies before the common expression/effect checker. Calls remain real AST calls. */
-export function normalizeGraphBodies(ast,registry,{signatures,canonical,canonicalTerm,resolve}){
+export function normalizeGraphBodies(ast,registry,{signatures,canonical,canonicalTerm,resolve,maxGraphs=33,maxNodes=1024}){
  const declarations=ast.declarations.filter(item=>item.body?.kind==='ContractGraph'),graphs=new Map();if(!declarations.length)return graphs;
- if(declarations.length>33||declarations.reduce((n,item)=>n+item.body.nodes.length,0)>1024)error('FLOW_LIMIT','Graph source module exceeds33 graphs or1024 nodes',ast);
+ if(!Number.isSafeInteger(maxGraphs)||maxGraphs<1||maxGraphs>1024||!Number.isSafeInteger(maxNodes)||maxNodes<1||maxNodes>32768)fail('FLOW_LIMIT','Invalid bounded graph source limits');
+ if(declarations.length>maxGraphs||declarations.reduce((n,item)=>n+item.body.nodes.length,0)>maxNodes)error('FLOW_LIMIT','Graph source module exceeds configured graph or node limit',ast);
  const sourceSignatures=new Map();
  for(const target of signatures.values())if(!target.parameters.length&&!target.async&&!target.declaration.external){try{sourceSignatures.set(target.name,{inputs:Object.fromEntries(target.inputs.map(port=>[port.name,canonicalTerm(port.type)])),output:canonicalTerm(target.output)});}catch{ /* Non-finite helpers are rejected if a graph actually calls them. */ }}
  for(const declaration of declarations){
@@ -56,10 +57,10 @@ export function normalizeGraphBodies(ast,registry,{signatures,canonical,canonica
  return graphs;
 }
 /** Canonical graph syntax retains node IDs, all edges, versions, shared cells and inactive nodes. */
-export function printGraphDeclaration(graph){
+export function printGraphDeclaration(graph,{requirements=[]}={}){
  const literal=value=>{if(typeof value==='number')return Object.is(value,-0)?'#-0':JSON.stringify(value);if(typeof value==='string'||typeof value==='boolean')return JSON.stringify(value);if(Array.isArray(value))return '['+value.map(literal).join(', ')+']';if(value?.tag==='None')return 'None()';if(['Some','Ok','Err','Map'].includes(value?.tag))return value.tag+'('+literal(value.value)+')';fail('GRAPH_SOURCE_VALUE','Unsupported graph data');};
  const symbol=uiSymbolSource,type=name=>name==='NumberArray'?'Number[]':name;
- const lines=['@'+path(graph.id)+'('+Object.entries(graph.inputs).map(([name,spec])=>symbol(name)+': '+type(spec.type)).join(', ')+') -> '+type(graph.output.type)+' graph '+JSON.stringify(graph.schemaVersion)+' {'];
+ const lines=['@'+path(graph.id)+'('+Object.entries(graph.inputs).map(([name,spec])=>symbol(name)+': '+type(spec.type)).join(', ')+') -> '+type(graph.output.type)+(requirements.length?' requires '+requirements.map(item=>item.name+'('+JSON.stringify(item.value)+')').join(', '):'')+' graph '+JSON.stringify(graph.schemaVersion)+' {'];
  for(const node of graph.nodes){let storage='';if(node.uses==='std.storage.Variable')storage=': '+type(node.valueType)+' = '+(Object.hasOwn(node,'storage')?'#'+symbol(node.storage):literal(node.initial));lines.push('  @'+path(node.uses)+'['+JSON.stringify(node.version)+'] #'+symbol(node.id)+storage+' {');for(const [name,ref]of Object.entries(node.args))lines.push('    '+symbol(name)+(Object.hasOwn(ref,'literal')?': '+literal(ref.literal):' <= '+(Object.hasOwn(ref,'input')?'input::'+symbol(ref.input):'#'+symbol(ref.node)))+';');lines.push('  }');}
  if(graph.entry!==null)lines.push('  + #'+symbol(graph.entry)+';');
  for(const edge of graph.connections)lines.push('  #'+symbol(edge.from.node)+'.'+symbol(edge.from.port)+' ~> #'+symbol(edge.to.node)+'.'+symbol(edge.to.port)+';');

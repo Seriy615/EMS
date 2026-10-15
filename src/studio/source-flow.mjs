@@ -9,7 +9,7 @@ import {SHARED_STORAGE_FLOW_VERSION} from '../contracts/flow.mjs';
 import {fail} from '../reference/errors.mjs';
 
 /** Project checked finite source into ordinary contracts. Never mutate the original source. */
-export function sourceContractFlow(ir,registry,{id='source',name=ir.entry,allowState=false,authoredGraphs=[]}={}){
+export function sourceContractFlow(ir,registry,{id='source',name=ir.entry,allowState=false,authoredGraphs=[],graphViews=[]}={}){
  validateControlIR(ir,registry);
  if(!['ems-control-finite/1','ems-control-algebraic/1'].includes(ir.profile))fail('SOURCE_FLOW_UNSUPPORTED','Этот исходник пока нельзя открыть обычным графом; исходный текст сохранён.');
  const functions=new Map(ir.functions.map(fn=>[fn.id,fn])),authored=verifyAuthoredProgramGraphs(ir,authoredGraphs,registry,{allowState});
@@ -17,7 +17,7 @@ export function sourceContractFlow(ir,registry,{id='source',name=ir.entry,allowS
 
  function projectFunction(fn){
  if(fn.requirements.effects.length||fn.requirements.capabilities.length)fail('SOURCE_FLOW_UNSUPPORTED','Явная политика исходного контракта требует сохранения в текстовом представлении.');
- const project=newFlowProject(id,name);if(authored.has(fn.id)){project.graph=structuredClone(authored.get(fn.id));project.canvas.positions={};project.inputs=Object.fromEntries(fn.inputs.map(p=>[p.name,defaultFlowValue(p.type)]));return layout(project,fn);}const graph=project.graph;
+ const project=newFlowProject(id,name);if(authored.has(fn.id)){project.graph=structuredClone(authored.get(fn.id));project.canvas.positions={};project.inputs=Object.fromEntries(fn.inputs.map(p=>[p.name,defaultFlowValue(p.type)]));const view=graphViews.find(view=>view.id===fn.id);if(view){project.inputs=structuredClone(view.inputs);project.canvas=structuredClone(view.canvas);return project;}return layout(project,fn);}const graph=project.graph;
  graph.id=fn.id;graph.output={...fn.output};graph.inputs=Object.fromEntries(fn.inputs.map(p=>[p.name,{type:p.type}]));project.inputs=Object.fromEntries(fn.inputs.map(p=>[p.name,defaultFlowValue(p.type)]));graph.nodes=[];graph.connections=[];project.canvas.positions={};
  let sequence=0;
  const unsupported=kind=>fail('SOURCE_FLOW_UNSUPPORTED','Операция '+kind+' пока не поддерживает преобразование в обычный граф. Исходник сохранён.');

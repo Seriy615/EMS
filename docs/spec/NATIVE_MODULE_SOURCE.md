@@ -111,3 +111,5 @@ async/resource transitions, cross-file imports или foreign bindings. Дейс
 `tests/browser/native-module-source.test.mjs`; runtime/standalone comparison,
 mutable graph body and field rename, tagged values, exact work accounting fixture,
 no-init build, negative bindings, real CLI export/edit/build и browser downloaded EMS.
+
+Продолжение AC-134: [NATIVE_SOURCE_APPLY.md](NATIVE_SOURCE_APPLY.md) добавляет полное current-source apply в тот же документ и project/4 graph presentation. Описанные здесь прежние ограничения source backend/origins сохраняют исторический контекст своего этапа.
