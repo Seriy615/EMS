@@ -34,8 +34,8 @@
 </section><section class="author-panel" aria-label="Создание интерфейса">
 <h2>Настройки приложения</h2><p class="hint">Состояние хранит данные, элементы показывают их, обработчики изменяют их по событиям.</p>
 <fieldset>
-<legend>1. Данные приложения</legend>
-<label class="field-label">Имя данных<input id="state-id" placeholder="count" aria-label="ID состояния"></label>
+<legend>Переменные приложения</legend>
+<div id="state-list"></div><details><summary>Добавить переменную</summary><label class="field-label">Имя данных<input id="state-id" placeholder="count" aria-label="ID состояния"></label>
 <label class="field-label">Тип<select id="state-type">
 <option>Number</option>
 <option>String</option>
@@ -43,19 +43,21 @@
 <option>NumberArray</option>
 </select></label>
 <label class="field-label">Начальное значение<input id="state-initial" value="0" aria-label="Начальное значение"></label>
-<button id="add-state-ui">Добавить состояние</button>
-<div id="state-list"></div>
+<button id="add-state-ui">Добавить переменную</button>
+</details>
 </fieldset>
 <fieldset>
 <legend>2. Логика события · EMS</legend>
 <label class="field-label">Обработчик<select id="handler-select" aria-label="Существующий обработчик"></select></label>
-<button id="load-handler">Открыть обработчик</button>
-<label class="field-label">Имя события<input id="handler-event" placeholder="increment" aria-label="Событие обработчика"></label>
+
+<button id="open-handler-graph" class="primary">Открыть граф контрактов</button>
+<form id="create-handler"><h3>Новый обработчик</h3><label>Имя события<input id="new-handler-event" required placeholder="submit"></label><label>Имя контракта<input id="new-handler-entry" required placeholder="app.Submit"></label><label>Вход события (необязательно)<input id="new-handler-parameter" placeholder="value"></label><label>Тип входа<select id="new-handler-type"><option>Number</option><option>Boolean</option><option>String</option><option>NumberArray</option></select></label><button>Создать и открыть граф</button></form>
+<details id="handler-code"><summary>Код EMS</summary><button id="load-handler">Загрузить код обработчика</button><label class="field-label">Имя события<input id="handler-event" placeholder="increment" aria-label="Событие обработчика"></label>
 <label class="field-label">Функция EMS<input id="handler-entry" placeholder="update" aria-label="Функция обработчика"></label>
 <textarea id="handler-source" placeholder="Выберите обработчик и нажмите «Открыть обработчик», чтобы увидеть код EMS." spellcheck="false" aria-label="Исходник обработчика EMS"></textarea>
 <button id="apply-handler">Применить EMS</button>
 <button id="ui-source-breakpoint">Точка под курсором</button>
-<button id="open-handler-graph" class="primary">Открыть граф контрактов</button><details class="technical-handler-graph"><summary>Техническое дерево EMS и диагностика</summary><button id="open-control-graph">Показать техническое дерево</button>
+</details><details class="technical-handler-graph"><summary>Техническое дерево EMS и диагностика</summary><button id="open-control-graph">Показать техническое дерево</button>
 <div id="control-graph"></div>
 <p id="graph-node-detail"></p>
 <textarea id="graph-node-source" aria-label="Код выбранного узла EMS" spellcheck="false"></textarea>

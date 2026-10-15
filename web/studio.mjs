@@ -1,3 +1,4 @@
+import {installProjectFiles} from './project-files.mjs';
 import {installContractDrag} from './contract-drag.mjs';
 import {exportFlowchartSVG} from '/src/compiler/flowchart.mjs';
 import {lowerWorkspace} from '/src/studio/project.mjs';
@@ -17,7 +18,7 @@ import {captureSourceBreakpoint} from '/src/studio/source-anchors.mjs';
 import {StudioDebuggerStorage,studioDebuggerContext,resolveStudioDebugger} from '/src/studio/debugger-storage.mjs';
 import {breakpointForEvent} from '/src/studio/debugger.mjs';
 import {breakpointAtTextOffset} from '/src/studio/breakpoints.mjs';
-import {ProjectManager} from '/src/studio/manager.mjs';
+import {projectManagerForLocation} from '/src/studio/manager.mjs';
 import {STANDARD_CONTRACTS} from '/src/stdlib/finite.mjs';
 import {ProjectEditor,newProject,parseProject} from '/src/studio/project.mjs';
 import {startStudioExecution,startBoundStudioExecution} from '/src/studio/execution-client.mjs';
@@ -32,7 +33,7 @@ const el=(tag,text,style)=>{const node=document.createElement(tag);if(text!==und
 const identity=()=> 'p'+crypto.randomUUID().replaceAll('-','');
 let guideOpen=false,structuredGraph=false,structuredEditor;
 let store,editor,selected=null,pending=null,failedNode=null,textMode=false,textProjectId=null,textStorage;
-const managedId=new URLSearchParams(location.search).get('project'),manager=managedId?new ProjectManager(localStorage):null;
+const managedId=new URLSearchParams(location.search).get('project'),manager=managedId?projectManagerForLocation(localStorage,location.search):null;
 let activeExecution=null,pausedOperation=null,executionBreakpointIdentity=null;
 let breakpointIdentity=null,breakpoints=[],debuggerOwner=null,debuggerStorage=null,debuggerRecords=[],debuggerPoints=[];
 let inspectionState=null,activeInspection=false,originState=null;
@@ -81,7 +82,7 @@ async function executeStudio(action,draft,inputs,debug=false){
 for(const [id,mode] of [['debug-step','step'],['debug-over','over'],['debug-out','out'],['debug-continue','continue']])$(id).onclick=()=>{if(activeExecution?.resume(mode)){clearInspectionValues();$('output').textContent='Отладка: выполняется…';pausedOperation=null;syncBreakpoints();$('debug-over').disabled=true;$('debug-out').disabled=true;$('debug-step').disabled=true;$('debug-continue').disabled=true;}};
 $('stop').onclick=()=>activeExecution?.cancel();
 function report(error){$('error').textContent=`${error.code??'ERROR'}: ${error.message}`;}
-try{if(manager){const record=manager.load(managedId);if(record?.kind!=='graph')throw new Error('Графовый проект не найден');store={load:id=>{const record=manager.load(id??managedId);return record?.kind==='graph'?parseProject(record.source):null;},list:()=>manager.list().filter(record=>record.kind==='graph'),save:project=>{manager.save({id:project.id,name:project.name,kind:'graph',source:new ProjectEditor(project).serialize(),draft:manager.load(project.id)?.draft??null});history.replaceState(null,'','/?project='+encodeURIComponent(project.id));}};}else store=new ProjectStorage(localStorage);editor=new ProjectEditor(store.load()??newProject(identity()));}catch(error){if(manager){report(error);throw error;}editor=new ProjectEditor(newProject(identity()));report(error);}
+try{if(manager){const record=manager.load(manager.fileId??managedId);if(record?.kind!=='graph')throw new Error('Графовый проект не найден');store={load:id=>{const record=manager.load(id??manager.fileId??managedId);return record?.kind==='graph'?parseProject(record.source):null;},list:()=>manager.list().filter(record=>record.kind==='graph'),save:project=>{manager.save({id:project.id,name:project.name,kind:'graph',source:new ProjectEditor(project).serialize(),draft:manager.load(project.id)?.draft??null});history.replaceState(null,'',manager.fileMode?manager.url(project.id):'/?project='+encodeURIComponent(project.id));}};}else store=new ProjectStorage(localStorage);editor=new ProjectEditor(store.load()??newProject(identity()));}catch(error){if(manager){report(error);throw error;}editor=new ProjectEditor(newProject(identity()));report(error);}
 function projectList(){
  $('projects').replaceChildren();const current=el('option',editor.project.name);current.value=editor.project.id;$('projects').append(current);
  try{for(const project of store?.list()??[])if(project.id!==editor.project.id){const option=el('option',project.name);option.value=project.id;$('projects').append(option);}}catch{}
@@ -189,7 +190,7 @@ function catalog(){
  $('catalog').replaceChildren();const query=$('catalog-search').value.trim().toLowerCase(),category=$('catalog-category').value;let count=0;
  for(const [key,title] of Object.entries(categories)){
   if(category&&category!==key)continue;let heading=false;
-  for(const [structure,title]of STRUCTURES){const group=['array','index'].includes(structure)?'array':structure==='variable'?'value':'control';if(group!==key||query&&!(title+' '+structure).toLowerCase().includes(query))continue;if(!heading){$('catalog').append(el('h3',categories[key]));heading=true;}const row=el('div',undefined,'catalog-item'),button=el('button',title);button.dataset.structure=structure;installContractDrag(button,event=>{if(!$('viewport').contains(event.target))return;if(!structuredGraph)activateStructured();structuredEditor.drop(event,structure);document.body.dataset.mobilePanel='';});button.onclick=e=>{if(e.detail===0){activateStructured();structuredEditor.drop(null,structure);}};const descriptions={if:'Условие → ветвь да / нет',while:'Условие → тело → проверка → выход',for:'Массив → элемент → тело → следующий элемент',array:'Значения → массив',index:'Массив + индекс → элемент',variable:'Значение → хранение',break:'Текущий цикл → выход',continue:'Текущий цикл → следующая итерация'};button.title=descriptions[structure];row.append(button,el('small',descriptions[structure],'signature'));$('catalog').append(row);count++;}
+  for(const [structure,title,template,contractId]of STRUCTURES){const group=['array','index'].includes(structure)?'array':structure==='variable'?'value':'control';if(group!==key||query&&!(title+' '+structure).toLowerCase().includes(query))continue;if(!heading){$('catalog').append(el('h3',categories[key]));heading=true;}const row=el('div',undefined,'catalog-item'),button=el('button',title);button.dataset.structure=structure;button.dataset.contract=contractId;installContractDrag(button,event=>{if(!$('viewport').contains(event.target))return;if(!structuredGraph)activateStructured();structuredEditor.drop(event,'contract:'+contractId);document.body.dataset.mobilePanel='';});button.onclick=e=>{if(e.detail===0){activateStructured();structuredEditor.drop(null,'contract:'+contractId);}};const descriptions={if:'Условие → ветвь да / нет',while:'Условие → тело → проверка → выход',for:'Массив → элемент → тело → следующий элемент',array:'Значения → массив',index:'Массив + индекс → элемент',variable:'Значение → хранение',break:'Текущий цикл → выход',continue:'Текущий цикл → следующая итерация'};button.title=descriptions[structure];row.append(button,el('small',descriptions[structure],'signature'));$('catalog').append(row);count++;}
 
   for(const contract of editor.registry.items.values()){
    const metadata=standardMetadata.get(contract.id),group=contract.kind==='collection'?'collection':contract.kind==='composite'?'custom':metadata?.category??(['core.sum','core.min','core.max'].includes(contract.id)?'array':'number');
@@ -382,3 +383,5 @@ $('origin-clear').onclick=()=>{try{new StudioOriginStorage(localStorage,editor.p
 $('origin-enabled').onchange=()=>{clearInspectionValues();$('origin-status').textContent=$('origin-enabled').checked?'Метки будут ограничивать выбранные переменные. Перед запуском нужна проверенная политика.':'Метки выключены. Действуют обычные разрешения просмотра переменных.';};
 
 $('text-seal').onclick=async()=>{const button=$('text-seal');button.disabled=true;try{const bundle=textAPI.compileTextDraft(draft(),editor),artifact=await buildAtomicPackage(bundle.ir,bundle.registry,{id:$('seal-id').value.trim()}),url=URL.createObjectURL(new Blob([packageTAR(artifact.files)],{type:'application/x-tar'})),link=el('a');link.href=url;link.download='ems-atomic-contract.tar';link.click();setTimeout(()=>URL.revokeObjectURL(url),1000);$('text-status').textContent='Атомарный пакет скачан. Содержит типизированный интерфейс и исполняемый модуль.';}catch(error){sourceError(error);}finally{button.disabled=false;}};
+
+installProjectFiles();

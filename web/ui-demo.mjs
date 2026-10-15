@@ -1,9 +1,10 @@
+import {installProjectFiles} from './project-files.mjs';
 import {installUIConnections} from './ui-connections.mjs';
 import {installUIDesigner} from './ui-designer.mjs';
 import {captureSourceBreakpoint,resolveSourceBreakpoint,UISourceBreakpointStorage} from '../src/studio/source-anchors.mjs';
 import {breakpointAtTextOffset} from '../src/studio/breakpoints.mjs';
 import {breakpointForEvent} from '../src/studio/debugger.mjs';
-import {ProjectManager} from '../src/studio/manager.mjs';
+import {projectManagerForLocation} from '../src/studio/manager.mjs';
 import {installControlGraph} from './control-graph.mjs';
 import {buildUIProjectPackage} from '../src/compiler/ui-package.mjs';
 import {packageTAR} from '../src/compiler/archive.mjs';
@@ -18,12 +19,12 @@ import {UIProjectEditor,UIProjectStorage} from '../src/studio/ui-project.mjs';
 const host=document.querySelector('#application'),error=document.querySelector('#error'),source=document.querySelector('#ui-source'),status=document.querySelector('#ui-status');
 const policy={capabilities:['ui.render','state.read','state.write'],allowedEffects:['ui.render','state.read','state.write']};
 const base=createCoreRegistry(),storage=new UIProjectStorage(localStorage,base);
-const managedId=new URLSearchParams(location.search).get('project'),manager=managedId?new ProjectManager(localStorage):null;
-let managedRecord;try{managedRecord=manager?.load(managedId);if(manager&&managedRecord?.kind!=='ui')throw new Error('UI project not found');}catch(failure){error.textContent=(failure.code??'HOST_ERROR')+': '+failure.message;throw failure;}
+const managedId=new URLSearchParams(location.search).get('project'),manager=managedId?projectManagerForLocation(localStorage,location.search):null;
+let managedRecord;try{managedRecord=manager?.load(manager.fileId??managedId);if(manager&&managedRecord?.kind!=='ui')throw new Error('UI project not found');}catch(failure){error.textContent=(failure.code??'HOST_ERROR')+': '+failure.message;throw failure;}
 let debugMode=false,pausedEvent=null,pausedOperation=null,previewIdentity=null,pointIdentity=null,uiPoints=[],uiAnchors=[],pointOwner=null,pointStorage=null;
 function syncUIPoints(){
  if(!editor)return;const identity=editor.source;
- const owner=(managedId??'local')+':'+editor.application.id;
+ const owner=(managedId??'local')+':'+(new URLSearchParams(location.search).get('file')??'')+':'+editor.application.id;
  if(pointOwner!==owner){pointOwner=owner;pointStorage=new UISourceBreakpointStorage(localStorage,owner);try{uiAnchors=pointStorage.load();}catch(failure){uiAnchors=[];report(failure);}uiPoints=[];pointIdentity=null;}
 
  if(pointIdentity!==identity){
@@ -76,7 +77,7 @@ document.querySelector('#restart').onclick=()=>{debugMode=false;startDemo().catc
 document.querySelector('#close').onclick=()=>applicationController.close().catch(report);
 document.querySelector('#apply-ui').onclick=()=>{apply(source.value).catch(report);};
 document.querySelector('#save-ui').onclick=()=>{try{saveProject();status.textContent='Программа сохранена.';}catch(failure){report(failure);}};
-document.querySelector('#open-ui').onclick=()=>{try{const saved=manager?parseUIWorkspace(manager.load(managedId).source,base):storage.loadWorkspace();if(!saved){status.textContent='Сохранённого UI-проекта нет.';return;}apply(new UIProjectEditor(saved.application,base,{sources:saved.sources}).source).catch(report);}catch(failure){report(failure);}};
+document.querySelector('#open-ui').onclick=()=>{try{const saved=manager?parseUIWorkspace(manager.load(manager.fileId??managedId).source,base):storage.loadWorkspace();if(!saved){status.textContent='Сохранённого UI-проекта нет.';return;}apply(new UIProjectEditor(saved.application,base,{sources:saved.sources}).source).catch(report);}catch(failure){report(failure);}};
 document.querySelector('#undo-ui').onclick=()=>{try{editor.undo();startDemo().then(saveManaged).catch(report);}catch(failure){report(failure);}};document.querySelector('#redo-ui').onclick=()=>{try{editor.redo();startDemo().then(saveManaged).catch(report);}catch(failure){report(failure);}};
 document.querySelector('#export-ui').onclick=()=>{const url=URL.createObjectURL(new Blob([editor.source],{type:'application/json'})),link=document.createElement('a');link.href=url;link.download='ems-ui-project.json';link.click();setTimeout(()=>URL.revokeObjectURL(url),1000);};
 document.querySelector('#export-app-ui').onclick=async()=>{
@@ -95,13 +96,16 @@ document.querySelector('#file-ui').onchange=async event=>{const file=event.targe
 function change(operation){const task=authoringQueue.then(async()=>{const candidate=new UIProjectEditor(editor.application,base,{sources:editor.sources});operation(candidate);const checked=new UIRuntime(candidate.application,base,{policy});await checked.close();editor.replace(candidate.source);await startDemo();saveManaged();status.textContent='Изменение проверено и применено.';});authoringQueue=task.catch(()=>{});return task;}
 authoring=installUIAuthoring(()=>editor,change,report);
 designer=installUIDesigner(()=>editor,change,report);
-document.querySelector('#new-ui').onclick=()=>{const empty={schemaVersion:'ems-ui-app/1',id:'project.ui',version:'1.0.0',reactor:{schemaVersion:'ems-reactor/1',id:'project.ui',version:'1.0.0',state:[],handlers:[]},ui:{schemaVersion:'ems-ui/1',root:{id:'root',kind:'column',props:{},events:{},children:[]}}};if(manager){try{const id='p'+crypto.randomUUID().replaceAll('-','');manager.save({id,name:'Новый UI-проект',kind:'ui',source:new UIProjectEditor(empty,base).source,draft:null});location.href='/web/ui-demo.html?project='+id;}catch(failure){report(failure);}}else apply(new UIProjectEditor(empty,base).source).catch(report);};
+document.querySelector('#new-ui').onclick=()=>{const empty={schemaVersion:'ems-ui-app/1',id:'project.ui',version:'1.0.0',reactor:{schemaVersion:'ems-reactor/1',id:'project.ui',version:'1.0.0',state:[],handlers:[]},ui:{schemaVersion:'ems-ui/1',root:{id:'root',kind:'column',props:{},events:{},children:[]}}};if(manager){try{const id='p'+crypto.randomUUID().replaceAll('-','');manager.save({id,name:'Новый UI-проект',kind:'ui',source:new UIProjectEditor(empty,base).source,draft:null});location.href=manager.fileMode?manager.url(id,'/web/ui-demo.html'):'/web/ui-demo.html?project='+id;}catch(failure){report(failure);}}else apply(new UIProjectEditor(empty,base).source).catch(report);};
 
-async function openHandlerGraph(event){try{await authoringQueue;if(!editor.sources[event])throw Object.assign(Error('У обработчика нет редактируемого EMS-исходника'),{code:'SOURCE_REQUIRED'});saveProject();location.href='/web/handler-graph.html?handler='+encodeURIComponent(event)+(managedId?'&project='+encodeURIComponent(managedId):'');}catch(failure){report(failure);}}
+async function openHandlerGraph(event){try{await authoringQueue;if(!editor.sources[event])throw Object.assign(Error('У обработчика нет редактируемого EMS-исходника'),{code:'SOURCE_REQUIRED'});saveProject();location.href='/web/handler-graph.html?handler='+encodeURIComponent(event)+(managedId?'&project='+encodeURIComponent(managedId)+(new URLSearchParams(location.search).get('file')?'&file='+encodeURIComponent(new URLSearchParams(location.search).get('file')):''):'');}catch(failure){report(failure);}}
+document.querySelector('#create-handler').onsubmit=async event=>{event.preventDefault();try{const name=document.querySelector('#new-handler-event').value.trim();await change(editor=>editor.createHandler(name,document.querySelector('#new-handler-entry').value.trim(),{parameter:document.querySelector('#new-handler-parameter').value.trim(),type:document.querySelector('#new-handler-type').value}));await openHandlerGraph(name);}catch(failure){report(failure);}};
 document.querySelector('#open-handler-graph').onclick=()=>openHandlerGraph(document.querySelector('#handler-select').value);
 document.addEventListener('ems:ui-open-graph',event=>openHandlerGraph(event.detail.event));
 installControlGraph(()=>editor,change,report);
 connections=installUIConnections(()=>editor,authoring,designer);
 
-function saveProject(){if(manager)manager.save({...manager.load(managedId),source:editor.source});else storage.save(editor.application,{sources:editor.sources});}
+function saveProject(){if(manager)manager.save({...manager.load(manager.fileId??managedId),source:editor.source});else storage.save(editor.application,{sources:editor.sources});}
 function saveManaged(){if(manager)saveProject();}
+
+installProjectFiles();

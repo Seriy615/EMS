@@ -230,3 +230,11 @@ core.add(2,3), Boolean sum > 4 →11 / sum < 4 →22, неверное усло�
 контракта→UI3; сохранение/reopen3; отказ от stale cross-tab overwrite managed UI.
 Numeric operator projection: source spans, arithmetic signed-zero oracle,
 &&/|| не становятся eager. Обязательны полный gate и публичный HTTPS smoke.
+
+## AC-108/109 — обычный вход переменной и документы UI-проекта
+
+[Контракт поведения, приёмка и ограничения](../plans/ORDINARY_CONTRACT_PORTS.md).
+Unit: kernel-contracts, storage-connections, project-files, ui-handler-create.
+Browser: loops-and-ports, project-files-ui, ui-handler-workspace.
+Обязательны полные Node/verify/Chromium gates, public HTTPS smoke и проверка
+неизменности чужих сервисов при публикации. Полная межфайловая линковка остаётся открытой.

@@ -1,3 +1,4 @@
+import {storageConnections} from './storage-connections.mjs';
 /** Typed ports project existing lexical values and expression spans; they add no evaluation rules. */
 export function structuredPorts(graph,nodes){
  const sources=[],targets=[];
@@ -5,13 +6,13 @@ export function structuredPorts(graph,nodes){
   if(['LetDeclaration','Parameter'].includes(node.kind)&&node.type)sources.push({id:node.id,node:node.id,name:node.label,type:node.type});
   if(node.loop?.binding&&node.loop.bindingType)sources.push({id:node.id+'/binding',node:node.id,name:node.loop.binding,type:node.loop.bindingType});
   for(const input of node.operation?.inputs??[])targets.push({id:node.id+':'+input.name,node:node.id,label:input.name,type:input.type,...input});
-  if(node.storage)targets.push({id:node.id+':initial',node:node.id,label:'Начальное значение',type:node.storage.type,...node.storage.initial});
+  if(node.storage)targets.push({id:node.id+':value',node:node.id,label:'Значение',type:node.storage.type,storage:true});
   if(node.storageWrite)targets.push({id:node.id+':write',node:node.id,label:'Новое значение',type:node.storageWrite.type,...node.storageWrite.value});
   if(node.condition)targets.push({id:node.id+':condition',node:node.id,label:'Условие',type:'Boolean',...node.condition});
   if(node.loop)targets.push({id:node.id+':loop',node:node.id,label:node.loop.kind==='while'?'Условие':'Массив',type:node.loop.kind==='while'?'Boolean':node.loop.valueType,...node.loop.value});
   if(node.result)targets.push({id:node.id+':result',node:node.id,label:'Результат',...node.result});
  }
- const edges=[];for(const target of targets){const ref=graph.nodes.find(n=>n.kind==='NameExpression'&&n.location.start.offset===target.location.start.offset&&n.location.end.offset===target.location.end.offset),source=sources.find(s=>s.id===ref?.binding?.id);if(source)edges.push({from:source.id,to:target.id});}
+ const edges=[];for(const target of targets){if(target.storage){for(const {reference}of storageConnections(graph,target.node)){const source=sources.find(s=>s.id===reference.binding.id);if(source)edges.push({from:source.id,to:target.id});}continue;}const ref=graph.nodes.find(n=>n.kind==='NameExpression'&&n.location.start.offset===target.location.start.offset&&n.location.end.offset===target.location.end.offset),source=sources.find(s=>s.id===ref?.binding?.id);if(source)edges.push({from:source.id,to:target.id});}
  return {sources,targets,edges};
 }
 /** Candidate only. The ordinary frontend must still check types, scope and exact lexical identity. */

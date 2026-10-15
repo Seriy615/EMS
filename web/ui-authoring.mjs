@@ -1,3 +1,4 @@
+import {renderStateEditors} from './ui-state-editor.mjs';
 import {createStateRegistry} from '../src/runtime/reactor.mjs';
 import {signatureIR} from '../src/ir/index.mjs';
 const $=id=>document.getElementById(id),text=(tag,value)=>{const node=document.createElement(tag);node.textContent=value;return node;};
@@ -27,7 +28,7 @@ export function installUIAuthoring(getEditor,change,report){
  }
  function refresh(){
   const editor=getEditor(),app=editor.application,all=nodes(app.ui.root);fill($('widget-parent'),all.filter(node=>['column','row'].includes(node.kind)).map(node=>node.id));fill($('widget-select'),all.map(node=>node.id));if(selected&&all.some(node=>node.id===selected))$('widget-select').value=selected;propertyChoices();
-  fill($('event-handler'),app.reactor.handlers.map(handler=>handler.event));selectBinding();$('state-list').replaceChildren();for(const slot of app.reactor.state)$('state-list').append(text('p',slot.id+' : '+slot.type+' = '+(Object.is(slot.initial,-0)?'-0':typeof slot.initial==='string'?slot.initial:JSON.stringify(slot.initial))));
+  fill($('event-handler'),app.reactor.handlers.map(handler=>handler.event));selectBinding();renderStateEditors($('state-list'),app, (id,value)=>change(editor=>editor.setInitial(id,value)),report);
   fill($('handler-select'),app.reactor.handlers.map(handler=>handler.event));$('handler-inspect').textContent=JSON.stringify(selectedNode()?.events??{},null,2);
  }
  const action=operation=>{change(operation).catch(report);};
@@ -42,6 +43,7 @@ export function installUIAuthoring(getEditor,change,report){
  $('event-handler').onchange=eventChoices;
  $('set-event').onclick=()=>action(editor=>{const node=selectedNode(),handler=$('event-handler').value,signature=signatureIR(editor.application.reactor.handlers.find(item=>item.event===handler).program,createStateRegistry(editor.base,editor.application.reactor.state)),inputs={};for(const [name,spec]of Object.entries(signature.inputs)){const mode=[...$('event-inputs').querySelectorAll('[data-event-mode]')].find(field=>field.dataset.eventMode===name).value,value=[...$('event-inputs').querySelectorAll('[data-event-value]')].find(field=>field.dataset.eventValue===name).value;inputs[name]=binding(mode,value,spec.type);}editor.event(node.id,node.kind==='button'?'press':'change',handler,inputs);});
  $('apply-handler').onclick=()=>action(editor=>editor.applyHandler($('handler-event').value,$('handler-source').value,$('handler-entry').value));
+ $('handler-select').onchange=()=>{$('load-handler').click();};
  $('load-handler').onclick=()=>{const editor=getEditor(),event=$('handler-select').value,draft=editor.sources[event];$('handler-event').value=event;if(draft){$('handler-source').value=draft.source;$('handler-entry').value=draft.entry;}else{$('handler-source').value='';$('handler-entry').value='';}$('handler-inspect').textContent=JSON.stringify(editor.application.reactor.handlers.find(handler=>handler.event===event)?.program,null,2);};
  $('application').addEventListener('click',event=>{const widget=event.target.closest('[data-ems-ui]');if(widget){select(widget.dataset.emsUi);}});
  const technical=text('details',''),summary=text('summary','Техническое описание связи');$('handler-inspect').before(technical);technical.append(summary,$('handler-inspect'));

@@ -31,6 +31,19 @@ Synchronous structured programs can export typed atomic packages with nested `Op
 
 The avg5 arithmetic demo computes `(sum - min - max)/3 = 12.566666…`, **not** an official WCA Ao5 implementation. The current textual syntax is a tiny draft and does **not** yet constitute the full EMS language. Generated standalone JS is a pure-operation target proof of concept; native/mobile compilers remain planned work.
 
+## Studio projects
+
+The projects screen can create a workspace containing UI documents, graph files and
+EMS contract sources. Existing single-document projects can be converted through
+“Файлы проекта”. All documents are exported and imported together. UI handlers open
+in the same full contract canvas; custom handlers can be created without writing a
+source template. Initial UI state values are editable in the data panel and handler graph.
+Local variable contracts expose a typed overwrite input and a current-value output.
+
+Workspace files currently organize validated documents; automatic cross-file contract
+imports and dependent module recompilation remain planned. See
+[the acceptance scope and semantic limits](docs/plans/ORDINARY_CONTRACT_PORTS.md).
+
 ## Read in order
 
 1. [`AGENTS.md`](AGENTS.md) — mandatory rules and model selection.
