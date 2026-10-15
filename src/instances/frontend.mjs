@@ -17,7 +17,13 @@ function fn(name,parameters,output,body,at){return located('ContractDeclaration'
 const resultBody=(value,at)=>located('Block',at,{statements:[located('ReturnStatement',at,{value})]});
 /** Native state declarations lower to ordinary located AST and the existing control IR2. */
 export function compileInstanceModule(source,base,{id='application',version='1.0.0'}={}){
- const ast=parseEMSModule(source),definitions=ast.declarations.filter(node=>node.kind==='StatefulContractDeclaration'),instances=ast.declarations.filter(node=>node.kind==='ContractInstanceDeclaration'),ordinary=ast.declarations.filter(node=>!['StatefulContractDeclaration','ContractInstanceDeclaration'].includes(node.kind));
+ return compileInstanceAST(parseEMSModule(source),base,{id,version});
+}
+/** Link an already parsed native module without reconstructing or evaluating source text. */
+export function compileInstanceAST(ast,base,{id='application',version='1.0.0'}={}){
+ if(ast?.schemaVersion!=='ems-ast/1'||!Array.isArray(ast.declarations))fail('AST_VERSION','Expected native module AST');
+ if(ast.declarations.some(node=>['UINodeDeclaration','UIEventBindingDeclaration','ApplicationDeclaration'].includes(node.kind)))fail('INSTANCE_UI_PROFILE_REQUIRED','Use the native application linker for UI declarations');
+ const definitions=ast.declarations.filter(node=>node.kind==='StatefulContractDeclaration'),instances=ast.declarations.filter(node=>node.kind==='ContractInstanceDeclaration'),ordinary=ast.declarations.filter(node=>!['StatefulContractDeclaration','ContractInstanceDeclaration'].includes(node.kind));
  if(!definitions.length||!instances.length)fail('INSTANCE_DECLARATION','Declare a stateful contract and an instance');
  const declarations=new Map(),instanceNames=new Set();for(const node of ast.declarations){if(node.name.startsWith('ems_')||declarations.has(node.name))fail('DUPLICATE_SYMBOL','Duplicate or reserved declaration',{location:node.location});declarations.set(node.name,node);}
  const prototypes=new Map(definitions.map(def=>[def.name,def]));

@@ -403,3 +403,7 @@ UI instance event binding and outgoing language events are not claimed by this g
 ## AC-127 — native instance operations and fields drive the common UI runtime
 
 [INSTANCE_UI.md](../spec/INSTANCE_UI.md): versioned module+UI document, typed field/event bindings, shared UIKernel over the genuine native owner, ordinary graph roundtrip and whole independent DOM export. No initializers run on import/save/build. Require invariant rollback, policy/type refusals, prototype-safe/signed data, actual Worker events and downloaded package after EMS origin shutdown. Node `tests/instance-ui.test.mjs`, Chromium `tests/browser/instance-ui.test.mjs`. Native UI syntax/stepping and platform backends remain open.
+
+## AC-128 — native UI source and the shared text/visual binding model
+
+[NATIVE_UI_SOURCE.md](../spec/NATIVE_UI_SOURCE.md): located common grammar for UI contracts, <= state bindings and ~> typed events, exact existing module/UI parity, no second evaluator, real runtime/standalone/Worker. Require UI-only inverse with body preservation, drafts/CAS/error spans, constructor/escaped/signed finite values, no-init import/build, CLI artifacts and actual downloaded app/offline. Node `tests/native-ui-source.test.mjs`; Chromium `tests/browser/native-ui-source.test.mjs`. Full native-body inverse, dynamic instances and platform backends remain open.

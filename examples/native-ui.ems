@@ -1,0 +1,38 @@
+@Counter {
+    value: Number = 1;
+    +Change(delta: Number) -> Number {
+        value = value + delta;
+        return value;
+    }
+    ? value >= 0;
+}
+
+@Application {
+    @Counter #left;
+    @Counter #right { value: 5; }
+
+    @UI.Column #root {
+        gap: 12;
+        padding: 16;
+        @UI.Text #count {
+            content <= left.value as number;
+            fontSize: 32;
+        }
+        @UI.Button #up {
+            text: "Увеличить";
+            padding: 12;
+            borderRadius: 10;
+            backgroundColor: "#4167e8";
+            color: "#ffffff";
+        }
+        @UI.Button #down {
+            text: "Уменьшить";
+            padding: 12;
+            borderRadius: 10;
+            backgroundColor: "#4167e8";
+            color: "#ffffff";
+        }
+    }
+    up.clicked ~> left::Change(delta: 1);
+    down.clicked ~> left::Change(delta: -1);
+}

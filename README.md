@@ -1,6 +1,8 @@
+Native UI на EMS: `@UI.*`, `~>`, `<=`, общий typed model и UI-only text/visual inverse — [AC-128](docs/spec/NATIVE_UI_SOURCE.md), [полный source](examples/native-ui.ems). `application-build` создаёт независимое DOM-приложение.
+
 Native контрактный модуль теперь связывается с UI: поля `left.value`, операции `left::Change`, общий designer/canvas и независимый DOM export — [AC-127](docs/spec/INSTANCE_UI.md). Пример для импорта: [contract-instance-ui.ems-project.json](examples/contract-instance-ui.ems-project.json).
 
-Контрактные модули Studio: создание/импорт native EMS, экземпляры и данные, операции и инварианты в общем графе — [AC-126](docs/spec/INSTANCE_STUDIO.md). Срез не завершает глобальную цель; native UI text notation и dynamic lifetimes ещё впереди.
+Контрактные модули Studio: создание/импорт native EMS, экземпляры и данные, операции и инварианты в общем графе — [AC-126](docs/spec/INSTANCE_STUDIO.md). Срез не завершает глобальную цель; полный body inverse и dynamic lifetimes ещё впереди.
 
 # EMS — universal contract-oriented programming platform
 

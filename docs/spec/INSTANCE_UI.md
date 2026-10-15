@@ -1,3 +1,5 @@
+Native UI source notation и текущий UI text/visual inverse добавлены последующим профилем [AC-128](NATIVE_UI_SOURCE.md). Ниже исходный объём AC-127.
+
 # Native экземпляры и UI — AC-127
 
 Срез EMS-038/043/045. Глобальная цель остаётся активной. Реализуется связь UI с native static-instance ядром AC-125 и обычным canvas AC-126, без второго тела обработчика или новой модели вычисления.

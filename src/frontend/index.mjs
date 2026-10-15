@@ -63,7 +63,7 @@ export function tokenizeEMS(source, { maxSourceLength = 1_000_000, maxTokens = 1
       emit('string', value, start); continue;
     }
     const pair = source.slice(offset, offset + 2);
-    if (['::', '->', '=>', '==', '!=', '<=', '>=', '&&', '||'].includes(pair)) {
+    if (['::', '->', '~>', '=>', '==', '!=', '<=', '>=', '&&', '||'].includes(pair)) {
       advance(); advance(); emit('symbol', pair, start); continue;
     }
     if ('{}()[],:;.@#?+-*/%!=<>'.includes(ch)) { advance(); emit('symbol', ch, start); continue; }
@@ -134,6 +134,7 @@ class Parser {
     return this.node('Module', start, { schemaVersion: 'ems-ast/1', package: packageDeclaration, imports, declarations });
   }
   declaration() {
+    if(['identifier','string'].includes(this.token.kind)&&this.tokens[this.index+1]?.value==='.')return this.uiEvent();
     const start = this.token, exported = this.take('export');
     if (this.take('type')) {
       const name = this.identifier(), typeParameters = this.generics(); this.expect('='); const value = this.type(); this.expect(';');
@@ -145,6 +146,14 @@ class Parser {
     else if (this.take('contract') || this.take('@')) category = 'ContractDeclaration';
     else this.error('Expected @, contract, fn or type declaration');
     const name = this.qualified(), typeParameters = this.generics(), parameters = [];
+    if(category==='ContractDeclaration'&&name.startsWith('UI.')){
+      if(external||async||typeParameters.length)this.error('UI nodes cannot be extern, async or generic');
+      this.expect('#');const id=this.uiName();return this.uiNode(start,name,id);
+    }
+    if(category==='ContractDeclaration'&&this.is('{')&&this.tokens[this.index+1]?.value==='@'){
+      if(external||async||typeParameters.length)this.error('Applications cannot be extern, async or generic');
+      this.expect('{');const declarations=[];while(!this.is('}'))declarations.push(this.nested(()=>this.declaration()));this.expect('}');return this.node('ApplicationDeclaration',start,{name,exported,declarations});
+    }
     if(category==='ContractDeclaration'&&this.take('#')){
       if(external||async||typeParameters.length)this.error('Instance declarations cannot be extern, async or generic');
       const instance=this.identifier(),initials=[];
@@ -183,6 +192,18 @@ class Parser {
     }
     const body = external ? (this.expect(';'), null) : this.block();
     return this.node(category, start, { exported, external, async, name, typeParameters, parameters, output, requirements, body });
+  }
+  uiName(){return this.token.kind==='string'?this.string():this.identifier();}
+  uiTarget(){let name=this.uiName();while(this.take('.')||this.take('::'))name+='.'+this.uiName();return name;}
+  uiNode(start,contract,name){
+    return this.nested(()=>{this.expect('{');const properties=[],children=[];while(!this.is('}')){
+      if(this.is('@')){const child=this.declaration();if(child.kind!=='UINodeDeclaration')this.error('Only UI nodes may be nested in a UI node');children.push(child);}
+      else{const at=this.token,name=this.identifier(),reactive=this.take('<=');if(!reactive)this.expect(':');const value=this.expression();let format=null;if(this.take('as'))format=this.identifier();this.expect(';');properties.push(this.node('UIPropertyDeclaration',at,{name,reactive,value,format}));}
+    }this.expect('}');this.take(';');return this.node('UINodeDeclaration',start,{name,contract,properties,children});});
+  }
+  uiEvent(){
+    const start=this.token,widget=this.uiName();this.expect('.');const event=this.identifier();this.expect('~>');const target=this.uiTarget(),inputs=[];
+    if(this.take('(')){if(!this.is(')'))do{const at=this.token,name=this.uiName();this.expect(':');const value=this.expression();let format=null;if(this.take('as'))format=this.identifier();inputs.push(this.node('UIEventInput',at,{name,value,format}));}while(this.take(','));this.expect(')');}this.expect(';');return this.node('UIEventBindingDeclaration',start,{widget,event,target,inputs});
   }
   block() {
     return this.nested(() => {
@@ -304,7 +325,7 @@ class Parser {
         const args = [];
         if (!this.is(')')) do { args.push(this.expression()); } while (this.take(','));
         this.expect(')'); value = this.node('CallExpression', start, { callee: value, arguments: args });
-      } else if (this.take('.') || this.take('::')) value = this.node('MemberExpression', start, { value, member: this.identifier() });
+      } else if (this.take('.') || this.take('::')) value = this.node('MemberExpression', start, { value, member: this.uiName() });
       else if (this.take('[')) {
         const index = this.expression(); this.expect(']'); value = this.node('IndexExpression', start, { value, index });
       } else return value;
@@ -317,3 +338,6 @@ export function parseEMSModule(source, options = {}) {
   const tokens = tokenizeEMS(source, options);
   return new Parser(tokens, options.maxDepth ?? 128).module();
 }
+
+/** Quote symbol names where the UI grammar permits escaped IDs and member names. */
+export function uiSymbolSource(name){return /^[_A-Za-z][_A-Za-z0-9]*$/.test(name)&&!keywords.has(name)?name:JSON.stringify(name);}

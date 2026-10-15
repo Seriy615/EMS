@@ -1,3 +1,4 @@
+import {compileInstanceSource,compileInstanceUIFragment} from '../instances/ui-source.mjs';
 import {formatFiniteJSON} from '../semantics/data-json.mjs';
 import {validateInstanceUI} from '../instances/ui.mjs';
 import {createCoreRegistry} from '../reference/registry.mjs';
@@ -10,7 +11,7 @@ import {canonicalFlowType,defaultFlowValue,flowValueSource,assertFlowValue} from
 const limit=4*1024*1024;
 function fields(value,names){if(!value||typeof value!=='object'||Array.isArray(value)||Object.keys(value).sort().join(',')!==[...names].sort().join(','))fail('INVALID_INSTANCE_PROJECT','Unexpected contract document fields');}
 export function newInstanceProject(source='@Main { +Run()->Number { return 0; } } @Main #main;',base=createCoreRegistry()){
- return {schemaVersion:'ems-instance-project/1',module:compileInstanceModule(source,base),sourceArchive:source,bodyGraph:null,invariantGraphs:[]};
+ const {module,ui}=compileInstanceSource(source,base);return {schemaVersion:ui?'ems-instance-project/2':'ems-instance-project/1',module,sourceArchive:source,bodyGraph:null,invariantGraphs:[],...(ui?{ui}:{})};
 }
 /** Saved graphs are checked authoring witnesses. Import, listing and saving never execute a program. */
 export function validateInstanceProject(project,base=createCoreRegistry()){
@@ -69,3 +70,5 @@ export function addInstanceInvariant(project,contract,base=createCoreRegistry())
 }
 
 export function withInstanceUI(project,ui={schemaVersion:'ems-ui/1',root:{id:'root',kind:'column',props:{gap:{literal:12},padding:{literal:16}},events:{},children:[]}},base=createCoreRegistry()){const next={...structuredClone(project),schemaVersion:'ems-instance-project/2',ui:structuredClone(ui)};validateInstanceProject(next,base);return next;}
+
+export function applyInstanceUIFragment(project,source,{expectedUI}={},base=createCoreRegistry()){if(expectedUI!==undefined&&expectedUI!==formatFiniteJSON(project.ui))fail('STALE_UI_TEXT','UI changed since this text draft was opened');return withInstanceUI(project,compileInstanceUIFragment(source,project.module,base),base);}
