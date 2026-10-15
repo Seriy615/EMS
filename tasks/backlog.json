@@ -1250,6 +1250,25 @@
         "GPT-6 Luna"
       ],
       "progress": "Source46f3a8c exact898/159/87 PASS, deployed; HTTPS UI -5/reopen and conditions11/22 PASS. Owner follow-up: source-span position preservation, append order, explicit arrange; unit layout/view6 and browser8 PASS. Final combined gate/public smoke pending."
+    },
+    {
+      "id": "EMS-042",
+      "title": "Preserve typed contract ports and data bindings across control flow authoring",
+      "phase": "M2 owner P0",
+      "dependsOn": [
+        "EMS-040",
+        "EMS-041"
+      ],
+      "objective": "Keep the same contract graph, typed ports and placements when adding conditions or loops; remove mandatory text creation dialogs",
+      "deliverables": "docs/plans/CONTROL_PORTS.md; shared source bindings, ports, native layout transfer, direct loop creation",
+      "acceptance": "AC-105; ordinary graph3 edges retained, rewiring6, typed rejection, exact lexical identity, mutable Boolean loop1, complete gates and public smoke",
+      "status": "IN_PROGRESS",
+      "priority": "P0",
+      "ownerModelPolicy": [
+        "GPT-6.1 Sol",
+        "GPT-6 Luna"
+      ],
+      "progress": "Focused3 Node and11 Chromium PASS; exact combined acceptance/publication pending. No new evaluation/implicit producer re-execution semantics."
     }
   ]
 }

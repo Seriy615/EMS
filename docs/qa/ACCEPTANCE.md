@@ -203,3 +203,12 @@ V2 conservative canonical user-type set, dependency union/reseal, immutable modu
 Реальный Worker: delta -5 → count -5; сохранение/повторное открытие. Общий граф:
 core.add(2,3), Boolean sum > 4 →11 / sum < 4 →22, неверное условие Number
 сохраняет предыдущую программу. Полные gates и публичный smoke обязательны.
+
+## AC-105 — порты сохраняются при добавлении управления
+
+[Критерии и семантические границы](../plans/CONTROL_PORTS.md).
+`tests/structured-ports.test.mjs`: настоящие bindings, Boolean/Number rejection,
+точная lexical identity, тип текущего элемента For. Браузер: ordinary sum→If
+сохраняет3 data edges/позиции/камеру и после rewiring даёт6; создание цикла без
+модального ввода, mutable Boolean loop1; массивный порт и запрет Number→Boolean.
+Публикация требует полного gate и HTTPS сценария на этом source revision.
