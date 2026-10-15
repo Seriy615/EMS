@@ -1,6 +1,6 @@
 import {decodeControlLiteral} from '../src/ir/control.mjs';
 import {projectManagerForLocation} from '../src/studio/manager.mjs';
-import {parseInstanceProject,serializeInstanceProject,newInstanceProject,instanceInitial,addInstanceTransition,addInstanceInvariant} from '../src/studio/instance-project.mjs';
+import {parseInstanceProject,serializeInstanceProject,newInstanceProject,withInstanceUI,instanceInitial,addInstanceTransition,addInstanceInvariant} from '../src/studio/instance-project.mjs';
 import {validateInstanceModule} from '../src/instances/module.mjs';
 import {compileInstanceModuleJS} from '../src/instances/compiler.mjs';
 import {createInstanceWorker} from '../src/instances/worker-client.mjs';
@@ -26,8 +26,10 @@ function render(){
 $('add-transition').onsubmit=event=>{event.preventDefault();try{const def=project.module.instances.find(item=>item.id===selected).contract,name=$('transition-name').value.trim(),ports=$('transition-inputs').value.trim(),inputs=ports?ports.split(';').map(text=>{const at=text.indexOf(':');if(at<0)throw Error('Вход: имя:тип');return {name:text.slice(0,at).trim(),type:text.slice(at+1).trim()};}):[];save(addInstanceTransition(project,def,name,inputs,$('transition-output').value));location.assign(url({instance:selected,transition:name}));}catch(error){report(error);}};
 $('add-invariant').onclick=()=>{try{const def=project.module.instances.find(item=>item.id===selected).contract,result=addInstanceInvariant(project,def);save(result.project);location.assign(url({definition:def,invariant:result.id}));}catch(error){report(error);}};
 $('source').oninput=()=>{sourceDraft=$('source').value;};
-$('apply-source').onclick=()=>{try{const next=newInstanceProject($('source').value);save(next);}catch(error){report(error);}};
+$('apply-source').onclick=()=>{try{let next=newInstanceProject($('source').value);if(project.ui)next=withInstanceUI(next,project.ui);save(next);}catch(error){report(error);}};
 $('restart').onclick=()=>{close();$('output').textContent='Следующий вызов начнётся с начальных данных.';};$('stop').onclick=()=>{close();$('output').textContent='Выполнение остановлено';};
 function download(source,name,type){const url=URL.createObjectURL(new Blob([source],{type})),link=el('a');link.href=url;link.download=name;link.click();setTimeout(()=>URL.revokeObjectURL(url),1000);}
 $('export').onclick=()=>download(serializeInstanceProject(project),'contracts.ems-project.json','application/json');$('compile').onclick=()=>{try{download(compileInstanceModuleJS(project.module),'application.mjs','text/javascript');}catch(error){report(error);}};
 window.addEventListener('pagehide',close);render();installProjectFiles();
+
+$('open-ui').onclick=()=>{try{if(!project.ui)save(withInstanceUI(project));const query=new URLSearchParams(location.search);query.set('native','1');location.assign('/web/ui-demo.html?'+query);}catch(error){report(error);}};

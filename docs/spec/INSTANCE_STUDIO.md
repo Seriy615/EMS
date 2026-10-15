@@ -1,3 +1,5 @@
+Последующее расширение native module→UI bindings и независимого DOM export: [AC-127](INSTANCE_UI.md). Ниже зафиксирован исходный объём AC-126.
+
 # Контрактный модуль в Studio — AC-126
 
 Статус: срез EMS-038; ядро static instances AC-125. Глобальная цель EMS остаётся активной.

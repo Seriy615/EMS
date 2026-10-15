@@ -22,17 +22,9 @@ function bindingType(ref,slots,eventType,rich=false){
  fail('INVALID_UI','Unsupported UI binding');
 }
 
-/** Link a finite, platform-neutral UI tree to real typed EMS event programs. Performs no DOM or handler effects. */
-export function linkUIApplication(application,baseRegistry,{policy={},maxQueue=64,recordTrace=false}={}){
- fields(application,['schemaVersion','id','version','reactor','ui'],'application');
- if(!['ems-ui-app/1','ems-ui-app/2'].includes(application.schemaVersion)||typeof application.id!=='string'||!application.id||typeof application.version!=='string'||!application.version)fail('UI_VERSION','Invalid UI application identity/version');
- const rich=application.schemaVersion==='ems-ui-app/2';if(application.reactor?.schemaVersion!==(rich?'ems-reactor/2':'ems-reactor/1'))fail('UI_VERSION','UI application and reactor versions disagree');
- const registry=createStateRegistry(baseRegistry,application.reactor?.state,application.reactor?.schemaVersion);
- // Reactor performs the authoritative manifest/state/binding/IR checks, without invoking handlers.
- const session=new ReactorSession(application.reactor,registry,{policy,maxQueue,recordTrace});
- const slots=new Map(application.reactor.state.map(slot=>[slot.id,slot]));
- const handlers=new Map(application.reactor.handlers.map(handler=>[handler.event,signatureIR(handler.program,registry)]));
- fields(application.ui,['schemaVersion','root'],'UI tree');if(application.ui.schemaVersion!=='ems-ui/1')fail('UI_VERSION','Unsupported UI tree version');
+/** Shared platform-neutral tree/binding validation. No state initializer or operation executes here. */
+export function validateUITree(ui,slots,handlers,{rich=false,stateVersion='ems-reactor/1'}={}){
+ fields(ui,['schemaVersion','root'],'UI tree');if(ui.schemaVersion!=='ems-ui/1')fail('UI_VERSION','Unsupported UI tree version');
  const nodes=new Map();let count=0;
  function visit(node,depth){
   if(++count>1000||depth>32)fail('UI_LIMIT','UI tree size/depth limit');
@@ -47,11 +39,25 @@ export function linkUIApplication(application,baseRegistry,{policy={},maxQueue=6
    if(event!==spec.event)fail('UNSUPPORTED_UI','Unsupported semantic event');fields(binding,['handler','inputs'],'event binding');
    const signature=handlers.get(binding.handler);if(!signature)fail('UNKNOWN_EVENT','Unknown UI handler');record(binding.inputs,'event inputs');
    if(Object.keys(binding.inputs).sort().join(',')!==Object.keys(signature.inputs).sort().join(','))fail('UI_EVENT_TYPE','UI event inputs disagree with handler');
-   for(const [name,ref]of Object.entries(binding.inputs))assertStateValue(bindingType(ref,slots,spec.value,rich),signature.inputs[name].type,`ui.${node.id}.${event}.${name}`,application.reactor.schemaVersion);
+   for(const [name,ref]of Object.entries(binding.inputs))assertStateValue(bindingType(ref,slots,spec.value,rich),signature.inputs[name].type,`ui.${node.id}.${event}.${name}`,stateVersion);
   }
   for(const child of node.children)visit(child,depth+1);
  }
- visit(application.ui.root,0);
+ visit(ui.root,0);
+ return {nodes};
+}
+
+/** Link a finite, platform-neutral UI tree to real typed EMS event programs. Performs no DOM or handler effects. */
+export function linkUIApplication(application,baseRegistry,{policy={},maxQueue=64,recordTrace=false}={}){
+ fields(application,['schemaVersion','id','version','reactor','ui'],'application');
+ if(!['ems-ui-app/1','ems-ui-app/2'].includes(application.schemaVersion)||typeof application.id!=='string'||!application.id||typeof application.version!=='string'||!application.version)fail('UI_VERSION','Invalid UI application identity/version');
+ const rich=application.schemaVersion==='ems-ui-app/2';if(application.reactor?.schemaVersion!==(rich?'ems-reactor/2':'ems-reactor/1'))fail('UI_VERSION','UI application and reactor versions disagree');
+ const registry=createStateRegistry(baseRegistry,application.reactor?.state,application.reactor?.schemaVersion);
+ // Reactor performs the authoritative manifest/state/binding/IR checks, without invoking handlers.
+ const session=new ReactorSession(application.reactor,registry,{policy,maxQueue,recordTrace});
+ const slots=new Map(application.reactor.state.map(slot=>[slot.id,slot]));
+ const handlers=new Map(application.reactor.handlers.map(handler=>[handler.event,signatureIR(handler.program,registry)]));
+ validateUITree(application.ui,slots,handlers,{rich,stateVersion:application.reactor.schemaVersion});
  return {...createUIRuntimeLink(application,session),registry};
 }
 

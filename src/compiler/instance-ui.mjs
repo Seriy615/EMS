@@ -1,0 +1,9 @@
+import {validateInstanceUI,instanceUILink} from '../instances/ui.mjs';
+import {compileInstanceModuleJS} from '../instances/compiler.mjs';
+import {uiRuntimeSupport,uiLiteral} from './ui.mjs';
+import {createCoreRegistry} from '../reference/registry.mjs';
+/** Emit the same UI kernel over the genuine compiled native instance owner, with no EMS imports. */
+export function compileInstanceUIJS(module,ui,base=createCoreRegistry()){
+ const {bindings}=validateInstanceUI(module,ui,base),program=compileInstanceModuleJS(module,base).replace('export async function createSession(','async function createSession('),source=`// EMS independent native-instance UI. No EMS service or imports.\n${uiRuntimeSupport()}\n${instanceUILink.toString()}\nconst native=(()=>{${program}\nreturn {createSession};})();\nconst ui=${uiLiteral(ui)},bindings=${uiLiteral(bindings)};\nexport async function createRuntime(options={}){checkUIPolicy(options.policy??{});const owner=await native.createSession(options);try{return new UIKernel(instanceUILink(null,ui,owner,bindings));}catch(error){await owner.close();throw error;}}\nexport async function mountApplication(host,{onError=()=>{},...options}={}){if(!host?.ownerDocument||typeof host.replaceChildren!=='function'||typeof onError!=='function')fail('INVALID_UI','DOM host and error callback required');if(mounted.has(host))fail('UI_HOST_BUSY','DOM host already owns an EMS application');const reservation={};mounted.set(host,reservation);let runtime;try{runtime=await createRuntime(options);mounted.delete(host);return mountDOMRuntime(host,{ui},runtime,{onError});}catch(error){if(mounted.get(host)===reservation)mounted.delete(host);await runtime?.close();throw error;}}\n`;
+ if(new TextEncoder().encode(source).length>3145728)throw Object.assign(Error('Native UI standalone exceeds 3 MiB'),{code:'INSTANCE_LIMIT'});return source;
+}

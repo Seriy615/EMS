@@ -1,3 +1,5 @@
+import {formatFiniteJSON} from '../semantics/data-json.mjs';
+import {validateInstanceUI} from '../instances/ui.mjs';
 import {createCoreRegistry} from '../reference/registry.mjs';
 import {fail} from '../reference/errors.mjs';
 import {compileInstanceModule} from '../instances/frontend.mjs';
@@ -12,8 +14,9 @@ export function newInstanceProject(source='@Main { +Run()->Number { return 0; } 
 }
 /** Saved graphs are checked authoring witnesses. Import, listing and saving never execute a program. */
 export function validateInstanceProject(project,base=createCoreRegistry()){
- fields(project,['schemaVersion','module','sourceArchive','bodyGraph','invariantGraphs']);
- if(project.schemaVersion!=='ems-instance-project/1'||project.sourceArchive!==null&&(typeof project.sourceArchive!=='string'||project.sourceArchive.length>1048576)||project.bodyGraph!==null&&typeof project.bodyGraph!=='string'||!Array.isArray(project.invariantGraphs)||project.invariantGraphs.length>512)fail('INVALID_INSTANCE_PROJECT','Invalid contract document');
+ fields(project,['schemaVersion','module','sourceArchive','bodyGraph','invariantGraphs',...(project?.schemaVersion==='ems-instance-project/2'?['ui']:[])]);
+ if(!['ems-instance-project/1','ems-instance-project/2'].includes(project.schemaVersion)||project.sourceArchive!==null&&(typeof project.sourceArchive!=='string'||project.sourceArchive.length>1048576)||project.bodyGraph!==null&&typeof project.bodyGraph!=='string'||!Array.isArray(project.invariantGraphs)||project.invariantGraphs.length>512)fail('INVALID_INSTANCE_PROJECT','Invalid contract document');
+ if(project.schemaVersion==='ems-instance-project/2')validateInstanceUI(project.module,project.ui,base);
  const checked=validateInstanceModule(project.module,base),canonical=serializeInstanceModule(project.module,base);
  if(project.bodyGraph!==null){const root=checked.transitions.find(action=>action.entry===project.module.program.entry);if(!root)fail('INSTANCE_ENTRY','Body graph must retain a public entry');const next=applyTransitionFlow(project.module,root.instance,root.name,project.bodyGraph,base);if(serializeInstanceModule(next,base)!==canonical)fail('INSTANCE_GRAPH_MISMATCH','Saved transition graph disagrees with semantic module');}
  const seen=new Set();for(const item of project.invariantGraphs){fields(item,['contract','id','flow']);const key=JSON.stringify([item.contract,item.id]);if(seen.has(key)||typeof item.flow!=='string')fail('INVALID_INSTANCE_PROJECT','Invalid or duplicate invariant graph');seen.add(key);const next=applyInvariantFlow(project.module,item.contract,item.id,item.flow,base);if(serializeInstanceModule(next,base)!==canonical)fail('INSTANCE_GRAPH_MISMATCH','Saved invariant graph disagrees with semantic module');}
@@ -23,11 +26,11 @@ export function parseInstanceProject(source,base=createCoreRegistry()){
  if(typeof source!=='string'||new TextEncoder().encode(source).length>limit)fail('INSTANCE_LIMIT','Contract document exceeds 4 MiB');let data;try{data=JSON.parse(source);}catch{fail('INVALID_INSTANCE_PROJECT','Malformed contract document');}return validateInstanceProject(data,base);
 }
 export function serializeInstanceProject(project,base=createCoreRegistry()){
- validateInstanceProject(project,base);const result={...project,module:JSON.parse(serializeInstanceModule(project.module,base))},source=JSON.stringify(result,null,2)+'\n';if(new TextEncoder().encode(source).length>limit)fail('INSTANCE_LIMIT','Contract document exceeds 4 MiB');return source;
+ validateInstanceProject(project,base);const result={...project,module:JSON.parse(serializeInstanceModule(project.module,base))},source=(project.schemaVersion==='ems-instance-project/2'?formatFiniteJSON(result):JSON.stringify(result,null,2))+'\n';if(new TextEncoder().encode(source).length>limit)fail('INSTANCE_LIMIT','Contract document exceeds 4 MiB');return source;
 }
 export function importInstanceProject(source,base=createCoreRegistry()){
  let data;try{data=JSON.parse(source);}catch{return newInstanceProject(source,base);}
- if(data?.schemaVersion==='ems-instance-project/1')return parseInstanceProject(source,base);
+ if(['ems-instance-project/1','ems-instance-project/2'].includes(data?.schemaVersion))return parseInstanceProject(source,base);
  if(data?.schemaVersion==='ems-instance-module/1')return {schemaVersion:'ems-instance-project/1',module:parseInstanceModule(source,base),sourceArchive:null,bodyGraph:null,invariantGraphs:[]};
  fail('INSTANCE_VERSION','Expected native EMS or a contract module/document');
 }
@@ -64,3 +67,5 @@ export function addInstanceInvariant(project,contract,base=createCoreRegistry())
  const def=project.module.definitions.find(item=>item.id===contract);if(!def)fail('UNKNOWN_INSTANCE','Unknown definition');let id='invariant_0',i=0;while(def.invariants.some(item=>item.id===id))id='invariant_'+(++i);
  const temporary=compileInstanceModule('@Initial {'+def.fields.map(field=>field.name+':'+field.type+'='+flowValueSource(defaultFlowValue(field.type),field.type)+';').join('')+'+Run()->Boolean{return true;} ? true;} @Initial #initial;',base),next=structuredClone(project);next.module.definitions.find(item=>item.id===contract).invariants.push({id,program:temporary.definitions[0].invariants[0].program});validateInstanceProject(next,base);return {project:next,id};
 }
+
+export function withInstanceUI(project,ui={schemaVersion:'ems-ui/1',root:{id:'root',kind:'column',props:{gap:{literal:12},padding:{literal:16}},events:{},children:[]}},base=createCoreRegistry()){const next={...structuredClone(project),schemaVersion:'ems-instance-project/2',ui:structuredClone(ui)};validateInstanceProject(next,base);return next;}

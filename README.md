@@ -1,4 +1,6 @@
-Контрактные модули Studio: создание/импорт native EMS, экземпляры и данные, операции и инварианты в общем графе — [AC-126](docs/spec/INSTANCE_STUDIO.md). Срез не завершает глобальную цель; native instance→UI bindings ещё впереди.
+Native контрактный модуль теперь связывается с UI: поля `left.value`, операции `left::Change`, общий designer/canvas и независимый DOM export — [AC-127](docs/spec/INSTANCE_UI.md). Пример для импорта: [contract-instance-ui.ems-project.json](examples/contract-instance-ui.ems-project.json).
+
+Контрактные модули Studio: создание/импорт native EMS, экземпляры и данные, операции и инварианты в общем графе — [AC-126](docs/spec/INSTANCE_STUDIO.md). Срез не завершает глобальную цель; native UI text notation и dynamic lifetimes ещё впереди.
 
 # EMS — universal contract-oriented programming platform
 

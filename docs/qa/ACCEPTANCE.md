@@ -399,3 +399,7 @@ UI instance event binding and outgoing language events are not claimed by this g
 ## AC-126 — native contract module documents in the ordinary Studio canvas
 
 [INSTANCE_STUDIO.md](../spec/INSTANCE_STUDIO.md): contract documents, raw EMS/module import, workspace routing, shared transition/invariant canvas, typed initial overrides/new operations, separate incomplete drafts/CAS/sibling preservation. Actual Worker state/invariant rollback and complete independent module export must agree after GUI edits. No initializer execution on import/list/save. Node `tests/instance-studio.test.mjs`; Chromium `tests/browser/instance-studio.test.mjs`. Full inverse and native instance→UI bindings remain open.
+
+## AC-127 — native instance operations and fields drive the common UI runtime
+
+[INSTANCE_UI.md](../spec/INSTANCE_UI.md): versioned module+UI document, typed field/event bindings, shared UIKernel over the genuine native owner, ordinary graph roundtrip and whole independent DOM export. No initializers run on import/save/build. Require invariant rollback, policy/type refusals, prototype-safe/signed data, actual Worker events and downloaded package after EMS origin shutdown. Node `tests/instance-ui.test.mjs`, Chromium `tests/browser/instance-ui.test.mjs`. Native UI syntax/stepping and platform backends remain open.
