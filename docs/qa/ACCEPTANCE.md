@@ -395,3 +395,7 @@ reapplies checks. Actual persistent Worker, offline new owner, deadline preservi
 last acknowledged state and browser-generated independent output are required.
 Full Studio native-module document/routing, first-class/dynamic instance values,
 UI instance event binding and outgoing language events are not claimed by this gate.
+
+## AC-126 — native contract module documents in the ordinary Studio canvas
+
+[INSTANCE_STUDIO.md](../spec/INSTANCE_STUDIO.md): contract documents, raw EMS/module import, workspace routing, shared transition/invariant canvas, typed initial overrides/new operations, separate incomplete drafts/CAS/sibling preservation. Actual Worker state/invariant rollback and complete independent module export must agree after GUI edits. No initializer execution on import/list/save. Node `tests/instance-studio.test.mjs`; Chromium `tests/browser/instance-studio.test.mjs`. Full inverse and native instance→UI bindings remain open.

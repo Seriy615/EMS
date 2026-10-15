@@ -15,7 +15,7 @@ export function studioEntryRoute(storage,pathname,search){
   const query=new URLSearchParams({project:id,source:'1'});if(manager.fileId)query.set('file',manager.fileId);
   return '/web/flow.html?'+query;
  }
- const route=record.kind==='flow'?'/web/flow.html':record.kind==='ui'?'/web/ui-demo.html':'/web/workspace.html',query=new URLSearchParams({project:id});
+ const route=record.kind==='contract'?'/web/contracts.html':record.kind==='flow'?'/web/flow.html':record.kind==='ui'?'/web/ui-demo.html':'/web/workspace.html',query=new URLSearchParams({project:id});
  if(manager.fileId)query.set('file',manager.fileId);
  return route+'?'+query;
 }

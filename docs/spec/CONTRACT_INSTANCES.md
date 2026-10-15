@@ -2,7 +2,7 @@
 
 Это первый исполняемый профиль контрактов с состоянием EMS-038. Он добавляет
 реальные native declarations и versioned semantic module; не объявляет завершёнными
-всю модель экземпляров, UI notation, динамическое создание или Studio authoring.
+всю модель экземпляров, UI notation или динамическое создание. Последующий базовый Studio authoring описан отдельно в [AC-126](INSTANCE_STUDIO.md).
 
 ```ems
 @Counter {

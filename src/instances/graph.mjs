@@ -10,7 +10,7 @@ export function transitionFlow(module,instance,name,base=createCoreRegistry()){
  return {source:sourceContractFlow({...module.program,entry:action.entry},checked.registry,{allowState:true}),registry:checked.registry,options:{allowState:true}};
 }
 export function applyTransitionFlow(module,instance,name,source,base=createCoreRegistry()){
- const view=transitionFlow(module,instance,name,base),project=parseFlowProject(source,view.registry,view.options),action=validateInstanceModule(module,base).transitions.find(action=>action.instance===instance&&action.name===name);
+ const checked=validateInstanceModule(module,base),action=checked.transitions.find(action=>action.instance===instance&&action.name===name);if(!action)fail('UNKNOWN_TRANSITION','Unknown instance transition');const view={registry:checked.registry,options:{allowState:true}},project=parseFlowProject(source,view.registry,view.options);
  if(project.graph.id!==action.entry)fail('INSTANCE_ENTRY','Graph must preserve the transition entry');
  const functions=new Map(),options=flowProjectOptions(project,view.options);let program;for(const target of validateInstanceModule(module,base).transitions){const bundle=compileContractFlow(project.graph,view.registry,{...options,entry:target.entry});program??=bundle.ir;for(const fn of bundle.ir.functions){const before=functions.get(fn.id);if(before&&JSON.stringify(before)!==JSON.stringify(fn))fail('INSTANCE_FUNCTION_CONFLICT','Graph definitions disagree across transition entries');functions.set(fn.id,fn);}}const next=structuredClone(module);next.program={...program,profile:'ems-control-algebraic/1',entry:action.entry,functions:[...functions.values()]};validateInstanceModule(next,base);return next;
 }

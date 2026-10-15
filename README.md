@@ -1,3 +1,5 @@
+Контрактные модули Studio: создание/импорт native EMS, экземпляры и данные, операции и инварианты в общем графе — [AC-126](docs/spec/INSTANCE_STUDIO.md). Срез не завершает глобальную цель; native instance→UI bindings ещё впереди.
+
 # EMS — universal contract-oriented programming platform
 
 > **EMS = language, contracts, compiler, runtime, UI, system API adapters, plugin ecosystem and AI-assisted programming.** Not merely an event builder or a website constructor.
