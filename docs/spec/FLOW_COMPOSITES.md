@@ -1,3 +1,5 @@
+AC-122: [profile /3](RECURSIVE_FLOW.md) добавляет self/mutual/entry recursion; /2 ниже остаётся прежним DAG profile.
+
 # Собственные составные контракты в обычном графе — AC-121
 
 Статус: reference slice EMS-043/044, частичное продвижение G-02/03/05/11/12/14.

@@ -1,3 +1,4 @@
+import {recursiveFlowCalls,RECURSIVE_FLOW_CALL_PROFILE} from '../contracts/flow-library.mjs';
 import {validateControlIR,decodeControlLiteral} from '../ir/control.mjs';
 import {newFlowProject,serializeFlowProject} from './flow-project.mjs';
 import {defaultFlowValue} from '../contracts/flow-values.mjs';
@@ -89,5 +90,6 @@ export function sourceContractFlow(ir,registry,{id='source',name=ir.entry,allowS
  }
  const project=projectFunction(functions.get(ir.entry)),definitions=ir.functions.filter(fn=>fn.id!==ir.entry).map(projectFunction);
  if(definitions.length){project.schemaVersion='ems-flow-project/2';project.contracts=definitions.map(({graph,inputs,canvas})=>({graph,inputs,canvas}));}
+ if(recursiveFlowCalls([project.graph,...definitions.map(item=>item.graph)])){project.schemaVersion='ems-flow-project/3';project.callProfile=RECURSIVE_FLOW_CALL_PROFILE;project.contracts??=[];}
  return serializeFlowProject(project,registry,{allowState});
 }

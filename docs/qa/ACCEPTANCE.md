@@ -339,3 +339,12 @@ Runtime/standalone/module export/import/CLI/SVG parity; real Worker12→27/reope
 UI helpers4→6/reopen6 and caller-error rollback. Saved helper source bookmarks
 retain source while saving a sibling module. Nested diagnostics focus correct scope.
 Recursion, broader source profiles, cross-file imports and full inverse remain open.
+
+## AC-122 — recursive flow calls with shared policy and execution limits
+
+[Семантика](../spec/RECURSIVE_FLOW.md): explicit project/3 callProfile; self,
+mutual and entry calls reuse typed IR2, frame-local storage and common work/depth.
+Transitive effects reach a fixed point through cycles; fake state callbacks refuse.
+Old profile behavior, closed transport/import/export/source/UI witnesses persist.
+Worker120→edit240/reopen240/independent240; real self drag/bounded CALL_DEPTH,
+UI3→6/reopen6 and rollback0. Root/helper Back navigation and finite SVG checked.
