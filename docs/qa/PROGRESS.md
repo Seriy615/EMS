@@ -1009,3 +1009,11 @@ Next unblocked: source helper contracts and existing standalone source-project
 routing/projection; explicit indexing error ABI and richer profiles follow.
 Full text/visual equivalence and global goal remain active; no claim of native
 platform compiler completion or full contract instance model.
+
+AC-117 actual publication: `28b3c38d9021af9cefda32775fa1136d2d0e1792`.
+Public flow/3 Worker8, independent different-input module7, old mutable UI
+Worker5→edit7 and downloaded independent UI increment7/decrement-7 verified.
+Service active/current symlink confirmed, foreign6 nginx configs unchanged.
+Evidence /tmp/ems-storage-{deploy,live-proof,vps-after}.log; Github main pushed.
+Final1002/166 and scoped20+final9 PASS. Source helpers / standalone legacy
+projection are next P0; full EMS objective remains active and incomplete.
