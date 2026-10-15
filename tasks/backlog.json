@@ -1177,6 +1177,24 @@
         "GPT-6 Luna"
       ],
       "progress": "Baseline872 Node/159 verify PASS. New Node879/879 and verify159/159 PASS; focused browser3/3 PASS. Unified graph and floating designer implemented; complete browser/deploy acceptance pending. Full language visual coverage remains open."
+    },
+    {
+      "id": "EMS-038",
+      "title": "Contract-first semantic kernel and native EMS syntax",
+      "phase": "M1/M2 owner priority",
+      "dependsOn": [
+        "EMS-037"
+      ],
+      "objective": "Define contract instances, storage, control and transactional invariants as the language basis and lower native EMS notation to shared IR",
+      "deliverables": "docs/architecture/CONTRACT_KERNEL.md; incremental grammar/lowering/Cell/transitions/UI bindings",
+      "acceptance": "Contract kernel section7: shared text/graph/interpreted/compiled fixtures; scope/type/alias/effect errors; invariant rollback and event traces",
+      "status": "TODO",
+      "priority": "P0",
+      "ownerModelPolicy": [
+        "GPT-6.1 Sol",
+        "GPT-6 Luna"
+      ],
+      "progress": "Owner concept and semantic basis recorded; @ syntax remains a proposal, no new parser or invariant runtime claimed."
     }
   ]
 }
