@@ -1,7 +1,11 @@
 let installPrompt;
+const standalone=matchMedia('(display-mode:standalone)');
+function updateInstall(){const installed=standalone.matches||navigator.standalone===true||localStorage.getItem('ems.pwa.installed')==='true';for(const button of document.querySelectorAll('[data-install]'))button.hidden=installed;}
+addEventListener('appinstalled',()=>{localStorage.setItem('ems.pwa.installed','true');installPrompt=null;updateInstall();});standalone.addEventListener('change',updateInstall);updateInstall();
+
 const message=document.createElement('p');message.className='pwa-notice';message.hidden=true;message.setAttribute('role','status');const text=document.createElement('span'),close=document.createElement('button');close.textContent='Закрыть';close.onclick=()=>{message.hidden=true;};message.append(text,close);document.body.append(message);
 function notice(value){text.textContent=value;message.hidden=false;}
-addEventListener('beforeinstallprompt',event=>{event.preventDefault();installPrompt=event;});
+addEventListener('beforeinstallprompt',event=>{event.preventDefault();installPrompt=event;localStorage.removeItem('ems.pwa.installed');updateInstall();});
 document.addEventListener('ems-install',async()=>{if(installPrompt){const prompt=installPrompt;installPrompt=null;await prompt.prompt();await prompt.userChoice;}else if(matchMedia('(display-mode:standalone)').matches)notice('EMS уже открыт как приложение.');else notice('В меню браузера выберите «Установить приложение» или «На экран Домой».');});
 addEventListener('offline',()=>notice('Нет сети. Сохранённые проекты доступны на этом устройстве.'));
 addEventListener('online',()=>{message.hidden=true;});

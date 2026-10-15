@@ -5,6 +5,8 @@ export function structuredPorts(graph,nodes){
   if(['LetDeclaration','Parameter'].includes(node.kind)&&node.type)sources.push({id:node.id,node:node.id,name:node.label,type:node.type});
   if(node.loop?.binding&&node.loop.bindingType)sources.push({id:node.id+'/binding',node:node.id,name:node.loop.binding,type:node.loop.bindingType});
   for(const input of node.operation?.inputs??[])targets.push({id:node.id+':'+input.name,node:node.id,label:input.name,type:input.type,...input});
+  if(node.storage)targets.push({id:node.id+':initial',node:node.id,label:'Начальное значение',type:node.storage.type,...node.storage.initial});
+  if(node.storageWrite)targets.push({id:node.id+':write',node:node.id,label:'Новое значение',type:node.storageWrite.type,...node.storageWrite.value});
   if(node.condition)targets.push({id:node.id+':condition',node:node.id,label:'Условие',type:'Boolean',...node.condition});
   if(node.loop)targets.push({id:node.id+':loop',node:node.id,label:node.loop.kind==='while'?'Условие':'Массив',type:node.loop.kind==='while'?'Boolean':node.loop.valueType,...node.loop.value});
   if(node.result)targets.push({id:node.id+':result',node:node.id,label:'Результат',...node.result});

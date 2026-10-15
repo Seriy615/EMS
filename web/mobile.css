@@ -16,5 +16,3 @@ body:has(#project-list){overflow:auto;height:auto;min-height:100dvh}body:has(#pr
 @media(max-width:700px){.canvas-tools{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));margin-left:0;gap:4px;min-width:0}.canvas-tools .history-actions{display:contents}.scope-bar .canvas-tools button{min-width:0!important;padding:4px;font-size:10px}.scope-bar .canvas-tools .history-actions button{font-size:0}.canvas-tools #fit-graph{font-size:10px}}
 
 .drag-ready{outline:3px solid #4167e8;outline-offset:2px}
-
-@media(max-width:700px){.structured-graph .canvas-tools{grid-template-columns:repeat(7,minmax(0,1fr))}.structured-graph .scope-bar #arrange-control-graph{font-size:9px;white-space:normal}}
