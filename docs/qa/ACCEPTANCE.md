@@ -319,3 +319,12 @@ workspace, including export/import and collision protection. Real Chromium
 Worker loop8 → edit4 → reopen4, source text unchanged, standalone and workspace
 entry paths. Independent JS4; unsupported helpers/profiles stay explicit.
 This does not complete helper composition or bidirectional text projection.
+
+## AC-120 — actionable uninitialized value diagnostics
+
+[Поведение](../spec/FLOW_VALUE_DIAGNOSTICS.md): exact receiving input and producer,
+Russian explanation and node/port highlights, explicit focus without changing
+authored positions/wires. Stale diagnostic references refuse highlighting.
+Actual Worker array loop refuses an operation output that may never execute;
+connecting the current variable output explicitly gives [] for zero iterations
+and [1,1,1] for three. No auto activation rewiring or fabricated initial result.

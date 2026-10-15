@@ -1,0 +1,8 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {validateContractFlow} from '../src/contracts/flow.mjs';
+import {createCoreRegistry} from '../src/reference/registry.mjs';
+import {flowValueDiagnostic} from '../src/studio/flow-diagnostic.mjs';
+import {readFile} from 'node:fs/promises';
+test('uninitialized value diagnostics identify the exact current receiver, producer and data input',async()=>{const graph=JSON.parse(await readFile(new URL('../examples/flow-counter.graph.json',import.meta.url),'utf8'));graph.nodes.find(n=>n.id==='result').args.value={node:'increment'};const before=structuredClone(graph);let failure;try{validateContractFlow(graph,createCoreRegistry());}catch(error){failure=error;}assert.equal(failure.code,'UNINITIALIZED_FLOW_VALUE');assert.deepEqual(failure.details,{node:'result',producer:'increment',port:'value'});assert.deepEqual(flowValueDiagnostic(failure,graph),failure.details);assert.deepEqual(graph,before);});
+test('stale or unrelated diagnostic references cannot highlight another current input',()=>{const graph={nodes:[{id:'result',args:{value:{node:'new'}}},{id:'old',args:{}},{id:'new',args:{}}]},error={code:'UNINITIALIZED_FLOW_VALUE',details:{node:'result',producer:'old',port:'value'}};assert.equal(flowValueDiagnostic(error,graph),null);error.details.producer='new';assert.deepEqual(flowValueDiagnostic(error,graph),{node:'result',producer:'new',port:'value'});delete error.details.port;assert.deepEqual(flowValueDiagnostic(error,graph),{node:'result',producer:'new',port:'value'});for(const bad of [{code:'TYPE_MISMATCH'},null,{code:'UNINITIALIZED_FLOW_VALUE',details:{node:'absent',producer:'new'}}])assert.equal(flowValueDiagnostic(bad,graph),null);});

@@ -6,3 +6,6 @@ body.ui-flow .execution details[hidden]{display:none}
 .toolbar #stop:disabled{display:none}@media(max-width:700px){#cancel-connection{font-size:12px;padding:6px 8px}}
 
 .flow-card header strong{min-width:0;overflow-wrap:anywhere}
+.flow-card[data-flow-error]{outline:3px solid #c34343;outline-offset:3px}.port[data-flow-error]{box-shadow:0 0 0 4px #c3434370}.flow-diagnostic-hint{display:block;margin-top:8px;font:13px/1.5 system-ui}#error [data-flow-diagnostic-node]{margin:10px 8px 0 0;font:13px system-ui;min-height:40px}
+
+.execution:has([data-flow-diagnostic-node]) #output,.execution:has([data-flow-diagnostic-node]) details:has(#trace:empty){display:none}

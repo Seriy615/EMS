@@ -71,7 +71,7 @@ export function validateContractFlow(graph,registry,{complete=true,allowState=fa
   const predecessors=new Map([...reachable].map(id=>[id,[]]));for(const edge of graph.connections)if(reachable.has(edge.from.node))predecessors.get(edge.to.node).push(edge.from.node);
   const dominators=new Map([...reachable].map(id=>[id,new Set(id===graph.entry?[id]:reachable)]));let changed=true;
   while(changed){changed=false;for(const id of reachable){if(id===graph.entry)continue;const parents=predecessors.get(id),next=new Set([...dominators.get(parents[0])].filter(value=>parents.every(parent=>dominators.get(parent).has(value))));next.add(id);const before=dominators.get(id);if(next.size!==before.size||[...next].some(value=>!before.has(value))){dominators.set(id,next);changed=true;}}}
-  for(const id of reachable)for(const ref of Object.values(nodes.get(id).args))if(Object.hasOwn(ref,'node')&&nodes.get(ref.node).uses!=='std.storage.Variable'&&!dominators.get(id).has(ref.node))fail('UNINITIALIZED_FLOW_VALUE','Activate the producer before consuming its value',{node:id,producer:ref.node});
+  for(const id of reachable)for(const [port,ref]of Object.entries(nodes.get(id).args))if(Object.hasOwn(ref,'node')&&nodes.get(ref.node).uses!=='std.storage.Variable'&&!dominators.get(id).has(ref.node))fail('UNINITIALIZED_FLOW_VALUE','Activate the producer before consuming its value',{node:id,producer:ref.node,port});
  }
  return {graph,nodes,interfaces,outgoing,reachable,storageOwners};
 }
