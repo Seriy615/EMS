@@ -15,7 +15,7 @@ function controlType(type, node) {
 const flexible = type => type.kind === 'Variable' ? { kind: 'Variable', name: type.name } : { ...type, arguments: type.arguments.map(flexible) };
 
 /** Specialize typed functions into semantic control blocks; locations remain a separate sidecar. */
-export function lowerControlModule(checked, entry, registry) {
+export function lowerControlModule(checked, entry, registry, {retainGraphReferences=false}={}) {
   if([...checked.calls.values()].some(call=>(call.target?.arrayTemplate||call.target?.mapTemplate))){const derived=new Registry();for(const [id,contract]of registry.items)derived.items.set(id,contract);registry=derived;}
   const functions = [], instances = new Map(), provenance = {}, locations=new WeakMap();
   let next = 0, errors = false, algebraic = false, futures = false, streams = false, resources = false;
@@ -112,6 +112,10 @@ export function lowerControlModule(checked, entry, registry) {
   if (target.parameters.length) fail('CANNOT_INFER', 'Generic entry requires concrete types');
   const linked = specialize(target, target.inputs.map(input => input.type));
   if (linked.kind !== 'function') fail('UNSUPPORTED_PROFILE', 'Entry must have an EMS body');
+  // Native authoring keeps real definitions referenced by inactive graph nodes too.
+  // Use this same specialization table: separate lowerings could collide on generic IDs.
+  if(retainGraphReferences)for(let index=0;index<functions.length;index++)for(const node of checked.graphBodies?.get(functions[index].id)?.nodes??[]){const helper=checked.signatures.get(node.uses);if(helper&&!helper.contract&&!helper.declaration.external){if(helper.parameters.length||helper.async)fail('GRAPH_SOURCE_PROFILE','Graph references require concrete synchronous helpers');specialize(helper,helper.inputs.map(input=>input.type));}}
+
   const ir = { schemaVersion: CONTROL_VERSION, profile: resources ? CONTROL_RESOURCE_PROFILE : streams ? CONTROL_STREAM_PROFILE : futures ? CONTROL_FUTURE_PROFILE : algebraic ? CONTROL_ALGEBRAIC_PROFILE : errors ? CONTROL_ERROR_PROFILE : CONTROL_PROFILE, id: entry,
     version: checked.ast.package?.version ?? '0.1.0', entry: linked.id, functions };
   if(resources)streams=true;

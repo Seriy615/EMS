@@ -31,6 +31,8 @@ export function typecheckModule(ast, registry, { imports = new Map(), maxTypeNod
   if (ast?.schemaVersion !== 'ems-ast/1') fail('AST_VERSION', 'Expected ems-ast/1');
   if(ast.declarations.some(node=>['UINodeDeclaration','UIEventBindingDeclaration','ApplicationDeclaration'].includes(node.kind)))fail('INSTANCE_UI_PROFILE_REQUIRED','UI declarations require the native application linker');
   if(ast.declarations.some(node=>['StatefulContractDeclaration','ContractInstanceDeclaration'].includes(node.kind)))fail('INSTANCE_PROFILE_REQUIRED','Stateful declarations require the contract instance module linker');
+  // Graph normalization replaces bodies; callers may reuse the located source AST.
+  if(ast.declarations.some(node=>node.body?.kind==='ContractGraph'))ast=structuredClone(ast);
   const expansion=expandCollectionApplications(ast,registry,{imports});ast=expansion.ast;const collectionHelpers=new Map(expansion.applications.map(item=>[item.helper,item]));
   const aliases = new Map(), declarations = new Map(), signatures = new Map(), namespaces = new Map();
   const types = new Map(), calls = new Map(), catchTypes = new Map();

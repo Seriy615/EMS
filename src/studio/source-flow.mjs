@@ -1,3 +1,4 @@
+import {verifyAuthoredProgramGraphs} from '../frontend/authored-graphs.mjs';
 import {typedArrayContractId} from '../stdlib/typed-array-contracts.mjs';
 import {controlArrayElementType} from '../semantics/control-algebraic.mjs';
 import {recursiveFlowCalls,RECURSIVE_FLOW_CALL_PROFILE} from '../contracts/flow-library.mjs';
@@ -8,13 +9,15 @@ import {SHARED_STORAGE_FLOW_VERSION} from '../contracts/flow.mjs';
 import {fail} from '../reference/errors.mjs';
 
 /** Project checked finite source into ordinary contracts. Never mutate the original source. */
-export function sourceContractFlow(ir,registry,{id='source',name=ir.entry,allowState=false}={}){
+export function sourceContractFlow(ir,registry,{id='source',name=ir.entry,allowState=false,authoredGraphs=[]}={}){
  validateControlIR(ir,registry);
  if(!['ems-control-finite/1','ems-control-algebraic/1'].includes(ir.profile))fail('SOURCE_FLOW_UNSUPPORTED','Этот исходник пока нельзя открыть обычным графом; исходный текст сохранён.');
- const functions=new Map(ir.functions.map(fn=>[fn.id,fn]));
+ const functions=new Map(ir.functions.map(fn=>[fn.id,fn])),authored=verifyAuthoredProgramGraphs(ir,authoredGraphs,registry,{allowState});
+ function layout(project,fn){const graph=project.graph,seen=new Set();let lastLane=0;function place(id,column=0,lane=0){if(!id||seen.has(id))return;seen.add(id);project.canvas.positions[id]={x:40+column*340,y:40+lane*520};graph.connections.filter(edge=>edge.from.node===id).forEach((edge,index)=>place(edge.to.node,column+1,index?++lastLane:lane));}place(graph.entry);for(const [index,p]of fn.inputs.entries())project.canvas.positions['input:'+p.name]={x:-300,y:40+index*180};return project;}
+
  function projectFunction(fn){
  if(fn.requirements.effects.length||fn.requirements.capabilities.length)fail('SOURCE_FLOW_UNSUPPORTED','Явная политика исходного контракта требует сохранения в текстовом представлении.');
- const project=newFlowProject(id,name),graph=project.graph;
+ const project=newFlowProject(id,name);if(authored.has(fn.id)){project.graph=structuredClone(authored.get(fn.id));project.canvas.positions={};project.inputs=Object.fromEntries(fn.inputs.map(p=>[p.name,defaultFlowValue(p.type)]));return layout(project,fn);}const graph=project.graph;
  graph.id=fn.id;graph.output={...fn.output};graph.inputs=Object.fromEntries(fn.inputs.map(p=>[p.name,{type:p.type}]));project.inputs=Object.fromEntries(fn.inputs.map(p=>[p.name,defaultFlowValue(p.type)]));graph.nodes=[];graph.connections=[];project.canvas.positions={};
  let sequence=0;
  const unsupported=kind=>fail('SOURCE_FLOW_UNSUPPORTED','Операция '+kind+' пока не поддерживает преобразование в обычный граф. Исходник сохранён.');
@@ -85,10 +88,8 @@ export function sourceContractFlow(ir,registry,{id='source',name=ir.entry,allowS
   }
  }
  graph.entry=block(fn.body,new Map(fn.inputs.map(p=>[p.name,{ref:{input:p.name},mutable:false}])),null);
- // Initial projection only; subsequent edits preserve the owner's positions exactly.
- const seen=new Set();let lastLane=0;function layout(id,column=0,lane=0){if(!id||seen.has(id))return;seen.add(id);project.canvas.positions[id]={x:40+column*340,y:40+lane*520};const outputs=graph.connections.filter(edge=>edge.from.node===id);outputs.forEach((edge,index)=>layout(edge.to.node,column+1,index?++lastLane:lane));}layout(graph.entry);
- for(const [index,p]of fn.inputs.entries())project.canvas.positions['input:'+p.name]={x:-300,y:40+index*180};
- return project;
+ // Only new views receive initial positions; saved editor layouts remain independent.
+ return layout(project,fn);
  }
  const project=projectFunction(functions.get(ir.entry)),definitions=ir.functions.filter(fn=>fn.id!==ir.entry).map(projectFunction);
  if(definitions.length){project.schemaVersion='ems-flow-project/2';project.contracts=definitions.map(({graph,inputs,canvas})=>({graph,inputs,canvas}));}

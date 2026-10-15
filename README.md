@@ -5,6 +5,7 @@
 Поля native контрактов: добавление, переименование и удаление с сохранением графов, инвариантов и UI; зависимости удаления и отмена/повтор — [AC-129](docs/spec/INSTANCE_FIELDS.md). Новое поле и операция связываются с кнопкой и текстом через тот же обычный граф.
 
 Native UI на EMS: `@UI.*`, `~>`, `<=`, общий typed model и UI-only text/visual inverse — [AC-128](docs/spec/NATIVE_UI_SOURCE.md), [полный source](examples/native-ui.ems). `application-build` создаёт независимое DOM-приложение.
+Native `graph` bodies сохраняют авторские узлы при первом открытии в обычном редакторе, включая поля и инварианты: [AC-133 / проверяемые origins](docs/spec/NATIVE_GRAPH_ORIGINS.md), [пример UI и графового обработчика](examples/native-graph-ui.ems).
 
 Native контрактный модуль теперь связывается с UI: поля `left.value`, операции `left::Change`, общий designer/canvas и независимый DOM export — [AC-127](docs/spec/INSTANCE_UI.md). Пример для импорта: [contract-instance-ui.ems-project.json](examples/contract-instance-ui.ems-project.json).
 

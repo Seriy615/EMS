@@ -132,7 +132,7 @@ function lowerCallModule(checked, entry, baseRegistry, eager = false, preserveGr
 }
 
 /** Select one semantic profile from the checked module; preserve the working call-IR backend. */
-export function lowerCheckedModule(checked, entry, registry, { profile = 'auto', preserveGraphIdentity = false } = {}) {
+export function lowerCheckedModule(checked, entry, registry, { profile = 'auto', preserveGraphIdentity = false, retainGraphReferences = false } = {}) {
   if (!['auto', 'call', 'control'].includes(profile)) fail('UNSUPPORTED_PROFILE', 'Unknown frontend lowering profile');
   let control = profile === 'auto' && checked.signatures.get(entry)?.async || profile === 'control' || profile === 'auto' && checked.signatures.get(entry)?.inputs.some(input => ['Map','Option','Result','Future','Stream','ResourceHandle'].includes(input.type.name));
   const entryTarget = checked.signatures.get(entry);
@@ -158,7 +158,7 @@ export function lowerCheckedModule(checked, entry, registry, { profile = 'auto',
       if (Array.isArray(value)) pending.push(...value); else if (value && typeof value === 'object') pending.push(value);
     }
   }
-  if (control) return lowerControlModule(checked, entry, registry);
+  if (control) return lowerControlModule(checked, entry, registry,{retainGraphReferences});
   try { return lowerCallModule(checked, entry, registry, profile === 'auto',preserveGraphIdentity); }
-  catch (error) { if (profile === 'auto' && error.code === 'RECURSIVE_COMPOSITE') return lowerControlModule(checked, entry, registry); throw error; }
+  catch (error) { if (profile === 'auto' && error.code === 'RECURSIVE_COMPOSITE') return lowerControlModule(checked, entry, registry,{retainGraphReferences}); throw error; }
 }
