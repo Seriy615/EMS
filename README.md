@@ -1,3 +1,5 @@
+Запуск UI Worker: загрузка среды и выполнение EMS имеют отдельные ограниченные бюджеты; native Stop отменяет и незавершённый запуск — [AC-135](docs/spec/UI_WORKER_STARTUP.md). Текущая приёмка и ограничения — в STATUS.
+
 Текст контрактного графа EMS и применение к тем же узлам/связям в обычном canvas — [AC-132](docs/spec/GRAPH_SOURCE.md), [пример](examples/graph-body.ems). Полный native source-document inverse остаётся открытым.
 
 Текущий native модуль можно показать и скачать как настоящий EMS после правок графов, полей и UI — [AC-130](docs/spec/NATIVE_MODULE_SOURCE.md). CLI `instance-source` / `application-source`; обратный импорт копии и standalone build проверяются на общем parser/IR. Применение полного текста к исходному холсту с сохранением геометрии ещё впереди.

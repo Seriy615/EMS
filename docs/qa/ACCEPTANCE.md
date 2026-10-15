@@ -431,3 +431,17 @@ Native graph transitions и guard helpers должны при первом им�
 ## AC-134 — полный native source apply в тот же документ
 
 Текущий source должен представлять actual module/UI и исходные graph bodies, доказанно сохраняя все существующие IR functions modulo lexical names. Проверить полный candidate compiler/type/effect/UI validation, stable function/node/reference identities, no-op, metadata/run-input preservation без IR→visual перекомпиляции, создание настоящей операции и event binding, typed refusal conflicts, immutable archive и неисполнение initial/guard при import/build. Project/4 graphViews проверяются по existing origins и общим canvas правилам; field rename/add/remove и guard adapters сохраняют geometry. Долговечные invalid/stale drafts, semantic и storage CAS, quota recovery, undo/redo, independent workspace files, mobile full editor, offline actual Worker и downloaded independent output. Inactive node changes сохраняются при одинаковом executable IR; полностью unreferenced owned graphs сохраняются настоящими native exports без исполнения, generic/async/foreign native exports отказываются явно; проверить >200 positions/descriptions. Много независимых pure graph scopes не попадает под default33 на весь native generated file, bounded limits остаются. Node `tests/native-source-apply.test.mjs`; Chromium `tests/browser/native-source-apply.test.mjs`; спецификация/границы [NATIVE_SOURCE_APPLY.md](../spec/NATIVE_SOURCE_APPLY.md).
+
+## AC-135 — загрузка UI Worker отдельно от выполнения EMS
+
+[Протокол и границы](../spec/UI_WORKER_STARTUP.md): явный versioned ready до передачи
+проекта, отдельный bounded loadTimeout, прежние init/event вычислительные лимиты,
+phase-specific ошибки без payload, строгий malformed/version/duplicate refusal,
+отмена загрузки/инициализации/событий и отсутствие поздних snapshot/DOM updates.
+Проверить настоящий delayed Node Worker, browser default factory с задержанным
+HTTP module и реальным UI event, native Stop/restart/pagehide lifetime, старый
+явно выбранный custom transport, infinite event termination/confirmed state и
+регрессии debug/permissions/FIFO/offline. Суммарный default startup теперь 5+5 s;
+никакого автоматического fallback. Node `tests/ui-worker-startup.test.mjs` и
+`tests/ui-worker.test.mjs`; Chromium `tests/browser/ui-worker-startup.test.mjs`.
+Не объявлять все прежние Chromium startup/CDP/load сбои исправленными.
