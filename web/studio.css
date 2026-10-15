@@ -93,5 +93,11 @@ body.text-mode main{grid-template-columns:minmax(0,1fr)}
 .file-actions #flowchart-export{top:125px}.code-heading{flex-wrap:wrap}@media(max-width:520px){.canvas-tools{gap:2px}.canvas-tools #show-guide{padding:6px 4px;font-size:9px}.canvas-tools #compile{max-width:83px}.mode-switch button{padding-left:10px;padding-right:10px}}
 
 
-.structure-contract{display:block;width:100%;margin:6px 0;text-align:left;font-size:12px;cursor:grab;border-color:#d7c4ed;background:#fbf8ff}.structured-card{width:245px;min-height:100px}.structured-card small{display:block;margin:10px;color:var(--muted);font-size:10px}.structured-card .operation-hint{white-space:pre-wrap;overflow-wrap:anywhere;max-height:90px;overflow:hidden;padding-bottom:8px}.control-card{border-color:#bc9cde}.control-card header{background:#f0e7fb}.block-card{border-style:dashed}.block-card header{background:#eff5f2}#structured-fragment{min-height:220px}
+.structured-card{width:245px;min-height:100px}.structured-card small{display:block;margin:10px;color:var(--muted);font-size:10px}.structured-card .operation-hint{white-space:pre-wrap;overflow-wrap:anywhere;max-height:90px;overflow:hidden;padding-bottom:8px}.control-card{border-color:#bc9cde}.control-card header{background:#f0e7fb}.block-card{border-style:dashed}.block-card header{background:#eff5f2}#structured-fragment{min-height:220px}
 .literal-editor{padding:12px 14px;display:grid;gap:8px}.literal-editor label{font-size:11px;color:var(--muted);display:grid;gap:6px}.literal-editor input{width:100%;font:600 22px ui-monospace,monospace;padding:8px;background:#f4f7fb;border:1px solid var(--line);border-radius:7px}.literal-editor button{font-size:12px;min-height:36px}
+
+#nodes button.port{position:relative;width:20px;height:20px;min-width:20px;min-height:20px;max-width:20px;max-height:20px;aspect-ratio:1;flex:0 0 20px;border-radius:50%}#nodes button.port::after{content:"";position:absolute;inset:-12px;border-radius:50%}.structured-card>button{margin:8px 12px}.structured-card .operation-hint{white-space:normal;overflow-wrap:anywhere}#inspector form label{display:grid;gap:8px}#inspector form input{width:100%}
+
+.structured-edge-label{font:11px system-ui;fill:#53637b;paint-order:stroke;stroke:#f4f6fa;stroke-width:5px;stroke-linejoin:round;pointer-events:none}
+
+.form-error{color:#b83343;font-size:12px;white-space:pre-wrap;overflow-wrap:anywhere}

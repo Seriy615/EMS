@@ -1,3 +1,9 @@
+## AC-103 / EMS-040 в работе
+
+Уточнения владельца по screenshots: круги растягивались мобильным min-height44; библиотека структурных операций использовала другой шаблон и игнорировала поиск; обычный touch swipe начинал drag; AST scaffolding и демонстрационные переменные делали if/loops нечитаемыми. Реализованы общие rows/filter/hold drag, фиксированные круги с отдельной hit area, настройка циклов без sample body и семантическая проекция без root AST контейнеров. Полные Node894/894 и verify159/159 PASS, focused browser12/12 PASS до финальной правки геометрии линий, view3/3 PASS. Исправлена обнаруженная гонка адаптации UI-окон к мобильному viewport при первоначальной загрузке; таймауты не увеличены. План `docs/plans/CONTROL_WORKBENCH.md`; publication gate pending.
+
+AC-102 принят в срезе нотации: checked/live7ba1f3414b0a9c1c48cfdf5a160c5b4bbdf62260, exact891 Node/159 verify/81 Chromium PASS. Полный public smoke и native example60/shared graph edit/reopen PASS; логи `/tmp/ems-native-exact-deploy.log`, `/tmp/ems-native-public-smoke.log`, `/tmp/ems-native-public-feature.log`. Foreign6 configs/5 services сохранены. EMS-038 остаётся IN_PROGRESS: Cell/instances/transitions/invariants не реализованы этим срезом.
+
 AC-102 precommit: полный `npm test`891/891 PASS, `npm run verify`159/159 PASS; focused browser native/design/projects/studio10/10 PASS, native/text21/21 PASS; CLI module-run actual Main60. Срез @/:: и сохранение первого draft готовы к точному публикационному gate; остальное EMS-038 остаётся IN_PROGRESS.
 
 ## AC-102 / EMS-038 в работе: исполняемый контрактный синтаксис

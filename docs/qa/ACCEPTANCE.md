@@ -190,3 +190,7 @@ V2 conservative canonical user-type set, dependency union/reseal, immutable modu
 ## AC-102 — контрактная нотация @ и :: через общий IR
 
 `tests/native-contracts.test.mjs`, `tests/browser/native-contracts.test.mjs`: located AST, exact canonical IR parity, runtime/standalone30, fresh process60, visual roundtrip, main graph edit/reopen4, type/unknown/duplicate/syntax failures. Спецификация: [NATIVE_CONTRACT_SYNTAX.md](../spec/NATIVE_CONTRACT_SYNTAX.md). Полное ядро EMS-038 остаётся открытым.
+
+## AC-103 — коннекторы, общая библиотека, жесты и представление управления
+
+Критерии: [CONTROL_WORKBENCH.md](../plans/CONTROL_WORKBENCH.md). Исполнимые проверки: `tests/structured-view.test.mjs`, `tests/browser/loops-and-ports.test.mjs`, mobile/native/workbench regression и полный publication gate.
