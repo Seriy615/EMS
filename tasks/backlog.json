@@ -1188,13 +1188,13 @@
       "objective": "Define contract instances, storage, control and transactional invariants as the language basis and lower native EMS notation to shared IR",
       "deliverables": "docs/architecture/CONTRACT_KERNEL.md; incremental grammar/lowering/Cell/transitions/UI bindings",
       "acceptance": "Contract kernel section7: shared text/graph/interpreted/compiled fixtures; scope/type/alias/effect errors; invariant rollback and event traces",
-      "status": "TODO",
+      "status": "IN_PROGRESS",
       "priority": "P0",
       "ownerModelPolicy": [
         "GPT-6.1 Sol",
         "GPT-6 Luna"
       ],
-      "progress": "Owner concept and semantic basis recorded; @ syntax remains a proposal, no new parser or invariant runtime claimed."
+      "progress": "AC-102 first native @/:: syntax slice implemented through existing ContractDeclaration/checker/IR, native finite graph export, independent executable fixture and browser persistence fix. Baseline880/159 PASS; focused41 parser/native tests and21 native/text roundtrip tests PASS; focused browser7/7 PASS before generator update. Full final gates pending. Cell/instances/transitions/invariants and event/UI notation remain open. Final precommit891 Node/159 verify/focused10 Chromium PASS; CLI Main60; exact gate pending."
     },
     {
       "id": "EMS-039",

@@ -1,0 +1,9 @@
+@Numbers::Double(value: Number) -> Number requires pure {
+    return core::mul(value, 2)
+}
+
+@Main() -> Number requires pure {
+    let x = 10
+    let y = 20
+    return Numbers::Double(core::add(x, y))
+}

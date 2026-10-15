@@ -131,3 +131,7 @@ UI preview поддерживает «Отладка событий (новый 
 Для сохранённых меток используйте `module-bind-origins … --policy annotations.json --out bound-policy.json`, затем `module-classify … --policy bound-policy.json`: изменённый semantic IR отвергается до диагностики. Source Worker API: `await startBoundStudioExecution(request, options)`. Подробности v2 в ORIGIN_POLICY.md.
 
 Структурный pure EMS-модуль можно собрать в reusable atomic package: node tools/ems.mjs module-seal examples/factorial-sum.ems --entry main --id sealed.Factorials --out dist/factorials. В IDE — «Скачать атомарный контракт» в настройках кода. Формат и trusted import: [ATOMIC_PACKAGE.md](docs/spec/ATOMIC_PACKAGE.md).
+
+## Native contract notation (initial profile)
+
+Typed contract declarations accept `@Main() -> Number`, and qualified operations accept `core::add(10, 20)`. They use the existing checker, semantic IR and standalone compiler. Run `node tools/ems.mjs module-run examples/native-contracts.ems --entry Main '{}'` (result: 60). See [the current syntax profile](docs/spec/NATIVE_CONTRACT_SYNTAX.md) for limits; state transitions and invariants are separate upcoming work.

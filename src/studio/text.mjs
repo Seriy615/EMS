@@ -73,8 +73,8 @@ export function textFromWorkspace(editor){
   function visit(node){if(seen.has(node.id))return;for(const value of Object.values(node.args))if(value.node)visit(nodes.get(value.node));seen.add(node.id);ordered.push(node);}
   graph.nodes.forEach(visit);
  }
- const lines=[`package studio.text @ ${JSON.stringify(graph.version)};`,`contract ${name(graph.id)}(${Object.entries(graph.inputs).map(([key,spec])=>`${name(key)}:${type(spec.type)}`).join(',')})->${type(graph.output.type)} {`];
- for(const node of ordered){const contract=registry.resolve(node.uses);lines.push(`  let ${name(node.id)}=${name(node.uses)}(${Object.keys(contract.inputs).map(port=>ref(node.args[port])).join(',')});`);}
+ const lines=[`package studio.text @ ${JSON.stringify(graph.version)};`,`@${name(graph.id).replaceAll('.', '::')}(${Object.entries(graph.inputs).map(([key,spec])=>`${name(key)}:${type(spec.type)}`).join(',')})->${type(graph.output.type)} {`];
+ for(const node of ordered){const contract=registry.resolve(node.uses);lines.push(`  let ${name(node.id)}=${name(node.uses).replaceAll('.', '::')}(${Object.keys(contract.inputs).map(port=>ref(node.args[port])).join(',')});`);}
  lines.push(`  return ${ref(graph.returns)};`,'}');return {source:lines.join('\n')+'\n',entry:graph.id,lowering};
 }
 

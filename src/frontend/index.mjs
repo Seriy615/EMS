@@ -63,7 +63,7 @@ export function tokenizeEMS(source, { maxSourceLength = 1_000_000, maxTokens = 1
       emit('string', value, start); continue;
     }
     const pair = source.slice(offset, offset + 2);
-    if (['->', '=>', '==', '!=', '<=', '>=', '&&', '||'].includes(pair)) {
+    if (['::', '->', '=>', '==', '!=', '<=', '>=', '&&', '||'].includes(pair)) {
       advance(); advance(); emit('symbol', pair, start); continue;
     }
     if ('{}()[],:;.@+-*/%!=<>'.includes(ch)) { advance(); emit('symbol', ch, start); continue; }
@@ -94,7 +94,7 @@ class Parser {
     if (++this.depth > this.maxDepth) fail('SYNTAX_DEPTH', 'EMS syntax exceeds configured nesting limit', { location: this.token.location });
     try { return fn(); } finally { this.depth--; }
   }
-  qualified() { let value = this.identifier(); while (this.take('.')) value += '.' + this.identifier(); return value; }
+  qualified() { let value = this.identifier(); while (this.take('.') || this.take('::')) value += '.' + this.identifier(); return value; }
   generics() {
     const params = [];
     if (this.take('<')) { do { params.push(this.identifier()); } while (this.take(',')); this.expect('>'); }
@@ -142,8 +142,8 @@ class Parser {
     const external = this.take('extern'), async = this.take('async');
     let category;
     if (this.take('fn')) category = 'FunctionDeclaration';
-    else if (this.take('contract')) category = 'ContractDeclaration';
-    else this.error('Expected fn, contract or type declaration');
+    else if (this.take('contract') || this.take('@')) category = 'ContractDeclaration';
+    else this.error('Expected @, contract, fn or type declaration');
     const name = this.qualified(), typeParameters = this.generics(), parameters = [];
     this.expect('(');
     if (!this.is(')')) do {
@@ -284,7 +284,7 @@ class Parser {
         const args = [];
         if (!this.is(')')) do { args.push(this.expression()); } while (this.take(','));
         this.expect(')'); value = this.node('CallExpression', start, { callee: value, arguments: args });
-      } else if (this.take('.')) value = this.node('MemberExpression', start, { value, member: this.identifier() });
+      } else if (this.take('.') || this.take('::')) value = this.node('MemberExpression', start, { value, member: this.identifier() });
       else if (this.take('[')) {
         const index = this.expression(); this.expect(']'); value = this.node('IndexExpression', start, { value, index });
       } else return value;

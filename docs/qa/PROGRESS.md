@@ -1,3 +1,9 @@
+AC-102 precommit: полный `npm test`891/891 PASS, `npm run verify`159/159 PASS; focused browser native/design/projects/studio10/10 PASS, native/text21/21 PASS; CLI module-run actual Main60. Срез @/:: и сохранение первого draft готовы к точному публикационному gate; остальное EMS-038 остаётся IN_PROGRESS.
+
+## AC-102 / EMS-038 в работе: исполняемый контрактный синтаксис
+
+Baseline880 Node/159 verify PASS. Реализованы @ declarations, :: calls, общий AST/checker/IR, native graph export и owner persistence первого draft. Focused parser/native41 и native/text roundtrip21 PASS; browser7/7 PASS до обновления генератора, финальные gates впереди. Первые negative fixtures исправлены на существующие UNKNOWN_SYMBOL/DUPLICATE_SYMBOL без изменения production ошибок. Первое browser reopen обнаружило реальную потерю project ID; исправлен saveDraft с сохранением owner, повторный browser PASS. Спецификация `docs/spec/NATIVE_CONTRACT_SYNTAX.md`. Полное контрактное ядро не объявляется завершённым.
+
 ## AC-101 принят — EMS-039: обычные контракты, мобильный Studio и PWA
 
 Checked/live `75774ef2adb5a4e2a18d93f780fa5ff52b1c59ce`: exact чистый gate **880 Node / 159 verify / 80 Chromium PASS**. Общий `literalEditor` для всех контрактов на карточке и в свойствах; отдельного Number node kind/Runtime нет. Обычные `core.add(a=2,b=3)`→5 и `std.value.Number(value=4)`→4, неверный тип отвергается, сохранение/повторное открытие проходят. Focused final10/10 и предыдущая интеграция13/13 PASS.

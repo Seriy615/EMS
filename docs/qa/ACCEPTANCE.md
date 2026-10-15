@@ -186,3 +186,7 @@ V2 conservative canonical user-type set, dependency union/reseal, immutable modu
 ## AC-101 — мобильный Studio, PWA и публичный доступ
 
 Критерии: [MOBILE_PWA.md](../plans/MOBILE_PWA.md). Исполнимые проверки: `tests/pwa.test.mjs`, `tests/browser/mobile-pwa.test.mjs`, регрессия дизайна, полный gate и анонимный public smoke.
+
+## AC-102 — контрактная нотация @ и :: через общий IR
+
+`tests/native-contracts.test.mjs`, `tests/browser/native-contracts.test.mjs`: located AST, exact canonical IR parity, runtime/standalone30, fresh process60, visual roundtrip, main graph edit/reopen4, type/unknown/duplicate/syntax failures. Спецификация: [NATIVE_CONTRACT_SYNTAX.md](../spec/NATIVE_CONTRACT_SYNTAX.md). Полное ядро EMS-038 остаётся открытым.
