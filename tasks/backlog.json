@@ -1269,6 +1269,24 @@
         "GPT-6 Luna"
       ],
       "progress": "Baseline903/159 PASS; source122bb75 exact903/159/90 published. Owner refinement: remove arrange entirely, one condition/loop card with two execution outputs, checked structural relocation, working context deletion, rename, mobile close/install. Final combined gate and public proof pending; scope/typing checks remain mandatory."
+    },
+    {
+      "id": "EMS-043",
+      "title": "Open UI handlers and source contracts in the ordinary shared contract canvas",
+      "phase": "M2 owner P0",
+      "dependsOn": [
+        "EMS-042"
+      ],
+      "objective": "Edit the actual UI program through the same typed contract graph, including reusable source contracts",
+      "deliverables": "docs/plans/UI_HANDLER_WORKSPACE.md; full UI handler workspace, shared renderer, source catalog, real UI Worker preview, checked same-project persistence",
+      "acceptance": "AC-107: mobile390 shared canvas, actual UI4, drag/wire helper3, reopen3, managed stale-write rejection, full gates and public HTTPS proof",
+      "status": "IN_PROGRESS",
+      "priority": "P0",
+      "ownerModelPolicy": [
+        "GPT-6.1 Sol",
+        "GPT-6 Luna"
+      ],
+      "progress": "Core shared UI canvas scenario passes; earlier gate95517b2 stopped before publication on obsolete Block drag fixture. Full final gate/public proof pending. No separate program copy or fake atomic implementation."
     }
   ]
 }

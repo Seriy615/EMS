@@ -221,3 +221,12 @@ core.add(2,3), Boolean sum > 4 →11 / sum < 4 →22, неверное усло�
 сохранения позиций/камеры и выхода. Переменная + Сложение + Записать в теле
 цикла дают3, неверный тип записи сохраняет исходник. Переименование/отмена/reopen, мобильное
 закрытие окон и установка только на главной. Полные gates и публичный smoke.
+
+## AC-107 — UI-обработчики на обычном контрактном холсте
+
+[Контракт поведения и границы](../plans/UI_HANDLER_WORKSPACE.md).
+`tests/browser/ui-handler-workspace.test.mjs`: shared viewport390, изменение
+аргумента→UI4; создание/открытие/перетаскивание/соединение собственного
+контракта→UI3; сохранение/reopen3; отказ от stale cross-tab overwrite managed UI.
+Numeric operator projection: source spans, arithmetic signed-zero oracle,
+&&/|| не становятся eager. Обязательны полный gate и публичный HTTPS smoke.

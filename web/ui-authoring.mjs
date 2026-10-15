@@ -36,7 +36,7 @@ export function installUIAuthoring(getEditor,change,report){
  $('remove-widget').onclick=()=>action(editor=>editor.removeNode($('widget-select').value));
  $('widget-select').onchange=()=>select($('widget-select').value);
  $('property-name').onchange=propertyValue;
- const context=text('p',''),open=text('button','Открыть связанный контракт');context.dataset.uiContext='';$('event-inputs').before(context);open.id='open-bound-handler';open.onclick=()=>openHandler($('event-handler').value);$('set-event').after(open);
+ const context=text('p',''),open=text('button','Открыть граф контракта');context.dataset.uiContext='';$('event-inputs').before(context);open.id='open-bound-handler';open.onclick=()=>document.dispatchEvent(new CustomEvent('ems:ui-open-graph',{detail:{event:$('event-handler').value}}));$('set-event').after(open);
  const propContext=text('p','');propContext.dataset.uiContext='';$('property-name').closest('label').before(propContext);
  $('set-property').onclick=()=>action(editor=>{const node=selectedNode(),name=$('property-name').value;editor.property(node.id,name,binding($('property-mode').value,$('property-value').value,properties[node.kind][name]));});
  $('event-handler').onchange=eventChoices;

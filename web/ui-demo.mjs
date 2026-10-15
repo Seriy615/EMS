@@ -97,6 +97,9 @@ authoring=installUIAuthoring(()=>editor,change,report);
 designer=installUIDesigner(()=>editor,change,report);
 document.querySelector('#new-ui').onclick=()=>{const empty={schemaVersion:'ems-ui-app/1',id:'project.ui',version:'1.0.0',reactor:{schemaVersion:'ems-reactor/1',id:'project.ui',version:'1.0.0',state:[],handlers:[]},ui:{schemaVersion:'ems-ui/1',root:{id:'root',kind:'column',props:{},events:{},children:[]}}};if(manager){try{const id='p'+crypto.randomUUID().replaceAll('-','');manager.save({id,name:'Новый UI-проект',kind:'ui',source:new UIProjectEditor(empty,base).source,draft:null});location.href='/web/ui-demo.html?project='+id;}catch(failure){report(failure);}}else apply(new UIProjectEditor(empty,base).source).catch(report);};
 
+async function openHandlerGraph(event){try{await authoringQueue;if(!editor.sources[event])throw Object.assign(Error('У обработчика нет редактируемого EMS-исходника'),{code:'SOURCE_REQUIRED'});saveProject();location.href='/web/handler-graph.html?handler='+encodeURIComponent(event)+(managedId?'&project='+encodeURIComponent(managedId):'');}catch(failure){report(failure);}}
+document.querySelector('#open-handler-graph').onclick=()=>openHandlerGraph(document.querySelector('#handler-select').value);
+document.addEventListener('ems:ui-open-graph',event=>openHandlerGraph(event.detail.event));
 installControlGraph(()=>editor,change,report);
 connections=installUIConnections(()=>editor,authoring,designer);
 

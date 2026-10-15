@@ -1,3 +1,5 @@
+P0 владельца: EMS-043 / AC-107 — [обычный контрактный граф UI и исходные составные контракты](UI_HANDLER_WORKSPACE.md), совместно с EMS-042 / AC-106. Публикация только после полного gate и HTTPS proof; далее EMS-038 и ряд6. Глобальная цель активна.
+
 P0 владельца: EMS-042 / AC-105 — [те же порты и связи при добавлении условий/циклов](CONTROL_PORTS.md). EMS-041 sources46f3a8c/6fadbe8 прошли898/159/87 и900/159/88; combined public acceptance фиксируется по финальному source. Далее EMS-038; глобальная цель активна.
 
 P0 владельца: EMS-041 / AC-104 — [связи UI и контрактов, аргументы и условия](UI_LOGIC_CONNECTIONS.md). EMS-040 принят048823e:894/159/84 + anonymous public smoke. Далее EMS-038 Cell/instances/transitions/invariants; глобальная цель активна.
