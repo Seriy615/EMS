@@ -1,0 +1,158 @@
+{
+  "schemaVersion": "ems-contract-flow/1",
+  "id": "demo.CounterFlow",
+  "version": "1.0.0",
+  "inputs": {
+    "limit": {
+      "type": "Number"
+    }
+  },
+  "output": {
+    "type": "Number"
+  },
+  "nodes": [
+    {
+      "id": "count",
+      "uses": "std.storage.Variable",
+      "version": "1.0.0",
+      "valueType": "Number",
+      "initial": 0,
+      "args": {
+        "value": {
+          "node": "increment"
+        }
+      }
+    },
+    {
+      "id": "increment",
+      "uses": "core.add",
+      "version": "1.0.0",
+      "args": {
+        "a": {
+          "node": "count"
+        },
+        "b": {
+          "literal": 1
+        }
+      }
+    },
+    {
+      "id": "less",
+      "uses": "std.number.less",
+      "version": "1.0.0",
+      "args": {
+        "a": {
+          "node": "count"
+        },
+        "b": {
+          "input": "limit"
+        }
+      }
+    },
+    {
+      "id": "begin",
+      "uses": "std.control.IterationBegin",
+      "version": "1.0.0",
+      "args": {}
+    },
+    {
+      "id": "end",
+      "uses": "std.control.IterationEnd",
+      "version": "1.0.0",
+      "args": {}
+    },
+    {
+      "id": "result",
+      "uses": "std.program.Result",
+      "version": "1.0.0",
+      "args": {
+        "value": {
+          "node": "count"
+        }
+      }
+    },
+    {
+      "id": "fork",
+      "uses": "std.control.If",
+      "version": "1.0.0",
+      "args": {
+        "condition": {
+          "node": "less"
+        }
+      }
+    }
+  ],
+  "connections": [
+    {
+      "from": {
+        "node": "begin",
+        "port": "next"
+      },
+      "to": {
+        "node": "less",
+        "port": "enter"
+      }
+    },
+    {
+      "from": {
+        "node": "less",
+        "port": "next"
+      },
+      "to": {
+        "node": "fork",
+        "port": "enter"
+      }
+    },
+    {
+      "from": {
+        "node": "fork",
+        "port": "yes"
+      },
+      "to": {
+        "node": "increment",
+        "port": "enter"
+      }
+    },
+    {
+      "from": {
+        "node": "increment",
+        "port": "next"
+      },
+      "to": {
+        "node": "count",
+        "port": "enter"
+      }
+    },
+    {
+      "from": {
+        "node": "count",
+        "port": "next"
+      },
+      "to": {
+        "node": "end",
+        "port": "enter"
+      }
+    },
+    {
+      "from": {
+        "node": "end",
+        "port": "repeat"
+      },
+      "to": {
+        "node": "begin",
+        "port": "enter"
+      }
+    },
+    {
+      "from": {
+        "node": "fork",
+        "port": "no"
+      },
+      "to": {
+        "node": "result",
+        "port": "enter"
+      }
+    }
+  ],
+  "entry": "begin"
+}

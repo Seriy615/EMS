@@ -1,4 +1,6 @@
 #!/usr/bin/env node
+import {compileContractFlowJS,executeContractFlow} from '../src/compiler/contract-flow.mjs';
+import {exportContractFlowSVG} from '../src/compiler/flowchart-contract-flow.mjs';
 import {buildAtomicPackage} from '../src/compiler/atomic-package.mjs';
 import { readFile, writeFile, mkdir } from 'node:fs/promises';
 import { dirname, resolve } from 'node:path';
@@ -14,6 +16,9 @@ import { createProgramLock,executeLockedIR,compileLockedIRToJS,serializeProgramL
 const [command, file, ...args] = process.argv.slice(2);
 function usage() {
   console.log(`EMS reference CLI (M0, NOT production)
+  node tools/ems.mjs flow-run <graph.json> '<inputs-json>'
+  node tools/ems.mjs flow-build <graph.json> --out <application.mjs>
+  node tools/ems.mjs flow-svg <graph.json> --out <diagram.svg>
   node tools/ems.mjs lock <program.ir.json> --target <target> --out <lock.json>
   node tools/ems.mjs locked-run <program.ir.json> --lock <lock.json> --target <target> '<inputs-json>'
   node tools/ems.mjs locked-build <program.ir.json> --lock <lock.json> --target <target> --out <output.mjs>
@@ -42,8 +47,14 @@ function usage() {
   node tools/ems.mjs module-seal <source.ems> --entry <name> --id <contract-id> --out <directory>`);
 }
 async function main() {
-  if (!file || !['lock','locked-run','locked-build','interface-check', 'interface-compare', 'binding-check', 'validate', 'run', 'build', 'seal', 'text-parse', 'text-run', 'text-build', 'ir', 'text-ir', 'ir-run', 'ir-build', 'parse', 'check', 'module-run', 'module-build', 'module-ir', 'module-origins', 'module-classify', 'module-bind-origins', 'module-seal'].includes(command)) { usage(); process.exitCode = 2; return; }
+  if (!file || !['flow-run','flow-build','flow-svg','lock','locked-run','locked-build','interface-check', 'interface-compare', 'binding-check', 'validate', 'run', 'build', 'seal', 'text-parse', 'text-run', 'text-build', 'ir', 'text-ir', 'ir-run', 'ir-build', 'parse', 'check', 'module-run', 'module-build', 'module-ir', 'module-origins', 'module-classify', 'module-bind-origins', 'module-seal'].includes(command)) { usage(); process.exitCode = 2; return; }
   const content = await readFile(file, 'utf8');
+  if(['flow-run','flow-build','flow-svg'].includes(command)){
+    const parsed=JSON.parse(content),graph=parsed.schemaVersion==='ems-flow-project/1'?parsed.graph:parsed,registry=createCoreRegistry();
+    if(command==='flow-run'){if(args.length>1)throw Error('Use optional JSON inputs');console.log(JSON.stringify({result:await executeContractFlow(graph,registry,JSON.parse(args[0]??'{}'))},null,2));}
+    else{if(args.length!==2||args[0]!=='--out')throw Error('Use --out <file>');const source=command==='flow-build'?compileContractFlowJS(graph,registry):exportContractFlowSVG(graph,registry,{descriptions:parsed.canvas?.descriptions??{}}),dest=resolve(args[1]);await mkdir(dirname(dest),{recursive:true});await writeFile(dest,source);console.log('Built '+dest);}return;
+  }
+
   if(['lock','locked-run','locked-build'].includes(command)){
     const registry=createCoreRegistry(),ir=parseIR(content,registry);
     if(command==='lock'){

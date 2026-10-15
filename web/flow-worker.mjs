@@ -1,0 +1,4 @@
+import {createCoreRegistry} from '../src/reference/registry.mjs';
+import {compileContractFlow} from '../src/compiler/contract-flow.mjs';
+import {executeIR} from '../src/ir/index.mjs';
+self.onmessage=async event=>{try{const {graph,inputs}=event.data,bundle=compileContractFlow(graph,createCoreRegistry()),lines=new Map(Object.entries(bundle.flowMap.activations).map(([id,line])=>[line,id])),trace=[];const value=await executeIR(bundle.ir,inputs,bundle.registry,{maxSteps:10000,maxDepth:32,onControlEnter:step=>{const location=bundle.provenance.functions[step.function]?.nodes[step.node],id=step.kind==='let'&&lines.get(location?.start.line);if(id&&trace.length<1000)trace.push(id);}});self.postMessage({ok:true,value,trace});}catch(error){self.postMessage({ok:false,error:{code:error.code??'HOST_ERROR',message:error.message,details:error.details??null}});}};

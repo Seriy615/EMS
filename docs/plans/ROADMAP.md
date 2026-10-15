@@ -1,3 +1,5 @@
+Текущий P0: EMS-044 / AC-111 [явные контрактные связи с value-less Begin/End](../spec/CONTRACT_FLOW.md). Новый профиль → checked IR2 → runtime/standalone, новый обычный canvas; затем generic Array<T>/Map<K,V>, интеграция flow в UI и обратимое текстовое представление. Глобальная цель активна.
+
 P0 владельца 2026-10-15: [описания атомов/экземпляров, SVG и удаление AC-110](CONTRACT_DESCRIPTIONS.md); затем [явные циклические связи контрактов AC-111](EXPLICIT_CONTRACT_FLOW.md) и полноценные Array<T>/Map<K,V>. Нынешние AST region moves не объявляются произвольным графом.
 
 P0 владельца 2026-10-15: [AC-108/109 — переменная со входом, обычные порты, свои UI-обработчики и документы проекта](ORDINARY_CONTRACT_PORTS.md). Следом явная межфайловая линковка и EMS-038 Cell/instances/invariants; глобальная цель активна.

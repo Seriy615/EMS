@@ -243,6 +243,10 @@ Browser: loops-and-ports, project-files-ui, ui-handler-workspace.
 
 [Критерии, реализация и пределы](../plans/CONTRACT_DESCRIPTIONS.md). Atomic templates с аргументами, instance overrides, сохранение/roundtrip/undo, неизменность IR/runtime и escaped SVG. Удаление разрывает связи, сохраняет выход/позиции/камеру. removeAt: interpreted/standalone, copying/signed-zero/index errors. Полный локальный Node/verify и targeted Chromium; порядок публикации по явному указанию владельца о ручной приёмке.
 
-## AC-111 — явный граф с обратными связями (план)
+## AC-111 — явный граф с обратными связями (reference slice)
 
-[Рисунок, последовательность реализации и приёмка](../plans/EXPLICIT_CONTRACT_FLOW.md). Пока не принят.
+[Рисунок, последовательность реализации и приёмка](../plans/EXPLICIT_CONTRACT_FLOW.md). Начальный профиль реализован; полный text/visual roundtrip и UI linkage остаются открытыми.
+
+### AC-111 reference slice: маркеры без значения и явный feedback graph
+
+[Нормативные правила и пределы](../spec/CONTRACT_FLOW.md). Counter3: три настоящих increment/write/end и четыре comparison/fork; limit0 без тела; разные targets концов реально меняют исполнение. Node-order invariant IR, typed refusal, data-cycle/ref availability, shared infinite-loop budget, signed-zero transport/copy/import, fresh-process standalone, actual browser Worker/wire/reopen/delete/unconnected state/mobile. Старый AST canvas не объявляется мигрированным; полный text editing/UI linking/Array<T>/Map ещё не выполнены.

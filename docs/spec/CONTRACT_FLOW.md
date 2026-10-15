@@ -1,0 +1,107 @@
+# EMS contract flow /1 — reference profile
+
+Статус: реализованный начальный профиль явных связей. Цель — перейти от вложенных
+AST-областей редактора к реальным контрактам и циклическим связям. Это не заявление
+о завершённом языке, всех значениях, эффектах или IDE.
+
+## Семантический артефакт
+
+`ems-contract-flow/1`: id, version1.0.0, typed inputs/output, nodes, connections,
+entry. Узел имеет id, canonical uses, exact version, named args. Аргумент —
+один literal, program input или value output другого узла. Canvas и описания
+отдельно в `ems-flow-project/1`; они не определяют исполнение.
+
+Все узлы имеют Activation-вход `enter`. Атомы и переменная имеют выход `next`;
+`std.control.If` имеет Boolean data input `condition` и Activation outputs
+`yes`/`no`; `std.program.Result` возвращает значение программы.
+
+Уточнение владельца от2026-10-15:
+
+- `std.control.IterationBegin` — **без data inputs/outputs**, только `enter→next`.
+- `std.control.IterationEnd` — **без data inputs/outputs**, только `enter→repeat`.
+- Маркеры не проверяют Boolean и не содержат тело/условие/скрытую пару. Их порты
+  соединяются с Activation-входом любого контракта. Соединение конца обратно
+  к началу реализует «телепорт runtime». Можно явно вернуться к другому узлу.
+- Сравнение выполняется отдельным атомом; его True/False значение поступает на
+  отдельную развилку. Никакого автоматического вычисления скрытого условия.
+
+## Исполнение и хранение
+
+Один последовательный token находится на entry. Активированный контракт читает
+свои аргументы, выполняется один раз и передаёт token по выбранному выходу.
+Один Activation-выход имеет максимум одного потребителя; fan-in допустим.
+Развилка активирует только выбранную ветвь. Creation order/координаты не добавляют
+связей и не задают порядок. Обратные связи разрешены; бесконечный цикл ограничен
+общим work budget, а не завершается фиктивным успехом.
+
+Результаты атомов — снимки последнего исполнения. Перед первым чтением обычный
+производитель обязан доминировать потребителя в activation CFG. Проверка
+отвергает необеспеченный value output (`UNINITIALIZED_FLOW_VALUE`), а не подставляет
+ноль или неявно запускает производителя. Чтобы сравнение обновлялось на каждом
+проходе, обратная связь должна вести к началу перед сравнением.
+
+`std.storage.Variable`: конкретный finite valueType, typed initial, optional
+value input и current-value output. Начальные значения создаются до первого
+перехода. Чтение output не запускает запись. Активация записывает подключённое
+значение (либо сохраняет current при несоединённом optional input), затем next.
+Storage output разрывает data dependency cycle; pure data cycles запрещены.
+Локальное хранение сбрасывается при новом вызове. Оно не подменяет persistent UI state.
+
+## Проверка и общий runtime/compiler
+
+Закрытая версия schema, уникальные имена/версии, типы портов и литералов, наличие
+ссылок, pure contracts/effects/capabilities, data cycles, activation ports,
+complete wiring и dominators. Текущий предел256 узлов/1024 activation links.
+Профиль принимает Number/Boolean/String/NumberArray, trusted pure атомы и pure
+Registry composites. Stateful host/API/Future/Stream/Resource не включаются
+молчаливо; недоступная реализация явно отвергается.
+
+Lowering в существующий typed IR2 через обычный EMS frontend. Внутренний
+program-counter dispatcher — backend implementation; SVG строится по исходным
+контрактным связям и не показывает dispatcher. Отдельного языка исполнения в
+браузере нет. Runtime и independent JS исполняют тот же IR, с теми же budgets.
+Canonical lowering сортирует node IDs, поэтому перестановка массива nodes
+не меняет IR. Flow provenance связывает реальные activation/data operations
+с graph node IDs, без runtime values.
+
+## Редактор и переносимость
+
+Новые проекты «Создать граф» и графовые файлы workspace открывают `/web/flow.html`.
+Общий стиль карточек, круговые typed ports, DnD с touch hold/scroll, бесконечные
+координаты, обычные pan/zoom, properties/description, rename, deletion, undo/redo,
+source-scoped save/reopen. Никаких отдельных branch/body/algorithm сущностей,
+автоматической раскладки или списка «путей». Правая кнопка на линии разрывает её.
+Начальная точка выбирается в свойствах контракта.
+
+Authoring допускает incomplete wiring: удаление узла разрывает его связи и
+сохраняет кандидат без выдуманных значений. Run/build отвергают missing inputs,
+outputs или необеспеченные результаты. Worker исполняет ограниченный IR2,
+Terminate останавливает job. Изменение программы во время job не публикует
+результат старой версии. Canvas/description правка не меняет semantic stamp.
+
+Формат транспорта сохраняет `-0` как JSON number token, включая arrays/inputs;
+copy/rename/import не превращают его в0. Сохранение файла сохраняет другие
+документы workspace; межоконная запись того же документа требует актуального source.
+
+## Команды и воспроизводимый пример
+
+```
+node tools/ems.mjs flow-run examples/flow-counter.graph.json '{"limit":3}'
+node tools/ems.mjs flow-build examples/flow-counter.graph.json --out dist/counter.mjs
+node tools/ems.mjs flow-svg examples/flow-counter.graph.json --out dist/counter.svg
+```
+
+Trace: begin→less→fork→increment→count→end (три раза), затем
+begin→less→fork→result. Результат3. При limit0 тело не выполняется.
+
+## Открытые границы
+
+Старые finite/text/structured документы остаются совместимыми; автоматическая
+миграция произвольного AST-графа в explicit flow не реализована. Редактор исходного
+EMS и обратное восстановление arbitrary flow из текста пока не предоставлены:
+«Код сборки» — явно readonly backend view. Graph и textual compiler используют
+общий IR, но весь G-02 не объявляется принятым.
+
+Нет интеграции новых flow documents как persistent UI handlers, межфайлового linker,
+вложенного раскрытия composites в новом canvas, parallel tokens, generic arrays/maps,
+native targets или полного debugger. Общая цель, EMS-038 и эти направления открыты.

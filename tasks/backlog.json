@@ -1287,6 +1287,24 @@
         "GPT-6 Luna"
       ],
       "progress": "Graph-first custom handlers, initial value editing, multi-document workspace through the same existing editors. Cross-file module linkage and state rename/type migration remain open. Full final/public gate pending. Owner requested immediate deploy/manual acceptance: e835997 published after913 Node/159 verify; full browser interrupted after46 successful cases, not full PASS. Safari history-rate fix regression1/1 PASS; source/publication evidence in STATUS."
+    },
+    {
+      "id": "EMS-044",
+      "title": "Explicit typed contract-flow with value-less iteration markers",
+      "phase": "M1/M2 owner P0",
+      "dependsOn": [
+        "EMS-037"
+      ],
+      "objective": "Execute actual contract edges with ordinary branch/storage/iteration markers through shared IR, without lexical region relocation",
+      "deliverables": "docs/spec/CONTRACT_FLOW.md; semantic graph validator/compiler, standalone target, project model, ordinary canvas and CLI",
+      "acceptance": "AC-111 reference slice: marker inputs/outputs have no data; comparison feeds Boolean fork; explicit feedback runtime3/standalone3; type/cycle/availability/budget failures; browser wire/reopen/delete/mobile and project compatibility",
+      "status": "IN_PROGRESS",
+      "priority": "P0",
+      "ownerModelPolicy": [
+        "GPT-6.1 Sol",
+        "GPT-6 Luna"
+      ],
+      "progress": "Reference slice implemented: value-less Begin/End with arbitrary activation targets, independent Boolean fork, writable storage, actual feedback lowered to shared IR2, ordinary canvas and standalone/SVG/CLI. Baseline923 Node/159 verify; final939/939 Node and162/162 verify PASS. Chromium explicit-flow2 plus manager2 PASS after stale-execution/mobile overflow regressions. Final workspace compatibility2/2 and PWA manifest1/1 PASS; CLI runtime3/build/SVG PASS. Publication pending. Full browser gate not rerun per owner immediate/manual instruction. Arbitrary old AST migration, source editing/reverse projection and flow UI handler linkage remain open."
     }
   ]
 }

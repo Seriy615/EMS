@@ -31,6 +31,20 @@ Synchronous structured programs can export typed atomic packages with nested `Op
 
 The avg5 arithmetic demo computes `(sum - min - max)/3 = 12.566666…`, **not** an official WCA Ao5 implementation. The current textual syntax is a tiny draft and does **not** yet constitute the full EMS language. Generated standalone JS is a pure-operation target proof of concept; native/mobile compilers remain planned work.
 
+## Explicit contract graphs
+
+New graph projects use ordinary typed contracts with explicit activation connections.
+`IterationBegin` and `IterationEnd` carry no data or hidden condition. A separate
+comparison produces the Boolean consumed by a fork; connecting the end back to the
+beginning repeats the actual graph. Incomplete graphs remain editable; run/build
+checks all required ports and value availability. The compiler lowers to the same
+checked IR2 used by textual EMS and exports independent JavaScript.
+
+Try `node tools/ems.mjs flow-run examples/flow-counter.graph.json '{"limit":3}'`.
+See [the versioned semantics and remaining limits](docs/spec/CONTRACT_FLOW.md).
+Existing saved graph/text projects remain compatible. Full reverse text editing,
+new-flow UI handler bindings and generic Array/Map support remain separate work.
+
 ## Studio projects
 
 The projects screen can create a workspace containing UI documents, graph files and
