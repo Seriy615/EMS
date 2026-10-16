@@ -64,7 +64,11 @@ function lowerUI(parts,module,base){
 }
 /** One parser and one semantic model: native UI syntax lowers to the existing module + UI artifact. */
 export function compileInstanceSource(source,base=createCoreRegistry(),options={}){
- const ast=parseEMSModule(source),authoredGraphs=[],settings={...options,authoredGraphs},result=module=>({module,...(authoredGraphs.length?{authoredGraphs}:{})}),hasUI=ast.declarations.some(node=>declarationKinds.has(node.kind));if(!hasUI)return result(compileInstanceAST(ast,base,settings));
+ return compileInstanceSourceAST(parseEMSModule(source),base,options);
+}
+/** Compile a linked located application AST through the same native and UI semantics. */
+export function compileInstanceSourceAST(ast,base=createCoreRegistry(),options={}){
+ const authoredGraphs=[],settings={...options,authoredGraphs},result=module=>({module,...(authoredGraphs.length?{authoredGraphs}:{})}),hasUI=ast.declarations.some(node=>declarationKinds.has(node.kind));if(!hasUI)return result(compileInstanceAST(ast,base,settings));
  const parts=split(ast);if(parts.application&&parts.core.some(node=>node.name===parts.application.name))error('DUPLICATE_SYMBOL','Application name conflicts with another declaration',parts.application);
  const module=compileInstanceAST({...ast,declarations:parts.core},base,{...(parts.application?{id:parts.application.name}:{}),...settings});return {...result(module),ui:lowerUI(parts,module,base)};
 }

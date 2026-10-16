@@ -1,0 +1,14 @@
+{
+  "schemaVersion": "ems-source-project/1",
+  "entry": "app/Main.ems",
+  "files": [
+    {
+      "path": "app/Main.ems",
+      "source": "import \"../lib/Series.ems\" as series;\n@Main(epsilon:Number)->Number { return series.Sum(epsilon); }\n"
+    },
+    {
+      "path": "lib/Series.ems",
+      "source": "// a_n = 1 / 2^n + 1 / 3^n, n starts at 1.\nexport @Sum(epsilon:Number)->Number {\n  if epsilon<=0 { throw \"epsilon must be positive\"; }\n  let mut half=0.5; let mut third=1/3; let mut total=0;\n  while half+third>epsilon {\n    total=total+half+third;\n    half=half/2; third=third/3;\n  }\n  return total;\n}\n"
+    }
+  ]
+}

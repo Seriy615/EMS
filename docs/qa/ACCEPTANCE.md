@@ -445,3 +445,20 @@ HTTP module и реальным UI event, native Stop/restart/pagehide lifetime,
 никакого автоматического fallback. Node `tests/ui-worker-startup.test.mjs` и
 `tests/ui-worker.test.mjs`; Chromium `tests/browser/ui-worker-startup.test.mjs`.
 Не объявлять все прежние Chromium startup/CDP/load сбои исправленными.
+
+## AC-136 — реальные исходные модули на общей семантике EMS
+
+[SOURCE_MODULES.md](../spec/SOURCE_MODULES.md), ADR-0019: явный source snapshot,
+relative imports/DAG/export visibility, private helpers, generic types и async,
+лексические value/type/UI scopes, статические graph/callback/implementation refs,
+приоритет канонических kernels и logical owner/self, file/UTF-16 diagnostics.
+Никаких filesystem/network/host executions при source resolution; native
+initializers/guards не исполняются при link/build, permissions/effects сохраняются.
+Проверить deterministic IR при перестановке source map, paths/cycles/privacy/
+reserved namespace/limits/unsupported extern, Node/browser одинаковый IR и
+поведение, imported stateful definition→actual graph body→UI Worker→rollback,
+CLI и скачанный независимый DOM/JS output после EMS origin shutdown. Existing
+workspace compiler использует actual drafts, не stale archive/graph stub.
+Compiled editor snapshot отделён от source-project: source-file IDE editing,
+CAS и dependency-aware rebuild остаются открытыми. Node tests/source-modules.test.mjs,
+Chromium tests/browser/source-modules.test.mjs, examples/modules/*.json.

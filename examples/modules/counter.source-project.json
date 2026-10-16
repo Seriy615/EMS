@@ -1,0 +1,18 @@
+{
+  "schemaVersion": "ems-source-project/1",
+  "entry": "app.ems",
+  "files": [
+    {
+      "path": "app.ems",
+      "source": "import \"lib/Counter.ems\" as counters;\n@counters::Counter #counter;\n@UI.Column #root {\n  @UI.Text #count { content <= counter.value as number; }\n  @UI.Button #up { text: \"Увеличить\"; }\n  @UI.Button #down { text: \"Уменьшить\"; }\n}\nup.clicked ~> counter.Change(delta: 1);\ndown.clicked ~> counter.Change(delta: -1);\n"
+    },
+    {
+      "path": "lib/Counter.ems",
+      "source": "import \"Math.ems\" as math;\nexport @Counter {\n  value:Number=1;\n  +Change(delta:Number)->Number graph {\n    @self::value::read #read {}\n    @math::Add #add { a <= #read; b <= input::delta; }\n    @self::value::write #write { value <= #add; }\n    @std::program::Result #result { value <= #write; }\n    + #read;\n    #read.next ~> #add.enter;\n    #add.next ~> #write.enter;\n    #write.next ~> #result.enter;\n  }\n  ? value>=0;\n}\n"
+    },
+    {
+      "path": "lib/Math.ems",
+      "source": "export @Add(a:Number,b:Number)->Number graph {\n  @core::add #sum { a <= input::a; b <= input::b; }\n  @std::program::Result #result { value <= #sum; }\n  + #sum;\n  #sum.next ~> #result.enter;\n}\n"
+    }
+  ]
+}
