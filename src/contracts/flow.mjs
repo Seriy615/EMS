@@ -13,6 +13,7 @@ export const FLOW_KERNEL=Object.freeze({
  'std.control.If':{title:'Условие',inputs:{condition:'Boolean'},outputs:['yes','no']},
  'std.control.IterationBegin':{title:'Начало итерации',inputs:{},outputs:['next']},
  'std.control.IterationEnd':{title:'Конец итерации',inputs:{},outputs:['repeat']},
+ 'std.error.Throw':{title:'Выбросить ошибку',inputs:{value:'String'},outputs:[]},
  'std.storage.Variable':{title:'Переменная',inputs:null,outputs:['next']},
  'std.program.Result':{title:'Результат',inputs:null,outputs:[]}
 });

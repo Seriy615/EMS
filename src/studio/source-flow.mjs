@@ -4,6 +4,7 @@ import {controlArrayElementType} from '../semantics/control-algebraic.mjs';
 import {recursiveFlowCalls,RECURSIVE_FLOW_CALL_PROFILE} from '../contracts/flow-library.mjs';
 import {validateControlIR,decodeControlLiteral} from '../ir/control.mjs';
 import {newFlowProject,serializeFlowProject} from './flow-project.mjs';
+import {FLOW_KERNEL} from '../contracts/flow.mjs';
 import {defaultFlowValue} from '../contracts/flow-values.mjs';
 import {SHARED_STORAGE_FLOW_VERSION} from '../contracts/flow.mjs';
 import {fail} from '../reference/errors.mjs';
@@ -11,7 +12,7 @@ import {fail} from '../reference/errors.mjs';
 /** Project checked finite source into ordinary contracts. Never mutate the original source. */
 export function sourceContractFlow(ir,registry,{id='source',name=ir.entry,allowState=false,authoredGraphs=[],graphViews=[]}={}){
  validateControlIR(ir,registry);
- if(!['ems-control-finite/1','ems-control-algebraic/1'].includes(ir.profile))fail('SOURCE_FLOW_UNSUPPORTED','Этот исходник пока нельзя открыть обычным графом; исходный текст сохранён.');
+ if(!['ems-control-finite/1','ems-control-algebraic/1','ems-control-errors/1'].includes(ir.profile))fail('SOURCE_FLOW_UNSUPPORTED','Этот исходник пока нельзя открыть обычным графом; исходный текст сохранён.');
  const functions=new Map(ir.functions.map(fn=>[fn.id,fn])),authored=verifyAuthoredProgramGraphs(ir,authoredGraphs,registry,{allowState});
  function layout(project,fn){const graph=project.graph,seen=new Set();let lastLane=0;function place(id,column=0,lane=0){if(!id||seen.has(id))return;seen.add(id);project.canvas.positions[id]={x:40+column*340,y:40+lane*520};graph.connections.filter(edge=>edge.from.node===id).forEach((edge,index)=>place(edge.to.node,column+1,index?++lastLane:lane));}place(graph.entry);for(const [index,p]of fn.inputs.entries())project.canvas.positions['input:'+p.name]={x:-300,y:40+index*180};return project;}
 
@@ -23,7 +24,7 @@ export function sourceContractFlow(ir,registry,{id='source',name=ir.entry,allowS
  const unsupported=kind=>fail('SOURCE_FLOW_UNSUPPORTED','Операция '+kind+' пока не поддерживает преобразование в обычный граф. Исходник сохранён.');
  function node(uses,args={},extra={},hint='n'){
   if(graph.nodes.length>=256)fail('FLOW_LIMIT','Слишком большой граф обработчика');
-  const item={id:hint+'_'+(++sequence),uses,version:uses.startsWith('std.control.')||uses==='std.storage.Variable'||uses==='std.program.Result'?'1.0.0':functions.has(uses)?'1.0.0':registry.resolve(uses).version,args,...extra};graph.nodes.push(item);return item;
+  const item={id:hint+'_'+(++sequence),uses,version:Object.hasOwn(FLOW_KERNEL,uses)||uses==='std.storage.Variable'? '1.0.0':functions.has(uses)?'1.0.0':registry.resolve(uses).version,args,...extra};graph.nodes.push(item);return item;
  }
  const edge=(item,port,target)=>{if(target)graph.connections.push({from:{node:item.id,port},to:{node:target,port:'enter'}});};
  function call(uses,args,next){const item=node(uses,args);edge(item,'next',next({node:item.id}));return item.id;}
@@ -65,6 +66,7 @@ export function sourceContractFlow(ir,registry,{id='source',name=ir.entry,allowS
   const [statement,...rest]=statements,next=()=>block(rest,new Map(scope),after,loop);
   switch(statement.kind){
    case 'return':return value(statement.value,scope,ref=>node('std.program.Result',{value:ref}).id);
+   case 'throw':if(statement.value.type!=='String')unsupported('выброс ошибки типа '+statement.value.type);return value(statement.value,scope,ref=>node('std.error.Throw',{value:ref}).id);
    case 'expression':return value(statement.value,scope,()=>next());
    case 'let':{
     if(statement.mutable){graph.schemaVersion=SHARED_STORAGE_FLOW_VERSION;return value(statement.value,scope,ref=>{const cell=node('std.storage.Variable',{value:ref},{valueType:statement.type,initial:defaultFlowValue(statement.type)},statement.name);scope.set(statement.name,{ref:{node:cell.id},mutable:true});edge(cell,'next',next());return cell.id;});}

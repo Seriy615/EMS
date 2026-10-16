@@ -29,6 +29,7 @@ $('new-workspace').onclick=action(()=>{const record={id:identity(),name:$('name'
 $('new-contract').onclick=action(()=>create('contract'));
 
 $('lab6').onclick=action(()=>openExample('/examples/lab6.ems-project.json','Лабораторная № 2 · вариант 6',{ui:true}));
+$('lab6-graphs').onclick=action(()=>openExample('/examples/lab6.ems-project.json','Лабораторная № 2 · вариант 6 · контракты и графы'));
 
 $('new-source-project').onclick=action(()=>{const record={id:identity(),name:$('name').value,kind:'source',source:newSourceProject(),draft:null};manager.save(record);location.href=projectURL(record);});
 $('source-counter').onclick=action(()=>openExample('/examples/modules/counter.source-project.json','Счётчик · исходные файлы EMS'));

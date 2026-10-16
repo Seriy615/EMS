@@ -4,7 +4,8 @@ import {readFile,mkdtemp,writeFile,rm} from 'node:fs/promises';
 import {tmpdir} from 'node:os';
 import {join} from 'node:path';
 import {spawnSync} from 'node:child_process';
-import {newInstanceProject,serializeInstanceProject,parseInstanceProject} from '../src/studio/instance-project.mjs';
+import {newInstanceProject,serializeInstanceProject,parseInstanceProject,instanceProjectFlow} from '../src/studio/instance-project.mjs';
+import {parseFlowProject,FlowProjectEditor} from '../src/studio/flow-project.mjs';
 import {createInstanceUIRuntime} from '../src/instances/ui.mjs';
 import {compileInstanceUIJS} from '../src/compiler/instance-ui.mjs';
 const source=await readFile(new URL('../examples/lab6.ems',import.meta.url),'utf8'),saved=await readFile(new URL('../examples/lab6.ems-project.json',import.meta.url),'utf8'),policy={capabilities:['ui.render','state.read','state.write'],allowedEffects:['ui.render','state.read','state.write']};
@@ -16,6 +17,10 @@ test('lab6 saved editable project is compiled from the supplied EMS source with 
  const project=parseInstanceProject(saved);assert.ok(project.authoredGraphs);
  assert.match(source,/for n in/);assert.match(source,/while term > accuracy/);
  assert.match(source,/@lab::RepeatUntil/);assert.match(source,/#until.yes ~> #report.enter/);assert.match(source,/#end.repeat ~> #begin.enter/);
+});
+test('lab6 transition graphs open with the shared contract library and can be saved back',()=>{
+ const project=parseInstanceProject(saved);
+ for(const name of ['SetEpsilon','While','For','RepeatUntil','GoTo']){const view=instanceProjectFlow(project,{kind:'transition',instance:'series',name}),flow=parseFlowProject(view.source,view.registry,view.options);assert.ok(flow.graph.nodes.length>0,name+' has a graph');assert.ok(view.registry.items.has('core.add'));assert.ok(flow.contracts.some(item=>item.graph.id==='lab.Validate'));const validate=flow.contracts.find(item=>item.graph.id==='lab.Validate').graph;assert.ok(validate.nodes.some(node=>node.uses==='std.error.Throw'));if(name!=='SetEpsilon')assert.equal(typeof view.activeContract,'string');const editor=new FlowProjectEditor(flow,view.registry,view.options);assert.ok(editor.catalogRegistry.items.has('core.add'));const reopened=parseFlowProject(editor.serialize(),view.registry,view.options);assert.equal(reopened.graph.id,flow.graph.id);}
 });
 test('lab6 four EMS methods include precisely terms above epsilon and agree with the independent formula',async()=>{
  const project=parseInstanceProject(saved),runtime=await createInstanceUIRuntime(project.module,project.ui,undefined,{policy});
