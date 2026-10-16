@@ -478,3 +478,19 @@ recovery → новая сборка → offline с сохранением пр�
 Проверить конечные ожидания, отказ активации и повторную попытку, snapshot
 изоляцию и registry/source invalidation, UI Worker и скачанный независимый DOM.
 Процедуры и границы: ../spec/PWA_RECOVERY.md и ../qa/LAB6.md.
+
+
+## AC-138 — source files в IDE и обратная запись обычного графа
+
+Новый исходный проект и импорт ems-source-project/1 должны хранить actual files,
+а не flattened native snapshot. Проверить file create/move/import rewriting,
+invalid persistent draft, explicit reset/recovery, compare-before-write и quota,
+общую компиляцию потребителей после library edit. Graph save должен менять
+соответствующие original AST body spans, сохранять imports/export/signature/IDs,
+отказывать unnameable/private/owner collisions и доказать обратную привязку через
+повторный compiler. Проверить shared definition для двух экземпляров, initializer/
+invariant helpers без исполнения при build, signed zero, geometry-only recovery
+без stale graph semantics. Actual browser: mobile file tree→text→graph→same source→
+реальный runtime; native UI/invariant rollback→downloaded independent DOM после
+отключения EMS origin; malformed/stale/offline draft и actual unready compiler Stop.
+Профиль/лимиты/открытые части: ../spec/SOURCE_WORKSPACE_IDE.md и ADR-0020.

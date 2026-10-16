@@ -1,0 +1,30 @@
+import {SourceWorkspace} from './source-workspace.mjs';
+import {parseSourceProject} from './source-project.mjs';
+import {openSourceProjectGraph} from './source-project-graphs.mjs';
+import {compileSourceWorkspace} from './source-workspace-compiler.mjs';
+import {parseFlowProject,serializeFlowProject,validateFlowPresentation} from './flow-project.mjs';
+import {reconcileGraphView} from './instance-graph-views.mjs';
+import {validateInstanceModule} from '../instances/module.mjs';
+import {instanceSlot} from '../instances/names.mjs';
+import {fail} from '../reference/errors.mjs';
+/** Bind the shared canvas to source bodies; compiled snapshots are never saved as a new authority. */
+export class SourceProjectFlowSession{
+ constructor(storage,search){
+  this.storage=storage;const params=new URLSearchParams(search);this.projectId=params.get('project');this.fileId=null;this.fromUI=false;this.workspace=new SourceWorkspace(storage,this.projectId);
+  if(this.workspace.dirty||this.workspace.warning)fail('SOURCE_DRAFT_PENDING','Сначала примените или восстановите текстовый черновик проекта.');
+  this.selector={file:params.get('sourceFile'),name:params.get('contract'),...(params.has('instance')?{instance:params.get('instance'),operation:params.get('transition')}:{})};this.name=this.workspace.name+' · '+this.selector.file;this.compilationOptions={entry:params.get('entry')??'Main'};this.expected=this.workspace.expected;this.load();
+  this.key='ems.source.project.flow.'+this.projectId+':'+JSON.stringify(this.selector);this.expectedDraft=storage.getItem(this.key);this.warning='';
+  if(this.expectedDraft){const draft=this.readDraft(this.expectedDraft);if(draft.base===this.expected)this.project=parseFlowProject(draft.flow,this.registry,this.options);else{this.warning='Исходные файлы изменились. Открыта новая программа с сохранёнными позициями; старый графовый черновик оставлен отдельно.';let old;try{old=JSON.parse(draft.flow);}catch{fail('INVALID_FLOW_DRAFT','Malformed saved canvas');}const previous=[old,...(old.contracts??[])];for(const workspace of [this.project,...(this.project.contracts??[])]){const before=previous.find(item=>item.graph?.id===workspace.graph.id);if(before){validateFlowPresentation(before);const view=reconcileGraphView(before,workspace.graph);workspace.inputs=view.inputs;workspace.canvas=view.canvas;}}}}
+ }
+ load(){this.view=openSourceProjectGraph(this.workspace.expected,this.selector,this.compilationOptions);this.project=this.view.project;this.registry=this.view.registry;this.options=this.view.options;this.labels=new Map(this.view.labels);for(const target of this.view.context.targets)this.labels.set(target.id,target.file+' · '+target.name);this.activeContract=null;this.compilationKind=this.view.context.compiled.kind;this.document=this.view.context.compiled.bundle.project??null;this.target=this.view.target.kind==='transition'?{kind:'transition',instance:this.view.target.instance,name:this.view.target.operation}:{kind:'source'};
+  if(this.document)for(const instance of this.document.module.instances){const def=this.document.module.definitions.find(item=>item.id===instance.contract);for(const field of def.fields)for(const action of ['read','write'])this.labels.set('state.'+instanceSlot(instance.id,field.name)+'.'+action,(action==='read'?'Прочитать ':'Записать ')+instance.id+'.'+field.name);}
+ }
+ readDraft(raw){if(raw.length>8*1024*1024)fail('INVALID_FLOW_DRAFT','Source graph draft exceeds limit');let draft;try{draft=JSON.parse(raw);}catch{fail('INVALID_FLOW_DRAFT','Malformed source graph draft');}if(draft?.schemaVersion!=='ems-source-project-flow-draft/1'||Object.keys(draft).sort().join(',')!=='base,flow,schemaVersion'||typeof draft.base!=='string'||typeof draft.flow!=='string'||draft.flow.length>1048576)fail('INVALID_FLOW_DRAFT','Invalid source graph draft');parseSourceProject(draft.base);return draft;}
+ assertDraft(){if(this.storage.getItem(this.key)!==this.expectedDraft)fail('STALE_FLOW_DRAFT','Графовый черновик изменён в другом окне. Скачайте свою копию.');}
+ saveDraft(flow){parseFlowProject(flow,this.registry,this.options);this.assertDraft();if(this.expectedDraft&&this.readDraft(this.expectedDraft).base!==this.expected)this.storage.setItem(this.key+'.previous',this.expectedDraft);const raw=JSON.stringify({schemaVersion:'ems-source-project-flow-draft/1',base:this.expected,flow});if(raw.length>8*1024*1024)fail('SOURCE_LIMIT','Graph draft exceeds limit');this.storage.setItem(this.key,raw);this.expectedDraft=raw;}
+ sourceFor(flow){return this.view.apply(flow);}
+ prepare(flow){return compileSourceWorkspace(this.sourceFor(flow),this.compilationOptions).bundle.project;}
+ apply(flow){this.assertDraft();this.workspace.assertCurrent();const candidate=this.sourceFor(flow),parsed=parseSourceProject(candidate);this.workspace.change(project=>{project.entry=parsed.entry;project.sources=parsed.sources;});this.workspace.commit(this.compilationOptions);this.expected=this.workspace.expected;const previous=parseFlowProject(flow,this.registry,this.options);this.load();for(const current of [this.project,...(this.project.contracts??[])]){const old=[previous,...(previous.contracts??[])].find(item=>item.graph.id===current.graph.id);if(old){const view=reconcileGraphView(old,current.graph);current.inputs=view.inputs;current.canvas=view.canvas;}}try{this.saveDraft(serializeFlowProject(this.project,this.registry,this.options));}catch{this.warning='Исходники сохранены, но обновить черновик расположения не удалось.';}return this.expected;}
+ action(entry){return this.document?validateInstanceModule(this.document.module).transitions.find(action=>action.entry===entry)??null:null;}
+ get returnURL(){return '/web/source-project.html?'+new URLSearchParams({project:this.projectId,path:this.selector.file,entry:this.compilationOptions.entry});}
+}

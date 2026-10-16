@@ -1,3 +1,4 @@
+import {newSourceProject} from '../src/studio/source-project.mjs';
 import {openExample} from './examples.mjs';
 import {newInstanceProject,serializeInstanceProject} from '../src/studio/instance-project.mjs';
 import {newFlowProject} from '../src/studio/flow-project.mjs';
@@ -10,7 +11,7 @@ function action(work){return async()=>{try{await work();$('error').textContent='
 function element(tag,text){const node=document.createElement(tag);node.textContent=text;return node;}
 function renameForm(record,button){const form=document.createElement('form'),input=document.createElement('input'),save=element('button','Сохранить имя'),cancel=element('button','Отмена');input.value=record.name;input.required=true;input.maxLength=200;input.setAttribute('aria-label','Новое имя проекта');form.dataset.renameProject=record.id;cancel.type='button';cancel.onclick=render;input.onkeydown=event=>{if(event.key==='Escape'){event.preventDefault();render();}};form.onsubmit=event=>{event.preventDefault();action(()=>manager.rename(record.id,input.value.trim()))();};form.append(input,save,cancel);button.replaceWith(form);input.focus();input.select();}
 function render(){const list=$('project-list');list.replaceChildren();for(const record of manager.list()){
- const row=document.createElement('p'),link=element('a',record.name+' · '+(record.kind==='workspace'?'Файлы проекта':record.kind==='contract'?'Контракты / состояние':record.kind==='ui'?'UI / события':'Граф / текст'));link.href=projectURL(record);link.dataset.project=record.id;row.append(link,' ');const rename=element('button','Переименовать');rename.dataset.rename=record.id;rename.onclick=()=>renameForm(record,rename);row.append(rename,' ');
+ const row=document.createElement('p'),link=element('a',record.name+' · '+(record.kind==='source'?'Исходные файлы EMS':record.kind==='workspace'?'Файлы проекта':record.kind==='contract'?'Контракты / состояние':record.kind==='ui'?'UI / события':'Граф / текст'));link.href=projectURL(record);link.dataset.project=record.id;row.append(link,' ');const rename=element('button','Переименовать');rename.dataset.rename=record.id;rename.onclick=()=>renameForm(record,rename);row.append(rename,' ');
  for(const [label,work] of [['Копия',()=>manager.copy(record.id,identity(),record.name.slice(0,185)+' (копия)')],['Экспорт',()=>{const url=URL.createObjectURL(new Blob([manager.export(record.id)],{type:'application/json'})),a=document.createElement('a');a.href=url;a.download=record.id+'.ems-project.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);}],['Удалить',()=>manager.remove(record.id)]]){const button=element('button',label);button.onclick=action(work);row.append(button,' ');}list.append(row);
  }if(!list.children.length)list.textContent='Пока нет проектов.';if(localStorage.getItem('ems.studio.projects.v1')!==null){const row=document.createElement('p'),link=element('a','Ранее сохранённые локальные проекты');link.id='previous-projects';link.href='/web/index.html';row.append(link);list.append(row);}}
 async function create(kind,counter=false){const id=identity(),name=$('name').value;let source;
@@ -28,3 +29,6 @@ $('new-workspace').onclick=action(()=>{const record={id:identity(),name:$('name'
 $('new-contract').onclick=action(()=>create('contract'));
 
 $('lab6').onclick=action(()=>openExample('/examples/lab6.ems-project.json','Лабораторная № 2 · вариант 6',{ui:true}));
+
+$('new-source-project').onclick=action(()=>{const record={id:identity(),name:$('name').value,kind:'source',source:newSourceProject(),draft:null};manager.save(record);location.href=projectURL(record);});
+$('source-counter').onclick=action(()=>openExample('/examples/modules/counter.source-project.json','Счётчик · исходные файлы EMS'));

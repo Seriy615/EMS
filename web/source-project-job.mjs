@@ -1,0 +1,9 @@
+/** Separate module loading from bounded compiler/runtime work; Stop terminates both phases. */
+export function sourceProjectJob(request,{loadTimeout=5000,timeout=5000}={}){
+ const worker=new Worker('/web/source-project-worker.mjs',{type:'module'});let settled=false,timer,resolve,reject,ready=false;
+ const promise=new Promise((yes,no)=>{resolve=yes;reject=no;}),finish=(error,result)=>{if(settled)return;settled=true;clearTimeout(timer);worker.terminate();error?reject(error):resolve(result);};
+ timer=setTimeout(()=>finish(Object.assign(Error('Не удалось загрузить компилятор вовремя.'),{code:'SOURCE_WORKER_LOAD_TIMEOUT'})),loadTimeout);
+ worker.onmessage=({data})=>{if(settled)return;if(!ready){if(data?.type!=='ready'||data.protocol!=='ems-source-worker/1'||Object.keys(data).sort().join(',')!=='protocol,type')return finish(Object.assign(Error('Неверный ответ компилятора.'),{code:'SOURCE_WORKER_PROTOCOL'}));ready=true;clearTimeout(timer);timer=setTimeout(()=>finish(Object.assign(Error('Проверка или выполнение превысили лимит времени.'),{code:'EXECUTION_TIMEOUT'})),timeout);try{worker.postMessage(request);}catch(error){finish(error);}return;}if(typeof data?.ok!=='boolean')return finish(Object.assign(Error('Неверный ответ компилятора.'),{code:'SOURCE_WORKER_PROTOCOL'}));if(data.ok&&(!['pure','native'].includes(data.result?.kind)||!Array.isArray(data.result.targets))||!data.ok&&(!data.error||typeof data.error.code!=='string'||typeof data.error.message!=='string'))return finish(Object.assign(Error('Неверный ответ компилятора.'),{code:'SOURCE_WORKER_PROTOCOL'}));data.ok?finish(null,data.result):finish(Object.assign(Error(data.error.message),data.error));};
+ worker.onerror=()=>finish(Object.assign(Error('Ошибка загрузки компилятора.'),{code:'SOURCE_WORKER_ERROR'}));
+ return {promise,cancel:()=>finish(Object.assign(Error('Выполнение остановлено.'),{code:'CANCELLED'}))};
+}

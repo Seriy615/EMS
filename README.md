@@ -1,12 +1,12 @@
 Практический старт: [как писать EMS](web/learn.html), [лабораторная № 2, вариант 6](docs/qa/LAB6.md), [восстановление обновления PWA](docs/spec/PWA_RECOVERY.md).
 
-Исходные модули: `import "lib.ems" as lib`, exported контракты и типы, stateful definitions и графовые тела проходят общий compiler/runtime. Multi-file CLI и примеры самостоятельных приложений — [AC-136](docs/spec/SOURCE_MODULES.md). Редактирование связанных source files в IDE — следующий этап.
+Исходные модули: `import "lib.ems" as lib`, exported контракты и типы, stateful definitions и графовые тела проходят общий compiler/runtime. Multi-file CLI и примеры самостоятельных приложений — [AC-136](docs/spec/SOURCE_MODULES.md). Source files теперь редактируются в IDE, а исходные graph bodies — в общем холсте с записью обратно в тот же файл: [AC-138](docs/spec/SOURCE_WORKSPACE_IDE.md). Визуальный UI inverse для source project и structured-body module graph apply ещё открыты.
 
 Запуск UI Worker: загрузка среды и выполнение EMS имеют отдельные ограниченные бюджеты; native Stop отменяет и незавершённый запуск — [AC-135](docs/spec/UI_WORKER_STARTUP.md). Текущая приёмка и ограничения — в STATUS.
 
-Текст контрактного графа EMS и применение к тем же узлам/связям в обычном canvas — [AC-132](docs/spec/GRAPH_SOURCE.md), [пример](examples/graph-body.ems). Полный native source-document inverse остаётся открытым.
+Текст контрактного графа EMS и применение к тем же узлам/связям в обычном canvas — [AC-132](docs/spec/GRAPH_SOURCE.md), [пример](examples/graph-body.ems). Текущий поддержанный native source inverse описан в AC-134; полная визуальная грамматика ещё открыта.
 
-Текущий native модуль можно показать и скачать как настоящий EMS после правок графов, полей и UI — [AC-130](docs/spec/NATIVE_MODULE_SOURCE.md). CLI `instance-source` / `application-source`; обратный импорт копии и standalone build проверяются на общем parser/IR. Применение полного текста к исходному холсту с сохранением геометрии ещё впереди.
+Текущий native модуль можно показать и скачать как настоящий EMS после правок графов, полей и UI — [AC-130](docs/spec/NATIVE_MODULE_SOURCE.md). CLI `instance-source` / `application-source`; обратный импорт копии и standalone build проверяются на общем parser/IR. Применение полного текста в поддержанном native профиле реализовано в AC-134 с сохранением проверенной геометрии.
 
 Поля native контрактов: добавление, переименование и удаление с сохранением графов, инвариантов и UI; зависимости удаления и отмена/повтор — [AC-129](docs/spec/INSTANCE_FIELDS.md). Новое поле и операция связываются с кнопкой и текстом через тот же обычный граф.
 
