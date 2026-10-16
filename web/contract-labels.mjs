@@ -13,3 +13,8 @@ export const CONTRACT_TITLES=Object.freeze({
 const TYPES=Object.freeze({Number:'Число',String:'Текст',Boolean:'Да / нет',NumberArray:'Список чисел',Array:'Массив',Map:'Словарь',Option:'Возможно',Result:'Результат',Activation:'Исполнение'});
 /** Translate nested finite type expressions without changing stored type identifiers. */
 export function typeLabel(type){return String(type).replace(/\b[A-Za-z][A-Za-z0-9]*\b/g,name=>Object.hasOwn(TYPES,name)?TYPES[name]:name).replaceAll(',',', ');}
+export function contractCategory(id){
+ const key=id.startsWith('core.')?'numbers':id.split('.')[1];
+ const titles={numbers:'Арифметика',number:'Числа и сравнения',value:'Значения',logic:'Логика',select:'Выбор значения',text:'Текст',array:'Массивы',map:'Словари',control:'Условия и циклы',storage:'Переменные',program:'Результат',state:'Данные интерфейса'};const group=id.startsWith('state.')?'state':key,title=Object.hasOwn(titles,group)?titles[group]:null;
+ return title?{key:id.startsWith('state.')?'state':key,title}:{key:'custom',title:'Контракты проекта'};
+}

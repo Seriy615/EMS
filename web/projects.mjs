@@ -1,3 +1,4 @@
+import {openExample} from './examples.mjs';
 import {newInstanceProject,serializeInstanceProject} from '../src/studio/instance-project.mjs';
 import {newFlowProject} from '../src/studio/flow-project.mjs';
 import {ProjectManager,projectURL,workspaceSource} from '../src/studio/manager.mjs';
@@ -25,3 +26,5 @@ try{render();}catch(error){report(error);}
 $('new-workspace').onclick=action(()=>{const record={id:identity(),name:$('name').value,kind:'workspace',source:workspaceSource([]),draft:null};manager.save(record);location.href=projectURL(record);});
 
 $('new-contract').onclick=action(()=>create('contract'));
+
+$('lab6').onclick=action(()=>openExample('/examples/lab6.ems-project.json','Лабораторная № 2 · вариант 6',{ui:true}));

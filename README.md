@@ -1,3 +1,5 @@
+Практический старт: [как писать EMS](web/learn.html), [лабораторная № 2, вариант 6](docs/qa/LAB6.md), [восстановление обновления PWA](docs/spec/PWA_RECOVERY.md).
+
 Исходные модули: `import "lib.ems" as lib`, exported контракты и типы, stateful definitions и графовые тела проходят общий compiler/runtime. Multi-file CLI и примеры самостоятельных приложений — [AC-136](docs/spec/SOURCE_MODULES.md). Редактирование связанных source files в IDE — следующий этап.
 
 Запуск UI Worker: загрузка среды и выполнение EMS имеют отдельные ограниченные бюджеты; native Stop отменяет и незавершённый запуск — [AC-135](docs/spec/UI_WORKER_STARTUP.md). Текущая приёмка и ограничения — в STATUS.

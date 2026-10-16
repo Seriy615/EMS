@@ -462,3 +462,19 @@ workspace compiler использует actual drafts, не stale archive/graph 
 Compiled editor snapshot отделён от source-project: source-file IDE editing,
 CAS и dependency-aware rebuild остаются открытыми. Node tests/source-modules.test.mjs,
 Chromium tests/browser/source-modules.test.mjs, examples/modules/*.json.
+
+
+## AC-137 — восстановление обновления, контекстный граф и лабораторная № 6
+
+Правый клик на контракте, свободном холсте и связи открывает действия EMS;
+открытие меню не меняет семантику. Удаление контракта/связи — явное действие.
+Каталог показывает русские названия/типы, разделы и подписанный поиск;
+технические ID остаются в данных и доступны для поиска. Главная страница
+открывает проверенный пример кода и лабораторную с пользовательским ε,
+рекуррентным следующим членом, перечнем членов и суммой четырьмя способами.
+Text For/While и graph postcondition/jump не выдаются за текстовые repeat/goto.
+Проверить actual старый 9d802b08 bootstrap/worker → неудачная установка →
+recovery → новая сборка → offline с сохранением проекта/черновика.
+Проверить конечные ожидания, отказ активации и повторную попытку, snapshot
+изоляцию и registry/source invalidation, UI Worker и скачанный независимый DOM.
+Процедуры и границы: ../spec/PWA_RECOVERY.md и ../qa/LAB6.md.

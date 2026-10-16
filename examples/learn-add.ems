@@ -1,0 +1,12 @@
+// Один и тот же контракт можно редактировать текстом и на холсте.
+@Main(a:Number,b:Number)->Number graph {
+    @core::add #sum {
+        a <= input::a;
+        b <= input::b;
+    }
+    @std::program::Result #result {
+        value <= #sum;
+    }
+    + #sum;
+    #sum.next ~> #result.enter;
+}

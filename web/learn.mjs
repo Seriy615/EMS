@@ -1,0 +1,2 @@
+import {openExample} from './examples.mjs';
+for(const [id,path,name]of [['learn-example','/examples/learn-add.ems','Первая программа · сумма'],['learn-lab','/examples/lab6.ems-project.json','Лабораторная № 2 · вариант 6']])document.getElementById(id).onclick=async()=>{const button=document.getElementById(id);button.disabled=true;try{await openExample(path,name,{ui:id==='learn-lab'});}catch(error){document.getElementById('learn-error').textContent=error.message;button.disabled=false;}};
