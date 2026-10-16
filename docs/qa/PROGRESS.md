@@ -1214,3 +1214,5 @@ instruction. Final1006 Node/167 verify; focused closure tests PASS.
 This slice resolves stale-looking entry/version/update UX and preserves old files.
 It does not claim old standalone source graphs were migrated; source helpers
 and actual shared source projection are the next P0. Goal remains active.
+
+2026-10-16 — подтверждён дефект графового входа ЛР6: переход из контрактного модуля падает до инициализации canvas/catalog, потому что `sourceContractFlow` отклоняет агрегированный `ems-control-errors/1`, сформированный `lab.Validate` (`throw`). Авторские graph-witnesses RepeatUntil/GoTo отдельно не открываются из-за проверки общего профиля; While/For не имеют авторских графов. Попытка добавить отдельную кнопку к тому же маршруту воспроизвела пустой холст и отклонена; кнопку/ложный acceptance не оставили. Следующий нужный срез EMS-038: локализовать профиль и ошибки на достижимых операциях и обеспечить честный графовый маршрут либо явную диагностическую ошибку, затем выразить все четыре способа графами с общей семантикой.
