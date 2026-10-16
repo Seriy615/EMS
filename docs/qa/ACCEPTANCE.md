@@ -494,3 +494,16 @@ invariant helpers без исполнения при build, signed zero, geometr
 реальный runtime; native UI/invariant rollback→downloaded independent DOM после
 отключения EMS origin; malformed/stale/offline draft и actual unready compiler Stop.
 Профиль/лимиты/открытые части: ../spec/SOURCE_WORKSPACE_IDE.md и ADR-0020.
+
+
+## AC-139 — визуальный UI редактор для исходного EMS-проекта
+
+Открыть существующий source project с native UI, изменить виджет и его событие в
+обычном визуальном дизайнере, сохранить изменения в UI-декларации исходного
+EMS-файла и запустить тот же UI Worker. Логика импортированных контрактов,
+модульные файлы и остальные source spans не меняются. Из события открыть реальный
+graph body обработчика в общем контрактном canvas; возврат должен восстановить
+исходный UI-файл проекта. Ошибка компиляции или устаревший source/draft не должны
+перезаписать проект. Критерии: tests/source-project-ui.test.mjs и
+tests/browser/source-project-ui.test.mjs. Реализация и границы —
+../spec/SOURCE_WORKSPACE_IDE.md.

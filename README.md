@@ -1,6 +1,6 @@
 Практический старт: [как писать EMS](web/learn.html), [лабораторная № 2, вариант 6](docs/qa/LAB6.md), [восстановление обновления PWA](docs/spec/PWA_RECOVERY.md).
 
-Исходные модули: `import "lib.ems" as lib`, exported контракты и типы, stateful definitions и графовые тела проходят общий compiler/runtime. Multi-file CLI и примеры самостоятельных приложений — [AC-136](docs/spec/SOURCE_MODULES.md). Source files теперь редактируются в IDE, а исходные graph bodies — в общем холсте с записью обратно в тот же файл: [AC-138](docs/spec/SOURCE_WORKSPACE_IDE.md). Визуальный UI inverse для source project и structured-body module graph apply ещё открыты.
+Исходные модули: `import "lib.ems" as lib`, exported контракты и типы, stateful definitions и графовые тела проходят общий compiler/runtime. Multi-file CLI и примеры самостоятельных приложений — [AC-136](docs/spec/SOURCE_MODULES.md). Source files теперь редактируются в IDE, а исходные graph bodies — в общем холсте с записью обратно в тот же файл: [AC-138](docs/spec/SOURCE_WORKSPACE_IDE.md). Визуальный UI source project связан с исходниками и обычным графом обработчика: [AC-139](docs/spec/SOURCE_WORKSPACE_IDE.md). Structured-body module graph apply и полный EMS остаются открытыми.
 
 Запуск UI Worker: загрузка среды и выполнение EMS имеют отдельные ограниченные бюджеты; native Stop отменяет и незавершённый запуск — [AC-135](docs/spec/UI_WORKER_STARTUP.md). Текущая приёмка и ограничения — в STATUS.
 

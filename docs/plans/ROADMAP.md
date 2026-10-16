@@ -1,3 +1,7 @@
+EMS-038 / AC-139 в проверке: source-project UI designer редактирует UI-декларации исходного EMS-файла, использует общий UI Worker/preview, открывает связанный graph body обработчика в обычном контрактном canvas и возвращается к UI-файлу. Unit 3/3 и Chromium 1/1 PASS; полные gates ожидаются. Затем остаётся structured-body module graph inverse и дальнейшее ядро EMS; глобальная цель активна.
+
+EMS-038 / AC-139 локально принят: source-aware visual UI designer, исходный event binding и возврат к UI entry после открытия обычного графа обработчика; 1237 Node/182 verify/focused3/scoped9 Chromium PASS. Публикация pending. Далее structured-body module graph inverse и дальнейшее ядро EMS; global goal active.
+
 EMS-038 / AC-138 опубликован (1234 Node/182 verify/focused38/scoped38 Chromium/public HTTPS3 PASS; STATUS): source workspace — actual EMS files, dependency rebuild, private/body scope mappings, обычный canvas с обратной записью тела в оригинальный файл, UI preview и independent output на общем ядре. Полный source-aware visual UI designer и structured-body module graph inverse остаются следующими шагами; глобальная цель активна.
 
 EMS-038 / AC-137 реализован и опубликован: восстановление PWA 9d802b08, контекстное меню обычного графа, русский каталог/поиск, путь к коду и работающая лабораторная № 6. 1214 Node/181 verify/29 scoped Chromium/public HTTPS3 PASS, детали — STATUS; source-file IDE authoring/CAS остаётся следующим этапом. Глобальная цель активна.

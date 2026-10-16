@@ -80,13 +80,21 @@ scope; её можно редактировать текстом/экспорт�
 перенос такого оформления остаётся открытым. Source export содержит файлы;
 локальные presentation/drafts не являются частью source-project/1.
 
-В этом срезе UI в source project редактируется текстом и исполняется в preview.
-Source-aware visual UI designer пока следующий шаг; обычный designer готовых
-contract documents сохраняет прежнюю семантику. FFI host bindings, native SDK,
+В source project визуальный UI designer использует тот же `InstanceUIProjectEditor`,
+UI Worker и DOM preview, что и обычный native проект. Свойства виджетов и привязки
+событий сериализуются обратно в UI-декларации исходного `app.ems`; логика
+импортированных контрактов и другие source spans остаются неизменными. Привязанный
+обработчик открывает его настоящий graph body в обычном canvas. Возврат ведёт к
+исходному UI-файлу, а не к файлу реализации импортированного контракта. Невалидный
+кандидат или устаревшее окно не меняет сохранённый source project.
+
+Этот срез не превращает structured-body `if`/`for` в редактируемый граф и не
+добавляет визуальное изменение сигнатур. FFI host bindings, native SDK,
 распределённое размещение, dynamic lifetime и полный язык не объявлены завершёнными.
 
 Проверки: tests/source-workspace.test.mjs, tests/source-project-job.test.mjs,
-Chromium tests/browser/source-workspace.test.mjs. Клиент отдельно ограничивает
+tests/source-project-ui.test.mjs, Chromium tests/browser/source-workspace.test.mjs
+и tests/browser/source-project-ui.test.mjs. Клиент отдельно ограничивает
 загрузку compiler Worker и его работу (5 s +5 s), late replies после Stop
 игнорируются. Операционный бюджет остаётся 10000, глубина32. Существующие common
 runtime limits/unsupported profiles не повышаются ради демонстрации. Scope/evidence
